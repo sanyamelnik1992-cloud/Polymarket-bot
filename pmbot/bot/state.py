@@ -70,6 +70,8 @@ class AssetPrices:
         self._last_sec_mid = None
         self.var = None               # EWMA of squared 1s log returns
         self.alpha = 1 - 0.5 ** (1 / halflife_s)
+        self.var_short = None         # 60s-halflife EWMA (volatility-burst detector)
+        self.alpha_short = 1 - 0.5 ** (1 / 60.0)
         self.last_ret = 0.0           # most recent completed 1s log return
 
     # ---- Chainlink
@@ -118,6 +120,7 @@ class AssetPrices:
 
     def _ewma(self, x):
         self.var = x if self.var is None else (1 - self.alpha) * self.var + self.alpha * x
+        self.var_short = x if self.var_short is None else (1 - self.alpha_short) * self.var_short + self.alpha_short * x
 
     def seed_vol(self, closes):
         """Bootstrap the EWMA from historical 1s closes (oldest first)."""
@@ -127,6 +130,9 @@ class AssetPrices:
 
     def sigma(self):
         return math.sqrt(self.var) if self.var else None
+
+    def sigma_short(self):
+        return math.sqrt(self.var_short) if self.var_short else None
 
     def bn_mid(self):
         return self.bn_hist[-1][1] if self.bn_hist else None
@@ -158,6 +164,17 @@ class State:
         self.token_window = {}     # token -> Window
         self.feed_alive = {"clob": {}, "rtds": 0, "binance": 0}  # last message rx per feed
         self.cooldown_until = {a: 0 for a in self.assets}
+        self.fair_hist = {}        # window key -> deque[(ms, p_up)]
+        self.fill_hist = {}        # (window key, side) -> deque[(ms, size)]
+        self.side_block_until = {}  # (window key, side) -> ms
+
+    def record_fair(self, key, ms, p):
+        d = self.fair_hist.setdefault(key, deque(maxlen=200))
+        d.append((ms, p))
+
+    def record_fill(self, key, side, ms, size):
+        d = self.fill_hist.setdefault((key, side), deque(maxlen=200))
+        d.append((ms, size))
 
     def add_window(self, w: Window):
         if w.key in self.windows:
@@ -170,6 +187,10 @@ class State:
         return w
 
     def drop_window(self, key):
+        self.fair_hist.pop(key, None)
+        for side in ("U", "D"):
+            self.fill_hist.pop((key, side), None)
+            self.side_block_until.pop((key, side), None)
         w = self.windows.pop(key, None)
         if w:
             for t in (w.token_up, w.token_down):

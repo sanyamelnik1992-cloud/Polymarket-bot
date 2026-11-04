@@ -32,7 +32,13 @@ class FilterCfg:
     jump_cooldown_ms: int = 3000
     max_sigma_bp: float = 3.0        # per-second vol above this (bp/s) = too wild, do not quote
     min_strike_seconds: int = 50     # strike computed from >= this many Chainlink seconds (if not published)
-    max_book_gap_ms: int = 0         # reserved
+    vol_spike_ratio: float = 0.0     # short (60s) / long sigma above this = volatility burst, do not quote (0=off)
+    max_fair_move: float = 0.0       # fair P(Up) moved more than this over fair_move_window_ms = unstable (0=off)
+    fair_move_window_ms: int = 5000
+    toxic_shares: float = 0.0        # >= this many shares filled on one side within toxic_window_ms ... (0=off)
+    toxic_fills: int = 0             # ... or >= this many separate fills (0=off)
+    toxic_window_ms: int = 5000
+    toxic_cooldown_ms: int = 30000   # ... blocks that side for this long
 
 
 @dataclass

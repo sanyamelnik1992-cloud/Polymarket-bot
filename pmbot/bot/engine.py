@@ -9,7 +9,7 @@ from ..http import get_json
 from .config import BotConfig
 from .fair import fair_value
 from .feeds import ClobFeed, binance_feed, rtds_feed
-from .filters import check
+from .filters import check, side_blocks
 from .journal import Journal
 from .risk import RiskManager
 from .state import State, Window, now_ms
@@ -45,6 +45,7 @@ class Engine:
 
     def on_fill(self, fill):
         self.stats["fills"] += 1
+        self.st.record_fill(fill["key"], fill["side"], now_ms(), fill["size"])
         self.risk.on_fill(fill["key"], fill["side"], fill["price"], fill["size"], fill["fee_eq"])
         q = self.quotes.get((fill["key"], fill["side"]))
         if q and q["oid"] == fill["order_id"]:
@@ -54,6 +55,11 @@ class Engine:
         w = self.st.windows.get(fill["key"])
         if w:
             self.to_settle[w.key] = w
+            # toxic-flow guard reacts on the fill itself, not on the next decision tick
+            if fill["side"] in side_blocks(w, self.st, now_ms(), self.cfg.filters):
+                cur = self.quotes.get((w.key, fill["side"]))
+                if cur:
+                    asyncio.get_running_loop().create_task(self._cancel((w.key, fill["side"]), cur, now_ms()))
 
     # ------------------------------------------------------------ discovery & strikes
     async def bootstrap_vol(self):
@@ -200,6 +206,8 @@ class Engine:
                     continue
                 fv = fair_value(w, self.st.prices[w.asset], now, self.cfg.strategy.vol_mult, self.cfg.strategy.t_df)
                 reasons = check(w, self.st, fv, now, self.cfg.filters, self.cfg.strategy)
+                if fv is not None:
+                    self.st.record_fair(w.key, now, fv.p_up)
                 if not ok:
                     reasons.append(why)
                 prev = self.last_reasons.get(w.key)
@@ -214,6 +222,13 @@ class Engine:
                     pos = self.risk.positions[w.key]
                     tg = target_quotes(w, fv.p_up, self.st.books[w.token_up], self.st.books[w.token_down], pos,
                                        self.cfg.strategy, self.cfg.risk)
+                    blocked = side_blocks(w, self.st, now, self.cfg.filters)
+                    for side in blocked:
+                        if tg.get(side) is not None:
+                            tg[side] = None
+                    if blocked != self.last_reasons.get((w.key, "blocked"), set()):
+                        self.journal.log("side_block", key=w.key, sides=sorted(blocked))
+                        self.last_reasons[(w.key, "blocked")] = blocked
                 for side in ("U", "D"):
                     await self.set_quote(w, side, tg[side], now)
             self.broker.gc(now)

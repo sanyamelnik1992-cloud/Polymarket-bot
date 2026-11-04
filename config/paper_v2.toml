@@ -1,0 +1,34 @@
+# Paper trading, v2 "strong filters" (after the first forward test lost on BTC to sweeps).
+journal_dir = "data/journal"
+
+[strategy]
+assets = ["btc", "eth", "sol"]
+half_spread = 0.04
+quote_size = 10
+join_only = true
+start_s = 5
+stop_s = 240
+skew_per_share = 0.002
+
+[filters]
+max_disagree = 0.10
+max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.10
+fair_move_window_ms = 5000
+toxic_shares = 10
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
+
+[risk]
+max_net_shares_per_window = 20
+max_cost_per_window = 12
+max_open_worst_loss = 60
+daily_loss_limit = 50
+max_actions_per_sec = 20
+
+[execution]
+mode = "paper"
+place_latency_ms = 150
+cancel_latency_ms = 150

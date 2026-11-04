@@ -52,4 +52,34 @@ def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc:
             st.cooldown_until[w.asset] = now_ms + fc.jump_cooldown_ms
     if now_ms < st.cooldown_until.get(w.asset, 0):
         reasons.append("jump_cooldown")
+    # --- volatility burst: short-horizon vol far above the usual level
+    if fc.vol_spike_ratio > 0:
+        ss, sl = px.sigma_short(), px.sigma()
+        if ss and sl and ss / sl > fc.vol_spike_ratio:
+            reasons.append("vol_spike")
+    # --- unstable fair value: the model itself is moving fast -> it is likely to be wrong right now
+    if fc.max_fair_move > 0 and fv is not None:
+        hist = st.fair_hist.get(w.key)
+        if hist:
+            recent = [p for t, p in hist if t >= now_ms - fc.fair_move_window_ms] + [fv.p_up]
+            if max(recent) - min(recent) > fc.max_fair_move:
+                reasons.append("fair_unstable")
     return reasons
+
+
+def side_blocks(w: Window, st: State, now_ms: int, fc: FilterCfg) -> set:
+    """Sides ('U'/'D') that must not be quoted: recently swept = toxic flow -> block for a cooldown."""
+    out = set()
+    for side in ("U", "D"):
+        key = (w.key, side)
+        if now_ms < st.side_block_until.get(key, 0):
+            out.add(side)
+            continue
+        if fc.toxic_shares <= 0 and fc.toxic_fills <= 0:
+            continue
+        recent = [(t, q) for t, q in st.fill_hist.get(key, ()) if t >= now_ms - fc.toxic_window_ms]
+        shares = sum(q for _, q in recent)
+        if (fc.toxic_shares > 0 and shares >= fc.toxic_shares) or (fc.toxic_fills > 0 and len(recent) >= fc.toxic_fills):
+            st.side_block_until[key] = now_ms + fc.toxic_cooldown_ms
+            out.add(side)
+    return out

@@ -327,3 +327,44 @@ def test_private_key_never_in_journal(tmp_path):
     run(scenario())
     j.close()
     assert "SECRETKEY" not in open(os.path.join(str(tmp_path), "events.jsonl")).read()
+
+
+# ---------------------------------------------------------------- v2 filters
+def v2_cfg():
+    return load_config(None, {"filters": {"vol_spike_ratio": 2.0, "max_fair_move": 0.10, "toxic_shares": 10,
+                                          "toxic_fills": 2, "toxic_window_ms": 5000, "toxic_cooldown_ms": 30000}})
+
+
+def test_toxic_flow_blocks_only_the_swept_side():
+    from pmbot.bot.filters import side_blocks
+    cfg = v2_cfg()
+    now = (T0 + 60) * 1000
+    st, w = mk_state(now)
+    assert side_blocks(w, st, now, cfg.filters) == set()
+    st.record_fill(w.key, "U", now - 1000, 4)
+    assert side_blocks(w, st, now, cfg.filters) == set()
+    st.record_fill(w.key, "U", now - 500, 3)          # 2 fills in 5s -> toxic
+    assert side_blocks(w, st, now, cfg.filters) == {"U"}
+    assert side_blocks(w, st, now + 20_000, cfg.filters) == {"U"}   # cooldown persists
+    assert side_blocks(w, st, now + 31_000, cfg.filters) == set()
+
+
+def test_fair_unstable_and_vol_spike():
+    cfg = v2_cfg()
+    now = (T0 + 60) * 1000
+    st, w = mk_state(now)
+    fv = fair_value(w, st.prices["btc"], now)
+    st.record_fair(w.key, now - 3000, fv.p_up + 0.15)
+    assert "fair_unstable" in check(w, st, fv, now, cfg.filters, cfg.strategy)
+    st2, w2 = mk_state(now)
+    px = st2.prices["btc"]
+    px.var, px.var_short = (0.5e-4) ** 2, (1.5e-4) ** 2   # short vol 3x long
+    fv2 = fair_value(w2, px, now)
+    assert "vol_spike" in check(w2, st2, fv2, now, cfg.filters, cfg.strategy)
+    px.var_short = (0.6e-4) ** 2
+    assert "vol_spike" not in check(w2, st2, fair_value(w2, px, now), now, cfg.filters, cfg.strategy)
+
+
+def test_v2_config_file_loads():
+    c = load_config("config/paper_v2.toml")
+    assert c.filters.toxic_fills == 2 and c.risk.max_cost_per_window == 12
