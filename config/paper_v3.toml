@@ -1,12 +1,12 @@
-# Paper trading, v3 candidate: v2 filters + quotes around a 50/50 blend of model and book mid, 3c spread.
-# Selected on the morning replay (reports/21_replay_variants.txt); validate out-of-sample before any live use.
+# Paper trading, v3: quote 3c around the BOOK MID (model_weight 0); the Chainlink model only acts as a guard
+# through the filters (model_disagrees / fair_unstable / p range). Most consistent variant across the morning
+# and night replays (reports/21, 24): +$36 and -$2.5. Still paper only: no variant has a proven 5m edge.
 journal_dir = "data/journal"
 
 [strategy]
 assets = ["btc", "eth", "sol"]
 half_spread = 0.03
-model_weight = 0.5
-vol_mult = 1.8                # calibration slope 0.56 on the night fv trace (reports/23) -> model ~1.8x overconfident
+model_weight = 0.0
 quote_size = 10
 join_only = true
 start_s = 5

@@ -5,7 +5,7 @@
 | Бот | Что делает | Конфиг paper | Шаблон live |
 |---|---|---|---|
 | **hourly** (`scripts/run_hourly.py`) | Часовые BTC/ETH Up/Down: в последние 30 мин покупает сторону, где модель на Binance даёт edge ≥ 8¢ после комиссии (FAK с лимитом) | `config/hourly.toml` | `config/hourly_live.example.toml` |
-| **5m** (`scripts/run_bot.py`) | 5-минутные BTC/ETH/SOL: два post-only бида Up/Down ниже справедливой цены по Chainlink | `config/paper_v2.toml` (v3-кандидат: `config/paper_v3.toml`) | `config/live.example.toml` |
+| **5m** (`scripts/run_bot.py`) | 5-минутные BTC/ETH/SOL: два post-only бида Up/Down на 3¢ ниже середины рынка; модель на Chainlink работает как фильтр | `config/paper_v3.toml` (прежний: `paper_v2.toml`) | `config/live.example.toml` (только после доказанного edge) |
 | recorder (`scripts/record_live.py`) | пишет стаканы + Chainlink + Binance для replay-бэктестов | — | — |
 
 ## 0. Установка на сервер (Ubuntu/Debian)
