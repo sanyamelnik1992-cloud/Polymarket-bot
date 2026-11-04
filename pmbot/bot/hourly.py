@@ -284,24 +284,26 @@ class HourlyEngine:
                 if key.endswith("#settled") or hp.shares <= 0:
                     continue
                 a, start = key.split("-")
-                if now < int(start) + 3600 + 120:
+                if now < int(start) + 3600 + 15:
                     continue
-                w = next((x for x in self.st.windows.values() if x.key == key), None)
-                slug = w.slug if w else None
-                e = await asyncio.to_thread(fetch_event, slug) if slug else None
-                if not e:
-                    continue
-                prices = json.loads(e["markets"][0]["outcomePrices"])
-                outs = json.loads(e["markets"][0]["outcomes"])
-                if float(prices[0]) not in (0.0, 1.0):
-                    continue
-                winner = "U" if float(prices[outs.index("Up")]) == 1.0 else "D"
+                winner = await self._binance_winner(a, int(start))      # the resolution rule itself
+                src = "binance"
+                if winner is None:
+                    w = next((x for x in self.st.windows.values() if x.key == key), None)
+                    e = await asyncio.to_thread(fetch_event, w.slug) if w else None
+                    if not e:
+                        continue
+                    prices = json.loads(e["markets"][0]["outcomePrices"])
+                    outs = json.loads(e["markets"][0]["outcomes"])
+                    if float(prices[0]) not in (0.0, 1.0):
+                        continue
+                    winner, src = ("U" if float(prices[outs.index("Up")]) == 1.0 else "D"), "gamma"
                 pnl = (hp.shares if hp.side == winner else 0.0) - hp.cost
                 self.realized += pnl
                 d = time.strftime("%Y-%m-%d", time.gmtime())
                 self.realized_by_day[d] = self.realized_by_day.get(d, 0.0) + pnl
                 self._save_state()
-                self.journal.log("settle", key=key, winner=winner, side=hp.side, shares=round(hp.shares, 3),
+                self.journal.log("settle", key=key, winner=winner, src=src, side=hp.side, shares=round(hp.shares, 3),
                                  cost=round(hp.cost, 4), pnl=round(pnl, 4))
                 log.info("HOURLY SETTLE %s side=%s winner=%s pnl=%+.2f total=%+.2f", key, hp.side, winner, pnl,
                          self.realized)
@@ -309,6 +311,17 @@ class HourlyEngine:
             if not self.alive() and now > (self.deadline or now) + 3600 * 2:
                 break
             await asyncio.sleep(30)
+
+    async def _binance_winner(self, asset, start):
+        """Up iff the Binance 1H candle starting at `start` closed >= its open (official resolution rule)."""
+        try:
+            k = await asyncio.to_thread(get_json, f"{BINANCE_REST}/klines", {
+                "symbol": BINANCE_SYMBOL[asset], "interval": "1h", "startTime": start * 1000, "limit": 1})
+        except Exception:  # noqa: BLE001
+            return None
+        if not k or int(k[0][0]) != start * 1000 or int(k[0][6]) > time.time() * 1000:
+            return None   # candle not closed yet
+        return "U" if float(k[0][4]) >= float(k[0][1]) else "D"
 
     async def status_loop(self):
         while self.alive():

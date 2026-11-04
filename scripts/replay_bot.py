@@ -32,7 +32,10 @@ GRID = {
     "vol1.3_disagree15": {"strategy": {"vol_mult": 1.3}, "filters": {"max_disagree": 0.15}},
     "no_toxic": {"filters": {"toxic_shares": 0, "toxic_fills": 0}},
     "lat300": {"execution": {"place_latency_ms": 300, "cancel_latency_ms": 300}},
+    "blend0.5_h3_vol1.6": {"strategy": {"model_weight": 0.5, "half_spread": 0.03, "vol_mult": 1.6}},
+    "h3_vol1.6": {"strategy": {"half_spread": 0.03, "vol_mult": 1.6}},
 }
+GRID2 = {k: GRID[k] for k in ("base", "blend0.5_h3", "vol1.6", "h3", "blend0.5_h3_vol1.6", "h3_vol1.6")}
 
 
 def parse_kv(args):
@@ -107,13 +110,18 @@ def one(args):
 
 if __name__ == "__main__":
     rec, out, cfg_path = sys.argv[1], sys.argv[2], sys.argv[3]
-    rest = [a for a in sys.argv[4:] if a != "--grid"]
+    rest = [a for a in sys.argv[4:] if not a.startswith("--")]
     os.makedirs(out, exist_ok=True)
     base_over = parse_kv(rest)
     cfg0 = load_config(cfg_path, base_over)
     winners, strikes = outcomes(rec)
     seed = vol_seed(rec, cfg0.strategy.assets)
     variants = GRID if "--grid" in sys.argv else {"run": {}}
+    if "--only" in " ".join(sys.argv):
+        names = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")][0].split(",")
+        variants = {n: GRID[n] for n in names}
+    if "--grid2" in sys.argv:
+        variants = GRID2
     jobs = [(n, rec, out, cfg_path, merge(base_over, v), winners, strikes, seed) for n, v in variants.items()]
     with ProcessPoolExecutor(min(4, len(jobs))) as ex:
         res = list(ex.map(one, jobs))

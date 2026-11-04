@@ -1,6 +1,6 @@
 """Collect closed hourly crypto Up/Down markets (resolve on the Binance 1H candle), trades and Binance 1s klines.
 
-usage: python scripts/collect_hourly.py OUT_DIR DAYS [assets=btc,eth]
+usage: python scripts/collect_hourly.py OUT_DIR DAYS [assets=btc,eth] [skip_recent_days=0]
 """
 import json
 import os
@@ -21,16 +21,18 @@ SERIES = {"btc": "btc-up-or-down-hourly", "eth": "eth-up-or-down-hourly", "sol":
           "xrp": "xrp-up-or-down-hourly"}
 
 
-def events(series, days):
+def events(series, days, skip=0.0):
     out, offset = [], 0
     since = datetime.now(timezone.utc) - timedelta(days=days)
+    until = datetime.now(timezone.utc) - timedelta(days=skip)
     while True:
         d = get_json(f"{GAMMA}/events", {"series_slug": series, "closed": "true", "limit": 100, "offset": offset,
                                          "order": "endDate", "ascending": "false"}, timeout=90)
         if not d:
             return out
         for e in d:
-            if datetime.fromisoformat(e["endDate"].replace("Z", "+00:00")) >= since:
+            end = datetime.fromisoformat(e["endDate"].replace("Z", "+00:00"))
+            if since <= end <= until:
                 out.append(e)
         if datetime.fromisoformat(d[-1]["endDate"].replace("Z", "+00:00")) < since:
             return out
@@ -54,10 +56,11 @@ def parse(e, asset):
 if __name__ == "__main__":
     out, days = sys.argv[1], float(sys.argv[2])
     assets = sys.argv[3].split(",") if len(sys.argv) > 3 else ["btc", "eth"]
+    skip = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
     os.makedirs(out, exist_ok=True)
     rows = []
     for a in assets:
-        rows += [parse(e, a) for e in events(SERIES[a], days)]
+        rows += [parse(e, a) for e in events(SERIES[a], days, skip)]
     mk = pd.DataFrame(rows).drop_duplicates("condition_id")
     mk.to_parquet(f"{out}/markets.parquet")
     print(f"markets {len(mk)}", mk.groupby("asset").size().to_dict(), flush=True)
