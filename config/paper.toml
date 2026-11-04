@@ -1,0 +1,25 @@
+# Paper trading (no real orders). Parameters chosen from the live simulation (reports/11_live_maker_sim.txt).
+journal_dir = "data/journal"
+
+[strategy]
+assets = ["btc", "eth", "sol"]
+half_spread = 0.04
+quote_size = 10
+join_only = true
+start_s = 5
+stop_s = 240
+
+[filters]
+max_disagree = 0.20
+max_spread = 0.03
+
+[risk]
+max_cost_per_window = 30
+max_open_worst_loss = 120
+daily_loss_limit = 50
+max_actions_per_sec = 20
+
+[execution]
+mode = "paper"
+place_latency_ms = 150
+cancel_latency_ms = 150

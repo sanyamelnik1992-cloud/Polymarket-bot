@@ -1,0 +1,28 @@
+# LIVE trading template. Copy to config/live.toml and review EVERY number.
+# Real money: start tiny. The bot never needs more collateral than risk.max_open_worst_loss.
+journal_dir = "data/journal-live"
+
+[strategy]
+assets = ["btc", "eth", "sol"]
+half_spread = 0.04
+quote_size = 5            # market minimum
+join_only = true
+start_s = 5
+stop_s = 240
+
+[filters]
+max_disagree = 0.20
+max_spread = 0.03
+
+[risk]
+max_net_shares_per_window = 20
+max_cost_per_window = 10
+max_open_worst_loss = 40
+daily_loss_limit = 20
+max_losing_windows_in_row = 6
+max_actions_per_sec = 5
+kill_file = "STOP"
+
+[execution]
+mode = "live"
+heartbeat_s = 4

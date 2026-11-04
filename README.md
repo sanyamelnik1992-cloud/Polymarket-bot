@@ -274,7 +274,30 @@ WebSocket вместо polling, все решения в памяти, логи�
 
 ---
 
-## 6. Код
+## 6. Бот (`pmbot/bot/`)
+
+Боевая реализация стратегии «мейкер на Chainlink-справедливой цене» с фильтрами и риск-контуром.
+Как запускать, какие стоят защиты и чек-лист перед реальными деньгами — в **[RUNBOOK.md](RUNBOOK.md)**.
+
+```bash
+python scripts/run_bot.py --config config/paper.toml --minutes 120     # paper (по умолчанию)
+python scripts/report_journal.py data/journal/<run>/                    # отчёт по запуску
+touch STOP                                                              # снять всё и остановиться
+```
+
+| Модуль | Назначение |
+|---|---|
+| `bot/config.py` | конфиг TOML + валидация (неизвестный ключ = ошибка) |
+| `bot/state.py`, `bot/feeds.py` | стаканы CLOB (по сокету на актив), Chainlink (RTDS), Binance |
+| `bot/fair.py` | P(Up): TWAP-модель на Chainlink + nowcast по Binance |
+| `bot/filters.py` | 12 фильтров «можно ли сейчас котировать» |
+| `bot/strategy.py` | два бида `fair − h`, post-only, не лучше рынка, перекос по инвентарю |
+| `bot/risk.py` | лимиты на окно и общие, дневной стоп, пауза после серии убытков, лимит частоты, kill-файл |
+| `bot/paper.py` | paper-исполнение по живым сделкам (консервативно, с задержками) |
+| `bot/live.py` | реальные ордера через `polymarket-client` (post-only + GTD + heartbeat), за 5 «замками» |
+| `bot/engine.py` | цикл: окна → страйки → fair → фильтры → риск → котировки → резолюция |
+
+## 7. Код исследования
 
 ```
 pmbot/
@@ -303,7 +326,7 @@ scripts/
   analyze_live.py         живые данные: задержки, lead-lag, кто точнее предсказывает, распад edge
   sim_maker_live.py       paper-мейкер на живых стаканах (Binance vs Chainlink fair value)
 reports/                  текстовые выводы всех тестов (цифры из этого README)
-tests/                    pytest (комиссии, модель, walk стаканов)
+tests/                    pytest: комиссии, модель, стаканы, бот (фильтры, риск, paper, гейты live)
 ```
 
 Быстрый старт:

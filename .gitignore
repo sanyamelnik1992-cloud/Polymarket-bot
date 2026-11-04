@@ -6,3 +6,6 @@ data/
 *.jsonl
 *.log
 .env
+STOP
+config/live.toml
+.env.*
