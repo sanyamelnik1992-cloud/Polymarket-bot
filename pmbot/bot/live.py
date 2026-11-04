@@ -156,6 +156,37 @@ class LiveBroker:
     def gc(self, now_ms):
         pass
 
+    # ------------------------------------------------------------ restart safety
+    def existing_positions(self, assets, get_json=None):
+        """OPEN 5m Up/Down positions already held by the wallet (e.g. after a restart).
+
+        Returns [(asset, window_start, side, shares, avg_price, slug)] so the risk manager can count them.
+        """
+        from ..config import DATA
+        from ..http import get_json as _get
+        get_json = get_json or _get
+        wallet = getattr(self.client, "wallet", None) or self._env.get("PMBOT_WALLET")
+        if not wallet:
+            raise LiveGateError("cannot determine wallet address to load existing positions")
+        out, cursor = [], None
+        while True:
+            params = {"user": str(wallet), "status": "OPEN", "title": "Up or Down", "limit": 500}
+            if cursor:
+                params["cursor"] = cursor
+            d = get_json(f"{DATA}/positions", params)
+            for r in d.get("data", []):
+                slug = r.get("slug") or ""
+                parts = slug.split("-")
+                if len(parts) != 4 or parts[1] != "updown" or parts[2] != "5m" or parts[0] not in assets:
+                    continue
+                side = "U" if r.get("outcome") == "Up" else "D"
+                out.append((parts[0], int(parts[3]), side, float(r.get("current_size") or 0),
+                            float(r.get("avg_price") or 0), slug))
+            pg = d.get("pagination") or {}
+            if not pg.get("has_more") or not pg.get("next_cursor"):
+                return out
+            cursor = pg["next_cursor"]
+
     def on_public_trade(self, *a, **kw):
         pass  # live fills come from the authenticated user stream
 

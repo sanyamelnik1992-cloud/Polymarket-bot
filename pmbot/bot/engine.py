@@ -30,6 +30,7 @@ class Engine:
         self.feeds = {a: ClobFeed(self.st, a, on_trade=self.on_public_trade, alive=self.alive) for a in self.st.assets}
         self.to_settle = {}       # window key -> Window (ended, has position)
         self.last_reasons = {}
+        self._last_fv_log = {}
         self.stats = {"placed": 0, "cancelled": 0, "fills": 0, "rejected_rate": 0}
         self._stop = False
 
@@ -208,6 +209,12 @@ class Engine:
                 reasons = check(w, self.st, fv, now, self.cfg.filters, self.cfg.strategy)
                 if fv is not None:
                     self.st.record_fair(w.key, now, fv.p_up)
+                    sec = now // 1000
+                    if self._last_fv_log.get(w.key) != sec:      # 1 Hz trace for offline calibration
+                        self._last_fv_log[w.key] = sec
+                        self.journal.log("fv", key=w.key, rel=round(fv.rel, 1), p=round(fv.p_up, 4),
+                                         mid=self._mid(w.token_up), spot=round(fv.spot, 6),
+                                         strike=w.strike, src=w.strike_src, cl_age=fv.cl_age_ms)
                 if not ok:
                     reasons.append(why)
                 prev = self.last_reasons.get(w.key)
@@ -290,9 +297,31 @@ class Engine:
                              stats=dict(self.stats))
 
     # ------------------------------------------------------------ run
+    async def load_existing_positions(self):
+        """Live restart safety: count positions the wallet already holds in 5m windows."""
+        if not hasattr(self.broker, "existing_positions"):
+            return
+        rows = await asyncio.to_thread(self.broker.existing_positions, self.st.assets)
+        for asset, start, side, shares, avg, slug in rows:
+            if shares <= 0:
+                continue
+            e = await asyncio.to_thread(fetch_event, slug)
+            if not e:
+                continue
+            m = parse_event(e)
+            w = self.st.add_window(Window(asset=asset, start=start, slug=slug, condition_id=m["condition_id"],
+                                          token_up=m["token_up"], token_down=m["token_down"]))
+            self.risk.on_fill(w.key, side, avg, shares, 0.0)
+            self.to_settle[w.key] = w
+            self.journal.log("existing_position", key=w.key, side=side, shares=shares, avg_price=avg)
+        if rows:
+            log.warning("loaded %d existing positions; open worst-case loss %.2f", len(rows),
+                        self.risk.open_worst_loss())
+
     async def run(self):
         await self.broker.start()
         self.journal.log("start", mode=self.broker.mode, config=_cfg_dict(self.cfg))
+        await self.load_existing_positions()
         await self.bootstrap_vol()
         tasks = [asyncio.create_task(c) for c in (
             self.discover_loop(), rtds_feed(self.st, self.alive), binance_feed(self.st, self.alive),

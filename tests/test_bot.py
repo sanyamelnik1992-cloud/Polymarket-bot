@@ -368,3 +368,25 @@ def test_fair_unstable_and_vol_spike():
 def test_v2_config_file_loads():
     c = load_config("config/paper_v2.toml")
     assert c.filters.toxic_fills == 2 and c.risk.max_cost_per_window == 12
+
+
+def test_live_existing_positions_are_parsed():
+    cfg = BotConfig()
+    fc = FakeClient(1000)
+    fc.wallet = "0xW"
+    lb = LiveBroker(cfg, client=fc, env={})
+    pages = [{"data": [
+        {"slug": "btc-updown-5m-1800000000", "outcome": "Up", "current_size": 12.0, "avg_price": 0.41},
+        {"slug": "eth-updown-15m-1800000000", "outcome": "Up", "current_size": 5.0, "avg_price": 0.5},   # not 5m
+        {"slug": "xrp-updown-5m-1800000000", "outcome": "Down", "current_size": 5.0, "avg_price": 0.5},  # not traded
+        {"slug": "will-x-happen", "outcome": "Yes", "current_size": 5.0, "avg_price": 0.5},
+    ], "pagination": {"has_more": False}}]
+    calls = []
+
+    def fake_get(url, params):
+        calls.append(params)
+        return pages.pop(0)
+
+    rows = lb.existing_positions(["btc", "eth", "sol"], get_json=fake_get)
+    assert rows == [("btc", 1800000000, "U", 12.0, 0.41, "btc-updown-5m-1800000000")]
+    assert calls[0]["user"] == "0xW" and calls[0]["status"] == "OPEN"
