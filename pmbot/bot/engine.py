@@ -19,11 +19,13 @@ log = logging.getLogger("pmbot.engine")
 
 
 class Engine:
-    def __init__(self, cfg: BotConfig, broker_factory, journal: Journal, duration_s: float | None = None):
+    def __init__(self, cfg: BotConfig, broker_factory, journal: Journal, duration_s: float | None = None,
+                 clock=None):
         self.cfg = cfg
         self.journal = journal
+        self.clock = clock or now_ms          # ms; replaced by a simulated clock in replay
         self.st = State(cfg.strategy.assets, cfg.strategy.vol_halflife_s)
-        self.risk = RiskManager(cfg.risk, journal)
+        self.risk = RiskManager(cfg.risk, journal, clock=lambda: self.clock() / 1000)
         self.broker = broker_factory(on_fill=self.on_fill, journal=journal)
         self.deadline = time.time() + duration_s if duration_s else None
         self.quotes = {}          # (window key, side) -> {"oid","price","size","t"}
@@ -46,7 +48,7 @@ class Engine:
 
     def on_fill(self, fill):
         self.stats["fills"] += 1
-        self.st.record_fill(fill["key"], fill["side"], now_ms(), fill["size"])
+        self.st.record_fill(fill["key"], fill["side"], self.clock(), fill["size"])
         self.risk.on_fill(fill["key"], fill["side"], fill["price"], fill["size"], fill["fee_eq"])
         q = self.quotes.get((fill["key"], fill["side"]))
         if q and q["oid"] == fill["order_id"]:
@@ -57,10 +59,10 @@ class Engine:
         if w:
             self.to_settle[w.key] = w
             # toxic-flow guard reacts on the fill itself, not on the next decision tick
-            if fill["side"] in side_blocks(w, self.st, now_ms(), self.cfg.filters):
+            if fill["side"] in side_blocks(w, self.st, self.clock(), self.cfg.filters):
                 cur = self.quotes.get((w.key, fill["side"]))
                 if cur:
-                    asyncio.get_running_loop().create_task(self._cancel((w.key, fill["side"]), cur, now_ms()))
+                    asyncio.get_running_loop().create_task(self._cancel((w.key, fill["side"]), cur, self.clock()))
 
     # ------------------------------------------------------------ discovery & strikes
     async def bootstrap_vol(self):
@@ -178,7 +180,7 @@ class Engine:
         self.stats["cancelled"] += 1
 
     async def cancel_everything(self, reason):
-        now = now_ms()
+        now = self.clock()
         for key, cur in list(self.quotes.items()):
             await self._cancel(key, cur, now)
         await self.broker.cancel_all(now)
@@ -188,58 +190,67 @@ class Engine:
         tick = self.cfg.execution.tick_ms / 1000
         while self.alive():
             t0 = time.time()
-            now = now_ms()
-            ok, why = self.risk.can_quote(now / 1000)
-            if not ok:
-                if self.quotes:
-                    await self.cancel_everything(why)
-                if self.risk.killed:
-                    log.error("KILL SWITCH: %s", why)
-                    self._stop = True
-                    break
-            for w in list(self.st.windows.values()):
-                if now / 1000 >= w.end:
-                    for side in ("U", "D"):
-                        if (w.key, side) in self.quotes:
-                            await self._cancel((w.key, side), self.quotes[(w.key, side)], now)
-                    continue
-                if now / 1000 < w.start:
-                    continue
-                fv = fair_value(w, self.st.prices[w.asset], now, self.cfg.strategy.vol_mult, self.cfg.strategy.t_df)
-                reasons = check(w, self.st, fv, now, self.cfg.filters, self.cfg.strategy)
-                if fv is not None:
-                    self.st.record_fair(w.key, now, fv.p_up)
-                    sec = now // 1000
-                    if self._last_fv_log.get(w.key) != sec:      # 1 Hz trace for offline calibration
-                        self._last_fv_log[w.key] = sec
-                        self.journal.log("fv", key=w.key, rel=round(fv.rel, 1), p=round(fv.p_up, 4),
-                                         mid=self._mid(w.token_up), spot=round(fv.spot, 6),
-                                         strike=w.strike, src=w.strike_src, cl_age=fv.cl_age_ms)
-                if not ok:
-                    reasons.append(why)
-                prev = self.last_reasons.get(w.key)
-                if prev != reasons:
-                    self.journal.log("filters", key=w.key, reasons=reasons,
-                                     p=round(fv.p_up, 4) if fv else None,
-                                     mid=self._mid(w.token_up))
-                    self.last_reasons[w.key] = reasons
-                if reasons:
-                    tg = {"U": None, "D": None}
-                else:
-                    pos = self.risk.positions[w.key]
-                    tg = target_quotes(w, fv.p_up, self.st.books[w.token_up], self.st.books[w.token_down], pos,
-                                       self.cfg.strategy, self.cfg.risk)
-                    blocked = side_blocks(w, self.st, now, self.cfg.filters)
-                    for side in blocked:
-                        if tg.get(side) is not None:
-                            tg[side] = None
-                    if blocked != self.last_reasons.get((w.key, "blocked"), set()):
-                        self.journal.log("side_block", key=w.key, sides=sorted(blocked))
-                        self.last_reasons[(w.key, "blocked")] = blocked
-                for side in ("U", "D"):
-                    await self.set_quote(w, side, tg[side], now)
-            self.broker.gc(now)
+            if not await self.decide_once(self.clock()):
+                break
             await asyncio.sleep(max(0.0, tick - (time.time() - t0)))
+
+    async def decide_once(self, now) -> bool:
+        """One decision pass over all windows at time `now` (ms). Returns False when the bot must stop."""
+        ok, why = self.risk.can_quote(now / 1000)
+        if not ok:
+            if self.quotes:
+                await self.cancel_everything(why)
+            if self.risk.killed:
+                log.error("KILL SWITCH: %s", why)
+                self._stop = True
+                return False
+        sc = self.cfg.strategy
+        for w in list(self.st.windows.values()):
+            if now / 1000 >= w.end:
+                for side in ("U", "D"):
+                    if (w.key, side) in self.quotes:
+                        await self._cancel((w.key, side), self.quotes[(w.key, side)], now)
+                continue
+            if now / 1000 < w.start:
+                continue
+            fv = fair_value(w, self.st.prices[w.asset], now, sc.vol_mult, sc.t_df)
+            reasons = check(w, self.st, fv, now, self.cfg.filters, sc)
+            mid = self._mid(w.token_up)
+            if fv is not None:
+                self.st.record_fair(w.key, now, fv.p_up)
+                sec = now // 1000
+                if self._last_fv_log.get(w.key) != sec:      # 1 Hz trace for offline calibration
+                    self._last_fv_log[w.key] = sec
+                    self.journal.log("fv", key=w.key, rel=round(fv.rel, 1), p=round(fv.p_up, 4),
+                                     mid=mid, spot=round(fv.spot, 6),
+                                     strike=w.strike, src=w.strike_src, cl_age=fv.cl_age_ms)
+            if not ok:
+                reasons.append(why)
+            prev = self.last_reasons.get(w.key)
+            if prev != reasons:
+                self.journal.log("filters", key=w.key, reasons=reasons,
+                                 p=round(fv.p_up, 4) if fv else None, mid=mid)
+                self.last_reasons[w.key] = reasons
+            if reasons:
+                tg = {"U": None, "D": None}
+            else:
+                # quote around a blend of the model and the book mid (model_weight=1 -> pure model)
+                p_q = fv.p_up if (sc.model_weight >= 1 or mid is None) else \
+                    sc.model_weight * fv.p_up + (1 - sc.model_weight) * mid
+                pos = self.risk.positions[w.key]
+                tg = target_quotes(w, p_q, self.st.books[w.token_up], self.st.books[w.token_down], pos, sc,
+                                   self.cfg.risk)
+                blocked = side_blocks(w, self.st, now, self.cfg.filters)
+                for side in blocked:
+                    if tg.get(side) is not None:
+                        tg[side] = None
+                if blocked != self.last_reasons.get((w.key, "blocked"), set()):
+                    self.journal.log("side_block", key=w.key, sides=sorted(blocked))
+                    self.last_reasons[(w.key, "blocked")] = blocked
+            for side in ("U", "D"):
+                await self.set_quote(w, side, tg[side], now)
+        self.broker.gc(now)
+        return True
 
     def _mid(self, token):
         b = self.st.books.get(token)
@@ -279,7 +290,7 @@ class Engine:
     async def status_loop(self):
         while self.alive():
             await asyncio.sleep(30)
-            now = now_ms()
+            now = self.clock()
             parts = []
             for w in sorted(self.st.windows.values(), key=lambda x: (x.asset, x.start)):
                 if not (w.start <= now / 1000 < w.end):

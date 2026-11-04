@@ -1,0 +1,33 @@
+== resolution from Binance 1s klines: {'agree': {'btc': 1.0, 'eth': 1.0}, 'open_err_bp': {'btc': 0.0, 'eth': 0.0}}
+       markets  taker_notional_day  taker_pnl_day  fees_day
+asset                                                      
+btc        165            257718.0        -5735.0    5389.0
+eth        165             50507.0         -504.0     856.0
+
+== log loss on fills: market 0.4883  model 0.4926
+
+== taker fills the model favours (edge after fee > thr): realised ROI, clustered t
+  lag= 2s edge>0.03: fills= 24169 markets=325 roi=+0.0099 t=+0.18
+  lag= 2s edge>0.1: fills=  2719 markets=160 roi=+0.2060 t=+2.18
+  lag= 4s edge>0.03: fills= 20320 markets=318 roi=-0.0120 t=-0.14
+  lag= 4s edge>0.1: fills=  1851 markets=136 roi=+0.2686 t=+2.86
+  lag= 8s edge>0.03: fills= 19294 markets=325 roi=-0.0258 t=-0.25
+  lag= 8s edge>0.1: fills=  2507 markets=173 roi=+0.1699 t=+2.19
+  lag=15s edge>0.03: fills= 20444 markets=323 roi=-0.0281 t=-0.22
+  lag=15s edge>0.1: fills=  3871 markets=224 roi=+0.0567 t=+0.96
+  lag=30s edge>0.03: fills= 23397 markets=328 roi=+0.0053 t=+0.16
+  lag=30s edge>0.1: fills=  6081 markets=270 roi=+0.0478 t=+0.77
+
+== edge>3c, lag 4s, by time to close (s):
+                     fills  markets    roi       pnl
+asset ttc                                           
+btc   (0, 60]        264.0     21.0  0.070   347.343
+      (60, 300]     1180.0     59.0  0.007    99.495
+      (300, 900]    1965.0     99.0  0.030   850.317
+      (900, 1800]   3708.0    127.0 -0.062 -3943.064
+      (1800, 3600]  9152.0    161.0 -0.026 -3702.083
+eth   (0, 60]        242.0     24.0  0.692  1462.651
+      (60, 300]      519.0     52.0 -0.015   -42.030
+      (300, 900]     650.0     84.0  0.392  1755.980
+      (900, 1800]    945.0    107.0  0.125   968.248
+      (1800, 3600]  1695.0    129.0 -0.088 -1233.868

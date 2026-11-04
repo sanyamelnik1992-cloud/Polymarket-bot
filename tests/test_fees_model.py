@@ -52,3 +52,17 @@ def test_walk_two_ladders():
     assert shares == 10
     assert edge == pytest.approx(1 - (0.9 + 0.07 * 0.4 * 0.6 + 0.07 * 0.25), abs=1e-9)
     assert walk([(0.55, 10)], [(0.50, 10)], 0.0)[0] == 0
+
+
+def test_weather_metar_parsing_and_rounding():
+    from pmbot.weather import parse_temp_c, qualifying, round_half_up
+    assert parse_temp_c("KLGA 030051Z 20006KT 10SM FEW150 16/06 A3033 RMK AO2 SLP269 T01610061 $") == 16.1
+    assert parse_temp_c("EGLC 041250Z 22008KT 9999 SCT030 M02/M05 Q1012 RMK T10171022") == -1.7
+    assert parse_temp_c("ZSPD 280000Z 33005MPS CAVOK 18/10 Q1028 NOSIG") == 18
+    assert parse_temp_c("UUWW 041200Z 00000MPS CAVOK M05/M07 Q1030 NOSIG") == -5
+    assert parse_temp_c("SPECI KLGA 031215Z 20006KT 16/06 A3033 RMK T01610061") is None
+    # examples from the market rules
+    assert round_half_up(13.9) == 14 and round_half_up(17.4) == 17 and round_half_up(16.5) == 17
+    assert round_half_up(-1.7) == -2 and round_half_up(-8.5) == -8
+    assert qualifying(18.3, "F") == 65 and qualifying(17.8, "F") == 64 and qualifying(19, "F") == 66
+    assert qualifying(-22.5, "F") == -8

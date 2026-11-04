@@ -1,0 +1,52 @@
+== reconstruction: events 452, with METAR 452, winner bucket agrees 0.954
+   disagreements: ['highest-temperature-in-amsterdam-on-october-30-2026', 'highest-temperature-in-ankara-on-october-26-2026', 'highest-temperature-in-ankara-on-october-27-2026', 'highest-temperature-in-beijing-on-october-30-2026', 'highest-temperature-in-guangzhou-on-october-28-2026', 'highest-temperature-in-helsinki-on-october-28-2026', 'highest-temperature-in-karachi-on-october-29-2026', 'highest-temperature-in-karachi-on-october-30-2026', 'highest-temperature-in-kuala-lumpur-on-october-26-2026', 'highest-temperature-in-london-on-november-2-2026', 'highest-temperature-in-london-on-october-28-2026', 'highest-temperature-in-madrid-on-october-27-2026', 'highest-temperature-in-moscow-on-november-3-2026', 'highest-temperature-in-munich-on-november-3-2026', 'highest-temperature-in-paris-on-october-29-2026']
+
+== volume by phase (local date of the trade vs observation date):
+{'after_day': 0.009, 'before_day': 0.328, 'on_day': 0.664}
+   share of notional traded after the stated end (12:00 UTC): 0.275
+   hours after end of last trade, per event (median): 9.44
+
+== trades on the observation day by bucket state:
+            fills     notional  win_rate  avg_price  taker_pnl  buy_share
+state                                                                    
+above    255745.0   955266.471     0.190      0.191  15671.067      0.376
+dead      17232.0     1847.707     0.000      0.002   -418.168      0.461
+leading   86538.0  1618044.841     0.549      0.551   1734.479      0.497
+no_obs     7871.0    40969.777     0.196      0.201   -340.864      0.387
+
+   dead-bucket check: 17232 fills, of which won=0 (must be 0 if the floor logic is right)
+   taker BUYs of dead YES: 7947 fills, $1,088 paid for $0 (the sellers' gain); by price: {'count': 7947.0, 'mean': 0.002, 'std': 0.008, 'min': 0.001, '50%': 0.001, '90%': 0.002, 'max': 0.47}
+
+== leading bucket (contains max so far): realised win rate vs price, by local hour of the trade
+            fills  events  avg_price  win_rate  buy_taker_roi
+hb                                                           
+(0, 9]     6821.0   232.0      0.254     0.251         -0.016
+(9, 12]   14731.0   382.0      0.119     0.112         -0.010
+(12, 14]  23191.0   440.0      0.269     0.267         -0.005
+(14, 16]  21429.0   448.0      0.635     0.636         -0.001
+(16, 18]  12647.0   443.0      0.923     0.925          0.001
+(18, 20]   4180.0   412.0      0.988     0.988         -0.002
+(20, 24]   3539.0   405.0      0.862     0.863          0.003
+
+== rule: BUY leading bucket at observed taker-buy prices, local hour >= H, price <= pmax
+     H  pmax  fills  events    notional       pnl    roi  win_rate  t_by_event
+0   14  0.80   5149     245   32516.498  -917.311 -0.028     0.373      -0.320
+1   14  0.90   7392     289   71469.310 -2066.601 -0.029     0.518      -0.514
+2   14  0.95   9393     332  126216.209  -899.552 -0.007     0.608      -0.198
+3   14  0.98  11950     382  211696.144  -274.384 -0.001     0.687      -0.054
+4   15  0.80   2119     131   12272.127   460.901  0.038     0.353       0.335
+5   15  0.90   3156     166   31587.634   242.863  0.008     0.520       0.119
+6   15  0.95   4305     211   63798.790   663.706  0.010     0.632       0.263
+7   15  0.98   5899     273  118191.434   679.021  0.006     0.725       0.216
+8   16  0.80    645      52    4058.474   389.592  0.096     0.363       0.673
+9   16  0.90   1011      60   11675.539   908.529  0.078     0.555       1.116
+10  16  0.95   1412      79   23220.485   846.446  0.036     0.656       0.741
+11  16  0.98   2104     142   46686.645   418.838  0.009     0.760       0.255
+12  17  0.80    239      27    1363.803   541.840  0.397     0.339       1.579
+13  17  0.90    379      32    4561.635   755.384  0.166     0.546       1.562
+14  17  0.95    515      36    8818.938   645.009  0.073     0.643       0.927
+15  17  0.98    732      57   17154.032   762.257  0.044     0.745       0.945
+16  18  0.80    182      20    1033.978   272.425  0.263     0.297       0.999
+17  18  0.90    267      21    2985.543   350.318  0.117     0.472       0.920
+18  18  0.95    329      22    4874.952    98.409  0.020     0.538       0.165
+19  18  0.98    429      25    9832.325   122.809  0.012     0.639       0.173

@@ -17,6 +17,7 @@ class StrategyCfg:
     requote_ticks: int = 1           # move a resting quote up only if target is >= this many ticks higher
     min_requote_ms: int = 300        # ... and not more often than this (moving DOWN is always immediate)
     vol_mult: float = 1.0
+    model_weight: float = 1.0        # quote around w*model + (1-w)*book mid (1 = pure model)
     t_df: float = 4.0                # Student-t degrees of freedom of the TWAP model
     vol_halflife_s: float = 900.0
 
@@ -51,6 +52,7 @@ class RiskCfg:
     pause_after_losses_s: int = 1800
     max_actions_per_sec: float = 8.0        # order placements + cancels
     kill_file: str = "STOP"                 # create this file to cancel everything and stop
+    state_file: str = ""                    # daily PnL + kill flag survive restarts (required in live mode)
 
 
 @dataclass
@@ -105,6 +107,8 @@ def validate(cfg: BotConfig):
     for name in ("max_cost_per_window", "max_open_worst_loss", "daily_loss_limit", "max_net_shares_per_window"):
         if getattr(r, name) <= 0:
             raise ValueError(f"risk.{name} must be > 0")
+    if e.mode == "live" and not r.state_file:
+        raise ValueError("risk.state_file is required in live mode (daily loss + kill switch must survive restarts)")
     if r.max_cost_per_window > r.max_open_worst_loss:
         raise ValueError("risk.max_cost_per_window cannot exceed risk.max_open_worst_loss")
     bad = [a for a in s.assets if a not in ("btc", "eth", "sol", "xrp")]

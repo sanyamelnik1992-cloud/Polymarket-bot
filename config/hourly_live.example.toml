@@ -1,0 +1,14 @@
+# Hourly crypto Up/Down taker, LIVE template - review every number (reports/17_hourly_crypto.txt, 18_hourly_strategy.txt)
+[hourly]
+assets = ["btc", "eth"]
+window_s = 1800
+min_edge = 0.08
+size_usd = 5.0
+max_cost_per_market = 10.0
+max_open_cost = 20.0
+daily_loss_limit = 15.0
+cooldown_s = 20.0
+state_file = "data/state/risk_hourly_live.json"
+vol_mult = 1.3
+mode = "live"
+journal_dir = "data/journal-hourly-live"

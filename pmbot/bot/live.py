@@ -223,3 +223,45 @@ class LiveBroker:
             except Exception as e:  # noqa: BLE001
                 self.log("user_stream_error", error=str(e)[:200])
                 await asyncio.sleep(2)
+
+
+class TakerLiveBroker:
+    """Minimal live taker (FAK) broker for the hourly strategy; same start gates as LiveBroker."""
+    mode = "live"
+
+    def __init__(self, max_exposure_usd, journal=None, client=None, geoblock_get=requests.get, env=os.environ):
+        self.max_exposure = max_exposure_usd
+        self.journal = journal
+        self.client = client
+        self._geoblock_get = geoblock_get
+        self._env = env
+
+    def log(self, kind, **kw):
+        if self.journal:
+            self.journal.log(kind, mode="live", **kw)
+
+    async def start(self):
+        check_env(self._env)
+        geo = check_geoblock(self._geoblock_get)
+        self.log("geoblock_ok", country=geo.get("country"))
+        if self.client is None:
+            from polymarket import AsyncSecureClient
+            self.client = await AsyncSecureClient.create(private_key=self._env["PMBOT_PRIVATE_KEY"],
+                                                         wallet=self._env.get("PMBOT_WALLET") or None)
+        bal = await self.client.get_balance_allowance(asset_type="COLLATERAL")
+        if bal.balance / 1e6 < self.max_exposure:
+            raise LiveGateError(f"collateral {bal.balance / 1e6:.2f} < max exposure {self.max_exposure:.2f}")
+        return True
+
+    async def place_fak(self, token, key, side, limit, usd):
+        resp = await self.client.place_market_order(asset_id=token, side="BUY", amount=f"{usd:.2f}",
+                                                    max_spend=f"{usd:.2f}", max_price=f"{limit:.3f}", order_type="FAK")
+        if not getattr(resp, "ok", False):
+            self.log("order_rejected", key=key, side=side, limit=limit, code=getattr(resp, "code", "?"),
+                     message=getattr(resp, "message", "")[:200])
+            return None
+        spent, shares = float(resp.making_amount), float(resp.taking_amount)
+        self.log("order_filled", key=key, side=side, order_id=resp.order_id, spent=spent, shares=shares)
+        if shares <= 0:
+            return None
+        return {"price": spent / shares, "size": shares}

@@ -1,0 +1,108 @@
+active events fetched: 500, total 24h volume $76,934,724
+
+by category:
+             events       vol24          liq  fee
+cat                                              
+politics        188  42094732.0  208866498.0  0.0
+sports          168  27001124.0   96448539.0  0.0
+crypto           29   3594003.0   13793187.0  0.0
+geopolitics      11   1835129.0    1880690.0  0.0
+economy           8   1577000.0    2591676.0  0.0
+finance          25    562278.0    1490617.0  0.0
+weather          34    189776.0    1040566.0  0.0
+pop-culture      18     45022.0     766644.0  0.0
+tech             12     19146.0     522413.0  0.0
+nfl               1      8468.0     455250.0  0.0
+science           2      4273.0      72780.0  0.0
+world             2      2209.0      59784.0  0.0
+division          1       789.0      32842.0  0.0
+uk                1       774.0       4464.0  0.0
+
+top 40 events by 24h volume:
+         vol24          cat                       series  n_markets  fee_rate                                                             title
+0   10109128.0     politics                                     128       0.0  Which Senate Swing States will Republicans win? (Build Your Map)
+1    5432152.0     politics                                     128       0.0                              Republican Presidential Nominee 2028
+2    4008463.0       sports                     ucl-2025          3       0.0                   BV Borussia 09 Dortmund vs. Real Betis Balompié
+3    3590350.0     politics                                      13       0.0                                Mississippi Senate Election Winner
+4    3412773.0     politics                                     128       0.0                                 Presidential Election Winner 2028
+5    3181085.0     politics                                     128       0.0                              Democratic Presidential Nominee 2028
+6    2546469.0     politics                                      29       0.0                                     Alaska Senate Election Winner
+7    2123597.0       sports                     cfb-2026        229       0.0                                                    Ohio vs. Akron
+8    1829909.0       sports                     ucl-2025          3       0.0                                    SK Slavia Praha vs. Arsenal FC
+9    1652864.0       sports            league-of-legends         47       0.0                        LoL: Gen.G vs LYON (BO5) - Worlds Playoffs
+10   1561286.0       sports                     cfb-2026        215       0.0                                            Buffalo vs. Miami (OH)
+11   1548739.0     politics                                       7       0.0                      Will the US confirm that aliens exist by...?
+12   1417595.0       sports                     ucl-2025         60       0.0                     SK Slavia Praha vs. Arsenal FC - More Markets
+13   1390894.0      economy                         fomc          5       0.0                                         Fed Decision in December?
+14   1326700.0     politics  us-iran-ceasefire-continues         26       NaN                           US-Iran ceasefire continues through...?
+15   1306044.0  geopolitics                                      42       NaN                     Israel x Iran ceasefire continues through...?
+16   1231162.0     politics                                      28       NaN                 Prime Minister of Israel after the next election?
+17   1211220.0       sports                     ucl-2025          3       0.0                                           FC Porto vs. SSC Napoli
+18   1157109.0       sports                                      42       0.0                              UEFA Champions League: 2027 Champion
+19   1027236.0     politics                                      15       0.0                                      Los Angeles Mayoral Election
+20    889192.0       sports                     ucl-2025          3       0.0                                 Racing Club de Lens vs. Como 1907
+21    837532.0       sports                     nba-2026        446       0.0                                                 Bucks vs. Celtics
+22    814360.0     politics            us-to-invade-iran          1       NaN                            Will the U.S. invade Iran before 2027?
+23    749415.0     politics                                     128       0.0                                 Next French Presidential Election
+24    709294.0       sports                                      20       0.0                                               Worlds 2026: Winner
+25    664394.0     politics      republican-senate-seats          9       0.0       Republican Senate seats after the midterms (Lower Brackets)
+26    641450.0       sports                     ucl-2025          3       0.0                                 RB Leipzig vs. Manchester City FC
+27    610869.0       sports                     ucl-2025         60       0.0                  RB Leipzig vs. Manchester City FC - More Markets
+28    599765.0     politics                                      25       NaN                       US announces end of Iranian blockade by...?
+29    580116.0     politics                                       8       0.0                                       NC-03 House Election Winner
+30    550328.0       crypto    bitcoin-hit-price-monthly         23       0.0                          What price will Bitcoin hit in November?
+31    526498.0     politics                  elon-tweets         30       0.0                 Elon Musk # tweets October 30 - November 6, 2026?
+32    514565.0       sports                       dota-2         20       0.0        Dota 2: CyberHero vs HULIGANI (BO3) - EPL Masters Playoffs
+33    486296.0       crypto     bitcoin-hit-price-weekly         18       0.0                         What price will Bitcoin hit November 2-8?
+34    480648.0       sports                     ucl-2025         60       0.0    BV Borussia 09 Dortmund vs. Real Betis Balompié - More Markets
+35    460271.0       crypto    bitcoin-hit-price-monthly         47       0.0                              What price will Bitcoin hit in 2026?
+36    436632.0     politics                                      12       0.0                           Texas Senate Election Margin of Victory
+37    429912.0       sports                     ucl-2025         37       0.0                      SK Slavia Praha vs. Arsenal FC - Exact Score
+38    425524.0       sports                     ucl-2025          3       0.0                                            PSV vs. Club Brugge KV
+39    390782.0       sports                     nba-2026        468       0.0                                                 76ers vs. Pistons
+
+top recurring series by 24h volume:
+                                  events       vol24  fee
+series                                                   
+ucl-2025                              22  13553771.0  0.0
+cfb-2026                               8   3826089.0  0.0
+nba-2026                              11   3049204.0  0.0
+league-of-legends                      1   1652864.0  0.0
+fomc                                   1   1390894.0  0.0
+us-iran-ceasefire-continues            1   1326700.0  NaN
+bitcoin-hit-price-monthly              2   1010598.0  0.0
+dota-2                                 3    815573.0  0.0
+us-to-invade-iran                      1    814360.0  NaN
+elon-tweets                            2    666009.0  0.0
+republican-senate-seats                1    664394.0  0.0
+bitcoin-hit-price-weekly               1    486296.0  0.0
+btc-multi-strikes-weekly               2    478533.0  0.0
+bitcoin-hit-price-daily                1    387221.0  0.0
+pete-hegseth-out                       2    379213.0  0.0
+hormuz-traffic-returns-to-normal       2    353357.0  NaN
+ethereum-hit-price-monthly             2    338345.0  0.0
+saudi-professional-league              5    318549.0  0.0
+ethereum-hit-price-daily               1    307121.0  0.0
+trump-out                              1    278884.0  NaN
+atp                                    1    274491.0  0.0
+ethereum-hit-price-weekly              1    270043.0  0.0
+crude-oil-cl-hit                       1    267584.0  0.0
+efl-championship                       1    267032.0  0.0
+ethereum-multi-strikes-weekly          3    256897.0  0.0
+nhl-2026                               2    188666.0  0.0
+nfl-2026                               3    169375.0  0.0
+putin-out-as-president                 1    161194.0  NaN
+bank-of-england-decision               1    156710.0  0.0
+xi-jinping-out                         1    156677.0  0.0
+counter-strike                         2    139252.0  0.0
+anthropic-ipo                          1    130226.0  0.0
+soccer-unl                             7     65922.0  0.0
+la-liga-2                              6     57950.0  0.0
+serie-a-2025                           2     20448.0  0.0
+ligue-1-2025                           3     18862.0  0.0
+itf                                    7     16012.0  0.0
+premier-league-2025                    3     13521.0  0.0
+tel-aviv-daily-weather                 2     12610.0  0.0
+ufc                                    3     12142.0  0.0
+
+top tags: [('politics', 42095533), ('us-presidential-election', 31604479), ('sports', 27001124), ('elections', 25140325), ('games', 24573926), ('midterms', 19116373), ('soccer', 15609291), ('united-states', 15301253), ('ucl', 14726110), ('global-elections', 14691372), ('world-elections', 14175088), ('earn-4', 12937980), ('alaska-midterm', 12657058), ('2028-election', 12063849), ('parent-for-derivative', 12037771), ('texas-midterm', 10580377), ('ucl-matchday', 10528695), ('kansas-midterm', 10485624), ('ohio-midterm', 10128995), ('senate-elections', 10122303), ('iowa-midterm', 10113291), ('michigan-midterm', 10111945), ('election', 10109128), ('maine-midterm', 10109128), ('build-your-map', 10109128), ('build-your-own-map', 10109128), ('map', 10109128), ('senate-map', 10109128), ('primaries', 8627818), ('geopolitics', 7618481), ('midterm-tossups', 7550910), ('competitive-races', 7390396), ('senate-midterms', 6604005), ('senate-midterm-winners', 6136819), ('senate-tossups', 6136819), ('trump', 6013532), ('main-election', 5994502), ('recurring', 5793398), ('iran', 5589386), ('israel', 5346676)]

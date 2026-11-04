@@ -21,6 +21,10 @@ from pmbot.bot.journal import Journal  # noqa: E402
 from pmbot.bot.paper import PaperBroker  # noqa: E402
 
 
+def cfg_mode(cfg):
+    return getattr(getattr(cfg, "execution", cfg), "mode", "?")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config/paper.toml")
@@ -33,7 +37,8 @@ def main():
     if args.live != (cfg.execution.mode == "live"):
         sys.exit("refusing to start: --live flag and execution.mode in the config must agree")
     run_dir = os.path.join(args.journal or cfg.journal_dir, time.strftime("%Y%m%d-%H%M%S"))
-    journal = Journal(run_dir)
+    from pmbot.bot.alerts import TelegramAlerts
+    journal = Journal(run_dir, alerts=TelegramAlerts(prefix="5m-" + cfg_mode(cfg)))
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s",
                         handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(run_dir, "bot.log"))])
     logging.getLogger("websockets").setLevel(logging.WARNING)

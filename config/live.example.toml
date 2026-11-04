@@ -23,6 +23,7 @@ toxic_window_ms = 5000
 toxic_cooldown_ms = 30000
 
 [risk]
+state_file = "data/state/risk_5m_live.json"
 max_net_shares_per_window = 20
 max_cost_per_window = 10
 max_open_worst_loss = 40

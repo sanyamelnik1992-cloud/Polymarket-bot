@@ -390,3 +390,23 @@ def test_live_existing_positions_are_parsed():
     rows = lb.existing_positions(["btc", "eth", "sol"], get_json=fake_get)
     assert rows == [("btc", 1800000000, "U", 12.0, 0.41, "btc-updown-5m-1800000000")]
     assert calls[0]["user"] == "0xW" and calls[0]["status"] == "OPEN"
+
+
+def test_risk_state_survives_restart(tmp_path):
+    cfg = BotConfig()
+    cfg.risk.state_file = str(tmp_path / "risk.json")
+    cfg.risk.kill_file = ""
+    cfg.risk.daily_loss_limit = 5
+    r = RiskManager(cfg.risk)
+    r.on_fill("a", "U", 0.5, 20, 0.0)
+    r.on_settle("a", "Down", rebate_share=0.0)        # -10 -> over the limit
+    assert not r.can_quote()[0] and r.killed
+    r2 = RiskManager(cfg.risk)                          # "restart"
+    assert r2.killed and not r2.can_quote()[0]
+    assert r2.realized_by_day[r2.today()] == pytest.approx(-10)
+
+
+def test_live_requires_state_file():
+    with pytest.raises(ValueError, match="state_file"):
+        load_config(None, {"execution": {"mode": "live"}})
+    assert load_config("config/live.example.toml").risk.state_file

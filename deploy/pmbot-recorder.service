@@ -1,0 +1,13 @@
+[Unit]
+Description=pmbot market-data recorder (books + Chainlink + Binance) for replay backtests
+After=network-online.target
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+ExecStart=/bin/bash -c '__REPO__/.venv/bin/python scripts/record_live.py data/rec/$(date +%%Y%%m%%d-%%H%%M) 1440'
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
