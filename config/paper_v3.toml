@@ -6,6 +6,7 @@ journal_dir = "data/journal"
 assets = ["btc", "eth", "sol"]
 half_spread = 0.03
 model_weight = 0.5
+vol_mult = 1.8                # calibration slope 0.56 on the night fv trace (reports/23) -> model ~1.8x overconfident
 quote_size = 10
 join_only = true
 start_s = 5

@@ -35,7 +35,11 @@ GRID = {
     "blend0.5_h3_vol1.6": {"strategy": {"model_weight": 0.5, "half_spread": 0.03, "vol_mult": 1.6}},
     "h3_vol1.6": {"strategy": {"half_spread": 0.03, "vol_mult": 1.6}},
 }
-GRID2 = {k: GRID[k] for k in ("base", "blend0.5_h3", "vol1.6", "h3", "blend0.5_h3_vol1.6", "h3_vol1.6")}
+GRID["v3_vol1.8"] = {"strategy": {"model_weight": 0.5, "half_spread": 0.03, "vol_mult": 1.8}}
+GRID["mid_h3"] = {"strategy": {"model_weight": 0.0, "half_spread": 0.03}}
+GRID["mid_h2"] = {"strategy": {"model_weight": 0.0, "half_spread": 0.02}}
+GRID2 = {k: GRID[k] for k in ("base", "blend0.5_h3", "vol1.6", "blend0.5_h3_vol1.6", "v3_vol1.8", "mid_h3",
+                              "mid_h2", "h3")}
 
 
 def parse_kv(args):

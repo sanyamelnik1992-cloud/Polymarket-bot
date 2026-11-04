@@ -1,0 +1,14 @@
+windows 36, samples 7965
+log loss:  model 0.5592   mid 0.5319
+  blend w=0.25: 0.5316
+  blend w=0.5: 0.5345
+  blend w=0.75: 0.5418
+logistic: a=+2.063  b_model=-0.724  c_mid=+1.810
+model-only calibration slope: 0.559 (1.0 = calibrated, < 1 = overconfident)
+                 n  ll_model  ll_mid  ll_blend50
+tb                                              
+(0, 60]     1989.0    0.6712  0.6308      0.6394
+(60, 120]   2132.0    0.5928  0.5829      0.5770
+(120, 180]  1991.0    0.5209  0.4829      0.4899
+(180, 240]  1421.0    0.4642  0.4454      0.4459
+(240, 300]   432.0    0.3668  0.3349      0.3379
