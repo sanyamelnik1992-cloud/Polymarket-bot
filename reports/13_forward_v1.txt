@@ -1,0 +1,23 @@
+run: forward2/20261104-122702/
+mode: paper  duration: 54.4 min  events: {'start': 1, 'vol_seed': 3, 'window': 36, 'filters': 1868, 'status': 97, 'strike_est': 30, 'quote': 7675, 'fill': 151, 'settle': 25, 'kill': 1, 'cancel_everything': 1, 'stopped': 1, 'final': 1}
+
+filter reasons (state changes): {'p_out_of_range': 504, 'wide_spread': 467, 'jump_cooldown': 375, 'too_late': 342, 'model_disagrees': 335, 'no_strike': 156, 'no_fair_value': 156, 'too_early': 140, 'no_book': 138, 'chainlink_stale': 24, 'clob_stale': 8, 'binance_stale': 6}
+quotes placed: 7675
+
+fills: 151  shares: 962  notional: $537.15
+       fills   shares  notional  avg_price  med_rel
+asset                                              
+btc       73  511.147   271.503      0.520   22.997
+eth       38  208.788   122.193      0.544  146.773
+sol       40  242.147   143.452      0.556  181.702
+
+settled windows:
+       windows     cost     pnl  pnl_ex_rebate  rebate  win_rate   worst    best    roi
+asset                                                                                  
+btc          9  271.503 -37.319        -38.954   1.636     0.556 -31.977  15.239 -0.137
+eth          8  122.193  34.439         33.869   0.571     0.750  -0.507  16.092  0.282
+sol          8  143.452 -20.541        -21.216   0.674     0.500 -17.600   7.264 -0.143
+
+TOTAL pnl $-23.42 (ex-rebate $-26.30) on cost $537.15 -> ROI -4.36%; windows 25, t-stat -0.38
+max drawdown $-46.54; hedged windows (both sides filled): 14
+2026-11-04 13:16:02,060 ERROR pmbot.engine: KILL SWITCH: daily loss limit 50.0 reached

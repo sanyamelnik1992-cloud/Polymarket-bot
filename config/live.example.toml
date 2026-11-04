@@ -7,12 +7,20 @@ assets = ["btc", "eth", "sol"]
 half_spread = 0.04
 quote_size = 5            # market minimum
 join_only = true
+skew_per_share = 0.004
 start_s = 5
 stop_s = 240
 
-[filters]
-max_disagree = 0.20
+[filters]                  # v2 "strong filters" (v1 without them lost in the forward test)
+max_disagree = 0.10
 max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.10
+fair_move_window_ms = 5000
+toxic_shares = 5
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
 
 [risk]
 max_net_shares_per_window = 20

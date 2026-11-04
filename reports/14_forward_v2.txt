@@ -1,0 +1,22 @@
+run: v2/20261104-124028/
+mode: paper  duration: 140.1 min  events: {'start': 1, 'vol_seed': 3, 'window': 90, 'filters': 8984, 'status': 279, 'strike_est': 81, 'quote': 2772, 'fill': 45, 'side_block': 41, 'settle': 19, 'cancel_everything': 1, 'stopped': 1, 'final': 1}
+
+filter reasons (state changes): {'model_disagrees': 5205, 'jump_cooldown': 4339, 'p_out_of_range': 3882, 'fair_unstable': 3426, 'too_late': 1407, 'wide_spread': 1386, 'no_book': 640, 'no_strike': 599, 'no_fair_value': 599, 'too_early': 454, 'chainlink_stale': 103, 'vol_spike': 47, 'clob_stale': 17, 'binance_stale': 5}
+quotes placed: 2772
+
+fills: 45  shares: 301  notional: $165.82
+       fills   shares  notional  avg_price  med_rel
+asset                                              
+btc       27  184.020    95.533      0.540   21.731
+eth       12   65.709    42.653      0.647   91.413
+sol        6   51.375    27.639      0.575  217.210
+
+settled windows:
+       windows    cost     pnl  pnl_ex_rebate  rebate  win_rate  worst    best    roi
+asset                                                                                
+btc         11  95.533  24.085         23.477   0.608     0.636 -5.165  10.070  0.252
+eth          5  42.653   8.256          8.056   0.200     0.800 -4.151   3.235  0.194
+sol          3  27.639   3.853          3.736   0.116     0.667 -7.373   7.507  0.139
+
+TOTAL pnl $+36.19 (ex-rebate $+35.27) on cost $165.82 -> ROI +21.83%; windows 19, t-stat +1.73
+max drawdown $-12.54; hedged windows (both sides filled): 8

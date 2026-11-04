@@ -1,0 +1,13 @@
+overlapping windows: 17  (A traded 17, B traded 13)
+           A      B   diff
+asset                     
+btc   -42.07  11.46  53.53
+eth    32.35   8.26 -24.10
+sol     8.96  11.23   2.27
+
+TOTAL  A $-0.76   B $+30.94   paired diff B-A $+31.70 (t +0.55)
+A: worst window $-31.98, max drawdown $-65.37, losing windows 6/17
+B: worst window $-4.57, max drawdown $-4.57, losing windows 4/13
+
+filter time (s) in B: {'p_out_of_range': 13955, 'model_disagrees': 11244, 'jump_cooldown': 9187, 'fair_unstable': 4052, 'no_book': 3642, 'too_late': 3336, 'no_strike': 1670, 'no_fair_value': 1670, 'too_early': 422, 'wide_spread': 367, 'chainlink_stale': 245, 'vol_spike': 120}
+toxic side blocks in B: 26

@@ -1,0 +1,22 @@
+run: forward/20261104-121531/
+mode: paper  duration: 21.7 min  events: {'start': 1, 'vol_seed': 3, 'window': 12, 'filters': 316, 'status': 22, 'strike_est': 6, 'quote': 1359, 'fill': 30, 'cancel_everything': 1, 'stopped': 1, 'settle': 6, 'final': 1}
+
+filter reasons (state changes): {'no_strike': 130, 'no_fair_value': 130, 'wide_spread': 80, 'jump_cooldown': 69, 'p_out_of_range': 41, 'no_book': 29, 'too_late': 29, 'too_early': 18, 'chainlink_stale': 14, 'binance_stale': 5, 'clob_stale': 4}
+quotes placed: 1359
+
+fills: 30  shares: 150  notional: $103.46
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc       20  93.151    60.209      0.650   24.105
+eth        8  41.820    32.650      0.771  174.198
+sol        2  15.000    10.600      0.635  122.441
+
+settled windows:
+       windows    cost     pnl  pnl_ex_rebate  rebate  win_rate   worst    best    roi
+asset                                                                                 
+btc          2  60.209 -59.913        -60.209   0.296       0.0 -30.678 -29.235 -0.995
+eth          2  32.649   9.266          9.170   0.096       1.0   2.929   6.337  0.284
+sol          2  10.600   4.435          4.400   0.035       1.0   1.518   2.917  0.418
+
+TOTAL pnl $-46.21 (ex-rebate $-46.64) on cost $103.46 -> ROI -44.67%; windows 6, t-stat -1.09
+max drawdown $-50.66; hedged windows (both sides filled): 0
