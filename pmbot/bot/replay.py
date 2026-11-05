@@ -42,6 +42,11 @@ PROFILES = {
     "dublin":    {"pm": 6, "bn_shift": 115 - HERE_BN_MS, "cl": 1260, "order_ms": 7, "tick_ms": 50},
     "london":    {"pm": 1, "bn_shift": 108 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 50},
     "tokyo":     {"pm": 105, "bn_shift": 2 - HERE_BN_MS, "cl": 1300, "order_ms": 106, "tick_ms": 50},
+    # two servers: the bot in London + a relay next to Binance (Tokyo) forwarding over a dedicated low-latency line
+    # (vendor claims ~132-150 ms RTT Tokyo<->London, i.e. ~66-75 ms one way, vs ~100-108 ms over the public internet)
+    "london_relay": {"pm": 1, "bn_shift": 68 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 50},
+    # theoretical ceiling: Binance teleported to London (2 ms) -- no relay can beat this
+    "london_bn0":   {"pm": 1, "bn_shift": 2 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 50},
 }
 
 

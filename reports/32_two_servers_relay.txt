@@ -1,0 +1,83 @@
+# Two servers: bot in London + Binance relay in Tokyo. Profiles london (Binance at E+108 ms, public internet),
+# london_relay (E+68 ms, dedicated low-latency line), london_bn0 (E+2 ms, impossible ceiling). run3, run4, run5_snap2.
+
+## maker, london_bn0 (all 5 variants)
+       rec     strategy    profile  windows  fills    pnl  rebate    cost      t  worst    roi
+      run3       v3_mid london_bn0        2      2 -3.545   0.055  13.600    NaN -5.265 -0.261
+      run3       mid_h2 london_bn0        6     10  7.663   0.244  40.706  1.629 -1.619  0.188
+      run3       mid_h1 london_bn0       19     25 25.667   0.672  98.130  1.817 -3.667  0.262
+      run3 mid_h2_touch london_bn0       19     38  6.764   0.887 135.950  0.796 -2.559  0.050
+      run3 mid_h1_touch london_bn0       38    114  5.336   2.016 321.187  0.373 -6.507  0.017
+      run4       v3_mid london_bn0        3      6  4.329   0.166  32.836  0.542 -3.617  0.132
+      run4       mid_h2 london_bn0        4      8  4.103   0.212  36.020  2.092  0.264  0.114
+      run4       mid_h1 london_bn0       10     21 36.341   0.510  84.170  3.009 -0.917  0.432
+      run4 mid_h2_touch london_bn0       10     30 15.259   0.592 104.025  1.650 -0.801  0.147
+      run4 mid_h1_touch london_bn0       28     89 15.705   1.745 288.170  1.352 -4.382  0.054
+run5_snap2       v3_mid london_bn0        4      7 -1.664   0.164  21.828 -0.813 -1.386 -0.076
+run5_snap2       mid_h2 london_bn0        8     16 -7.004   0.389  64.726 -1.944 -2.540 -0.108
+run5_snap2       mid_h1 london_bn0       14     30  5.371   0.685 124.710  0.451 -5.896  0.043
+run5_snap2 mid_h2_touch london_bn0       15     38  7.396   0.824 131.459  0.561 -2.871  0.056
+run5_snap2 mid_h1_touch london_bn0       27     80 39.211   1.659 254.822  2.302 -2.971  0.154
+
+TOTAL over recordings:
+                         windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                   
+mid_h1       london_bn0       43     76  67.379  307.009   1.867  0.219
+mid_h1_touch london_bn0       93    283  60.252  864.179   5.420  0.070
+mid_h2       london_bn0       18     34   4.762  141.453   0.845  0.034
+mid_h2_touch london_bn0       44    106  29.420  371.434   2.303  0.079
+v3_mid       london_bn0        9     15  -0.880   68.264   0.384 -0.013
+
+## maker, london_relay
+       rec     strategy      profile  windows  fills    pnl  rebate    cost      t  worst    roi
+      run3       mid_h1 london_relay       17     25 18.904   0.556 105.429  1.920 -2.532  0.179
+      run3 mid_h1_touch london_relay       51    146 29.610   2.754 439.895  1.705 -5.866  0.067
+      run3 mid_h2_touch london_relay       17     33  3.844   0.694 128.590  0.593 -2.482  0.030
+      run4       mid_h1 london_relay       12     23 -2.894   0.447  93.429 -0.418 -3.867 -0.031
+      run4 mid_h1_touch london_relay       32     94  7.399   1.752 302.793  0.590 -3.217  0.024
+      run4 mid_h2_touch london_relay       12     31  7.625   0.578 110.843  0.816 -2.758  0.069
+run5_snap2       mid_h1 london_relay       13     27  5.101   0.621 112.212  0.486 -3.369  0.045
+run5_snap2 mid_h1_touch london_relay       26     89 46.238   1.722 264.723  2.880 -2.856  0.175
+run5_snap2 mid_h2_touch london_relay       14     36 11.430   0.793 137.199  1.084 -2.971  0.083
+
+TOTAL over recordings:
+                           windows  fills     pnl      cost  rebate    roi
+strategy     profile                                                      
+mid_h1       london_relay       42     75  21.112   311.070   1.624  0.068
+mid_h1_touch london_relay      109    329  83.247  1007.411   6.228  0.083
+mid_h2_touch london_relay       43    100  22.898   376.632   2.064  0.061
+
+## maker comparison (sum over 3 recordings)
+    strategy      profile  recs  pnl  fills     t  pos_recs  run3  run4  run5_snap2
+      mid_h1       london     3 76.4     79  3.01         3  20.9  33.6        21.9
+      mid_h1   london_bn0     3 67.4     76  2.93         3  25.7  36.3         5.4
+      mid_h1 london_relay     3 21.1     75  1.32         2  18.9  -2.9         5.1
+mid_h1_touch       london     3 74.6    289  2.90         3  23.7  18.9        32.0
+mid_h1_touch   london_bn0     3 60.3    283  2.37         3   5.3  15.7        39.2
+mid_h1_touch london_relay     3 83.2    329  3.06         3  29.6   7.4        46.2
+      mid_h2       london     3 17.6     36  2.34         3  12.6   4.9         0.1
+      mid_h2   london_bn0     3  4.8     34  0.64         2   7.7   4.1        -7.0
+mid_h2_touch       london     3 35.0    107  2.20         3   3.8  19.3        11.9
+mid_h2_touch   london_bn0     3 29.4    106  1.63         3   6.8  15.3         7.4
+mid_h2_touch london_relay     3 22.9    100  1.51         3   3.8   7.6        11.4
+      v3_mid       london     3  6.5     14  0.79         2  -0.7   4.7         2.5
+      v3_mid   london_bn0     3 -0.9     15 -0.09         1  -3.5   4.3        -1.7
+
+## taker (scripts/taker_latency_study.py --profiles=london,london_relay,london_bn0 --edges=0.05)
+       rec      profile  min_edge  windows  signals  missed     cost      pnl      t    roi
+      run3       london      0.05       86      342      78 2313.297 -139.475 -0.552 -0.060
+      run3 london_relay      0.05       86      342      80 2310.596 -134.832 -0.533 -0.058
+      run3   london_bn0      0.05       86      338      78 2275.378  168.009  0.635  0.074
+      run4       london      0.05       56      212      41 1389.394 -117.014 -0.432 -0.084
+      run4 london_relay      0.05       56      210      39 1410.970 -156.737 -0.536 -0.111
+      run4   london_bn0      0.05       56      216      43 1381.384  -68.724 -0.281 -0.050
+run5_snap2       london      0.05       35      127      23  825.735  227.106  1.363  0.275
+run5_snap2 london_relay      0.05       35      131      26  842.607  213.286  1.265  0.253
+run5_snap2   london_bn0      0.05       34      140      37  840.054  210.678  1.267  0.251
+
+TOTAL:
+                       windows  signals  missed      cost      pnl    roi
+profile      min_edge                                                    
+london       0.05          177      681     142  4528.426  -29.383 -0.006
+london_bn0   0.05          176      694     158  4496.817  309.964  0.069
+london_relay 0.05          177      683     145  4564.173  -78.283 -0.017
