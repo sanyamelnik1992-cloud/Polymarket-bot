@@ -1,0 +1,53 @@
+### maker, conservative fills (trade-through), 4 locations
+run3       v2 here_slow       15     32  -6.406   0.561 101.105 -0.376  -7.776 -0.063
+run3       v2    dublin       10     16   4.749   0.360  62.414  0.302  -5.966  0.076
+run3       v2    london        6      9 -12.889   0.209  37.714 -1.167  -5.966 -0.342
+run3       v2     tokyo       10     26   3.917   0.416  82.159  0.234  -9.857  0.048
+run3   v3_mid here_slow       13     35  36.202   0.504  94.591  2.505  -7.768  0.383
+run3   v3_mid    dublin        3      5  15.669   0.122  20.770  6.898   4.348  0.754
+run3   v3_mid    london        1      2   4.590   0.043  11.770    NaN   4.590  0.390
+run3   v3_mid     tokyo       11     23  15.533   0.374  74.824  0.938  -8.987  0.208
+run4       v2 here_slow        7     19 -21.195   0.245  59.440 -1.232 -11.884 -0.357
+run4       v2    dublin        8     13  -6.206   0.226  59.578 -0.375 -11.394 -0.104
+run4       v2    london        7     11  -5.419   0.223  59.779 -0.314 -11.394 -0.091
+run4       v2     tokyo        6     16 -19.669   0.230  58.469 -0.946 -16.276 -0.336
+run4   v3_mid here_slow       14     34  -2.530   0.540 104.070 -0.203  -5.029 -0.024
+run4   v3_mid    dublin        4      6   4.508   0.158  32.650  2.244   0.164  0.138
+run4   v3_mid    london        3      4   3.753   0.103  23.350  1.817   0.164  0.161
+run4   v3_mid     tokyo        9     32   9.017   0.485 101.685  0.863  -4.486  0.089
+
+TOTAL over recordings:
+                    windows  fills     pnl     cost  rebate    roi
+strategy profile                                                  
+v2       dublin          18     29  -1.457  121.992   0.586 -0.012
+         here_slow       22     51 -27.601  160.545   0.806 -0.172
+         london          13     20 -18.309   97.493   0.432 -0.188
+         tokyo           16     42 -15.751  140.628   0.646 -0.112
+v3_mid   dublin           7     11  20.177   53.420   0.281  0.378
+         here_slow       27     69  33.671  198.661   1.044  0.169
+         london           4      6   8.343   35.120   0.146  0.238
+         tokyo           20     55  24.550  176.508   0.859  0.139
+
+### maker, fill at touch (front-of-queue upper bound)
+run3 v3_mid_touch here_slow       18     53  34.823   0.737 129.002  1.942  -7.768  0.270
+run3 v3_mid_touch    dublin        5      8  16.971   0.205  38.166  2.387  -0.918  0.445
+run3 v3_mid_touch    london        4      6   5.516   0.132  29.548  1.232  -0.476  0.187
+run3     v2_touch here_slow       13     25   3.744   0.420  85.275  0.289  -6.627  0.044
+run3     v2_touch    dublin       15     39   0.357   0.599 118.312  0.026  -6.468  0.003
+run3     v2_touch    london       14     37  -7.694   0.580 115.343 -0.537  -6.468 -0.067
+run4 v3_mid_touch here_slow       16     50   0.290   0.836 137.361  0.014  -7.024  0.002
+run4 v3_mid_touch    dublin        4      8   6.839   0.182  33.343  2.271   0.164  0.205
+run4 v3_mid_touch    london        3      5   6.420   0.123  23.703  2.044   0.164  0.271
+run4     v2_touch here_slow        9     25 -17.603   0.346  69.949 -0.810 -16.116 -0.252
+run4     v2_touch    dublin       12     21  -8.485   0.276  69.891 -0.464 -11.458 -0.121
+run4     v2_touch    london       10     19 -19.566   0.248  62.943 -1.156 -11.951 -0.311
+
+TOTAL over recordings:
+                        windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                  
+v2_touch     dublin          27     60  -8.128  188.203   0.876 -0.043
+             here_slow       22     50 -13.859  155.224   0.765 -0.089
+             london          24     56 -27.260  178.287   0.828 -0.153
+v3_mid_touch dublin           9     16  23.810   71.509   0.387  0.333
+             here_slow       34    103  35.113  266.363   1.574  0.132
+             london           7     11  11.936   53.252   0.255  0.224

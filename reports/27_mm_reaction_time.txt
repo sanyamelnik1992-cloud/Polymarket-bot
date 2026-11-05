@@ -1,0 +1,31 @@
+#### btc
+binance trades 21625; rx-E median 70 ms
+sharp moves (>= 2.0 bp in 200 ms): 4
+moves inside a 5m window: 4, book reacted within 5 s: 4
+delay Binance E -> first Polymarket quote move (ms): {'count': 4.0, 'mean': 94.0, 'std': 100.0, 'min': 7.0, '10%': 12.0, '25%': 20.0, '50%': 74.0, '75%': 148.0, '90%': 193.0, 'max': 222.0}
+   share reacted within   50 ms: 0.50
+   share reacted within  105 ms: 0.50
+   share reacted within  150 ms: 0.75
+   share reacted within  250 ms: 1.00
+   share reacted within  500 ms: 1.00
+   share reacted within 1000 ms: 1.00
+#### eth
+binance trades 5609; rx-E median 70 ms
+sharp moves (>= 2.0 bp in 200 ms): 6
+moves inside a 5m window: 6, book reacted within 5 s: 6
+delay Binance E -> first Polymarket quote move (ms): {'count': 6.0, 'mean': 52.0, 'std': 94.0, 'min': 1.0, '10%': 2.0, '25%': 3.0, '50%': 18.0, '75%': 33.0, '90%': 138.0, 'max': 243.0}
+   share reacted within   50 ms: 0.83
+   share reacted within  105 ms: 0.83
+   share reacted within  150 ms: 0.83
+   share reacted within  250 ms: 1.00
+   share reacted within  500 ms: 1.00
+   share reacted within 1000 ms: 1.00
+btc: corr(Binance 50ms return at E, PM mid change 10ms-binned, by lag ms):
+   -200:0.011, -100:0.007, -50:0.008, 0:0.014, 25:0.014, 50:0.013, 75:0.012, 100:0.014, 125:0.019, 150:0.025, 200:0.032, 250:0.036, 300:0.035, 400:0.027, 600:0.005, 1000:0.018
+   peak at 250 ms (corr 0.036)
+eth: corr(Binance 50ms return at E, PM mid change 10ms-binned, by lag ms):
+   -200:0.014, -100:0.012, -50:0.021, 0:0.042, 25:0.046, 50:0.050, 75:0.058, 100:0.067, 125:0.066, 150:0.060, 200:0.049, 250:0.029, 300:0.012, 400:0.011, 600:0.002, 1000:-0.004
+   peak at 100 ms (corr 0.067)
+sol: corr(Binance 50ms return at E, PM mid change 10ms-binned, by lag ms):
+   -200:0.001, -100:0.006, -50:0.010, 0:0.010, 25:0.015, 50:0.024, 75:0.032, 100:0.045, 125:0.049, 150:0.045, 200:0.022, 250:0.016, 300:0.016, 400:0.014, 600:0.002, 1000:0.001
+   peak at 125 ms (corr 0.049)

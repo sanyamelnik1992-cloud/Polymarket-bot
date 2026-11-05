@@ -1,6 +1,6 @@
 # 5m maker for a server next to Polymarket (AWS eu-west-1 Dublin, or co-located eu-west-2 London). PAPER.
 # Same quoting as v3 (3c around the book mid, model as guard) with fast reaction: 50 ms ticks and an immediate
-# re-decision whenever Binance moves > 1 sigma(1s). See reports/25_latency_study.txt.
+# re-decision whenever Binance moves > 1 sigma(1s). See reports/25_latency_study_maker.txt and reports/29_colocation_5m.md.
 journal_dir = "data/journal-colo"
 
 [strategy]

@@ -27,7 +27,10 @@ STRATEGIES = {
     "v3_mid_touch": ("config/paper_v3.toml", {"execution": {"paper_fill_at_touch": True}}),
     "v2_touch": ("config/paper_v2.toml", {"execution": {"paper_fill_at_touch": True}}),
     "mid_h2_touch": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.02}, "execution": {"paper_fill_at_touch": True}}),
+    "mid_h1": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}}),
+    "mid_h1_touch": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}, "execution": {"paper_fill_at_touch": True}}),
 }
+BN_STALE_OFF = "--bn-stale-off" in sys.argv   # old recordings stored only BBO changes -> staleness is an artifact
 
 
 def one(job):
@@ -35,6 +38,8 @@ def one(job):
     path, over = STRATEGIES[strat]
     over = json.loads(json.dumps(over))
     over.setdefault("risk", {})["max_actions_per_sec"] = 100
+    if BN_STALE_OFF:
+        over.setdefault("filters", {})["bn_max_age_ms"] = 600000
     cfg = load_config(path, over)
     name = f"{os.path.basename(rec.rstrip('/'))}__{strat}__{prof}"
     jd = os.path.join(out, name)

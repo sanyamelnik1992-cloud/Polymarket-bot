@@ -1,0 +1,401 @@
+# scripts/flow_toxicity.py — maker PnL per share vs preceding Binance move; does a fast (co-located) maker avoid toxic flow?
+# run3 = Nov 4 10:15-12:35, run4 = Nov 4 21:21-22:57 (Binance time approximated as rx-70 ms), run5_snap = Nov 5 10:31-11:11 (true aggTrade E)
+
+################ run3
+# /tmp/claude-0/-home-user-Polymarket-bot/1b5ec7fd-3b16-54a6-a4fb-1df868ca6274/scratchpad/live/run3  binance source: bookTicker rx-70  thr 1.0 bp
+
+#### btc
+trades 42983, shares 1094647
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.62, 'm1': 0.2, 'm5': 0.13, 'm30': -0.16}
+  Binance move (bp, signed with taker) in window 'late':
+                      n  share_vol  spread_c   m5_c   m30_c
+    b                                                      
+    against<-1.0    164      0.004     1.128  5.067   2.577
+    small-          555      0.013     1.445  5.894   7.591
+    flat          40517      0.952     0.617  0.177  -0.062
+    small+         1364      0.023     0.315 -3.379  -3.754
+    with>+1.0       383      0.008     0.623 -8.099 -15.503
+  Binance move (bp, signed with taker) in window 'colo':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0    136      0.004     2.951  4.545  2.452
+    small-          591      0.020     1.459  1.626  2.377
+    flat          38426      0.925     0.607  0.169 -0.134
+    small+         2725      0.037     0.443 -1.145 -1.949
+    with>+1.0      1105      0.014     0.309 -2.572 -1.060
+  Binance move (bp, signed with taker) in window 'early':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0   2140      0.060     0.880 -0.128 -0.281
+    small-         2596      0.071     0.970 -0.180 -0.611
+    flat          29884      0.739     0.583  0.350 -0.081
+    small+         3915      0.068     0.570 -0.218  0.098
+    with>+1.0      4448      0.062     0.508 -1.531 -0.670
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.16c  m5   0.13c  vol kept 1.00  (all trades m30 -0.16c)
+    slow, R=420 ms             m30  -0.14c  m5   0.24c  vol kept 0.94  (all trades m30 -0.16c)
+    Dublin/London, R=130 ms    m30  -0.09c  m5   0.29c  vol kept 0.92  (all trades m30 -0.16c)
+    oracle, R=0 (impossible)   m30   0.03c  m5   0.34c  vol kept 0.92  (all trades m30 -0.16c)
+
+#### eth
+trades 5287, shares 62044
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.46, 'm1': -0.28, 'm5': -0.31, 'm30': -0.51}
+  Binance move (bp, signed with taker) in window 'late':
+                     n  share_vol  spread_c   m5_c   m30_c
+    b                                                     
+    against<-1.0    61      0.011     1.042  3.263  -3.513
+    small-         130      0.023     1.390  2.392   6.407
+    flat          4795      0.912     0.453 -0.343  -0.409
+    small+         220      0.040     0.167 -0.025  -0.481
+    with>+1.0       81      0.013    -0.545 -6.682 -17.150
+  Binance move (bp, signed with taker) in window 'colo':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    56      0.008     0.673  2.060  3.981
+    small-         117      0.023     1.019  0.634 -1.485
+    flat          4273      0.844     0.455 -0.159 -0.053
+    small+         471      0.071     0.271 -1.476 -4.006
+    with>+1.0      370      0.053     0.455 -1.904 -3.338
+  Binance move (bp, signed with taker) in window 'early':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0   422      0.100     0.628  0.829  0.174
+    small-         362      0.092     0.459 -0.639 -4.191
+    flat          2704      0.543     0.383 -0.417  0.775
+    small+         711      0.100     0.545  1.329  0.840
+    with>+1.0     1088      0.164     0.546 -1.452 -3.893
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.51c  m5  -0.31c  vol kept 1.00  (all trades m30 -0.51c)
+    slow, R=420 ms             m30   0.19c  m5  -0.07c  vol kept 0.83  (all trades m30 -0.51c)
+    Dublin/London, R=130 ms    m30   0.32c  m5   0.00c  vol kept 0.79  (all trades m30 -0.51c)
+    oracle, R=0 (impossible)   m30   0.43c  m5   0.03c  vol kept 0.79  (all trades m30 -0.51c)
+
+#### sol
+trades 2208, shares 21548
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.74, 'm1': 0.08, 'm5': 0.45, 'm30': 0.27}
+  Binance move (bp, signed with taker) in window 'late':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    65      0.026     1.414  6.425  3.394
+    flat          2067      0.944     0.763  0.437  0.305
+    with>+1.0       76      0.030    -0.596 -4.312 -3.689
+  Binance move (bp, signed with taker) in window 'colo':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    58      0.021     1.132  3.030 -4.389
+    flat          1942      0.890     0.784  0.636  0.442
+    with>+1.0      208      0.089     0.198 -2.047 -0.285
+  Binance move (bp, signed with taker) in window 'early':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0   348      0.163     0.802 -2.905  0.398
+    flat          1391      0.641     0.757  0.863  0.240
+    with>+1.0      469      0.195     0.627  1.889  0.294
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30   0.27c  m5   0.45c  vol kept 1.00  (all trades m30 0.27c)
+    slow, R=420 ms             m30   0.27c  m5   0.10c  vol kept 0.80  (all trades m30 0.27c)
+    Dublin/London, R=130 ms    m30   0.39c  m5   0.34c  vol kept 0.74  (all trades m30 0.27c)
+    oracle, R=0 (impossible)   m30   0.40c  m5   0.34c  vol kept 0.74  (all trades m30 0.27c)
+
+#### pooled
+trades 50478, shares 1178239
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.62, 'm1': 0.17, 'm5': 0.11, 'm30': -0.17}
+  Binance move (bp, signed with taker) in window 'late':
+                      n  share_vol  spread_c   m5_c   m30_c
+    b                                                      
+    against<-1.0    290      0.005     1.145  4.983   1.925
+    small-          685      0.013     1.440  5.576   7.481
+    flat          47379      0.950     0.611  0.155  -0.073
+    small+         1584      0.023     0.302 -3.073  -3.449
+    with>+1.0       540      0.008     0.447 -7.732 -14.952
+  Binance move (bp, signed with taker) in window 'colo':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0    250      0.005     2.571  4.171  2.110
+    small-          708      0.020     1.432  1.564  2.123
+    flat          44641      0.920     0.603  0.162 -0.121
+    small+         3196      0.038     0.426 -1.177 -2.150
+    with>+1.0      1683      0.017     0.322 -2.415 -1.365
+  Binance move (bp, signed with taker) in window 'early':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0   2910      0.064     0.856 -0.179 -0.217
+    small-         2958      0.071     0.935 -0.211 -0.854
+    flat          33979      0.727     0.578  0.328 -0.042
+    small+         4626      0.068     0.568 -0.098  0.157
+    with>+1.0      6005      0.070     0.519 -1.347 -1.036
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.17c  m5   0.11c  vol kept 1.00  (all trades m30 -0.17c)
+    slow, R=420 ms             m30  -0.12c  m5   0.23c  vol kept 0.93  (all trades m30 -0.17c)
+    Dublin/London, R=130 ms    m30  -0.06c  m5   0.27c  vol kept 0.91  (all trades m30 -0.17c)
+    oracle, R=0 (impossible)   m30   0.06c  m5   0.33c  vol kept 0.91  (all trades m30 -0.17c)
+
+################ run4
+# /tmp/claude-0/-home-user-Polymarket-bot/1b5ec7fd-3b16-54a6-a4fb-1df868ca6274/scratchpad/live/run4  binance source: bookTicker rx-70  thr 1.0 bp
+
+#### btc
+trades 25921, shares 676671
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.5, 'm1': 0.02, 'm5': -0.19, 'm30': -0.48}
+  Binance move (bp, signed with taker) in window 'late':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0     33      0.003     0.831  4.995  3.749
+    small-          273      0.012     1.147  4.118  2.122
+    flat          24878      0.960     0.495 -0.158 -0.446
+    small+          643      0.021     0.238 -4.381 -4.523
+    with>+1.0        94      0.005    -0.083 -0.829  1.092
+  Binance move (bp, signed with taker) in window 'colo':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0     58      0.003     0.663  2.014 -4.984
+    small-          215      0.011     1.736  4.017  3.813
+    flat          23883      0.933     0.490 -0.051 -0.240
+    small+         1361      0.040     0.379 -2.852 -4.179
+    with>+1.0       404      0.012     0.077 -6.185 -9.314
+  Binance move (bp, signed with taker) in window 'early':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0    971      0.039     0.682 -0.807 -2.512
+    small-         1480      0.064     1.099  0.008 -0.377
+    flat          18381      0.744     0.390 -0.053 -0.407
+    small+         2657      0.093     0.792 -0.892 -0.238
+    with>+1.0      2432      0.061     0.579 -0.529 -0.668
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.48c  m5  -0.19c  vol kept 1.00  (all trades m30 -0.48c)
+    slow, R=420 ms             m30  -0.45c  m5  -0.16c  vol kept 0.94  (all trades m30 -0.48c)
+    Dublin/London, R=130 ms    m30  -0.30c  m5  -0.06c  vol kept 0.92  (all trades m30 -0.48c)
+    oracle, R=0 (impossible)   m30  -0.33c  m5  -0.06c  vol kept 0.92  (all trades m30 -0.48c)
+
+#### eth
+trades 2785, shares 45340
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.4, 'm1': -0.41, 'm5': -0.3, 'm30': 0.58}
+  Binance move (bp, signed with taker) in window 'late':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    61      0.023     1.033  3.493  1.417
+    small-          43      0.020     0.582 -0.177  0.364
+    flat          2457      0.883     0.415 -0.122  0.805
+    small+         168      0.056    -0.172 -3.751 -1.738
+    with>+1.0       56      0.017     0.547 -3.800 -4.385
+  Binance move (bp, signed with taker) in window 'colo':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    54      0.030     0.999  0.026 -0.958
+    small-          68      0.032     1.047  1.724  3.236
+    flat          2158      0.797     0.414 -0.384  0.622
+    small+         273      0.081     0.155 -0.147 -1.047
+    with>+1.0      232      0.061    -0.049 -0.675  1.550
+  Binance move (bp, signed with taker) in window 'early':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0   215      0.109     0.664 -2.545 -3.850
+    small-         163      0.064     0.174  0.192 -0.389
+    flat          1463      0.599     0.378 -0.581  0.906
+    small+         291      0.082     0.372  0.755 -0.859
+    with>+1.0      653      0.146     0.424  1.691  3.616
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30   0.58c  m5  -0.30c  vol kept 1.00  (all trades m30 0.58c)
+    slow, R=420 ms             m30   0.04c  m5  -0.65c  vol kept 0.85  (all trades m30 0.58c)
+    Dublin/London, R=130 ms    m30   0.17c  m5  -0.44c  vol kept 0.80  (all trades m30 0.58c)
+    oracle, R=0 (impossible)   m30   0.23c  m5  -0.43c  vol kept 0.80  (all trades m30 0.58c)
+
+#### sol
+trades 1317, shares 18203
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.64, 'm1': 0.22, 'm5': -0.22, 'm30': 0.25}
+  Binance move (bp, signed with taker) in window 'late':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    52      0.037     1.262  4.014   2.08
+    flat          1223      0.944     0.629 -0.297   0.28
+    with>+1.0       42      0.019    -0.015 -4.687  -4.47
+  Binance move (bp, signed with taker) in window 'colo':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    45      0.040     0.357  1.053 -4.589
+    flat          1148      0.886     0.699 -0.185  0.636
+    with>+1.0      124      0.074     0.093 -1.347 -1.552
+  Binance move (bp, signed with taker) in window 'early':
+                    n  share_vol  spread_c   m5_c   m30_c
+    b                                                    
+    against<-1.0  160      0.139     0.205  1.308  -1.456
+    flat          883      0.680     0.758 -0.613  -2.254
+    with>+1.0     274      0.181     0.536  0.066  10.099
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30   0.25c  m5  -0.22c  vol kept 1.00  (all trades m30 0.25c)
+    slow, R=420 ms             m30  -2.12c  m5  -0.29c  vol kept 0.81  (all trades m30 0.25c)
+    Dublin/London, R=130 ms    m30  -2.04c  m5  -0.18c  vol kept 0.76  (all trades m30 0.25c)
+    oracle, R=0 (impossible)   m30  -1.97c  m5  -0.12c  vol kept 0.76  (all trades m30 0.25c)
+
+#### pooled
+trades 30023, shares 740213
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.49, 'm1': -0.01, 'm5': -0.19, 'm30': -0.4}
+  Binance move (bp, signed with taker) in window 'late':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0    146      0.005     0.972  4.360  2.748
+    small-          316      0.012     1.089  3.674  1.939
+    flat          28558      0.955     0.494 -0.160 -0.356
+    small+          811      0.022     0.175 -4.285 -4.098
+    with>+1.0       192      0.006     0.033 -1.658 -0.314
+  Binance move (bp, signed with taker) in window 'colo':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0    157      0.005     0.720  1.178 -3.561
+    small-          283      0.012     1.629  3.660  3.729
+    flat          27189      0.924     0.491 -0.072 -0.173
+    small+         1634      0.042     0.353 -2.530 -3.821
+    with>+1.0       760      0.017     0.050 -4.410 -6.015
+  Binance move (bp, signed with taker) in window 'early':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0   1346      0.046     0.644 -0.901 -2.632
+    small-         1643      0.062     1.040  0.020 -0.378
+    flat          20727      0.733     0.398 -0.092 -0.378
+    small+         2948      0.090     0.769 -0.800 -0.271
+    with>+1.0      3359      0.069     0.556 -0.203  0.587
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.40c  m5  -0.19c  vol kept 1.00  (all trades m30 -0.40c)
+    slow, R=420 ms             m30  -0.46c  m5  -0.19c  vol kept 0.93  (all trades m30 -0.40c)
+    Dublin/London, R=130 ms    m30  -0.31c  m5  -0.08c  vol kept 0.91  (all trades m30 -0.40c)
+    oracle, R=0 (impossible)   m30  -0.33c  m5  -0.08c  vol kept 0.91  (all trades m30 -0.40c)
+
+################ run5snap
+# /tmp/claude-0/-home-user-Polymarket-bot/1b5ec7fd-3b16-54a6-a4fb-1df868ca6274/scratchpad/live/run5_snap  binance source: aggTrade E  thr 1.0 bp
+
+#### btc
+trades 9408, shares 244193
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.44, 'm1': 0.06, 'm5': 0.17, 'm30': -0.01}
+  Binance move (bp, signed with taker) in window 'late':
+                     n  share_vol  spread_c   m5_c   m30_c
+    b                                                     
+    against<-1.0    15      0.003     0.862 -3.255 -15.499
+    small-          77      0.010     1.106  4.549   4.584
+    flat          9037      0.966     0.437  0.209   0.081
+    small+         253      0.018     0.074 -3.603  -4.811
+    with>+1.0       26      0.003    -0.304 -0.526  -2.659
+  Binance move (bp, signed with taker) in window 'colo':
+                     n  share_vol  spread_c    m5_c   m30_c
+    b                                                      
+    against<-1.0     5       0.00     0.695 -10.968 -23.188
+    small-          88       0.01     1.383   4.026   5.229
+    flat          8612       0.94     0.438   0.208   0.079
+    small+         521       0.04     0.221  -1.366  -2.470
+    with>+1.0      182       0.01     0.259  -0.239  -3.014
+  Binance move (bp, signed with taker) in window 'early':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0   247      0.027     0.319  0.075 -2.735
+    small-         466      0.059     0.592 -1.767 -3.006
+    flat          7423      0.822     0.429  0.423  0.374
+    small+         765      0.060     0.356 -0.217 -0.594
+    with>+1.0      507      0.031     0.600 -1.872 -1.003
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.01c  m5   0.17c  vol kept 1.00  (all trades m30 -0.01c)
+    slow, R=420 ms             m30   0.02c  m5   0.24c  vol kept 0.97  (all trades m30 -0.01c)
+    Dublin/London, R=130 ms    m30   0.07c  m5   0.26c  vol kept 0.95  (all trades m30 -0.01c)
+    oracle, R=0 (impossible)   m30   0.07c  m5   0.25c  vol kept 0.95  (all trades m30 -0.01c)
+
+#### eth
+trades 902, shares 12200
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.29, 'm1': -0.38, 'm5': -0.19, 'm30': -0.6}
+  Binance move (bp, signed with taker) in window 'late':
+                    n  share_vol  spread_c   m5_c   m30_c
+    b                                                    
+    against<-1.0    4      0.002     0.776 -0.486  -2.210
+    small-         14      0.011     0.490 -1.745  -4.569
+    flat          842      0.957     0.316 -0.065  -0.416
+    small+         32      0.025    -0.605 -2.696  -3.171
+    with>+1.0      10      0.004    -1.013 -9.048 -14.148
+  Binance move (bp, signed with taker) in window 'colo':
+                    n  share_vol  spread_c   m5_c  m30_c
+    b                                                   
+    against<-1.0    6      0.006     0.910  4.398  6.384
+    small-          8      0.007     0.620 -3.219 -4.994
+    flat          758      0.866     0.291 -0.201 -0.840
+    small+         64      0.066    -0.040  0.056 -0.388
+    with>+1.0      66      0.054     0.553 -0.432  2.743
+  Binance move (bp, signed with taker) in window 'early':
+                    n  share_vol  spread_c   m5_c   m30_c
+    b                                                    
+    against<-1.0   49      0.048     0.118 -5.662 -11.112
+    small-         47      0.055     0.355  0.249   0.531
+    flat          658      0.768     0.291 -0.135  -0.970
+    small+         70      0.079     0.487  0.230   5.014
+    with>+1.0      78      0.049     0.040  3.145   5.139
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30  -0.60c  m5  -0.19c  vol kept 1.00  (all trades m30 -0.60c)
+    slow, R=420 ms             m30  -0.87c  m5  -0.37c  vol kept 0.95  (all trades m30 -0.60c)
+    Dublin/London, R=130 ms    m30  -0.91c  m5  -0.31c  vol kept 0.90  (all trades m30 -0.60c)
+    oracle, R=0 (impossible)   m30  -0.91c  m5  -0.31c  vol kept 0.90  (all trades m30 -0.60c)
+
+#### sol
+trades 471, shares 6786
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.58, 'm1': 0.22, 'm5': 0.99, 'm30': 2.2}
+  Binance move (bp, signed with taker) in window 'late':
+                    n  share_vol  spread_c   m5_c  m30_c
+    b                                                   
+    against<-1.0   22      0.056     1.030  3.287  7.722
+    flat          412      0.885     0.576  0.950  2.133
+    with>+1.0      37      0.059     0.248 -0.606 -2.316
+  Binance move (bp, signed with taker) in window 'colo':
+                    n  share_vol  spread_c   m5_c   m30_c
+    b                                                    
+    against<-1.0   28      0.044     0.793  1.040   0.504
+    flat          388      0.852     0.560  0.117   1.153
+    with>+1.0      55      0.104     0.676  8.132  11.137
+  Binance move (bp, signed with taker) in window 'early':
+                    n  share_vol  spread_c   m5_c  m30_c
+    b                                                   
+    against<-1.0   85      0.213     0.682  4.041  7.523
+    flat          265      0.563     0.540 -0.054  0.197
+    with>+1.0     121      0.224     0.594  0.717  1.901
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30   2.20c  m5   0.99c  vol kept 1.00  (all trades m30 2.20c)
+    slow, R=420 ms             m30   2.41c  m5   1.07c  vol kept 0.77  (all trades m30 2.20c)
+    Dublin/London, R=130 ms    m30   1.42c  m5   0.06c  vol kept 0.68  (all trades m30 2.20c)
+    oracle, R=0 (impossible)   m30   1.45c  m5   0.05c  vol kept 0.66  (all trades m30 2.20c)
+
+#### pooled
+trades 10781, shares 263180
+size-weighted maker PnL per share (cents): spread vs pre-trade mid, markout at 1/5/30 s
+  all: {'spread': 0.43, 'm1': 0.05, 'm5': 0.18, 'm30': 0.01}
+  Binance move (bp, signed with taker) in window 'late':
+                      n  share_vol  spread_c   m5_c  m30_c
+    b                                                     
+    against<-1.0     41      0.004     0.917 -0.984 -7.816
+    small-           91      0.010     1.075  4.227  4.116
+    flat          10291      0.964     0.435  0.214  0.103
+    small+          285      0.018     0.029 -3.542 -4.702
+    with>+1.0        73      0.004    -0.132 -0.979 -3.147
+  Binance move (bp, signed with taker) in window 'colo':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0    39      0.002     0.791 -0.895 -3.691
+    small-          96      0.010     1.356  3.771  4.869
+    flat          9758      0.934     0.434  0.188  0.063
+    small+         585      0.040     0.201 -1.257 -2.310
+    with>+1.0      303      0.015     0.385  1.244  0.462
+  Binance move (bp, signed with taker) in window 'early':
+                     n  share_vol  spread_c   m5_c  m30_c
+    b                                                    
+    against<-1.0   381      0.033     0.365  0.341 -1.672
+    small-         513      0.057     0.582 -1.679 -2.850
+    flat          8346      0.813     0.425  0.390  0.313
+    small+         835      0.059     0.364 -0.189 -0.246
+    with>+1.0      706      0.037     0.564 -1.159 -0.184
+  maker that pulls the threatened side after a Binance move > 1.0 bp it can see in time (PnL per share at 30 s, cents; volume kept):
+    no reaction                m30   0.01c  m5   0.18c  vol kept 1.00  (all trades m30 0.01c)
+    slow, R=420 ms             m30   0.03c  m5   0.23c  vol kept 0.96  (all trades m30 0.01c)
+    Dublin/London, R=130 ms    m30   0.05c  m5   0.23c  vol kept 0.94  (all trades m30 0.01c)
+    oracle, R=0 (impossible)   m30   0.05c  m5   0.22c  vol kept 0.94  (all trades m30 0.01c)
