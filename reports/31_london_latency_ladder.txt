@@ -1,0 +1,73 @@
+# London profile + control profiles (here_fast, tokyo); scripts/latency_study.py --bn-stale-off on run3, run4, run5_snap2
+
+## london
+       rec     strategy profile  windows  fills    pnl  rebate    cost     t  worst    roi
+      run3       v3_mid  london        2      3 -0.675   0.078  17.070   NaN -5.265 -0.040
+      run3       mid_h2  london        9     13 12.590   0.290  60.757 2.242 -1.031  0.207
+      run3       mid_h1  london       18     27 20.896   0.629 111.791 2.403 -2.971  0.187
+      run3 mid_h2_touch  london       18     38  3.752   0.863 144.168 0.608 -1.726  0.026
+      run3 mid_h1_touch  london       41    117 23.744   2.117 343.076 1.388 -4.366  0.069
+      run4       v3_mid  london        4      5  4.716   0.114  27.159 2.396  0.164  0.174
+      run4       mid_h2  london        5      7  4.908   0.176  33.220 2.049 -0.036  0.148
+      run4       mid_h1  london       11     25 33.602   0.509  94.529 1.881 -1.414  0.355
+      run4 mid_h2_touch  london       11     31 19.334   0.606 108.170 1.637 -1.316  0.179
+      run4 mid_h1_touch  london       28     89 18.937   1.701 281.343 1.504 -3.217  0.067
+run5_snap2       v3_mid  london        4      6  2.478   0.178  27.700 0.787 -1.386  0.089
+run5_snap2       mid_h2  london        8     16  0.053   0.411  68.691 0.014 -2.540  0.001
+run5_snap2       mid_h1  london       15     27 21.882   0.635 115.097 1.358 -5.898  0.190
+run5_snap2 mid_h2_touch  london       15     38 11.898   0.774 123.335 1.403 -2.540  0.096
+run5_snap2 mid_h1_touch  london       25     83 31.965   1.621 250.713 2.164 -1.868  0.127
+
+TOTAL over recordings:
+                      windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                
+mid_h1       london        44     79  76.380  321.417   1.773  0.238
+mid_h1_touch london        94    289  74.646  875.132   5.440  0.085
+mid_h2       london        22     36  17.550  162.669   0.876  0.108
+mid_h2_touch london        44    107  34.984  375.674   2.243  0.093
+v3_mid       london        10     14   6.519   71.930   0.370  0.091
+
+## here_fast / tokyo (controls)
+       rec     strategy   profile  windows  fills     pnl  rebate    cost      t   worst    roi
+      run3       mid_h1 here_fast       22     51  28.082   1.012 171.931  2.807  -2.971  0.163
+      run3       mid_h1     tokyo       17     42  18.839   0.778 141.677  1.135  -6.870  0.133
+      run3 mid_h1_touch here_fast       27     99   1.354   1.705 282.028  0.076 -11.683  0.005
+      run3 mid_h1_touch     tokyo       20     76  34.112   1.271 194.726  1.414 -10.831  0.175
+      run4       mid_h1 here_fast       14     42 -17.993   0.749 128.372 -1.168  -8.631 -0.140
+      run4       mid_h1     tokyo       16     50 -11.162   0.900 155.199 -0.643  -8.640 -0.072
+      run4 mid_h1_touch here_fast       27     90 -21.741   1.621 278.559 -1.592  -6.665 -0.078
+      run4 mid_h1_touch     tokyo       24     79 -12.664   1.372 229.158 -0.731  -9.031 -0.055
+run5_snap2       mid_h1 here_fast       21     53  -8.955   1.086 177.161 -0.719  -7.235 -0.051
+run5_snap2       mid_h1     tokyo       25     71  -8.357   1.369 226.825 -0.645  -5.039 -0.037
+run5_snap2 mid_h1_touch here_fast       28     90  15.729   1.745 260.655  0.856  -5.581  0.060
+run5_snap2 mid_h1_touch     tokyo       30     99  13.178   1.880 283.984  0.715  -5.265  0.046
+
+TOTAL over recordings:
+                        windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                  
+mid_h1       here_fast       57    146   1.134  477.464   2.847  0.002
+             tokyo           58    163  -0.680  523.701   3.046 -0.001
+mid_h1_touch here_fast       82    279  -4.658  821.242   5.071 -0.006
+             tokyo           74    254  34.626  707.867   4.523  0.049
+
+## all profiles, summed over the 3 recordings (t = per-window over all windows)
+    strategy   profile  recs  pnl  fills     t  pos_recs  run3  run4  run5_snap2
+      mid_h1 here_slow     3  7.7    172  0.29         2  12.0 -15.8        11.5
+      mid_h1 here_fast     3  1.1    146  0.05         1  28.1 -18.0        -9.0
+      mid_h1     tokyo     3 -0.7    163 -0.02         1  18.8 -11.2        -8.4
+      mid_h1    dublin     3 25.3     96  1.16         3  14.9   1.2         9.2
+      mid_h1    london     3 76.4     79  3.01         3  20.9  33.6        21.9
+mid_h1_touch here_slow     3 -2.1    258 -0.06         1  27.2 -25.6        -3.7
+mid_h1_touch here_fast     3 -4.7    279 -0.16         2   1.4 -21.7        15.7
+mid_h1_touch     tokyo     3 34.6    254  0.98         2  34.1 -12.7        13.2
+mid_h1_touch    dublin     3 74.9    303  2.80         3  34.0   3.9        37.0
+mid_h1_touch    london     3 74.6    289  2.90         3  23.7  18.9        32.0
+      mid_h2 here_slow     3 -2.8    134 -0.10         1   7.3  -8.7        -1.4
+      mid_h2    dublin     3  7.4     52  0.64         2  15.8   4.0       -12.4
+      mid_h2    london     3 17.6     36  2.34         3  12.6   4.9         0.1
+mid_h2_touch here_slow     3  6.8    201  0.26         2  -4.4   0.2        11.0
+mid_h2_touch    dublin     3 43.4    140  2.26         3  10.0  13.0        20.4
+mid_h2_touch    london     3 35.0    107  2.20         3   3.8  19.3        11.9
+      v3_mid here_slow     3  1.3    124  0.05         1  25.9  -3.2       -21.4
+      v3_mid    dublin     3 16.7     22  1.50         2  11.8   5.5        -0.6
+      v3_mid    london     3  6.5     14  0.79         2  -0.7   4.7         2.5
