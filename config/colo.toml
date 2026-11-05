@@ -1,11 +1,11 @@
 # 5m maker for a server next to Polymarket (AWS eu-west-1 Dublin, or co-located eu-west-2 London). PAPER.
-# Same quoting as v3 (3c around the book mid, model as guard) with fast reaction: 50 ms ticks and an immediate
+# v3 logic (quotes around the book mid, model as guard) but 1c from mid instead of 3c, with fast reaction: 50 ms ticks and an immediate
 # re-decision whenever Binance moves > 1 sigma(1s). See reports/25_latency_study_maker.txt and reports/29_colocation_5m.md.
 journal_dir = "data/journal-colo"
 
 [strategy]
 assets = ["btc", "eth", "sol"]
-half_spread = 0.03
+half_spread = 0.01            # 1c from the book mid: best of the colo replays (reports/30); NEVER on a slow server
 model_weight = 0.0
 quote_size = 10
 join_only = true

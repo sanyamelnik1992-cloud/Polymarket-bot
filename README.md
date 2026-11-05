@@ -9,6 +9,11 @@
 
 ## TL;DR
 
+> **Обновление 5 ноября:** 5-минутки и сервер рядом с Polymarket — **[reports/29_colocation_5m.md](reports/29_colocation_5m.md)**.
+> Матчинг в AWS eu-west-2 (Лондон), берём eu-west-1 (Дублин). Тейкер на 5m убыточен из любой точки. Мейкер на медленном
+> сервере ≈ 0. Тот же мейкер с реакцией ~125 мс и котировкой в 1¢ от середины даёт в replay +$25…+$75 за ~5 часов
+> (плюс на 3 из 3 записей). Следующий шаг — paper в Дублине (`config/colo.toml`); доказательства пока только из replay.
+>
 > **Обновление 4 ноября, вечер:** полный обзор секторов и готовые к серверу стратегии — в **[STRATEGIES.md](STRATEGIES.md)**,
 > запуск — в **[RUNBOOK.md](RUNBOOK.md)**. Коротко:
 > - **Часовые крипто-рынки BTC/ETH** (резолюция по Binance — без проблемы базиса): тейкер в последние 30 минут при edge ≥ 8¢.
@@ -398,4 +403,6 @@ python -m pmbot.arb_scanner data/arb 120 0.005                   # paper-ска�
 ## Источники
 
 - Документация Polymarket: <https://docs.polymarket.com> (fees, maker rebates, market making, rate limits, geoblock, changelog)
+- Polymarket, геоограничения и расположение серверов (eu-west-2, колокация через KYC): <https://docs.polymarket.com/developers/CLOB/geoblock>
+- Bitquery, «Racing the oracle: Polymarket's 26-second arbitrage»: <https://bitquery.io/investigations/polymarket-oracle-race>
 - Bitquery, «Polymarket five-minute casino» (on-chain, 679 млн сделок): <https://www.bitquery.io/investigations/polymarket-five-minute-casino>

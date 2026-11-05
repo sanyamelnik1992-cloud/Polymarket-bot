@@ -10,7 +10,9 @@ StartLimitBurst=5
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# PAPER by default. For live: --config config/live.toml --live  (and PMBOT_LIVE_CONFIRM in the env file)
+# PAPER by default. On a server next to Polymarket (AWS eu-west-1 Dublin / co-located eu-west-2) use
+# --config config/colo.toml (50 ms ticks + immediate re-quote on Binance moves; reports/29_colocation_5m.md).
+# For live: --config config/live.toml --live  (and PMBOT_LIVE_CONFIRM in the env file)
 ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/paper_v3.toml
 Restart=on-failure
 RestartSec=30

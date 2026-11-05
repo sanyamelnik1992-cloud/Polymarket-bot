@@ -19,6 +19,19 @@ sudo systemctl start pmbot-hourly pmbot-5m pmbot-recorder   # всё в PAPER-р
 journalctl -u pmbot-hourly -f                # живой лог
 ```
 
+### Сервер рядом с Polymarket (для 5m)
+
+Матчинг — AWS eu-west-2 (Лондон). Берём **eu-west-1 (Дублин)**: Ирландия ограничена только на сайте, API открыт.
+Обычный VPS в Великобритании — close-only. Сервер не меняет требования к юрисдикции владельца аккаунта.
+```bash
+.venv/bin/python scripts/latency_probe.py 120   # цель: CLOB REST RTT < 15 мс, CLOB ws < 10 мс, Binance ~110–120 мс
+# 5m на быстром сервере: в /etc/systemd/system/pmbot-5m.service заменить config/paper_v3.toml на config/colo.toml
+sudo systemctl daemon-reload && sudo systemctl restart pmbot-5m
+```
+Почему именно так и чего ждать — `reports/29_colocation_5m.md`. Коротко: в replay быстрый мейкер с котировкой в 1¢
+от середины в плюсе на всех трёх записях, медленный — около нуля. Тейкер на 5m убыточен из любой точки.
+`config/colo.toml` котирует на 1¢ от середины — **на медленном сервере его не запускать**.
+
 Отчёты:
 ```bash
 .venv/bin/python scripts/report_journal.py data/journal/<run>/          # 5m
@@ -84,7 +97,7 @@ Kill-файл `STOP`. systemd: `Restart=on-failure`, но не больше 5 р
 | Рестарт после убытков | дневной PnL и kill switch на диске; лимит рестартов systemd |
 | Серия неудач | дневной стоп, пауза после серии убытков, kill-файл |
 | Обрыв данных | фильтры свежести → снятие котировок или пропуск сигналов |
-| Высокая задержка сервера | replay: при 300 мс вместо 150 мс 5m-стратегия уходит в −40%; preflight показывает задержки |
+| Высокая задержка сервера | сервер в Дублине (eu-west-1), `latency_probe.py`; replay: при 300 мс вместо 150 мс 5m-стратегия уходит в −40% |
 | Конкуренция за те же сделки (в paper её нет) | маленький старт, сверка live-исполнения с paper |
 | Ошибка в коде | 42 юнит-теста, paper по умолчанию, лимиты в $ на всё |
 

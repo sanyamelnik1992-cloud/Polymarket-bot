@@ -1,0 +1,79 @@
+# Tighter quotes vs location (scripts/latency_study.py --bn-stale-off), profiles here_slow (reaction ~420 ms) vs dublin (~125 ms)
+# mid_hN = v3 quoting N cents from the book mid; *_touch = fill when a print hits our price (front-of-queue upper bound)
+
+## run3 + run4 (Nov 4, used before for design)
+ rec     strategy   profile  windows  fills     pnl  rebate    cost      t   worst    roi
+run3       v3_mid here_slow       13     32  25.947   0.568 106.273  1.535  -9.905  0.244
+run3       v3_mid    dublin        4      5  11.790   0.144  24.670  1.076  -5.165  0.478
+run3       mid_h2 here_slow       19     53   7.311   0.863 148.260  0.465  -8.931  0.049
+run3       mid_h2    dublin       10     16  15.838   0.401  77.621  2.381  -0.931  0.204
+run3       mid_h1 here_slow       20     49  12.001   0.865 149.394  0.881  -6.870  0.080
+run3       mid_h1    dublin       21     30  14.906   0.680 120.832  1.281  -5.265  0.123
+run3 mid_h2_touch here_slow       23     66  -4.431   1.103 185.921 -0.362  -6.890 -0.024
+run3 mid_h2_touch    dublin       23     47   9.986   1.022 180.093  1.214  -2.271  0.055
+run3 mid_h1_touch here_slow       23     84  27.150   1.330 210.046  1.223 -10.831  0.129
+run3 mid_h1_touch    dublin       45    127  34.031   2.332 382.251  2.045  -3.396  0.089
+run4       v3_mid here_slow       17     44  -3.204   0.777 132.806 -0.217  -5.826 -0.024
+run4       v3_mid    dublin        5      7   5.471   0.169  36.460  2.803   0.164  0.150
+run4       mid_h2 here_slow       12     40  -8.739   0.709 118.835 -0.435  -9.344 -0.074
+run4       mid_h2    dublin        7     12   3.956   0.320  54.316  0.896  -2.550  0.073
+run4       mid_h1 here_slow       16     57 -15.773   0.960 168.923 -1.122  -8.552 -0.093
+run4       mid_h1    dublin       14     33   1.208   0.709 128.124  0.109  -4.782  0.009
+run4 mid_h2_touch here_slow       20     64   0.226   1.130 190.422  0.015  -4.588  0.001
+run4 mid_h2_touch    dublin       14     41  13.009   0.859 146.104  1.037  -2.758  0.089
+run4 mid_h1_touch here_slow       25     84 -25.552   1.496 261.426 -1.562  -9.031 -0.098
+run4 mid_h1_touch    dublin       30     93   3.852   1.786 298.898  0.276  -4.470  0.013
+
+TOTAL over recordings:
+                        windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                  
+mid_h1       dublin          35     63  16.114  248.956   1.389  0.065
+             here_slow       36    106  -3.772  318.316   1.825 -0.012
+mid_h1_touch dublin          75    220  37.883  681.149   4.118  0.056
+             here_slow       48    168   1.599  471.471   2.826  0.003
+mid_h2       dublin          17     28  19.794  131.937   0.721  0.150
+             here_slow       31     93  -1.428  267.094   1.572 -0.005
+mid_h2_touch dublin          37     88  22.996  326.197   1.881  0.070
+             here_slow       43    130  -4.205  376.343   2.233 -0.011
+v3_mid       dublin           9     12  17.262   61.130   0.313  0.282
+             here_slow       30     76  22.742  239.079   1.345  0.095
+
+## run5 (Nov 5 10:31-11:27, fresh recording, never looked at before)
+       rec     strategy   profile  windows  fills     pnl  rebate    cost      t  worst    roi
+run5_snap2       v3_mid here_slow       18     48 -21.447   0.934 169.765 -1.955 -5.985 -0.126
+run5_snap2       v3_mid    dublin        5     10  -0.555   0.253  35.964 -0.372 -1.210 -0.015
+run5_snap2       mid_h2 here_slow       14     41  -1.383   0.741 131.496 -0.095 -4.958 -0.011
+run5_snap2       mid_h2    dublin       10     24 -12.414   0.465  80.780 -2.087 -4.810 -0.154
+run5_snap2       mid_h1 here_slow       21     66  11.506   1.243 203.143  0.655 -5.402  0.057
+run5_snap2       mid_h1    dublin       17     33   9.156   0.741 128.929  0.595 -8.814  0.071
+run5_snap2 mid_h2_touch here_slow       21     71  11.016   1.292 210.904  0.609 -5.253  0.052
+run5_snap2 mid_h2_touch    dublin       18     52  20.435   0.969 159.994  1.644 -2.971  0.128
+run5_snap2 mid_h1_touch here_slow       25     90  -3.717   1.585 235.901 -0.187 -6.584 -0.016
+run5_snap2 mid_h1_touch    dublin       23     83  36.976   1.544 243.123  2.452 -1.897  0.152
+
+TOTAL over recordings:
+                        windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                  
+mid_h1       dublin          17     33   9.156  128.929   0.741  0.071
+             here_slow       21     66  11.506  203.143   1.243  0.057
+mid_h1_touch dublin          23     83  36.976  243.123   1.544  0.152
+             here_slow       25     90  -3.717  235.901   1.585 -0.016
+mid_h2       dublin          10     24 -12.414   80.780   0.465 -0.154
+             here_slow       14     41  -1.383  131.496   0.741 -0.011
+mid_h2_touch dublin          18     52  20.435  159.994   0.969  0.128
+             here_slow       21     71  11.016  210.904   1.292  0.052
+v3_mid       dublin           5     10  -0.555   35.964   0.253 -0.015
+             here_slow       18     48 -21.447  169.765   0.934 -0.126
+
+## pooled per-window stats, all three recordings (~5 h)
+strategy       profile     win     pnl   mean     t %win>0
+mid_h1         dublin       52   25.27   0.49  1.16   0.52
+mid_h1         here_slow    57    7.73   0.14  0.29   0.46
+mid_h1_touch   dublin       98   74.86   0.76  2.80   0.56
+mid_h1_touch   here_slow    73   -2.12  -0.03 -0.06   0.42
+mid_h2         dublin       27    7.38   0.27  0.64   0.56
+mid_h2         here_slow    45   -2.81  -0.06 -0.10   0.49
+mid_h2_touch   dublin       55   43.43   0.79  2.26   0.58
+mid_h2_touch   here_slow    64    6.81   0.11  0.26   0.44
+v3_mid         dublin       14   16.71   1.19  1.50   0.79
+v3_mid         here_slow    48    1.30   0.03  0.05   0.40
