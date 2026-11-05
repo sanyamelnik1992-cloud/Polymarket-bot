@@ -1,0 +1,129 @@
+# Liquidity rewards farming estimate (scripts/rewards_scan.py, top 1500 pools by rate, Nov 5 ~12:45 UTC)
+# Snapshot upper bound: one moment, competitors merged into one, many pools opened Nov 2-5.
+
+rewarded markets: 13473, pools total $167,798/day
+priced 1466 markets (quote 1.0c from adjusted mid, size = max(min_size, 0.0))
+after dropping markets ending within 2 days / awaiting resolution: 957
+
+Top by daily net yield on capital:
+                                                                                  question  rate  v_c  size  fair  book_spread  comp_Q  share  reward_day  capital  chg_1d  net_day  net_yield  days_left
+                                Will South African inflation be greater than 5.0% in 2026? 139.0  4.5  20.0 0.518        0.189     0.0  1.000     139.000    19.58   0.128  136.650      6.979     76.672
+                                      Will GPT Astra 6.1+ be released on November 5, 2026? 131.0  4.5  20.0 0.220        0.260     0.0  1.000     131.000    19.60   0.110  129.000      6.582     25.672
+              Will the Bank of Russia make no change to the key rate at the March meeting? 118.0  4.5  20.0 0.480        0.290     0.0  1.000     118.000    19.60   0.030  117.600      6.000    134.463
+                                      Will GPT Astra 6.1+ be released on November 6, 2026? 223.0  4.5  20.0 0.355        0.040     8.2  0.519     115.804    19.40   0.230  111.404      5.742     25.672
+                    Will "Black Doves: Season 2" be the top global Netflix show this week? 100.0  4.5  20.0 0.495        0.930     0.0  1.000     100.000    19.40   0.000  100.000      5.155      5.672
+                                                 Will US gas hit $4.15 (High) in November? 100.0  6.5  20.0 0.460        0.890     0.0  1.000     100.000    19.60   0.000  100.000      5.102     25.089
+        Will the median home value in NYC be between $445,000 and $458,000 on December 31? 103.0  4.5  20.0 0.425        0.590     0.0  1.000     103.000    19.40   0.235   98.500      5.077     66.672
+Will "Housewife - Tate McRae" be the Billboard Hot 100 #2 song for the week of November 14 100.0  4.5  20.0 0.745        0.210     0.0  1.000     100.000    19.60   0.222   95.750      4.885      5.672
+           Will Canada's GDP growth rate MoM in September 2026 be between -0.2% and -0.1%?  97.0  4.5  20.0 0.640        0.100     0.0  1.000      97.000    19.60   0.225   92.700      4.730     24.985
+                          245-249 votes for Hakeem Jeffries to be Speaker on first ballot?  86.0  4.5  20.0 0.390        0.560     0.0  1.000      86.000    19.60   0.000   86.000      4.388     59.672
+                                     Will GPT Astra 6.1+ be released on November 10, 2026?  85.0  4.5  20.0 0.156        0.165     0.0  1.000      85.000    19.58   0.040   84.390      4.310     25.672
+                     244 or fewer votes for Hakeem Jeffries to be Speaker on first ballot?  81.0  4.5  20.0 0.360        0.590     0.0  1.000      81.000    19.60   0.000   81.000      4.133     59.672
+                                Will South Korea’s 2026 Annual Inflation be at least 3.0%?  75.0  4.5  20.0 0.318        0.218     0.0  1.000      75.000    19.58   0.062   73.960      3.777     56.672
+             Will the Ornn RTX 6000 Index be between $1.50 and $1.75 on December 31, 2026?  73.0  6.5  20.0 0.390        0.400     0.0  1.000      73.000    19.60   0.040   72.400      3.694     56.672
+             Will the Ornn RTX 6000 Index be between $1.25 and $1.50 on December 31, 2026?  73.0  6.5  20.0 0.385        0.410     0.0  1.000      73.000    19.40   0.130   70.600      3.639     56.672
+                      280 or more votes for Hakeem Jeffries to be Speaker on first ballot?  71.0  4.5  20.0 0.323        0.598     0.0  1.000      71.000    19.60   0.000   71.000      3.622     59.672
+                   Will the median home value in NYC be less than $445,000 on December 31?  70.0  4.5  20.0 0.306        0.131     0.0  1.000      70.000    19.58   0.065   68.900      3.519     66.672
+                          250-254 votes for Hakeem Jeffries to be Speaker on first ballot?  68.0  4.5  20.0 0.315        0.570     0.0  1.000      68.000    19.40   0.000   68.000      3.505     59.672
+                 Will the Ornn H200 Index be between $6.50 and $7.00 on December 31, 2026?  68.0  6.5  20.0 0.218        0.312     0.0  1.000      68.000    19.58   0.020   67.810      3.463     56.672
+                          265-269 votes for Hakeem Jeffries to be Speaker on first ballot?  66.0  4.5  20.0 0.303        0.602     0.0  1.000      66.000    19.60   0.000   66.000      3.367     59.672
+                 Will the Ornn A100 Index be between $1.25 and $1.50 on December 31, 2026?  66.0  6.5  20.0 0.305        0.570     0.0  1.000      66.000    19.40   0.130   63.600      3.278     56.672
+   Will the Swiss National Bank make no change to the SNB policy rate at the June meeting?  63.0  4.5  20.0 0.335        0.250     0.0  1.000      63.000    19.40   0.035   62.500      3.222    231.463
+                          260-264 votes for Hakeem Jeffries to be Speaker on first ballot?  63.0  4.5  20.0 0.310        0.580     0.0  1.000      63.000    19.60   0.000   63.000      3.214     59.672
+                Will the Ornn B200 Index be between $9.50 and $10.00 on December 31, 2026?  62.0  6.5  20.0 0.370        0.300     0.0  1.000      62.000    19.60   0.020   61.800      3.153     56.672
+         Will the Bank of England make no change to the Bank Rate at the February meeting?  65.0  4.5  20.0 0.160        0.280     0.0  1.000      65.000    19.60   0.205   61.100      3.117     91.463
+                               Walmart (WMT) Q3 US comp sales (ex-fuel) growth 2.5% to 4%?  61.0  6.5  20.0 0.435        0.370     0.0  1.000      61.000    19.40   0.085   59.500      3.067     14.068
+                          255-259 votes for Hakeem Jeffries to be Speaker on first ballot?  58.0  4.5  20.0 0.285        0.430     0.0  1.000      58.000    19.40   0.000   58.000      2.990     59.672
+                             Will UK annual inflation be between 3.7% and 3.9% in October?  58.0  4.5  20.0 0.505        0.520     0.0  1.000      58.000    19.40   0.015   57.900      2.985     12.963
+        Will the Bank of England increase the Bank Rate by 25 bps at the February meeting? 135.0  4.5  20.0 0.715        0.050    11.9  0.429      57.857    19.40   0.095   56.157      2.895     91.463
+                                                    Will Team Spirit win 1win Essence III?  56.0  4.5  20.0 0.520        0.140     0.0  1.000      56.000    19.60   0.055   55.100      2.811     14.672
+
+Calm (|1d change| <= 2c) and > 7 days to resolution: 452 markets
+                                                                                 question  rate  v_c  size  fair  book_spread  comp_Q  share  reward_day  capital  chg_1d  net_day  net_yield  days_left
+                                                Will US gas hit $4.15 (High) in November? 100.0  6.5  20.0 0.460        0.890     0.0    1.0       100.0    19.60   0.000   100.00      5.102     25.089
+                         245-249 votes for Hakeem Jeffries to be Speaker on first ballot?  86.0  4.5  20.0 0.390        0.560     0.0    1.0        86.0    19.60   0.000    86.00      4.388     59.672
+                    244 or fewer votes for Hakeem Jeffries to be Speaker on first ballot?  81.0  4.5  20.0 0.360        0.590     0.0    1.0        81.0    19.60   0.000    81.00      4.133     59.672
+                     280 or more votes for Hakeem Jeffries to be Speaker on first ballot?  71.0  4.5  20.0 0.323        0.598     0.0    1.0        71.0    19.60   0.000    71.00      3.622     59.672
+                         250-254 votes for Hakeem Jeffries to be Speaker on first ballot?  68.0  4.5  20.0 0.315        0.570     0.0    1.0        68.0    19.40   0.000    68.00      3.505     59.672
+                Will the Ornn H200 Index be between $6.50 and $7.00 on December 31, 2026?  68.0  6.5  20.0 0.218        0.312     0.0    1.0        68.0    19.58   0.020    67.81      3.463     56.672
+                         265-269 votes for Hakeem Jeffries to be Speaker on first ballot?  66.0  4.5  20.0 0.303        0.602     0.0    1.0        66.0    19.60   0.000    66.00      3.367     59.672
+                         260-264 votes for Hakeem Jeffries to be Speaker on first ballot?  63.0  4.5  20.0 0.310        0.580     0.0    1.0        63.0    19.60   0.000    63.00      3.214     59.672
+               Will the Ornn B200 Index be between $9.50 and $10.00 on December 31, 2026?  62.0  6.5  20.0 0.370        0.300     0.0    1.0        62.0    19.60   0.020    61.80      3.153     56.672
+                         255-259 votes for Hakeem Jeffries to be Speaker on first ballot?  58.0  4.5  20.0 0.285        0.430     0.0    1.0        58.0    19.40   0.000    58.00      2.990     59.672
+                            Will UK annual inflation be between 3.7% and 3.9% in October?  58.0  4.5  20.0 0.505        0.520     0.0    1.0        58.0    19.40   0.015    57.90      2.985     12.963
+                                  Will the AP call the Alaska Senate race by November 30?  50.0  6.5  20.0 0.755        0.430     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+                                  Will OpenAI's valuation hit (LOW) $1.2T by November 30?  50.0  4.5  20.0 0.295        0.390     0.0    1.0        50.0    19.40   0.010    50.00      2.577     25.672
+        Will the highest recorded wind on Mt. Washington in November be at least 110 mph?  50.0  4.5  20.0 0.645        0.510     0.0    1.0        50.0    19.40   0.005    50.00      2.577     25.672
+                                  Will Kraken's valuation hit (LOW) $9.2B by November 30?  50.0  4.5  20.0 0.505        0.970     0.0    1.0        50.0    19.40   0.005    50.00      2.577     25.672
+                                 Will Anduril's valuation hit (LOW) $109B by November 30?  50.0  4.5  20.0 0.315        0.610     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+                      Will Donald Trump publicly insult Hasan Piker by November 30, 2026?  50.0  6.5  20.0 0.665        0.570     0.0    1.0        50.0    19.40   0.010    50.00      2.577     25.672
+                                Will Lambda's valuation hit (HIGH) $15.2B by November 30?  50.0  4.5  20.0 0.505        0.970     0.0    1.0        50.0    19.40   0.010    50.00      2.577     25.672
+                                  Will Canva's valuation hit (LOW) $28.5B by November 30?  50.0  4.5  20.0 0.225        0.430     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+                                 Will Stripe's valuation hit (HIGH) $194B by November 30?  50.0  4.5  20.0 0.285        0.490     0.0    1.0        50.0    19.40   0.010    50.00      2.577     25.672
+                            Will Perplexity's valuation hit (LOW) $20.25B by November 30?  50.0  4.5  20.0 0.595        0.570     0.0    1.0        50.0    19.40   0.005    50.00      2.577     25.672
+                           Will Perplexity's valuation hit (HIGH) $22.25B by November 30?  50.0  4.5  20.0 0.325        0.550     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+                                 Will Revolut's valuation hit (LOW) $116B by November 30?  50.0  4.5  20.0 0.305        0.420     0.0    1.0        50.0    19.40   0.005    50.00      2.577     25.672
+                              Will Neuralink's valuation hit (LOW) $51.5B by November 30?  50.0  4.5  20.0 0.255        0.490     0.0    1.0        50.0    19.40   0.005    50.00      2.577     25.672
+                                Will Revolut's valuation hit (HIGH) $127B by November 30?  50.0  4.5  20.0 0.255        0.490     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+                              Will Epic Games' valuation hit (HIGH) $7.4B by November 30?  50.0  4.5  20.0 0.685        0.570     0.0    1.0        50.0    19.40   0.005    50.00      2.577     25.672
+                             Will Databricks' valuation hit (LOW) $187.5B by November 30?  50.0  4.5  20.0 0.235        0.450     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+                     Will Minnesota Lynx advance to the Finals in the 2027 WNBA Playoffs?  50.0  4.5  20.0 0.285        0.450     0.0    1.0        50.0    19.40   0.005    50.00      2.577    344.463
+Will the new Senate confirm a Trump Cabinet or federal judge nominee by January 31, 2027?  50.0  6.5  20.0 0.385        0.190     0.0    1.0        50.0    19.40   0.000    50.00      2.577    237.630
+                                 Will Lambda's valuation hit (LOW) $13.5B by November 30?  50.0  4.5  20.0 0.255        0.490     0.0    1.0        50.0    19.40   0.000    50.00      2.577     25.672
+all priced budget $   500:  25 markets, reward $ 2138.80/day, move-loss proxy $  35.14/day, net $ 2103.66/day (420.7%/day), median share 1.00
+all priced budget $  2000: 102 markets, reward $ 6045.66/day, move-loss proxy $  52.43/day, net $ 5993.23/day (299.7%/day), median share 1.00
+all priced budget $ 10000: 388 markets, reward $16839.52/day, move-loss proxy $ 477.94/day, net $16361.58/day (163.6%/day), median share 1.00
+calm       budget $   500:  25 markets, reward $ 1481.00/day, move-loss proxy $   0.49/day, net $ 1480.51/day (296.1%/day), median share 1.00
+calm       budget $  2000: 102 markets, reward $ 4988.77/day, move-loss proxy $   3.65/day, net $ 4985.12/day (249.3%/day), median share 1.00
+calm       budget $ 10000: 229 markets, reward $ 7032.66/day, move-loss proxy $  26.27/day, net $ 7006.39/day (70.1%/day), median share 1.00
+
+## competition stability: same 40 candidates re-scored every 2 min for 10 min (competitors' score D)
+sample 0 done 12:53:16
+sample 1 done 12:55:16
+sample 2 done 12:57:17
+sample 3 done 12:59:17
+sample 4 done 13:01:18
+sample 5 done 13:03:18
+k                                                                                                                0       1       2       3       4       5     min     max  first_scan  mid_range
+slug                                                                                                                                                                                             
+any-member-elect-blocked-from-being-sworn-in                                                                 238.2    86.9   148.6   145.7   187.4   190.8    86.9   238.2       238.2        0.0
+aocs-democratic-nomination-odds-dip-to-10-by-december-31                                                      73.7    61.8     0.7    36.3    53.8    59.9     0.7    73.7        73.7        0.1
+callum-turner-announced-as-next-james-bond-288                                                                37.9    37.9    37.9    37.7    32.6    32.6    32.6    37.9        32.8        0.0
+harriss-democratic-nomination-odds-hit-8-by-december-31                                                       97.3    67.2    37.7     9.7     9.7     9.7     9.7    97.3        97.3        0.0
+jd-vance-2028-presidential-odds-leader-on-november-30                                                        391.1   581.9   594.7   401.0   439.9   439.9   391.1   594.7       391.1        0.0
+jon-ossoff-democratic-nomination-odds-leader-on-november-30                                                  199.0   199.0   195.9   195.9   216.9   204.7   195.9   216.9       199.0        0.0
+netanyahu-out-by-june-30-2027                                                                                 32.3    90.2    83.1    84.6   137.1   110.7    32.3   137.1       142.0        0.0
+next-astra-model-6pt1-released-by-november-5-2026                                                              9.1    16.9    17.5    17.5    12.8    12.8     9.1    17.5        11.1        0.0
+next-astra-model-6pt1-released-by-november-6-2026                                                             75.7    96.5   140.8   209.0   121.6   112.5    75.7   209.0        59.7        0.0
+pete-hegseth-out-as-secretary-of-defense-by-december-31                                                     4308.1  3484.5  3445.3  3482.7  3533.6  3531.0  3445.3  4308.1      4334.1        0.0
+pete-hegseth-out-as-secretary-of-defense-by-october-31-20261001003401433                                    1326.3  1349.8  1395.1  1443.1  1443.1  2589.3  1326.3  2589.3      1431.9        0.0
+russia-x-ukraine-ceasefire-by-december-31-2027                                                                73.5    91.1    96.0   100.1   133.2   128.4    73.5   133.2        80.2        0.0
+us-imports-russian-diesel-by-march-31                                                                        392.0   358.0   407.9   407.2   381.5   421.2   358.0   421.2       272.8        0.0
+us-x-iran-effective-ceasefire-continues-through-november-15-20261103                                        3306.7  2497.6  2104.0  3614.0  3759.7  3883.7  2104.0  3883.7      2553.3        0.0
+will-alphabets-market-capitalization-be-less-than-3pt00t-at-the-end-of-2026-1785882876116                      9.0     8.9    27.4    28.1    20.9    10.9     8.9    28.1        10.1        0.0
+will-anthropic-sell-between-4pct-and-5pct-of-its-shares-in-its-ipo                                             1.5     8.0     1.5     2.0     2.0     2.0     1.5     8.0         2.7        0.0
+will-canadas-gdp-growth-rate-mom-in-september-2026-be-less-than-0pt2                                          11.6    35.5    42.0    42.0    49.3    24.3    11.6    49.3        11.6        0.0
+will-dune-part-three-opening-weekend-box-office-be-at-least-130m                                               2.0    16.8    14.0    24.6    28.5    34.5     2.0    34.5         1.5        0.0
+will-gemini-carbon-be-released-on-november-11-2026                                                           516.1   502.5   393.7   538.1   489.3   560.9   393.7   560.9       547.5        0.0
+will-gpt-astra-6pt1-be-released-on-november-6-2026                                                             9.1     9.1     9.1    18.1    18.1    27.2     9.1    27.2         8.2        0.0
+will-gpt-astra-6pt1-debut-at-a-score-of-at-least-1430-by-june-30-2027                                         96.6    96.6    96.6   113.5   141.4   184.2    96.6   184.2        56.2        0.0
+will-openais-valuation-hit-high-1pt37t-by-november-30-2026                                                     7.9     7.9     7.9     7.9     7.9     7.9     7.9     7.9        10.5        0.0
+will-predictfun-launch-a-token-by-november-15-2026-20261026105916511                                           4.6     5.3     3.3     3.3     3.3     5.1     3.3     5.3         9.7        0.0
+will-ron-desantis-announce-a-presidential-run-before-2027                                                      0.3     0.3     0.3     0.3     0.3     0.3     0.3     0.3         0.2        0.0
+will-ron-desantis-be-the-first-listed-republican-to-announce-a-run-for-president-in-2028-20260721150657427    10.4    14.8    10.2    10.2    10.2    10.2    10.2    14.8        10.4        0.0
+will-thailand-come-in-3rd-place-at-eurovision-asia-2026                                                       40.0    38.7    43.1    71.6    71.6    70.5    38.7    71.6        33.8        0.0
+will-the-10-year-treasury-yield-dip-below-4pt73-in-november                                                    0.1     0.1     0.0     0.0     0.0     0.0     0.0     0.1         0.1        0.0
+will-the-10-year-treasury-yield-dip-below-4pt76-in-november                                                    0.1     0.0     0.0     0.1     0.0     0.0     0.0     0.1         0.5        0.0
+will-the-2-year-treasury-yield-dip-below-4pt44-in-november                                                     0.0     0.0     0.0     0.9     0.9     0.5     0.0     0.9         0.5        0.0
+will-the-5-year-treasury-yield-dip-below-4pt56-in-november                                                     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0        12.4        0.3
+will-the-bank-of-england-increase-the-bank-rate-by-25-bps-at-the-february-2027-meeting                         7.9    11.9    11.9    11.9    11.9    11.9     7.9    11.9        11.9        0.0
+will-the-lowest-baton-rouge-river-level-be-6pt00-ft-or-more-by-november-30                                     4.5     4.5     5.7     6.0     6.0     6.0     4.5     6.0         3.7        0.0
+will-the-ornn-h100-index-hit-2pt25-low-by-december-31-2026-20260709170850330                                   1.8     1.4     2.2     3.2     4.0     5.7     1.4     5.7         2.7        0.1
+will-the-white-house-call-a-full-lid-by-630-pm-on-november-8-2026                                              0.4     0.4     0.4     0.4     0.4     0.4     0.4     0.4         0.4        0.0
+will-there-be-3-or-more-government-shutdowns-by-december-31-2027                                              13.7     5.0     5.0     5.0    13.7     7.9     5.0    13.7        19.3        0.0
+will-there-be-exactly-1-government-shutdown-by-december-31-2027                                              403.6   449.7   487.1   505.7   487.1   420.0   403.6   505.7       373.9        0.0
+will-ukraine-re-enter-uspenivka-by-december-31                                                                 0.7     0.7     0.7     4.9     0.7     6.7     0.7     6.7        11.4        0.1
+will-voter-turnout-be-between-78-and-80-in-the-2026-new-zealand-general-election                              29.0    29.0    44.1    59.5    58.9    61.3    29.0    61.3        29.0        0.0
+will-voter-turnout-be-between-80-and-82-in-the-2026-new-zealand-general-election                               4.8     8.1     9.5     9.5     8.6     8.8     4.8     9.5         3.9        0.0
+you-seem-pretty-sad-for-a-girl-so-in-love-olivia-rodrigo-billboard-200-1-album-week-of-november-14            13.8    13.8    29.3    44.4    44.1    41.7    13.8    44.4        10.5        0.0
+median ratio max/first: 1.4717909597898429
