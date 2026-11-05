@@ -33,8 +33,21 @@ class Engine:
         self.to_settle = {}       # window key -> Window (ended, has position)
         self.last_reasons = {}
         self._last_fv_log = {}
-        self.stats = {"placed": 0, "cancelled": 0, "fills": 0, "rejected_rate": 0}
+        self.stats = {"placed": 0, "cancelled": 0, "fills": 0, "rejected_rate": 0, "fast_wakes": 0}
         self._stop = False
+        self._wake = asyncio.Event()
+        self._decided_mid = {}            # asset -> Binance mid at the last decision
+        if cfg.execution.fast_react:
+            self.st.on_tick = self._maybe_wake
+
+    def _maybe_wake(self, asset):
+        """Wake the decision loop immediately when Binance moved enough since the last decision."""
+        px = self.st.prices[asset]
+        mid, ref, sig = px.bn_mid(), self._decided_mid.get(asset), px.sigma()
+        if mid and ref and sig and abs(mid / ref - 1) > self.cfg.execution.fast_move_sigmas * sig:
+            if not self._wake.is_set():
+                self.stats["fast_wakes"] += 1
+                self._wake.set()
 
     def alive(self):
         return not self._stop and (self.deadline is None or time.time() < self.deadline)
@@ -190,9 +203,13 @@ class Engine:
         tick = self.cfg.execution.tick_ms / 1000
         while self.alive():
             t0 = time.time()
+            self._wake.clear()
             if not await self.decide_once(self.clock()):
                 break
-            await asyncio.sleep(max(0.0, tick - (time.time() - t0)))
+            try:   # sleep until the next tick, or less if a fast Binance move wakes us
+                await asyncio.wait_for(self._wake.wait(), timeout=max(0.0, tick - (time.time() - t0)))
+            except asyncio.TimeoutError:
+                pass
 
     async def decide_once(self, now) -> bool:
         """One decision pass over all windows at time `now` (ms). Returns False when the bot must stop."""
@@ -205,6 +222,8 @@ class Engine:
                 self._stop = True
                 return False
         sc = self.cfg.strategy
+        for a in self.st.assets:
+            self._decided_mid[a] = self.st.prices[a].bn_mid()
         for w in list(self.st.windows.values()):
             if now / 1000 >= w.end:
                 for side in ("U", "D"):

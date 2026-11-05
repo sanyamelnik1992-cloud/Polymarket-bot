@@ -29,7 +29,7 @@ class Recorder:
         self.assets = list(assets)
         self.deadline = time.time() + duration_s
         self.files = {k: open(os.path.join(out_dir, f"{k}.jsonl"), "a", buffering=1 << 16)
-                      for k in ("clob", "chainlink", "binance", "markets")}
+                      for k in ("clob", "chainlink", "binance", "binance_trades", "markets")}
         self.known = {}          # slug -> parsed market
         self.tokmap = {}         # token id -> short key
         self.subscribed = {a: set() for a in self.assets}  # asset -> token ids
@@ -184,7 +184,8 @@ class Recorder:
                 await asyncio.sleep(2)
 
     async def binance_loop(self):
-        streams = "/".join(f"{BINANCE_SYMBOL[a].lower()}@bookTicker" for a in self.assets)
+        streams = "/".join(f"{BINANCE_SYMBOL[a].lower()}@bookTicker/{BINANCE_SYMBOL[a].lower()}@aggTrade"
+                           for a in self.assets)
         last = {}
         while self.alive:
             try:
@@ -193,6 +194,10 @@ class Recorder:
                         msg = await asyncio.wait_for(ws.recv(), timeout=30)
                         rx = now_ms()
                         d = json.loads(msg)["data"]
+                        if d.get("e") == "aggTrade":   # exchange timestamps (E) for latency-profile replays
+                            self.write("binance_trades", {"sym": d["s"], "p": float(d["p"]), "q": float(d["q"]),
+                                                          "E": d["E"], "T": d["T"], "rx": rx})
+                            continue
                         s = d["s"]
                         key = (d["b"], d["a"])
                         if last.get(s) == key:

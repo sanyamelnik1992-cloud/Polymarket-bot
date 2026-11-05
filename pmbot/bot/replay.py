@@ -4,6 +4,11 @@ Recorder files (pmbot/recorder.py): markets.jsonl, clob.jsonl (compact), chainli
 Events are merged by local receive time `rx`; the engine decides every `tick_ms` of simulated time.
 Strikes follow the live rules: Chainlink TWAP estimate once >= min_strike_seconds are present, the exact
 published priceToBeat from `exact_strikes` (if given) from start+90s.
+
+Latency profiles re-time every event as if the bot ran on another server: Polymarket events at their exchange
+timestamp + `pm` ms, Chainlink prints at oracle time + `cl` ms, Binance ticks at recorded rx + `bn_shift` ms
+(recorded here with ~71 ms from Tokyo), orders reach the exchange `order_ms` after the decision, and the engine
+decides every `tick_ms`. profile=None keeps the recorded receive times.
 """
 import asyncio
 import heapq
@@ -28,6 +33,55 @@ def _jsonl(path, kind):
                 yield (rx, kind, ev)
 
 
+HERE_BN_MS = 71       # measured one-way Binance (Tokyo) -> recording machine
+HERE_PM_MS = 50       # measured median CLOB engine ts -> recording machine
+PROFILES = {
+    # one-way latencies in ms; cl = Chainlink oracle ts -> receipt via RTDS (pipeline ~1.25 s, location-insensitive)
+    "here_slow": {"pm": None, "bn_shift": 0, "cl": None, "order_ms": 150, "tick_ms": 200},   # what we tested so far
+    "here_fast": {"pm": None, "bn_shift": 0, "cl": None, "order_ms": 50, "tick_ms": 50},
+    "dublin":    {"pm": 6, "bn_shift": 115 - HERE_BN_MS, "cl": 1260, "order_ms": 7, "tick_ms": 50},
+    "london":    {"pm": 1, "bn_shift": 108 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 50},
+    "tokyo":     {"pm": 105, "bn_shift": 2 - HERE_BN_MS, "cl": 1300, "order_ms": 106, "tick_ms": 50},
+}
+
+
+def _retime(gen, fn, window_ms=3000):
+    """Re-time a (rx, kind, ev) stream with fn(rx, ev) and restore order with a bounded reorder buffer."""
+    heap, seq = [], 0
+    for rx, kind, ev in gen:
+        t = fn(rx, ev)
+        heapq.heappush(heap, (t, seq, kind, ev))
+        seq += 1
+        while heap and heap[0][0] <= t - window_ms:
+            t0, _, k0, e0 = heapq.heappop(heap)
+            yield (t0, k0, e0)
+    while heap:
+        t0, _, k0, e0 = heapq.heappop(heap)
+        yield (t0, k0, e0)
+
+
+def _profile_streams(rec_dir, prof):
+    clob = _jsonl(f"{rec_dir}/clob.jsonl", "c")
+    cl = _jsonl(f"{rec_dir}/chainlink.jsonl", "l")
+    bn = _jsonl(f"{rec_dir}/binance.jsonl", "b")
+    if prof is None:
+        return clob, cl, bn
+    pm, cl_ms, bshift = prof["pm"], prof["cl"], prof["bn_shift"]
+
+    def t_clob(rx, ev):
+        if pm is None:
+            return rx
+        ts = ev.get("ts")
+        if ts and 0 <= rx - ts < 1000:       # live update: exchange time + our latency to the exchange
+            return ts + pm
+        return rx - HERE_PM_MS + pm          # snapshots on (re)subscribe carry old ts; conn markers have none
+
+    def t_cl(rx, ev):
+        return rx if cl_ms is None else ev["ts"] + cl_ms
+
+    return (_retime(clob, t_clob), _retime(cl, t_cl), _retime(bn, lambda rx, ev: rx + bshift))
+
+
 class Clock:
     def __init__(self):
         self.t = 0
@@ -37,16 +91,20 @@ class Clock:
 
 
 async def replay(rec_dir, cfg, journal_dir, winners: dict, exact_strikes: dict | None = None,
-                 vol_seed: dict | None = None, assets=None):
+                 vol_seed: dict | None = None, assets=None, profile: dict | None = None):
     """winners: slug -> 'Up'/'Down'. Returns the engine (risk manager holds the results)."""
     assets = assets or cfg.strategy.assets
     cfg.risk.state_file = ""          # a replay never reads or writes the live risk state
+    if profile is not None:
+        cfg.execution.place_latency_ms = profile["order_ms"]
+        cfg.execution.cancel_latency_ms = profile["order_ms"]
+        cfg.execution.tick_ms = profile["tick_ms"]
     clock = Clock()
     journal = Journal(journal_dir)
 
     def factory(on_fill, journal):
         return PaperBroker(cfg.execution.place_latency_ms, cfg.execution.cancel_latency_ms, on_fill=on_fill,
-                           journal=journal)
+                           journal=journal, fill_at_touch=cfg.execution.paper_fill_at_touch)
 
     eng = Engine(cfg, factory, journal, clock=clock)
     st = eng.st
@@ -62,8 +120,7 @@ async def replay(rec_dir, cfg, journal_dir, winners: dict, exact_strikes: dict |
                 st.prices[a].seed_vol(closes)
     sym_cl = {CHAINLINK_SYMBOL[a]: a for a in assets}
     sym_bn = {BINANCE_SYMBOL[a]: a for a in assets}
-    stream = heapq.merge(_jsonl(f"{rec_dir}/clob.jsonl", "c"), _jsonl(f"{rec_dir}/chainlink.jsonl", "l"),
-                         _jsonl(f"{rec_dir}/binance.jsonl", "b"), key=lambda x: x[0])
+    stream = heapq.merge(*_profile_streams(rec_dir, profile), key=lambda x: x[0])
     tick = cfg.execution.tick_ms
     next_tick = None
     added = set()
@@ -93,6 +150,12 @@ async def replay(rec_dir, cfg, journal_dir, winners: dict, exact_strikes: dict |
             a = sym_bn.get(ev["sym"])
             if a:
                 st.prices[a].on_binance((ev["bid"] + ev["ask"]) / 2, rx)
+                if st.on_tick is not None:
+                    st.on_tick(a)
+                    if eng._wake.is_set():          # fast reaction, exactly like the live decide loop
+                        eng._wake.clear()
+                        _strikes(eng, markets, exact_strikes, rx, cfg)
+                        await eng.decide_once(rx)
         else:
             _clob(eng, ev, rx, assets)
     # settle everything with the known outcomes
@@ -160,5 +223,5 @@ def _clob(eng, ev, rx, assets):
         eng.on_public_trade(k, ev.get("side"), ev["p"], ev["s"], ev["ts"], rx)
 
 
-def run_replay(rec_dir, cfg, journal_dir, winners, exact_strikes=None, vol_seed=None):
-    return asyncio.run(replay(rec_dir, cfg, journal_dir, winners, exact_strikes, vol_seed))
+def run_replay(rec_dir, cfg, journal_dir, winners, exact_strikes=None, vol_seed=None, profile=None):
+    return asyncio.run(replay(rec_dir, cfg, journal_dir, winners, exact_strikes, vol_seed, profile=profile))

@@ -410,3 +410,23 @@ def test_live_requires_state_file():
     with pytest.raises(ValueError, match="state_file"):
         load_config(None, {"execution": {"mode": "live"}})
     assert load_config("config/live.example.toml").risk.state_file
+
+
+def test_fast_react_wakes_on_binance_move():
+    from pmbot.bot.engine import Engine
+    from pmbot.bot.journal import Journal
+    import tempfile
+    cfg = load_config(None, {"strategy": {"assets": ["btc"]}})
+    eng = Engine(cfg, lambda on_fill, journal: PaperBroker(on_fill=on_fill), Journal(tempfile.mkdtemp()))
+    px = eng.st.prices["btc"]
+    px.var = (0.5e-4) ** 2
+    px.on_binance(100.0, 1000)
+    eng._decided_mid["btc"] = 100.0
+    eng.st.on_tick("btc")
+    assert not eng._wake.is_set()                 # no move
+    px.on_binance(100.002, 1100)                  # 0.2bp < 1 sigma (0.5bp)
+    eng.st.on_tick("btc")
+    assert not eng._wake.is_set()
+    px.on_binance(100.01, 1200)                   # 1bp > 1 sigma -> wake now
+    eng.st.on_tick("btc")
+    assert eng._wake.is_set() and eng.stats["fast_wakes"] == 1

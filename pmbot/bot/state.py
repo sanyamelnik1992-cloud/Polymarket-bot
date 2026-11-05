@@ -157,6 +157,7 @@ class AssetPrices:
 
 class State:
     def __init__(self, assets, halflife_s=900.0):
+        self.on_tick = None        # optional callback(asset) after every Binance update (fast reaction)
         self.assets = list(assets)
         self.prices = {a: AssetPrices(halflife_s) for a in self.assets}
         self.books = {}            # token -> Book

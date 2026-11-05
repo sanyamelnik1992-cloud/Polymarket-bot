@@ -1,0 +1,41 @@
+# 5m maker for a server next to Polymarket (AWS eu-west-1 Dublin, or co-located eu-west-2 London). PAPER.
+# Same quoting as v3 (3c around the book mid, model as guard) with fast reaction: 50 ms ticks and an immediate
+# re-decision whenever Binance moves > 1 sigma(1s). See reports/25_latency_study.txt.
+journal_dir = "data/journal-colo"
+
+[strategy]
+assets = ["btc", "eth", "sol"]
+half_spread = 0.03
+model_weight = 0.0
+quote_size = 10
+join_only = true
+start_s = 5
+stop_s = 240
+skew_per_share = 0.002
+
+[filters]
+max_disagree = 0.10
+max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.10
+fair_move_window_ms = 5000
+toxic_shares = 10
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
+
+[risk]
+state_file = "data/state/risk_5m_colo_paper.json"
+max_net_shares_per_window = 20
+max_cost_per_window = 12
+max_open_worst_loss = 60
+daily_loss_limit = 50
+max_actions_per_sec = 50
+
+[execution]
+mode = "paper"
+tick_ms = 50
+fast_react = true
+fast_move_sigmas = 1.0
+place_latency_ms = 10
+cancel_latency_ms = 10

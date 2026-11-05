@@ -40,9 +40,10 @@ class PaperOrder:
 class PaperBroker:
     mode = "paper"
 
-    def __init__(self, place_latency_ms=150, cancel_latency_ms=150, on_fill=None, journal=None):
+    def __init__(self, place_latency_ms=150, cancel_latency_ms=150, on_fill=None, journal=None, fill_at_touch=False):
         self.place_latency = place_latency_ms
         self.cancel_latency = cancel_latency_ms
+        self.touch = 1e-9 if fill_at_touch else -1e-9   # >0: a print at our price fills us (front of the queue)
         self.orders = {}
         self._ids = itertools.count(1)
         self.on_fill = on_fill
@@ -86,9 +87,9 @@ class PaperBroker:
         for o in self.orders.values():
             if not o.live_at(ts_ms):
                 continue
-            if o.token == token and side == "SELL" and price < o.price - 1e-9:
+            if o.token == token and side == "SELL" and price < o.price + self.touch:
                 cands.append(o)
-            elif o.token == other and side == "BUY" and (1 - price) < o.price - 1e-9:
+            elif o.token == other and side == "BUY" and (1 - price) < o.price + self.touch:
                 cands.append(o)
         left = size
         for o in sorted(cands, key=lambda x: -x.price):   # best bid first

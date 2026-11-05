@@ -147,6 +147,8 @@ async def binance_feed(st: State, alive=lambda: True):
                     if a:
                         st.feed_alive["binance"] = rx
                         st.prices[a].on_binance((float(d["b"]) + float(d["a"])) / 2, rx)
+                        if st.on_tick is not None:
+                            st.on_tick(a)
         except Exception as e:  # noqa: BLE001
             log.warning("binance error %s %s", type(e).__name__, str(e)[:120])
             await asyncio.sleep(1)

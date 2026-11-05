@@ -60,7 +60,10 @@ class ExecCfg:
     mode: str = "paper"                     # "paper" | "live"
     place_latency_ms: int = 150             # paper: order becomes live this long after the decision
     cancel_latency_ms: int = 150            # paper: cancel takes effect this long after the decision
+    paper_fill_at_touch: bool = False       # paper: also fill when a trade prints AT our price (front of queue)
     tick_ms: int = 200                      # decision loop period
+    fast_react: bool = True                 # a Binance move > fast_move_sigmas * sigma_1s wakes the loop at once
+    fast_move_sigmas: float = 1.0
     gtd_min_lifetime_s: int = 185           # GTD expiration must be >= now+180s (exchange rule)
     heartbeat_s: float = 4.0                # live: order heartbeat period (server cancels all after 10s silence)
 
