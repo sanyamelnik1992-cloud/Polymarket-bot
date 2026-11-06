@@ -1,0 +1,40 @@
+# 5m maker v2 (model fair value, 4c half-spread) with fast-server settings, for an A/B paper run next to
+# config/colo.toml on the Dublin server. Fixed replay (reports/38): Dublin +$36 over ~6.5 h, positive on 3 of 3
+# recordings with conservative fills. PAPER.
+journal_dir = "data/journal-colo-v2"
+
+[strategy]
+assets = ["btc", "eth", "sol"]
+half_spread = 0.04
+quote_size = 10
+join_only = true
+start_s = 5
+stop_s = 240
+skew_per_share = 0.002
+
+[filters]
+max_disagree = 0.10
+max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.10
+fair_move_window_ms = 5000
+toxic_shares = 10
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
+
+[risk]
+state_file = "data/state/risk_5m_colo_v2_paper.json"
+max_net_shares_per_window = 20
+max_cost_per_window = 12
+max_open_worst_loss = 60
+daily_loss_limit = 50
+max_actions_per_sec = 50
+
+[execution]
+mode = "paper"
+tick_ms = 50
+fast_react = true
+fast_move_sigmas = 1.0
+place_latency_ms = 10
+cancel_latency_ms = 10

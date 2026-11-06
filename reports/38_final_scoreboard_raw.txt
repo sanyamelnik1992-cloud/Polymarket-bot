@@ -1,0 +1,183 @@
+# Raw numbers for reports/38_final_scoreboard.md (fixed replay: settlement 90 s after each window end)
+# recordings: run3 Nov 4 10:15-12:35, run4 Nov 4 21:21-22:57, run5 Nov 5 10:31-13:08, run6 Nov 6 12:37-14:17 (fresh)
+
+## pooled, all profiles (t = per-window over all windows)
+    strategy    profile  recs   pnl  fills     t  pos_recs  run3  run4  run5  run6
+      mid_h1  here_slow     4  23.7    403  0.49         3  25.3 -11.1   4.6   4.9
+      mid_h1     dublin     4  -5.3    151 -0.17         2  14.9   1.2  -9.1 -12.3
+      mid_h1     london     4  58.4    122  1.69         3  23.0  33.6  21.8 -20.1
+      mid_h1 dublin_t10     4  27.5     52  1.22         4   6.0  10.2   6.5   4.8
+      mid_h1 london_t10     3  44.7     37  2.85         3  18.9   1.6  24.3   NaN
+mid_h1_touch  here_slow     4  65.0    595  1.19         3  82.1 -28.0   6.9   4.0
+mid_h1_touch     dublin     4  79.9    474  2.19         4  22.3   7.4  24.4  25.8
+mid_h1_touch     london     4  69.5    460  2.09         4  25.3  17.1  21.4   5.7
+mid_h1_touch dublin_t10     3  71.8    387  2.58         3  35.2  15.0  21.6   NaN
+mid_h1_touch london_t10     3  43.2    376  1.81         2  31.6  15.9  -4.2   NaN
+      mid_h2  here_slow     3 -23.7    251 -0.66         1   4.4  -7.8 -20.2   NaN
+      mid_h2     dublin     3  -1.2     59 -0.08         2  15.8   4.0 -21.0   NaN
+mid_h2_touch  here_slow     4  28.1    451  0.65         2  12.2  -5.1  -2.5  23.5
+mid_h2_touch     dublin     4  40.3    207  1.59         4  10.0  13.0  11.2   6.1
+mid_h2_touch     london     3  29.9    132  1.70         3   3.8  19.3   6.9   NaN
+          v2  here_slow     4  -8.8    288 -0.14         2   4.8  -7.1  28.3 -34.9
+          v2     dublin     4  45.5    111  1.15         4   1.3   0.7  33.9   9.5
+      v3_mid  here_slow     4   5.7    208  0.15         2  17.5  -3.2 -26.7  18.1
+      v3_mid     dublin     4  16.5     36  1.27         3  11.8   5.5   0.9  -1.7
+
+## run3+run4+run5, here_slow / dublin
+ rec     strategy   profile  windows  fills     pnl  rebate    cost      t   worst    roi
+run3           v2 here_slow       46     96   4.813   1.833 357.141  0.135  -8.381  0.013
+run3           v2    dublin       19     29   1.303   0.653 113.693  0.072  -8.078  0.011
+run3       v3_mid here_slow       23     66  17.542   1.069 191.469  0.797  -9.905  0.092
+run3       v3_mid    dublin        4      5  11.790   0.144  24.670  1.076  -5.165  0.478
+run3       mid_h2 here_slow       32     96   4.361   1.578 264.713  0.271  -7.373  0.016
+run3       mid_h2    dublin       10     16  15.838   0.401  77.621  2.381  -0.931  0.204
+run3       mid_h1 here_slow       51    122  25.315   2.182 375.448  1.107  -6.870  0.067
+run3       mid_h1    dublin       23     35  14.929   0.833 141.962  1.246  -5.265  0.105
+run3 mid_h2_touch here_slow       51    138  12.156   2.358 398.770  0.573  -6.890  0.030
+run3 mid_h2_touch    dublin       23     47   9.986   1.022 180.093  1.214  -2.271  0.055
+run3 mid_h1_touch here_slow       63    205  82.150   3.415 556.890  2.228 -10.831  0.148
+run3 mid_h1_touch    dublin       50    141  22.273   2.660 436.043  1.381  -3.396  0.051
+run4           v2 here_slow       27     52  -7.072   1.009 225.769 -0.282 -11.636 -0.031
+run4           v2    dublin       12     20   0.736   0.482 105.949  0.045 -11.824  0.007
+run4       v3_mid here_slow       17     44  -3.204   0.777 132.806 -0.217  -5.826 -0.024
+run4       v3_mid    dublin        5      7   5.471   0.169  36.460  2.803   0.164  0.150
+run4       mid_h2 here_slow       18     52  -7.810   0.963 163.161 -0.359  -9.344 -0.048
+run4       mid_h2    dublin        7     12   3.956   0.320  54.316  0.896  -2.550  0.073
+run4       mid_h1 here_slow       23     73 -11.110   1.258 214.638 -0.586  -8.552 -0.052
+run4       mid_h1    dublin       14     33   1.208   0.709 128.124  0.109  -4.782  0.009
+run4 mid_h2_touch here_slow       23     76  -5.082   1.318 222.946 -0.318  -5.089 -0.023
+run4 mid_h2_touch    dublin       14     41  13.009   0.859 146.104  1.037  -2.758  0.089
+run4 mid_h1_touch here_slow       24     89 -28.012   1.634 265.628 -1.786  -9.031 -0.105
+run4 mid_h1_touch    dublin       30     94   7.421   1.821 304.543  0.530  -4.470  0.024
+run5           v2 here_slow       41     91  28.320   1.975 378.295  0.702 -11.852  0.075
+run5           v2    dublin       22     37  33.930   0.920 174.395  1.435 -11.362  0.195
+run5       v3_mid here_slow       23     54 -26.734   1.138 186.810 -1.399  -9.827 -0.143
+run5       v3_mid    dublin        7     12   0.912   0.320  44.564  0.134  -3.568  0.020
+run5       mid_h2 here_slow       38    103 -20.203   1.954 321.221 -0.845 -10.027 -0.063
+run5       mid_h2    dublin       15     31 -21.006   0.671 109.577 -1.941  -5.365 -0.192
+run5       mid_h1 here_slow       48    131   4.575   2.760 431.538  0.146 -10.430  0.011
+run5       mid_h1    dublin       31     52  -9.113   1.258 205.716 -0.419  -8.814 -0.044
+run5 mid_h2_touch here_slow       48    150  -2.462   2.952 460.611 -0.088 -10.230 -0.005
+run5 mid_h2_touch    dublin       32     76  11.212   1.613 258.953  0.702  -5.365  0.043
+run5 mid_h1_touch here_slow       58    189   6.874   3.531 543.937  0.229 -10.430  0.013
+run5 mid_h1_touch    dublin       51    144  24.388   3.041 476.294  1.143  -5.465  0.051
+
+TOTAL over recordings:
+                        windows  fills     pnl      cost  rebate    roi
+strategy     profile                                                   
+mid_h1       dublin          68    120   7.023   475.802   2.801  0.015
+             here_slow      122    326  18.780  1021.624   6.201  0.018
+mid_h1_touch dublin         131    379  54.082  1216.880   7.522  0.044
+             here_slow      145    483  61.012  1366.455   8.580  0.045
+mid_h2       dublin          32     59  -1.212   241.513   1.392 -0.005
+             here_slow       88    251 -23.652   749.095   4.496 -0.032
+mid_h2_touch dublin          69    164  34.207   585.150   3.493  0.058
+             here_slow      122    364   4.612  1082.327   6.628  0.004
+v2           dublin          53     86  35.968   394.037   2.055  0.091
+             here_slow      114    239  26.061   961.204   4.817  0.027
+v3_mid       dublin          16     24  18.174   105.694   0.633  0.172
+             here_slow       63    164 -12.396   511.085   2.983 -0.024
+
+## london
+ rec     strategy profile  windows  fills    pnl  rebate    cost     t  worst   roi
+run3       mid_h1  london       18     27 23.034   0.677 118.701 2.618 -2.971 0.194
+run3 mid_h1_touch  london       50    138 25.335   2.551 413.621 1.512 -5.866 0.061
+run3 mid_h2_touch  london       18     38  3.752   0.863 144.168 0.608 -1.726 0.026
+run4       mid_h1  london       11     25 33.602   0.509  94.529 1.881 -1.414 0.355
+run4 mid_h1_touch  london       28     89 17.060   1.704 282.223 1.402 -3.217 0.060
+run4 mid_h2_touch  london       11     31 19.334   0.606 108.170 1.637 -1.316 0.179
+run5       mid_h1  london       27     43 21.849   1.070 175.564 0.984 -5.898 0.124
+run5 mid_h1_touch  london       50    140 21.392   2.943 464.506 1.174 -4.166 0.046
+run5 mid_h2_touch  london       27     63  6.858   1.406 223.006 0.613 -4.066 0.031
+
+TOTAL over recordings:
+                      windows  fills     pnl      cost  rebate    roi
+strategy     profile                                                 
+mid_h1       london        56     95  78.486   388.794   2.256  0.202
+mid_h1_touch london       128    367  63.787  1160.350   7.198  0.055
+mid_h2_touch london        56    132  29.944   475.345   2.875  0.063
+
+## 10 ms tick
+ rec     strategy    profile  windows  fills    pnl  rebate    cost      t  worst    roi
+run3       mid_h1 dublin_t10        7      9  6.038   0.161  33.148  0.673 -5.165  0.182
+run3       mid_h1 london_t10       11     15 18.900   0.285  46.656  1.840 -2.275  0.405
+run3 mid_h1_touch dublin_t10       49    145 35.181   2.611 416.256  2.172 -4.890  0.085
+run3 mid_h1_touch london_t10       50    152 31.632   2.432 398.396  1.898 -4.890  0.079
+run4       mid_h1 dublin_t10        5      6 10.206   0.126  29.126  1.274 -2.615  0.350
+run4       mid_h1 london_t10        4      6  1.555   0.100  17.141  0.280 -2.615  0.091
+run4 mid_h1_touch dublin_t10       29     90 14.953   1.738 292.223  1.291 -3.907  0.051
+run4 mid_h1_touch london_t10       26     85 15.856   1.662 268.908  1.738 -2.212  0.059
+run5       mid_h1 dublin_t10        9     15  6.453   0.420  64.286  0.539 -6.870  0.100
+run5       mid_h1 london_t10       10     16 24.270   0.414  56.945  2.236 -2.971  0.426
+run5 mid_h1_touch dublin_t10       55    152 21.640   3.080 470.055  1.098 -4.755  0.046
+run5 mid_h1_touch london_t10       49    139 -4.248   2.680 412.924 -0.297 -4.755 -0.010
+
+TOTAL over recordings:
+                         windows  fills     pnl      cost  rebate    roi
+strategy     profile                                                    
+mid_h1       dublin_t10       21     30  22.698   126.560   0.707  0.179
+             london_t10       25     37  44.726   120.743   0.799  0.370
+mid_h1_touch dublin_t10      133    387  71.774  1178.534   7.429  0.061
+             london_t10      125    376  43.240  1080.228   6.774  0.040
+
+## run6 (fresh)
+ rec     strategy   profile  windows  fills     pnl  rebate    cost      t   worst    roi
+run6           v2 here_slow       24     49 -34.903   0.982 197.975 -1.409 -11.904 -0.176
+run6           v2    dublin       15     25   9.525   0.547 117.926  0.453 -11.824  0.081
+run6       v3_mid here_slow       16     44  18.139   0.799 136.926  1.035 -10.129  0.132
+run6       v3_mid    dublin        4     12  -1.658   0.183  36.388 -1.544  -0.975 -0.046
+run6       mid_h1 here_slow       28     77   4.945   1.373 239.135  0.209 -10.525  0.021
+run6       mid_h1    dublin       18     31 -12.282   0.769 127.052 -0.771  -6.368 -0.097
+run6 mid_h1_touch here_slow       31    112   3.986   2.041 325.343  0.205  -7.715  0.012
+run6 mid_h1_touch    dublin       31     95  25.795   1.699 279.109  1.228  -5.307  0.092
+run6 mid_h2_touch here_slow       28     87  23.496   1.453 249.609  1.216  -3.964  0.094
+run6 mid_h2_touch    dublin       18     43   6.117   0.880 149.578  0.451  -6.267  0.041
+
+TOTAL over recordings:
+                        windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                  
+mid_h1       dublin          18     31 -12.282  127.052   0.769 -0.097
+             here_slow       28     77   4.945  239.135   1.373  0.021
+mid_h1_touch dublin          31     95  25.795  279.109   1.699  0.092
+             here_slow       31    112   3.986  325.343   2.041  0.012
+mid_h2_touch dublin          18     43   6.117  149.578   0.880  0.041
+             here_slow       28     87  23.496  249.609   1.453  0.094
+v2           dublin          15     25   9.525  117.926   0.547  0.081
+             here_slow       24     49 -34.903  197.975   0.982 -0.176
+v3_mid       dublin           4     12  -1.658   36.388   0.183 -0.046
+             here_slow       16     44  18.139  136.926   0.799  0.132
+ rec     strategy profile  windows  fills     pnl  rebate    cost      t  worst    roi
+run6       mid_h1  london       17     27 -20.062   0.628 114.690 -1.346 -6.368 -0.175
+run6 mid_h1_touch  london       33     93   5.744   1.736 288.572  0.301 -5.307  0.020
+
+TOTAL over recordings:
+                      windows  fills     pnl     cost  rebate    roi
+strategy     profile                                                
+mid_h1       london        17     27 -20.062  114.690   0.628 -0.175
+mid_h1_touch london        33     93   5.744  288.572   1.736  0.020
+ rec strategy    profile  windows  fills   pnl  rebate   cost     t  worst   roi
+run6   mid_h1 dublin_t10       11     22 4.758   0.443 75.479 0.297 -6.468 0.063
+
+TOTAL over recordings:
+                     windows  fills    pnl    cost  rebate    roi
+strategy profile                                                 
+mid_h1   dublin_t10       11     22  4.758  75.479   0.443  0.063
+
+## 5m taker on run5 (run3+run4: reports/26)
+ rec   profile  min_edge  windows  signals  missed     cost     pnl      t    roi
+run5 here_slow      0.05       95      384     110 2479.232  -1.534 -0.006 -0.001
+run5 here_slow      0.10       77      308      92 1926.345 119.236  0.508  0.062
+run5    dublin      0.05       95      335      60 2401.911  16.673  0.066  0.007
+run5    dublin      0.10       78      294      70 1937.777 -44.580 -0.188 -0.023
+run5    london      0.05       95      333      59 2398.061  29.271  0.116  0.012
+run5    london      0.10       78      298      75 1954.786 -37.260 -0.156 -0.019
+
+TOTAL:
+                    windows  signals  missed      cost      pnl    roi
+profile   min_edge                                                    
+dublin    0.05           95      335      60  2401.911   16.673  0.007
+          0.10           78      294      70  1937.777  -44.580 -0.023
+here_slow 0.05           95      384     110  2479.232   -1.534 -0.001
+          0.10           77      308      92  1926.345  119.236  0.062
+london    0.05           95      333      59  2398.061   29.271  0.012
+          0.10           78      298      75  1954.786  -37.260 -0.019

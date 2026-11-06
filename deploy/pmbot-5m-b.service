@@ -1,0 +1,22 @@
+[Unit]
+Description=pmbot 5m maker B (config/colo.toml, 1c quotes, paper A/B run next to pmbot-5m)
+After=network-online.target
+Wants=network-online.target
+# a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. Experimental: quotes 1c from the book mid; pays off only with queue priority (reports/38).
+# For live: --config config/live.toml --live  (and PMBOT_LIVE_CONFIRM in the env file)
+ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/colo.toml
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=1500
+
+[Install]
+WantedBy=multi-user.target

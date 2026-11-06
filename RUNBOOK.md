@@ -1,11 +1,12 @@
 # RUNBOOK: запуск ботов на сервере
 
-Два бота (подробности и доказательства — в `STRATEGIES.md` и `README.md`):
+Боты (подробности и доказательства — в `STRATEGIES.md`, `PLAYBOOK.md` и `reports/38_final_scoreboard.md`):
 
 | Бот | Что делает | Конфиг paper | Шаблон live |
 |---|---|---|---|
-| **hourly** (`scripts/run_hourly.py`) | Часовые BTC/ETH Up/Down: в последние 30 мин покупает сторону, где модель на Binance даёт edge ≥ 8¢ после комиссии (FAK с лимитом) | `config/hourly.toml` | `config/hourly_live.example.toml` |
-| **5m** (`scripts/run_bot.py`) | 5-минутные BTC/ETH/SOL: два post-only бида Up/Down на 3¢ ниже середины рынка; модель на Chainlink работает как фильтр | `config/paper_v3.toml` (прежний: `paper_v2.toml`) | `config/live.example.toml` (только после доказанного edge) |
+| hourly (`scripts/run_hourly.py`, **не запускаем**: edge исчез вне выборки, `reports/36`) | Часовые BTC/ETH Up/Down: в последние 30 мин покупает сторону, где модель на Binance даёт edge ≥ 8¢ после комиссии (FAK с лимитом) | `config/hourly.toml` | `config/hourly_live.example.toml` |
+| **5m A** (`scripts/run_bot.py`, юнит `pmbot-5m`) | 5-минутные BTC/ETH/SOL: post-only биды Up/Down на 4¢ вокруг модели (v2), быстрые настройки для сервера в Дублине | `config/colo_v2.toml` (медленный сервер: `config/paper_v3.toml`) | `config/live.example.toml` (только после доказанного edge) |
+| **5m B** (юнит `pmbot-5m-b`) | эксперимент: 1¢ от середины стакана, шаг 10 мс | `config/colo.toml` | — |
 | recorder (`scripts/record_live.py`) | пишет стаканы + Chainlink + Binance для replay-бэктестов | — | — |
 
 ## 0. Установка на сервер (Ubuntu/Debian)
@@ -15,8 +16,8 @@ git clone https://github.com/sanyamelnik1992-cloud/Polymarket-bot && cd Polymark
 git checkout claude/polymarket-5m-research
 sudo bash deploy/setup.sh                    # venv, зависимости, chrony, systemd-юниты, /etc/pmbot/pmbot.env
 .venv/bin/python scripts/preflight.py        # ДОЛЖНО быть "0 failed"; geoblock: blocked=False
-sudo systemctl start pmbot-hourly pmbot-5m pmbot-recorder   # всё в PAPER-режиме
-journalctl -u pmbot-hourly -f                # живой лог
+sudo systemctl start pmbot-5m pmbot-5m-b pmbot-recorder     # всё в PAPER-режиме (A: colo_v2, B: colo 1¢)
+journalctl -u pmbot-5m -f                    # живой лог
 ```
 
 ### Сервер рядом с Polymarket (для 5m)
@@ -25,12 +26,11 @@ journalctl -u pmbot-hourly -f                # живой лог
 Обычный VPS в Великобритании — close-only. Сервер не меняет требования к юрисдикции владельца аккаунта.
 ```bash
 .venv/bin/python scripts/latency_probe.py 120   # цель: CLOB REST RTT < 15 мс, CLOB ws < 10 мс, Binance ~110–120 мс
-# 5m на быстром сервере: в /etc/systemd/system/pmbot-5m.service заменить config/paper_v3.toml на config/colo.toml
-sudo systemctl daemon-reload && sudo systemctl restart pmbot-5m
 ```
-Почему именно так и чего ждать — `reports/29_colocation_5m.md`. Коротко: в replay быстрый мейкер с котировкой в 1¢
-от середины в плюсе на всех трёх записях, медленный — около нуля. Тейкер на 5m убыточен из любой точки.
-`config/colo.toml` котирует на 1¢ от середины — **на медленном сервере его не запускать**.
+Юниты `pmbot-5m` (`config/colo_v2.toml`) и `pmbot-5m-b` (`config/colo.toml`) уже настроены под быстрый сервер.
+На медленном сервере `pmbot-5m` переключить на `config/paper_v3.toml`, `pmbot-5m-b` не запускать.
+Почему именно так — `reports/38_final_scoreboard.md`. Коротко: в исправленном replay v2 в Дублине в плюсе на всех
+четырёх записях (+$45.5 за ~8.2 ч), на медленном сервере та же стратегия −$8.8. Тейкер на 5m убыточен из любой точки.
 
 ### Диск
 

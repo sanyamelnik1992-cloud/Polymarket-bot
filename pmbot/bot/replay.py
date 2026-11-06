@@ -47,6 +47,9 @@ PROFILES = {
     "london_relay": {"pm": 1, "bn_shift": 68 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 50},
     # theoretical ceiling: Binance teleported to London (2 ms) -- no relay can beat this
     "london_bn0":   {"pm": 1, "bn_shift": 2 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 50},
+    # same servers with a 10 ms decision tick instead of 50 ms: is the gap Dublin -> London geography or reaction time?
+    "dublin_t10":   {"pm": 6, "bn_shift": 115 - HERE_BN_MS, "cl": 1260, "order_ms": 7, "tick_ms": 10},
+    "london_t10":   {"pm": 1, "bn_shift": 108 - HERE_BN_MS, "cl": 1255, "order_ms": 2, "tick_ms": 10},
 }
 
 

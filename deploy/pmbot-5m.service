@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot 5m Up/Down market maker (config/paper_v3.toml by default)
+Description=pmbot 5m Up/Down market maker A (config/colo_v2.toml, paper)
 After=network-online.target
 Wants=network-online.target
 # a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes
@@ -10,10 +10,11 @@ StartLimitBurst=5
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# PAPER by default. On a server next to Polymarket (AWS eu-west-1 Dublin / co-located eu-west-2) use
-# --config config/colo.toml (50 ms ticks + immediate re-quote on Binance moves; reports/29_colocation_5m.md).
+# PAPER by default. Built for a server next to Polymarket (AWS eu-west-1 Dublin / co-located eu-west-2):
+# v2 model quoting (4c), 50 ms ticks, immediate re-quote on Binance moves -- the most robust variant in the
+# fixed replay (reports/38_final_scoreboard.md). On a slow server use --config config/paper_v3.toml instead.
 # For live: --config config/live.toml --live  (and PMBOT_LIVE_CONFIRM in the env file)
-ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/paper_v3.toml
+ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/colo_v2.toml
 Restart=on-failure
 RestartSec=30
 KillSignal=SIGINT
