@@ -135,6 +135,7 @@ async def replay(rec_dir, cfg, journal_dir, winners: dict, exact_strikes: dict |
             next_tick = rx + tick
         while rx >= next_tick:
             clock.t = next_tick
+            _settle_due(eng, winners, journal, next_tick)
             _strikes(eng, markets, exact_strikes, next_tick, cfg)
             if not await eng.decide_once(next_tick):
                 break
@@ -163,16 +164,30 @@ async def replay(rec_dir, cfg, journal_dir, winners: dict, exact_strikes: dict |
                         await eng.decide_once(rx)
         else:
             _clob(eng, ev, rx, assets)
-    # settle everything with the known outcomes
-    for key, w in list(eng.to_settle.items()):
-        win = winners.get(w.slug)
-        if win:
-            res = eng.risk.on_settle(key, win, ts=w.end + 60)
-            if res:
-                journal.log("settle", key=key, winner=win, **{k: round(v, 4) for k, v in res.items()})
+    # settle what is left (windows that ended too close to the end of the recording)
+    _settle_due(eng, winners, journal, None)
     journal.log("final", pnl=eng.risk.realized_total, rebates=eng.risk.rebates_total, stats=eng.stats)
     journal.close()
     return eng
+
+
+SETTLE_DELAY_S = 90      # live: the settle loop waits >= 60 s after the window end, then polls Gamma for the winner
+
+
+def _settle_due(eng, winners, journal, now_ms, delay_s=SETTLE_DELAY_S):
+    """Settle ended windows the way the live settle loop does: shortly after the end, not at the end of the replay.
+    Without this, positions pile up in the open worst-case-loss budget and throttle quoting later in a recording.
+    now_ms=None settles everything left (end of the recording)."""
+    for key, w in list(eng.to_settle.items()):
+        if now_ms is not None and now_ms / 1000 < w.end + delay_s:
+            continue
+        win = winners.get(w.slug)
+        if win:
+            res = eng.risk.on_settle(key, win, ts=w.end + delay_s)
+            if res:
+                journal.log("settle", key=key, winner=win, at_ms=now_ms if now_ms is not None else -1,
+                            **{k: round(v, 4) for k, v in res.items()})
+        eng.to_settle.pop(key, None)
 
 
 def _strikes(eng, markets, exact, now_ms, cfg):

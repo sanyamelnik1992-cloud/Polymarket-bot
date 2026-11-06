@@ -1,0 +1,11 @@
+# Weather forecast forward test: snapshot 2026-11-04 21:45 UTC (ECMWF 51 + GFS 31 members), events whose local day had not started
+market mid      logloss=0.2170 brier=0.0680
+ensemble model  logloss=0.3089 brier=0.0967
+50/50 blend     logloss=0.2502 brier=0.0774
+events 27, buckets 220, median lead 7.4h
+buy YES where model - ask - fee > 0.03: n=70 events=27 pnl/share-sum=-2.59 roi=-0.753
+buy NO  where bid - model - fee > 0.03: n=47 events=26 pnl/share-sum=-5.23 roi=-0.182
+buy YES where model - ask - fee > 0.05: n=54 events=24 pnl/share-sum=-3.02 roi=-1.044
+buy NO  where bid - model - fee > 0.05: n=42 events=25 pnl/share-sum=-5.00 roi=-0.204
+buy YES where model - ask - fee > 0.1: n=30 events=19 pnl/share-sum=-1.52 roi=-1.046
+buy NO  where bid - model - fee > 0.1: n=37 events=24 pnl/share-sum=-4.40 roi=-0.210

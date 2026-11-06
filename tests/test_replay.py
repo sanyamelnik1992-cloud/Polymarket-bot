@@ -49,3 +49,25 @@ def test_replay_end_to_end(tmp_path):
     settle = [e for e in ev if e["type"] == "settle"]
     assert settle and settle[0]["winner"] == "Up" and settle[0]["pnl"] > 0
     assert not eng.risk.killed
+
+
+def test_replay_settles_during_the_run(tmp_path):
+    """Ended windows settle ~90 s after their end (like the live settle loop), not only when the replay finishes:
+    otherwise open positions pile up in the worst-case-loss budget and throttle quoting later in a recording."""
+    make_recording(tmp_path)
+    # keep the feeds running until 100 s after the window end
+    cl = [json.loads(x) for x in open(tmp_path / "chainlink.jsonl")]
+    bn = [json.loads(x) for x in open(tmp_path / "binance.jsonl")]
+    for s in range(T0 + 120, T0 + 400):
+        cl.append({"sym": "btc/usd", "ts": s * 1000, "v": 100.0, "rx": s * 1000 + 1400})
+        bn.append({"sym": "BTCUSDT", "bid": 99.995, "ask": 100.005, "rx": s * 1000 + 50})
+    write(tmp_path / "chainlink.jsonl", cl)
+    write(tmp_path / "binance.jsonl", bn)
+    cfg = load_config("config/paper_v2.toml", {"strategy": {"assets": ["btc"]}})
+    seed = {"btc": [100.0 * (1 + 0.00005 * ((i % 2) * 2 - 1)) for i in range(1800)]}
+    eng = run_replay(str(tmp_path), cfg, str(tmp_path / "out"), {"btc-updown-5m-x": "Up"}, None, seed)
+    ev = [json.loads(line) for line in open(tmp_path / "out" / "events.jsonl")]
+    settle = [e for e in ev if e["type"] == "settle"]
+    assert len(settle) == 1
+    assert (T0 + 300 + 90) * 1000 <= settle[0]["at_ms"] < (T0 + 400) * 1000
+    assert not eng.risk.unresolved and eng.risk.open_worst_loss() == 0
