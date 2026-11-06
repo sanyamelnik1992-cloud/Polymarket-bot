@@ -1,0 +1,7 @@
+[Unit]
+Description=pmbot: delete old recorder data, stop the recorder if the disk is nearly full
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/pmbot/pmbot.env
+ExecStart=/bin/bash __REPO__/deploy/cleanup.sh

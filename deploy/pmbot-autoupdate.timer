@@ -1,0 +1,9 @@
+[Unit]
+Description=pmbot: check GitHub for new code every 2 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+
+[Install]
+WantedBy=timers.target

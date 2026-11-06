@@ -1,0 +1,9 @@
+[Unit]
+Description=pmbot: pull new code from GitHub, run tests, restart bots (deploy/autoupdate.sh)
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/pmbot/pmbot.env
+ExecStart=/bin/bash __REPO__/deploy/autoupdate.sh
+TimeoutStartSec=900

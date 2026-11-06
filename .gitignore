@@ -9,3 +9,5 @@ data/
 STOP
 config/live.toml
 .env.*
+.venv/
+secrets.env

@@ -1,0 +1,10 @@
+[Unit]
+Description=pmbot: push the hourly server report to the server-reports branch on GitHub
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=__USER__
+WorkingDirectory=__REPO__
+ExecStart=/bin/bash __REPO__/deploy/push_reports.sh
+TimeoutStartSec=600

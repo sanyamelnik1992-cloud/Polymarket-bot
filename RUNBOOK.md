@@ -113,3 +113,33 @@ Kill-файл `STOP`. systemd: `Restart=on-failure`, но не больше 5 р
   первый live — минимальные лимиты;
 - самый быстрый источник Chainlink для 5m — PolyBolt (`price.crypto`, нужны API-ключи); сейчас RTDS (+~1.4 с);
 - арбитраж 5m↔15m и сканер лестниц — пока отдельные paper-инструменты.
+
+## 5. Сервер сам по себе: автообновление, Telegram, отчёты
+
+```
+Телефон (Claude Code) ─push─▶ GitHub main ─каждые 2 мин─▶ сервер: git pull → pytest → рестарт ботов
+                                    ▲                          │ (тесты упали → откат + сообщение в Telegram)
+                                    └── ветка server-reports ◀─┘ отчёт каждый час (статус, PnL, settles.csv)
+```
+
+**Новый сервер с нуля** (под root, Ubuntu 22.04/24.04):
+```bash
+curl -fsSL https://raw.githubusercontent.com/sanyamelnik1992-cloud/Polymarket-bot/main/deploy/bootstrap.sh | bash -s -- main
+```
+Создаёт пользователя `pmbot`, клонирует репозиторий в `/home/pmbot/Polymarket-bot`, делает swap на маленьком VPS,
+ставит юниты и таймеры и печатает **deploy key**. Его нужно добавить в GitHub → Settings → Deploy keys → Add,
+отметив **Allow write access** (без этого сервер не сможет пушить отчёты). Потом: `systemctl start pmbot-reports.timer`.
+
+| юнит / таймер | что делает |
+|---|---|
+| `pmbot-autoupdate.timer` | каждые 2 мин `deploy/autoupdate.sh`: fast-forward на `origin/$PMBOT_BRANCH` (по умолчанию `main`), `pip install` при изменении `requirements.txt`, `pytest -q -x`, рестарт запущенных ботов. Тесты упали → откат, коммит запоминается как плохой |
+| `pmbot-tg` | Telegram-бот: `/status /pnl /trades /server /log /stop /resume /update /restart`, сводка раз в час, итог дня в 00:05 UTC, сообщения о падениях юнитов и нехватке диска. Слушается только чат `PMBOT_TG_CHAT` |
+| `pmbot-reports.timer` | раз в час пушит в ветку `server-reports`: `README.md` (статус), `days/<дата>.md`, `settles.csv`, `runs/<юнит>.txt` |
+| `pmbot-cleanup.timer` | раз в час удаляет записи рекордера, в которые ничего не писалось `PMBOT_REC_KEEP_HOURS` часов; если свободно меньше `PMBOT_MIN_FREE_GB`, останавливает рекордер |
+
+**Telegram:** @BotFather → `/newbot` → токен в `PMBOT_TG_TOKEN`; написать боту что угодно, он ответит chat id →
+в `PMBOT_TG_CHAT`; `systemctl restart pmbot-tg`. `/stop` создаёт файл `STOP` (все заявки снимаются, боты выходят);
+`/resume` удаляет его и снимает kill, вызванный этим файлом. Kill по дневному стопу убытка `/resume` не снимает.
+
+**Ручное обновление:** `/update` в Telegram или `sudo systemctl start pmbot-autoupdate`. Лог: `journalctl -u pmbot-autoupdate`.
+Правки прямо на сервере блокируют автообновление (оно пишет об этом в Telegram): код меняем только через GitHub.

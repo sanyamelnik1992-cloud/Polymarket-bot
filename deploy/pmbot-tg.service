@@ -1,0 +1,15 @@
+[Unit]
+Description=pmbot Telegram control bot (status, PnL, /stop, /update)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+ExecStart=__REPO__/.venv/bin/python scripts/tg_bot.py
+Restart=always
+RestartSec=20
+
+[Install]
+WantedBy=multi-user.target
