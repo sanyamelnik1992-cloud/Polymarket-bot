@@ -1,0 +1,6 @@
+run: /home/pmbot/Polymarket-bot/data/journal-colo-v2-strict/20261107-073607
+mode: paper  duration: 4.6 min  events: {'start': 1, 'vol_seed': 3, 'window': 9, 'filters': 80, 'status': 9, 'strike_est': 3, 'fv': 120, 'quote': 32}
+
+filter reasons (state changes): {'no_strike': 60, 'no_fair_value': 60, 'jump_cooldown': 17, 'too_late': 16, 'no_book': 15, 'model_disagrees': 12, 'too_early': 11, 'wide_spread': 10, 'chainlink_stale': 8, 'binance_stale': 7, 'clob_stale': 3, 'p_out_of_range': 2}
+quotes placed: 32
+no fills
