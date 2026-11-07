@@ -33,7 +33,8 @@ def main():
         sys.exit("refusing to start: --live flag and hourly.mode must agree")
     run_dir = os.path.join(args.journal or cfg.journal_dir, time.strftime("%Y%m%d-%H%M%S"))
     from pmbot.bot.alerts import TelegramAlerts
-    journal = Journal(run_dir, alerts=TelegramAlerts(prefix="hourly-" + cfg_mode(cfg)))
+    journal = Journal(run_dir, alerts=TelegramAlerts(prefix="hourly-" + cfg_mode(cfg), config_path=args.config,
+                                                       mode=cfg_mode(cfg)))
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s",
                         handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(run_dir, "bot.log"))])
     logging.getLogger("websockets").setLevel(logging.WARNING)

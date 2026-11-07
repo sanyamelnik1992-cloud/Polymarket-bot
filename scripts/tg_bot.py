@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from pmbot import ops  # noqa: E402
+from pmbot import notify, ops  # noqa: E402
+from pmbot.notify import esc, label  # noqa: E402
 
 log = logging.getLogger("tg")
 TOKEN = os.environ.get("PMBOT_TG_TOKEN", "").strip()
@@ -25,27 +26,43 @@ CHAT = os.environ.get("PMBOT_TG_CHAT", "").strip()
 DIGEST_MIN = float(os.environ.get("PMBOT_TG_DIGEST_MIN", "60") or 0)
 API = f"https://api.telegram.org/bot{TOKEN}"
 
-HELP = """Команды:
-/status — боты, PnL за сегодня, режим
-/pnl — PnL по дням
-/trades — последние 10 закрытых окон
-/server — CPU, RAM, диск
-/log [юнит] — последние строки лога (по умолчанию pmbot-5m)
-/stop — АВАРИЙНЫЙ СТОП: снять все заявки и остановить торговлю
-/resume — снять STOP и запустить ботов снова
-/update — сейчас подтянуть код с GitHub
-/restart [юнит] — перезапустить юнит
-Юниты: """ + ", ".join(ops.ALL_UNITS)
+HELP = """🤖 <b>pmbot — команды</b>
+
+📊 /status — боты, PnL за сегодня, режим
+🕐 /report — сводка за последний час
+📅 /today — итог дня на текущий момент
+💰 /pnl — PnL по дням
+🧾 /trades — последние 10 закрытых окон
+🖥 /server — CPU, RAM, диск
+📜 /log [юнит] — последние строки лога
+
+⛔ /stop — <b>АВАРИЙНЫЙ СТОП</b>: снять все заявки и остановить торговлю
+▶️ /resume — снять STOP и запустить ботов снова
+🔄 /update — подтянуть код с GitHub
+♻️ /restart [юнит] — перезапустить юнит
+
+<b>Боты</b>
+""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS) + """
+
+Сам присылаю: сводку каждый час, итог дня в 00:05 UTC, тревоги (стоп, пауза, ошибки, падение юнита)."""
+
+
+def chunks(text, size=3900):
+    """Split on line breaks so HTML tags (one line each) are never cut in half."""
+    out, cur = [], ""
+    for line in text.split("\n"):
+        if cur and len(cur) + len(line) + 1 > size:
+            out.append(cur)
+            cur = ""
+        cur = f"{cur}\n{line}" if cur else line[:size]
+    return out + [cur] if cur else out or [""]
 
 
 def send(text, chat=None):
-    chat = chat or CHAT
-    for i in range(0, max(len(text), 1), 4000):
-        try:
-            requests.post(f"{API}/sendMessage", json={"chat_id": chat, "text": text[i:i + 4000],
-                                                      "disable_web_page_preview": True}, timeout=15)
-        except requests.RequestException as e:
-            log.warning("send failed: %s", e)
+    from pmbot.bot.alerts import send_html
+    for part in chunks(text):
+        if not send_html(TOKEN, chat or CHAT, part):
+            log.warning("send failed")
 
 
 def systemctl(*args):
@@ -68,7 +85,7 @@ def enabled_units(units):
 # ---------------------------------------------------------------- commands
 def cmd_stop(_):
     open(ops.KILL_FILE, "w").write(f"stopped from Telegram at {datetime.now(timezone.utc).isoformat()}\n")
-    return ("⛔ STOP создан. Боты снимают все заявки и выключаются (обычно за несколько секунд).\n"
+    return ("⛔ <b>STOP создан</b>\nБоты снимают все заявки и выключаются (обычно за несколько секунд).\n"
             "Вернуть: /resume")
 
 
@@ -79,36 +96,40 @@ def cmd_resume(_):
         ok, _ = systemctl("start", "--no-block", u)
         if ok:
             started.append(u)
-    msg = ("STOP удалён. " if removed else "STOP не было. ") + (f"kill снят: {', '.join(cleared)}. " if cleared else "")
-    msg += f"Запускаю: {', '.join(started) or 'нечего'}.\n"
+    msg = ("▶️ STOP удалён. " if removed else "STOP не было. ") + \
+        (f"kill снят: {', '.join(label(u, False) for u in cleared)}. " if cleared else "")
+    msg += f"Запускаю: {', '.join(label(u, False) for u in started) or 'нечего'}.\n"
     msg += "Если бот остановился по дневному стопу убытка, он сам не начнёт торговать до 00:00 UTC."
     return msg
 
 
 def cmd_update(_):
     ok, out = systemctl("start", "--no-block", "pmbot-autoupdate.service")
-    return "🔄 Проверяю GitHub, результат придёт сюда." if ok else f"не получилось: {out[:500]}"
+    return "🔄 Проверяю GitHub, результат придёт сюда." if ok else f"не получилось: {esc(out[:500])}"
 
 
 def cmd_restart(arg):
     unit = arg or "pmbot-5m"
     if unit not in ops.ALL_UNITS:
-        return f"неизвестный юнит {unit}. Юниты: {', '.join(ops.ALL_UNITS)}"
+        return f"неизвестный юнит {esc(unit)}. Юниты: {', '.join(ops.ALL_UNITS)}"
     ok, out = systemctl("restart", "--no-block", unit)
-    return f"перезапускаю {unit}" if ok else f"не получилось: {out[:500]}"
+    return f"♻️ перезапускаю {label(unit)}" if ok else f"не получилось: {esc(out[:500])}"
 
 
 def cmd_log(arg):
     unit = arg or "pmbot-5m"
     if unit not in ops.ALL_UNITS:
-        return f"неизвестный юнит {unit}"
-    return ops.journal_tail(unit, 15) or "лог пуст"
+        return f"неизвестный юнит {esc(unit)}"
+    tail = ops.journal_tail(unit, 15)
+    return f"📜 {label(unit)}\n<pre>{esc(tail[-3500:])}</pre>" if tail else "лог пуст"
 
 
 COMMANDS = {
     "/start": lambda a: HELP, "/help": lambda a: HELP,
-    "/status": lambda a: ops.format_status(), "/pnl": lambda a: ops.format_pnl(),
-    "/trades": lambda a: ops.format_trades(), "/server": lambda a: ops.format_server(),
+    "/status": lambda a: notify.format_status(), "/pnl": lambda a: notify.format_pnl(),
+    "/trades": lambda a: notify.format_trades(), "/server": lambda a: notify.format_server(),
+    "/report": lambda a: notify.format_digest(time.time() - 3600) or "ботов нет",
+    "/today": lambda a: notify.format_daily(ops.today_utc()) or "сегодня закрытых окон ещё нет",
     "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart,
 }
 
@@ -135,7 +156,7 @@ def handle(msg):
         send(fn(parts[1] if len(parts) > 1 else ""))
     except Exception as e:  # noqa: BLE001
         log.exception("command %s failed", cmd)
-        send(f"ошибка: {e}")
+        send(f"ошибка: {esc(e)}")
 
 
 # ---------------------------------------------------------------- background notifications
@@ -154,16 +175,17 @@ class Watcher:
             prev = self.states.get(u)
             if prev != st and st in ("active", "failed", "inactive") and prev not in (None, "n/a"):
                 if st == "failed":
-                    send(f"🔴 {u} упал. /log {u}")
+                    send(f"🔴 {label(u)} <b>упал</b>\nsystemd перезапустит его сам (до 5 раз за 10 мин). "
+                         f"Лог: /log {u}")
                 elif st == "inactive" and prev == "active":
-                    reason = " (файл STOP)" if os.path.exists(ops.KILL_FILE) else ""
-                    send(f"⚪ {u} остановлен{reason}")
-                elif st == "active" and prev in ("failed", "inactive", "activating"):
-                    send(f"🟢 {u} запущен")
+                    reason = "\nпричина: файл STOP (/resume — снять)" if os.path.exists(ops.KILL_FILE) else ""
+                    send(f"⚪ {label(u)} остановлен{reason}")
+                elif st == "active" and prev in ("failed", "inactive", "activating") and u not in ops.BOT_UNITS:
+                    send(f"🟢 {label(u)} запущен")   # trading bots announce their own start
             self.states[u] = st
         h = ops.server_health()
         if h["disk_free_gb"] < 2 and not self.disk_warned:
-            send(f"⚠️ на диске осталось {h['disk_free_gb']:.1f} ГБ")
+            send(f"⚠️ <b>мало места</b>: на диске осталось {h['disk_free_gb']:.1f} ГБ")
             self.disk_warned = True
         elif h["disk_free_gb"] > 4:
             self.disk_warned = False
@@ -177,27 +199,14 @@ class Watcher:
             self.last_daily = day
 
     def digest(self, since):
-        parts = []
-        for u in ops.BOT_UNITS:
-            s = ops.bot_summary(u, since_ts=since)
-            if not s["settles"] and not s["fills"]:
-                continue
-            pnl = sum(e.get("pnl", 0) for e in s["settles"])
-            parts.append(f"{u}: окон {len(s['settles'])}, исполнений {len(s['fills'])}, {pnl:+.2f}$ "
-                         f"(сегодня {ops.fmt_money(s['pnl_today'])})")
-        if parts:
-            send(f"🕐 за {DIGEST_MIN:.0f} мин:\n" + "\n".join(parts))
+        msg = notify.format_digest(since, DIGEST_MIN)
+        if msg:
+            send(msg)
 
     def daily(self, day):
-        lines = [f"📅 итог {day} (UTC)"]
-        for u in ops.BOT_UNITS:
-            _, state_file, mode = ops.bot_paths(u)
-            by_day = ops.risk_state(state_file).get("realized_by_day", {})
-            if day in by_day:
-                lines.append(f"{u} [{mode}]: {by_day[day]:+.2f}$, всего {sum(by_day.values()):+.2f}$")
-        if len(lines) > 1:
-            lines.append(ops.format_server())
-            send("\n".join(lines))
+        msg = notify.format_daily(day)
+        if msg:
+            send(msg)
 
 
 def main():
@@ -207,13 +216,14 @@ def main():
     try:
         requests.post(f"{API}/setMyCommands", timeout=15, json={"commands": [
             {"command": c.strip("/"), "description": d} for c, d in [
-                ("/status", "статус и PnL"), ("/pnl", "PnL по дням"), ("/trades", "последние сделки"),
+                ("/status", "статус и PnL"), ("/report", "сводка за час"), ("/today", "итог дня"),
+                ("/pnl", "PnL по дням"), ("/trades", "последние сделки"),
                 ("/server", "сервер"), ("/log", "лог"), ("/stop", "АВАРИЙНЫЙ СТОП"), ("/resume", "снять стоп"),
                 ("/update", "обновить код"), ("/restart", "перезапустить юнит"), ("/help", "помощь")]]})
     except requests.RequestException:
         pass
     if CHAT:
-        send("🤖 pmbot-tg запущен\n\n" + ops.format_status())
+        send("🤖 <b>pmbot-tg запущен</b>\n\n" + notify.format_status())
     watcher = Watcher() if CHAT else None
     offset, next_watch = None, 0.0
     while True:
