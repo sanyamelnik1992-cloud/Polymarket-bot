@@ -1,21 +1,20 @@
-run: /home/pmbot/Polymarket-bot/data/journal-colo/20261107-074046
-mode: paper  duration: 21.3 min  events: {'start': 1, 'vol_seed': 3, 'window': 18, 'filters': 1226, 'status': 42, 'strike_est': 12, 'fv': 3062, 'quote': 2019, 'fill': 17, 'side_block': 20, 'settle': 3}
+run: /home/pmbot/Polymarket-bot/data/journal-colo/20261107-084212
+mode: paper  duration: 19.9 min  events: {'start': 1, 'vol_seed': 3, 'window': 18, 'filters': 1361, 'status': 39, 'strike_est': 12, 'fv': 3066, 'quote': 1575, 'fill': 9, 'side_block': 7, 'settle': 3}
 
-filter reasons (state changes): {'model_disagrees': 494, 'jump_cooldown': 305, 'fair_unstable': 305, 'wide_spread': 294, 'p_out_of_range': 189, 'too_late': 85, 'too_early': 77, 'chainlink_stale': 76, 'no_strike': 71, 'no_book': 71, 'no_fair_value': 71, 'binance_stale': 6, 'clob_stale': 3}
-quotes placed: 2019
+filter reasons (state changes): {'model_disagrees': 640, 'wide_spread': 413, 'jump_cooldown': 391, 'p_out_of_range': 331, 'fair_unstable': 328, 'no_strike': 186, 'no_fair_value': 186, 'too_late': 174, 'too_early': 81, 'no_book': 46, 'chainlink_stale': 17, 'binance_stale': 7, 'clob_stale': 3}
+quotes placed: 1575
 
-fills: 17  shares: 138  notional: $73.94
+fills: 9  shares: 72  notional: $33.38
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        9  62.530    32.142      0.518   78.215
-eth        6  55.191    31.595      0.585   39.561
-sol        2  20.000    10.200      0.510  145.824
+btc        4  32.426    14.276      0.458   10.709
+eth        5  40.000    19.100      0.434   61.726
 
 settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          2  19.900  0.187          0.100   0.087       0.5 -0.056  0.243  0.009
-eth          1   8.805 -2.102         -2.152   0.050       0.0 -2.102 -2.102 -0.239
+       windows  cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                            
+btc          1   2.5 -2.474           -2.5   0.026       0.0 -2.474 -2.474 -0.989
+eth          2  19.1  1.021            0.9   0.121       1.0  0.162  0.858  0.053
 
-TOTAL pnl $-1.91 (ex-rebate $-2.05) on cost $28.71 -> ROI -6.67%; windows 3, t-stat -0.87
-max drawdown $-2.10; hedged windows (both sides filled): 3
+TOTAL pnl $-1.45 (ex-rebate $-1.60) on cost $21.60 -> ROI -6.73%; windows 3, t-stat -0.48
+max drawdown $-2.47; hedged windows (both sides filled): 2

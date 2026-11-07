@@ -1,18 +1,18 @@
-run: /home/pmbot/Polymarket-bot/data/journal-colo-v2-strict/20261107-073607
-mode: paper  duration: 26.0 min  events: {'start': 1, 'vol_seed': 3, 'window': 21, 'filters': 1135, 'status': 51, 'strike_est': 15, 'fv': 3958, 'quote': 585, 'fill': 2, 'side_block': 4, 'settle': 2}
+run: /home/pmbot/Polymarket-bot/data/journal-colo-v2-strict/20261107-084203
+mode: paper  duration: 20.1 min  events: {'start': 1, 'vol_seed': 3, 'window': 18, 'filters': 1047, 'status': 40, 'strike_est': 12, 'fv': 3075, 'quote': 469, 'fill': 3, 'side_block': 5, 'settle': 1}
 
-filter reasons (state changes): {'model_disagrees': 628, 'fair_unstable': 371, 'jump_cooldown': 306, 'p_out_of_range': 232, 'wide_spread': 177, 'too_late': 97, 'no_strike': 93, 'no_fair_value': 93, 'too_early': 83, 'no_book': 70, 'chainlink_stale': 17, 'binance_stale': 7, 'clob_stale': 3}
-quotes placed: 585
+filter reasons (state changes): {'model_disagrees': 610, 'fair_unstable': 327, 'jump_cooldown': 286, 'wide_spread': 248, 'p_out_of_range': 234, 'no_strike': 127, 'no_fair_value': 127, 'too_late': 125, 'too_early': 63, 'no_book': 47, 'chainlink_stale': 12, 'binance_stale': 8, 'clob_stale': 3}
+quotes placed: 469
 
-fills: 2  shares: 20  notional: $15.80
+fills: 3  shares: 30  notional: $16.50
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        2    20.0      15.8       0.79  105.018
+btc        3    30.0      16.5       0.55    7.182
 
 settled windows:
        windows  cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                            
-btc          2  15.8  4.246            4.2   0.046       1.0  2.022  2.224  0.269
+btc          1   7.2  2.828            2.8   0.028       1.0  2.828  2.828  0.393
 
-TOTAL pnl $+4.25 (ex-rebate $+4.20) on cost $15.80 -> ROI +26.88%; windows 2, t-stat +nan
+TOTAL pnl $+2.83 (ex-rebate $+2.80) on cost $7.20 -> ROI +39.28%; windows 1, t-stat +nan
 max drawdown $0.00; hedged windows (both sides filled): 0
