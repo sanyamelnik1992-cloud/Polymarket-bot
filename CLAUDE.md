@@ -9,6 +9,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
 - So: **everything pushed to `main` goes live within ~2 minutes.** Work on a `claude/...` branch, run
   `python -m pytest -q`, and merge/push to `main` only when the owner asked for it and tests pass.
 - Never rewrite `main` history (force push) — the server only fast-forwards.
+- The owner works from the phone: when they say "залей в main" / "в main", merge your branch into `main` and push.
+  Within ~2 min the server pulls, tests and restarts; Telegram reports "✅ код обновлён" or "🔴 откатено".
+  Commits touching only `*.md`, `reports/` or `tests/` are tested but do not restart the bots.
 - The server pushes an hourly report to branch **`server-reports`** (status, PnL by day, `settles.csv`,
   `runs/<unit>.txt`). Read it to see how the bots are doing: `git fetch origin server-reports` then
   `git show origin/server-reports:README.md`. Never commit code to that branch.
