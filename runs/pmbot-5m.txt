@@ -1,22 +1,6 @@
-run: /home/pmbot/Polymarket-bot/data/journal-colo-v2/20261107-084208
-mode: paper  duration: 78.1 min  events: {'start': 1, 'vol_seed': 3, 'window': 54, 'filters': 3875, 'status': 156, 'strike_est': 48, 'fv': 13488, 'quote': 2304, 'fill': 14, 'side_block': 24, 'settle': 10}
+run: /home/pmbot/Polymarket-bot/data/journal-colo-v2/20261107-105616
+mode: paper  duration: 4.0 min  events: {'start': 1, 'vol_seed': 3, 'window': 9, 'filters': 87, 'status': 8, 'strike_est': 3, 'fv': 51, 'quote': 67}
 
-filter reasons (state changes): {'model_disagrees': 2189, 'fair_unstable': 1457, 'p_out_of_range': 1396, 'jump_cooldown': 1258, 'wide_spread': 886, 'too_late': 646, 'no_strike': 227, 'no_fair_value': 227, 'too_early': 222, 'no_book': 185, 'chainlink_stale': 25, 'binance_stale': 5, 'clob_stale': 3}
-quotes placed: 2304
-
-fills: 14  shares: 134  notional: $76.38
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-btc        7    70.0     36.10      0.516   10.517
-eth        3    30.0     18.30      0.610   41.793
-sol        4    34.0     21.98      0.665   37.185
-
-settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-btc          5  36.10  4.134           3.90   0.234     0.800 -5.766  6.034  0.115
-eth          2  18.30  1.782           1.70   0.082     0.500 -1.549  3.331  0.097
-sol          3  21.98 -7.876          -7.98   0.104     0.333 -6.267  3.557 -0.358
-
-TOTAL pnl $-1.96 (ex-rebate $-2.38) on cost $76.38 -> ROI -2.57%; windows 10, t-stat -0.14
-max drawdown $-10.93; hedged windows (both sides filled): 3
+filter reasons (state changes): {'no_strike': 57, 'no_fair_value': 57, 'wide_spread': 25, 'fair_unstable': 15, 'no_book': 13, 'too_early': 13, 'jump_cooldown': 12, 'binance_stale': 8, 'model_disagrees': 8, 'too_late': 7, 'chainlink_stale': 5, 'clob_stale': 2}
+quotes placed: 67
+no fills
