@@ -62,11 +62,15 @@ if echo "$CHANGED" | grep -qE '^deploy/.*\.(service|timer)$|^deploy/install_unit
   bash deploy/install_units.sh "$OWNER"
 fi
 
-# restart only what is running. Bots stop gracefully (cancel all orders, wait for settlements), so --no-block.
+# restart only what is running. Bots stop gracefully (cancel all orders, wait for settlements: up to ~15 min
+# without quotes), so --no-block -- and not at all when only docs/reports/tests changed (frequent phone commits).
 RESTARTED=()
-for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-hourly pmbot-tg; do
-  if systemctl is-active -q "$u"; then systemctl restart --no-block "$u"; RESTARTED+=("$u"); fi
-done
+RUNTIME="$(echo "$CHANGED" | grep -vE '\.md$|^reports/|^tests/' || true)"
+if [ -n "$RUNTIME" ]; then
+  for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-hourly pmbot-tg; do
+    if systemctl is-active -q "$u"; then systemctl restart --no-block "$u"; RESTARTED+=("$u"); fi
+  done
+fi
 if echo "$CHANGED" | grep -qE '^(pmbot/recorder.py|scripts/record_live.py|deploy/pmbot-recorder.service)$' \
    && systemctl is-active -q pmbot-recorder; then
   systemctl restart --no-block pmbot-recorder; RESTARTED+=("pmbot-recorder")
@@ -74,4 +78,4 @@ fi
 
 notify "✅ код обновлён ${OLD:0:7} → ${NEW:0:7} ($BRANCH), тесты ок
 $LOG
-перезапуск: ${RESTARTED[*]:-ничего не запущено}"
+перезапуск: ${RESTARTED[*]:-не нужен (менялись только документы/отчёты/тесты) или ничего не запущено}"
