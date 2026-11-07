@@ -1,0 +1,13 @@
+[Unit]
+Description=pmbot: nightly review of all bots + experiment verdicts + PnL chart to Telegram (scripts/nightly_review.py)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# low priority: never steal CPU from the trading bots
+Nice=15
+ExecStart=__REPO__/.venv/bin/python scripts/nightly_review.py --send
+TimeoutStartSec=1200

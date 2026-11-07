@@ -1,0 +1,9 @@
+[Unit]
+Description=pmbot: nightly review at 00:20 UTC (after the last windows of the day settled)
+
+[Timer]
+OnCalendar=*-*-* 00:20:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

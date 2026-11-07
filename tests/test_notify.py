@@ -14,8 +14,8 @@ from test_ops import make_repo  # noqa: E402
 def balanced(text):
     """Every <b>/<code>/<pre> is closed and nothing else looks like a tag (Telegram rejects broken HTML)."""
     tags = re.findall(r"</?([a-z]+)>", text)
-    assert set(tags) <= {"b", "code", "pre"}, tags
-    for t in ("b", "code", "pre"):
+    assert set(tags) <= {"b", "i", "code", "pre"}, tags
+    for t in ("b", "i", "code", "pre"):
         assert text.count(f"<{t}>") == text.count(f"</{t}>"), t
     return True
 

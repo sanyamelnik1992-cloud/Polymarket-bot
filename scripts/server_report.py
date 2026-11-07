@@ -5,10 +5,12 @@ usage: python scripts/server_report.py OUT_DIR
   OUT_DIR/days/<date>.md     the same snapshot, one file per UTC day (overwritten during the day)
   OUT_DIR/settles.csv        every settled window of the last 14 days (all bots) for analysis
   OUT_DIR/runs/<unit>.txt    scripts/report_journal.py of the current run of every running bot
+  OUT_DIR/reviews/<day>.md   nightly reviews with experiment verdicts (scripts/nightly_review.py)
 No secrets: only journals, risk state files and system stats are read.
 """
 import csv
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -49,6 +51,13 @@ def main(out):
                                           "payoff", "rebate", "pnl"])
         w.writeheader()
         w.writerows(rows)
+
+    rev = os.path.join(ops.REPO, "data", "reviews")         # nightly reviews (scripts/nightly_review.py)
+    if os.path.isdir(rev):
+        os.makedirs(os.path.join(out, "reviews"), exist_ok=True)
+        for name in sorted(os.listdir(rev))[-60:]:
+            if name.endswith(".md"):
+                shutil.copyfile(os.path.join(rev, name), os.path.join(out, "reviews", name))
 
     for unit in ops.BOT_UNITS:
         if ops.unit_state(unit)[0] != "active":

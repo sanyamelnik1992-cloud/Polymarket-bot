@@ -79,6 +79,17 @@ class TelegramAlerts:
             send_html(self.token, self.chat, text)
 
 
+def send_photo(token, chat, png, caption=""):
+    """Send a PNG with an HTML caption (Telegram caption limit 1024)."""
+    try:
+        r = requests.post(f"https://api.telegram.org/bot{token}/sendPhoto",
+                          data={"chat_id": chat, "caption": caption[:1024], "parse_mode": "HTML"},
+                          files={"photo": ("chart.png", png, "image/png")}, timeout=30)
+        return r.status_code == 200
+    except requests.RequestException:
+        return False
+
+
 def send_html(token, chat, text):
     """Send as HTML; if Telegram rejects the markup, resend the same text without tags."""
     url = f"https://api.telegram.org/bot{token}/sendMessage"

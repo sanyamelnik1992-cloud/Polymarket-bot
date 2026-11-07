@@ -132,9 +132,10 @@ curl -fsSL https://raw.githubusercontent.com/sanyamelnik1992-cloud/Polymarket-bo
 
 | юнит / таймер | что делает |
 |---|---|
-| `pmbot-autoupdate.timer` | каждые 2 мин `deploy/autoupdate.sh`: fast-forward на `origin/$PMBOT_BRANCH` (по умолчанию `main`), `pip install` при изменении `requirements.txt`, `pytest -q -x`, рестарт запущенных ботов. Тесты упали → откат, коммит запоминается как плохой |
-| `pmbot-tg` | Telegram-бот: `/status /pnl /trades /server /log /stop /resume /update /restart`, сводка раз в час, итог дня в 00:05 UTC, сообщения о падениях юнитов и нехватке диска. Слушается только чат `PMBOT_TG_CHAT` |
-| `pmbot-reports.timer` | раз в час пушит в ветку `server-reports`: `README.md` (статус), `days/<дата>.md`, `settles.csv`, `runs/<юнит>.txt` |
+| `pmbot-autoupdate.timer` | каждые 2 мин `deploy/autoupdate.sh`: fast-forward на `origin/$PMBOT_BRANCH` (по умолчанию `main`), `pip install` при изменении `requirements.txt`, `pytest -q -x`, рестарт запущенных ботов (не рестартует, если менялись только `*.md`, `reports/`, `tests/`). Тесты упали → откат, коммит запоминается как плохой |
+| `pmbot-tg` | Telegram-бот: `/status /report /today /chart /review /pnl /trades /server /log /stop /resume /update /restart`, сводка раз в час, итог дня в 00:05 UTC, сообщения о падениях юнитов и нехватке диска. Слушается только чат `PMBOT_TG_CHAT`. Тексты — `pmbot/notify.py` |
+| `pmbot-review.timer` | в 00:20 UTC `scripts/nightly_review.py --send`: разбор дня по каждому боту, вердикт по парам-экспериментам (правило в `pmbot/review.py`), график PnL за 7 дней в Telegram; файл `data/reviews/<день>.md` попадает в `server-reports/reviews/` |
+| `pmbot-reports.timer` | раз в час пушит в ветку `server-reports`: `README.md` (статус), `days/<дата>.md`, `settles.csv`, `runs/<юнит>.txt`, `reviews/<день>.md` |
 | `pmbot-cleanup.timer` | раз в час удаляет записи рекордера, в которые ничего не писалось `PMBOT_REC_KEEP_HOURS` часов; если свободно меньше `PMBOT_MIN_FREE_GB`, останавливает рекордер |
 
 **Telegram:** @BotFather → `/newbot` → токен в `PMBOT_TG_TOKEN`; написать боту что угодно, он ответит chat id →
@@ -143,3 +144,19 @@ curl -fsSL https://raw.githubusercontent.com/sanyamelnik1992-cloud/Polymarket-bo
 
 **Ручное обновление:** `/update` в Telegram или `sudo systemctl start pmbot-autoupdate`. Лог: `journalctl -u pmbot-autoupdate`.
 Правки прямо на сервере блокируют автообновление (оно пишет об этом в Telegram): код меняем только через GitHub.
+
+## 6. Цикл улучшения стратегии
+
+1. **Эксперимент = бот-близнец.** Новый фильтр — отдельный paper-бот рядом с контрольным (как C рядом с A,
+   D рядом с B): одно изменение в конфиге, свой `journal_dir` и `state_file`, юнит в `deploy/`, имя в
+   `ops.BOT_UNITS` и `notify.BOTS`/`notify.PAIRS`. Контроль не трогаем.
+2. **Каждую ночь** `pmbot-review` сравнивает пары окно к окну (только окна, когда работали оба) и пишет вердикт по
+   заранее зафиксированному правилу: ≥3 дня, t ≥ 2, строгий лучше в ≥2/3 дней → «перенести»; t ≤ −2 → «вредит».
+   Перенос в основной конфиг — только по решению владельца.
+3. **Быстрая проверка идеи на записях** (до paper): рекордер `pmbot-recorder` пишет данные Дублина в `data/rec/`
+   (хранится `PMBOT_REC_KEEP_HOURS` часов). Прогон конфига с правками, с низким приоритетом, чтобы не мешать ботам:
+   ```bash
+   nice -n 15 .venv/bin/python scripts/replay_bot.py data/rec/<каталог> /tmp/replay config/colo_v2.toml filters.max_disagree=0.04
+   ```
+   Только идеи, которые выглядят лучше контроля на записях, идут в paper-близнеца.
+

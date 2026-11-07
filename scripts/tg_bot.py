@@ -31,6 +31,8 @@ HELP = """🤖 <b>pmbot — команды</b>
 📊 /status — боты, PnL за сегодня, режим
 🕐 /report — сводка за последний час
 📅 /today — итог дня на текущий момент
+📈 /chart [дней] — график накопленного PnL (по умолчанию 7 дней)
+🔬 /review — разбор дня и вердикт по экспериментам (C/D) прямо сейчас
 💰 /pnl — PnL по дням
 🧾 /trades — последние 10 закрытых окон
 🖥 /server — CPU, RAM, диск
@@ -44,7 +46,8 @@ HELP = """🤖 <b>pmbot — команды</b>
 <b>Боты</b>
 """ + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS) + """
 
-Сам присылаю: сводку каждый час, итог дня в 00:05 UTC, тревоги (стоп, пауза, ошибки, падение юнита)."""
+Сам присылаю: сводку каждый час, итог дня в 00:05 UTC, ночной разбор с графиком в 00:20 UTC,
+тревоги (стоп, пауза, ошибки, падение юнита)."""
 
 
 def chunks(text, size=3900):
@@ -116,6 +119,29 @@ def cmd_restart(arg):
     return f"♻️ перезапускаю {label(unit)}" if ok else f"не получилось: {esc(out[:500])}"
 
 
+def cmd_chart(arg):
+    from pmbot import charts
+    from pmbot.bot.alerts import send_photo
+    try:
+        days = max(1, min(60, int(arg or 7)))
+    except ValueError:
+        days = 7
+    png = charts.equity_png(days)
+    if not png:
+        return "за этот период закрытых окон нет"
+    send_photo(TOKEN, CHAT, png, f"📈 Накопленный PnL за {days} дн. (пунктир — строгие близнецы)")
+    return None
+
+
+def cmd_review(_):
+    # separate low-priority process: it parses whole journals (pandas), the trading bots must not feel it
+    script = os.path.join(ops.REPO, "scripts", "nightly_review.py")
+    subprocess.Popen(["nice", "-n", "15", sys.executable, script, "--day", ops.today_utc(), "--send",
+                      "--out", os.path.join(ops.REPO, "data", "reviews", "partial")],
+                     cwd=ops.REPO, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return "🔬 считаю разбор за сегодня (до текущего момента), пришлю через 1–2 минуты"
+
+
 def cmd_log(arg):
     unit = arg or "pmbot-5m"
     if unit not in ops.ALL_UNITS:
@@ -130,6 +156,7 @@ COMMANDS = {
     "/trades": lambda a: notify.format_trades(), "/server": lambda a: notify.format_server(),
     "/report": lambda a: notify.format_digest(time.time() - 3600) or "ботов нет",
     "/today": lambda a: notify.format_daily(ops.today_utc()) or "сегодня закрытых окон ещё нет",
+    "/chart": cmd_chart, "/review": cmd_review,
     "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart,
 }
 
@@ -153,7 +180,9 @@ def handle(msg):
         send("не понял. /help — список команд")
         return
     try:
-        send(fn(parts[1] if len(parts) > 1 else ""))
+        reply = fn(parts[1] if len(parts) > 1 else "")
+        if reply:
+            send(reply)
     except Exception as e:  # noqa: BLE001
         log.exception("command %s failed", cmd)
         send(f"ошибка: {esc(e)}")
@@ -217,7 +246,7 @@ def main():
         requests.post(f"{API}/setMyCommands", timeout=15, json={"commands": [
             {"command": c.strip("/"), "description": d} for c, d in [
                 ("/status", "статус и PnL"), ("/report", "сводка за час"), ("/today", "итог дня"),
-                ("/pnl", "PnL по дням"), ("/trades", "последние сделки"),
+                ("/chart", "график PnL"), ("/review", "разбор и вердикт"), ("/pnl", "PnL по дням"), ("/trades", "последние сделки"),
                 ("/server", "сервер"), ("/log", "лог"), ("/stop", "АВАРИЙНЫЙ СТОП"), ("/resume", "снять стоп"),
                 ("/update", "обновить код"), ("/restart", "перезапустить юнит"), ("/help", "помощь")]]})
     except requests.RequestException:
