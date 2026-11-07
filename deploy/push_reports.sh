@@ -13,7 +13,11 @@ if [ ! -d "$WT/.git" ] && [ ! -f "$WT/.git" ]; then
     git fetch -q origin "$BR"
     git worktree add -q -B "$BR" "$WT" "origin/$BR"
   else
-    git worktree add -q --orphan -b "$BR" "$WT"
+    # orphan branch without `worktree add --orphan` (needs git >= 2.42; Ubuntu 22.04 has 2.34)
+    root="$(git -c user.name="pmbot server" -c user.email="pmbot@server" commit-tree \
+      "$(git hash-object -w -t tree /dev/null)" -m "server reports: empty root")"
+    git branch -f "$BR" "$root"
+    git worktree add -q "$WT" "$BR"
   fi
 fi
 
