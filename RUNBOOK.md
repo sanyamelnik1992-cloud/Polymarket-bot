@@ -133,7 +133,7 @@ curl -fsSL https://raw.githubusercontent.com/sanyamelnik1992-cloud/Polymarket-bo
 | юнит / таймер | что делает |
 |---|---|
 | `pmbot-autoupdate.timer` | каждые 2 мин `deploy/autoupdate.sh`: fast-forward на `origin/$PMBOT_BRANCH` (по умолчанию `main`), `pip install` при изменении `requirements.txt`, `pytest -q -x`, рестарт запущенных ботов (не рестартует, если менялись только `*.md`, `reports/`, `tests/`). Тесты упали → откат, коммит запоминается как плохой |
-| `pmbot-tg` | Telegram-бот: `/status /report /today /chart /review /pnl /trades /server /log /stop /resume /update /restart`, сводка раз в час, итог дня в 00:05 UTC, сообщения о падениях юнитов и нехватке диска. Слушается только чат `PMBOT_TG_CHAT`. Тексты — `pmbot/notify.py` |
+| `pmbot-tg` | Telegram-бот: `/status /chart /review /trades /server /log /stop /resume /update /restart`, сводка в 06/12/18 UTC (`PMBOT_TG_DIGEST_HOURS`), сообщения о падениях юнитов и нехватке диска. Слушается только чат `PMBOT_TG_CHAT`. Тексты — `pmbot/notify.py` |
 | `pmbot-review.timer` | в 00:20 UTC `scripts/nightly_review.py --send`: разбор дня по каждому боту, вердикт по парам-экспериментам (правило в `pmbot/review.py`), график PnL за 7 дней в Telegram; файл `data/reviews/<день>.md` попадает в `server-reports/reviews/` |
 | `pmbot-reports.timer` | раз в час пушит в ветку `server-reports`: `README.md` (статус), `days/<дата>.md`, `settles.csv`, `runs/<юнит>.txt`, `reviews/<день>.md` |
 | `pmbot-cleanup.timer` | раз в час удаляет записи рекордера, в которые ничего не писалось `PMBOT_REC_KEEP_HOURS` часов; если свободно меньше `PMBOT_MIN_FREE_GB`, останавливает рекордер |

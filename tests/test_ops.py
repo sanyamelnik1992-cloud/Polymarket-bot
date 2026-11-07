@@ -77,7 +77,7 @@ def test_tg_bot_obeys_only_its_chat(tmp_path, monkeypatch):
     assert (tmp_path / "STOP").exists() and "STOP" in sent[-1][1]
     tg.handle({"chat": {"id": 42}, "text": "/status@mybot"})
     assert "<b>A</b>" in sent[-1][1] and "+5.50$" in sent[-1][1]
-    for cmd in ("/report", "/today", "/pnl", "/trades", "/help"):
+    for cmd in ("/trades", "/help", "/server"):
         tg.handle({"chat": {"id": 42}, "text": cmd})
         assert sent[-1][1] and not sent[-1][1].startswith("ошибка"), cmd
 

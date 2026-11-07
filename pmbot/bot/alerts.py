@@ -2,8 +2,8 @@
 
 Messages are formatted by pmbot.notify (HTML). Sent asynchronously from a background thread so trading is never
 blocked by the network.
-  - a closed window is sent one by one only in LIVE mode (or with PMBOT_TG_SETTLES=1); paper windows go into the
-    hourly digest of pmbot-tg instead of ~30 messages an hour
+  - paper bots only report what needs attention (kill switch, errors); start / pause / final / every closed window
+    are sent only in LIVE mode (closed windows also with PMBOT_TG_SETTLES=1). Paper results come in the digests
   - the same error kind is sent at most once per ERROR_EVERY_S; the next message says how many were skipped
 """
 import os
@@ -16,6 +16,7 @@ import requests
 
 ALERT_TYPES = {"start", "kill", "pause", "order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error",
                "settle_timeout", "existing_position", "final", "settle", "geoblock_ok", "balance"}
+LIVE_ONLY = {"start", "pause", "final", "settle", "existing_position", "geoblock_ok", "balance"}
 RATE_LIMITED = {"order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error", "settle_timeout"}
 ERROR_EVERY_S = 600
 
@@ -45,6 +46,8 @@ class TelegramAlerts:
     def render(self, kind, rec):
         """HTML text for an event, or None (not an alert / rate-limited / paper window)."""
         if kind not in ALERT_TYPES:
+            return None
+        if kind in LIVE_ONLY and self.mode != "live" and not (kind == "settle" and self.per_window):
             return None
         if kind in RATE_LIMITED:
             now = self.clock()

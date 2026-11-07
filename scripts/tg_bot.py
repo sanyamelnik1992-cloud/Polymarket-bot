@@ -1,7 +1,8 @@
 """Telegram control bot for the server: status, PnL, trades, server health, logs, emergency stop, updates.
 
   env: PMBOT_TG_TOKEN (from @BotFather), PMBOT_TG_CHAT (your chat id; only this chat is obeyed)
-       PMBOT_TG_DIGEST_MIN=60   hourly digest (0 = off); a daily report is sent at 00:05 UTC
+       PMBOT_TG_DIGEST_HOURS=6,12,18   UTC hours of the digest ("" = off); the nightly review comes at 00:20 UTC
+                                       from pmbot-review.timer
   run: python scripts/tg_bot.py          (systemd unit pmbot-tg)
 
 Without PMBOT_TG_CHAT the bot only answers "your chat id is ..." so the id can be put into /etc/pmbot/pmbot.env.
@@ -23,17 +24,15 @@ from pmbot.notify import esc, label  # noqa: E402
 log = logging.getLogger("tg")
 TOKEN = os.environ.get("PMBOT_TG_TOKEN", "").strip()
 CHAT = os.environ.get("PMBOT_TG_CHAT", "").strip()
-DIGEST_MIN = float(os.environ.get("PMBOT_TG_DIGEST_MIN", "60") or 0)
+DIGEST_HOURS = sorted({int(h) % 24 for h in os.environ.get("PMBOT_TG_DIGEST_HOURS", "6,12,18").replace(" ", "").split(",")
+                        if h.isdigit()})
 API = f"https://api.telegram.org/bot{TOKEN}"
 
 HELP = """🤖 <b>pmbot — команды</b>
 
 📊 /status — боты, PnL за сегодня, режим
-🕐 /report — сводка за последний час
-📅 /today — итог дня на текущий момент
 📈 /chart [дней] — график накопленного PnL (по умолчанию 7 дней)
 🔬 /review — разбор дня и вердикт по экспериментам (C/D) прямо сейчас
-💰 /pnl — PnL по дням
 🧾 /trades — последние 10 закрытых окон
 🖥 /server — CPU, RAM, диск
 📜 /log [юнит] — последние строки лога
@@ -44,10 +43,10 @@ HELP = """🤖 <b>pmbot — команды</b>
 ♻️ /restart [юнит] — перезапустить юнит
 
 <b>Боты</b>
-""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS) + """
+""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS if u.startswith("pmbot-5m")) + """
 
-Сам присылаю: сводку каждый час, итог дня в 00:05 UTC, ночной разбор с графиком в 00:20 UTC,
-тревоги (стоп, пауза, ошибки, падение юнита)."""
+Сам присылаю: сводку в """ + ", ".join(f"{h:02d}:00" for h in DIGEST_HOURS) + """ UTC, ночной разбор с графиком в 00:20 UTC,
+тревоги (стоп, ошибки, падение юнита, мало места)."""
 
 
 def chunks(text, size=3900):
@@ -152,10 +151,8 @@ def cmd_log(arg):
 
 COMMANDS = {
     "/start": lambda a: HELP, "/help": lambda a: HELP,
-    "/status": lambda a: notify.format_status(), "/pnl": lambda a: notify.format_pnl(),
+    "/status": lambda a: notify.format_status(),
     "/trades": lambda a: notify.format_trades(), "/server": lambda a: notify.format_server(),
-    "/report": lambda a: notify.format_digest(time.time() - 3600) or "ботов нет",
-    "/today": lambda a: notify.format_daily(ops.today_utc()) or "сегодня закрытых окон ещё нет",
     "/chart": cmd_chart, "/review": cmd_review,
     "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart,
 }
@@ -194,8 +191,7 @@ class Watcher:
 
     def __init__(self):
         self.states = {u: ops.unit_state(u)[0] for u in ops.ALL_UNITS}
-        self.last_digest = time.time()
-        self.last_daily = ops.today_utc()
+        self.last_slot = self.slot()
         self.disk_warned = False
 
     def tick(self):
@@ -218,22 +214,28 @@ class Watcher:
             self.disk_warned = True
         elif h["disk_free_gb"] > 4:
             self.disk_warned = False
-        now = time.time()
-        if DIGEST_MIN > 0 and now - self.last_digest >= DIGEST_MIN * 60:
-            self.digest(self.last_digest)
-            self.last_digest = now
-        day = ops.today_utc()
-        if day != self.last_daily and datetime.now(timezone.utc).minute >= 5:
-            self.daily(self.last_daily)
-            self.last_daily = day
+        slot = self.slot()
+        if slot != self.last_slot:
+            self.last_slot = slot
+            if slot is not None:
+                self.digest(slot)
 
-    def digest(self, since):
-        msg = notify.format_digest(since, DIGEST_MIN)
-        if msg:
-            send(msg)
+    @staticmethod
+    def slot():
+        """Start (ts) of the latest digest hour that has passed, or None when digests are off."""
+        if not DIGEST_HOURS:
+            return None
+        now = datetime.now(timezone.utc)
+        day0 = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        past = [day0 + h * 3600 for h in DIGEST_HOURS if day0 + h * 3600 <= now.timestamp()]
+        return past[-1] if past else day0 - 86400 + DIGEST_HOURS[-1] * 3600
 
-    def daily(self, day):
-        msg = notify.format_daily(day)
+    def digest(self, slot):
+        """Digest for the period since the previous digest hour (the night is covered by the nightly review)."""
+        prev = [slot - k * 3600 for k in range(1, 25) if datetime.fromtimestamp(slot - k * 3600, timezone.utc).hour
+                in DIGEST_HOURS or datetime.fromtimestamp(slot - k * 3600, timezone.utc).hour == 0]
+        since = prev[0] if prev else slot - 6 * 3600
+        msg = notify.format_digest(since, (slot - since) / 3600)
         if msg:
             send(msg)
 
@@ -245,14 +247,13 @@ def main():
     try:
         requests.post(f"{API}/setMyCommands", timeout=15, json={"commands": [
             {"command": c.strip("/"), "description": d} for c, d in [
-                ("/status", "статус и PnL"), ("/report", "сводка за час"), ("/today", "итог дня"),
-                ("/chart", "график PnL"), ("/review", "разбор и вердикт"), ("/pnl", "PnL по дням"), ("/trades", "последние сделки"),
+                ("/status", "статус и PnL"), ("/chart", "график PnL"), ("/review", "разбор и вердикт"),
+                ("/trades", "последние сделки"),
                 ("/server", "сервер"), ("/log", "лог"), ("/stop", "АВАРИЙНЫЙ СТОП"), ("/resume", "снять стоп"),
                 ("/update", "обновить код"), ("/restart", "перезапустить юнит"), ("/help", "помощь")]]})
     except requests.RequestException:
         pass
-    if CHAT:
-        send("🤖 <b>pmbot-tg запущен</b>\n\n" + notify.format_status())
+    log.info("started; chat %s", "set" if CHAT else "not set")   # silent: restarts come with every code update
     watcher = Watcher() if CHAT else None
     offset, next_watch = None, 0.0
     while True:

@@ -41,15 +41,22 @@ def test_paper_windows_are_not_sent_one_by_one_but_live_ones_are():
     assert alerts(per_window=True).render("settle", rec)
 
 
-def test_alert_texts_are_labelled_and_escaped():
+def test_paper_bots_are_silent_about_start_pause_and_final():
     a = alerts()
+    for kind in ("start", "pause", "final"):
+        assert a.render(kind, {"mode": "paper", "pnl": 1, "losing_streak": 8}) is None, kind
+    assert a.render("kill", {"reason": "daily loss limit 50 reached"})      # the kill switch is always reported
+
+
+def test_alert_texts_are_labelled_and_escaped():
+    a = alerts(mode="live")
     assert a.unit == "pmbot-5m"
     for kind, rec in [("start", {"mode": "paper"}), ("pause", {"losing_streak": 8, "until": 1793988600}),
                       ("kill", {"reason": "daily loss limit 50 reached"}), ("final", {"pnl": -3, "unresolved": 1}),
                       ("order_rejected", {"key": "eth-1793988600", "error": "bad <html> & stuff"})]:
         msg = a.render(kind, rec)
         assert msg and "<b>A</b>" in msg and balanced(msg), kind
-    assert "00:00 UTC" in alerts().render("kill", {"reason": "daily loss limit 50 reached"})
+    assert "00:00 UTC" in alerts(mode="live").render("kill", {"reason": "daily loss limit 50 reached"})
     assert "/resume" in alerts().render("kill", {"reason": "kill file STOP present"})
     assert alerts().render("quote", {}) is None and alerts().render("fv", {}) is None
 
@@ -78,9 +85,6 @@ def test_digest_daily_and_status_from_journals(tmp_path, monkeypatch):
     assert "<b>A</b>" in d and "+5.50$" in d and "окон 1 (✅1 ❌0)" in d and balanced(d)
     assert "сделок не было" in d                           # C had no closed windows this hour
     assert "C</b> vs" in d and "+2.00$" in d and "строгий лучше" in d   # 7.5 - 5.5
-    daily = notify.format_daily(ops.today_utc())
-    assert "выиграно 100%" in daily and "Лучший за день" in daily and balanced(daily)
     st = notify.format_status()
     assert "+5.50$" in st and "kill switch" in st and balanced(st)
-    assert balanced(notify.format_pnl()) and balanced(notify.format_trades())
-    assert notify.format_daily("2001-01-01") is None
+    assert balanced(notify.format_trades())

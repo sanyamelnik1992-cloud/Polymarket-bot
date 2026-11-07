@@ -202,12 +202,12 @@ def pairs_block(day):
     return "⚖️ <b>Строгий фильтр против контроля</b> (за сегодня)\n" + "\n".join(rows)
 
 
-def format_digest(since, minutes=60):
+def format_digest(since, hours=6):
     units = _shown_units()
     if not units:
         return None
     now = time.time()
-    lines = [f"🕐 <b>Сводка за {minutes:.0f} мин</b> · {hhmm(since)}–{hhmm(now)} UTC", ""]
+    lines = [f"🕐 <b>Сводка за {hours:g} ч</b> · {hhmm(since)}–{hhmm(now)} UTC", ""]
     tot = 0.0
     for u in units:
         settles, fills = _settles(u, since)
@@ -218,60 +218,18 @@ def format_digest(since, minutes=60):
         if state != "active":
             head += f"  {ops.STATE_RU.get(state, esc(state))}"
         if s["n"]:
-            lines.append(f"{head}\n   {dot(s['pnl'])} за час {money(s['pnl'], True)} · окон {s['n']} "
+            lines.append(f"{head}\n   {dot(s['pnl'])} за период {money(s['pnl'], True)} · окон {s['n']} "
                          f"(✅{s['wins']} ❌{s['losses']}) · исп. {len(fills)}\n"
                          f"   сегодня {money(today)}")
         else:
             lines.append(f"{head}\n   ⚪ сделок не было · сегодня {money(today)}")
         tot += s["pnl"]
-    lines += [LINE, f"Σ за час: {money(tot, True)} · сегодня: "
+    lines += [LINE, f"Σ за период: {money(tot, True)} · сегодня: "
                     f"{money(sum(_by_day(u).get(ops.today_utc(), 0) for u in units), True)}"]
     pb = pairs_block(ops.today_utc())
     if pb:
         lines += ["", pb]
     lines += ["", paper_note(units)]
-    return "\n".join(lines)
-
-
-def format_daily(day):
-    units = [u for u in _shown_units() if day in _by_day(u)]
-    if not units:
-        return None
-    t0 = ops.day_start_ts(day)
-    lines = [f"📅 <b>Итог дня {day}</b> (UTC)", ""]
-    best = None
-    for u in units:
-        by = _by_day(u)
-        pnl = by[day]
-        settles, fills = _settles(u, t0, t0 + 86400)
-        s = _stats(settles)
-        days = sorted(d for d in by if d <= day)
-        lines.append(f"{label(u)}\n   {dot(pnl)} день {money(pnl, True)}")
-        if s["n"]:
-            wr = 100 * s["wins"] / s["n"]
-            lines.append(f"   окон {s['n']} · выиграно {wr:.0f}% · исп. {len(fills)}")
-            lines.append(f"   лучшее {money(s['best'])} · худшее {money(s['worst'])}")
-            assets = {}
-            for e in settles:
-                a = str(e.get("key", "?")).split("-")[0].upper()
-                assets[a] = assets.get(a, 0) + (e.get("pnl", 0) or 0)
-            lines.append("   " + " · ".join(f"{esc(a)} {money(v)}" for a, v in sorted(assets.items())))
-        lines.append(f"   всего {money(sum(by[d] for d in days))} за {len(days)} дн. {squares([by[d] for d in days[-7:]])}")
-        if best is None or pnl > best[1]:
-            best = (u, pnl)
-        lines.append("")
-    if len(units) > 1:
-        lines.append(f"🏆 Лучший за день: {label(best[0], False)} {money(best[1], True)}")
-    pb = pairs_block(day)
-    if pb:
-        lines += ["", pb.replace("(за сегодня)", f"(за {day})")]
-    h = ops.server_health()
-    srv = f"🖥 диск {h['disk_free_gb']:.0f} ГБ свободно"
-    if h.get("load"):
-        srv += f" · CPU {h['load'][2]:.1f}/{h['cpus']}"
-    if "mem_avail_mb" in h:
-        srv += f" · RAM {h['mem_avail_mb'] / 1024:.1f} ГБ свободно"
-    lines += [LINE, srv, paper_note(units)]
     return "\n".join(lines)
 
 
@@ -313,21 +271,6 @@ def format_status():
     g = ops.git_info()
     lines += [LINE, f"Σ сегодня: {money(total, True)}", f"код: <code>{esc(g['branch'])} {esc(g['commit'])}</code>"]
     return "\n".join(lines)
-
-
-def format_pnl(days=7):
-    out = ["💰 <b>PnL по дням</b> (UTC)", ""]
-    for unit in ops.BOT_UNITS:
-        by = _by_day(unit)
-        if not by:
-            continue
-        mode = ops.bot_paths(unit)[2]
-        out.append(f"{label(unit)} [{esc(mode)}]")
-        for d in sorted(by)[-days:]:
-            out.append(f"   {dot(by[d])} {d}: {money(by[d])}")
-        out.append(f"   итого: {money(sum(by.values()), True)} {squares([by[d] for d in sorted(by)[-7:]])}")
-        out.append("")
-    return "\n".join(out).rstrip() if len(out) > 2 else "пока нет закрытых окон"
 
 
 def format_trades(n=10):
