@@ -1,22 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo/20261107-104748
-mode: paper  duration: 493.9 min  events: {'start': 1, 'vol_seed': 3, 'window': 303, 'filters': 44342, 'status': 987, 'strike_est': 294, 'fv': 87145, 'quote': 15015, 'fill': 118, 'side_block': 108, 'settle': 54}
+mode: paper  duration: 553.4 min  events: {'start': 1, 'vol_seed': 3, 'window': 339, 'filters': 49735, 'status': 1106, 'strike_est': 330, 'fv': 97785, 'quote': 16234, 'fill': 125, 'side_block': 114, 'settle': 59}
 
-filter reasons (state changes): {'model_disagrees': 29528, 'p_out_of_range': 23677, 'jump_cooldown': 15506, 'wide_spread': 14667, 'fair_unstable': 10906, 'too_late': 10051, 'too_early': 2004, 'no_book': 1737, 'no_strike': 1722, 'no_fair_value': 1722, 'vol_spike': 1025, 'chainlink_stale': 386, 'clob_stale': 25, 'binance_stale': 11}
-quotes placed: 15015
+filter reasons (state changes): {'model_disagrees': 33438, 'p_out_of_range': 26679, 'jump_cooldown': 17311, 'wide_spread': 16527, 'fair_unstable': 12225, 'too_late': 11102, 'too_early': 2313, 'no_strike': 1905, 'no_fair_value': 1905, 'no_book': 1890, 'vol_spike': 1126, 'chainlink_stale': 424, 'clob_stale': 25, 'binance_stale': 11}
+quotes placed: 16234
 
-fills: 118  shares: 886  notional: $410.16
+fills: 125  shares: 932  notional: $432.81
        fills   shares  notional  avg_price  med_rel
 asset                                              
-btc       83  613.738   281.680      0.445   72.780
+btc       89  657.808   303.271      0.447   64.528
 eth       16  117.083    60.098      0.522   95.098
-sol       19  155.035    68.384      0.434  112.872
+sol       20  157.076    69.445      0.438  104.171
 
 settled windows:
        windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst    best    roi
 asset                                                                                 
-btc         31  281.680  -3.102         -5.068   1.966     0.484 -7.044  11.468 -0.011
+btc         35  303.271 -14.542        -16.659   2.117     0.429 -7.044  11.468 -0.048
 eth         10   60.098  12.751         12.392   0.359     0.600 -5.365   9.370  0.212
-sol         13   68.384  -2.375         -2.848   0.473     0.385 -5.365   7.942 -0.035
+sol         14   69.445  -1.389         -1.869   0.480     0.429 -5.365   7.942 -0.020
 
-TOTAL pnl $+7.27 (ex-rebate $+4.48) on cost $410.16 -> ROI +1.77%; windows 54, t-stat +0.22
-max drawdown $-29.67; hedged windows (both sides filled): 25
+TOTAL pnl $-3.18 (ex-rebate $-6.14) on cost $432.81 -> ROI -0.73%; windows 59, t-stat -0.09
+max drawdown $-29.67; hedged windows (both sides filled): 26
