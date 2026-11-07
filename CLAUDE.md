@@ -22,7 +22,8 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
 
 ## Layout
 - `pmbot/bot/` — engine, strategy, filters, risk, paper/live brokers, replay; `scripts/run_bot.py` runs it.
-- `config/*.toml` — bot configs (`colo_v2.toml` = main 5m bot A, `colo.toml` = experiment B).
+- `config/*.toml` — bot configs (`colo_v2.toml` = main 5m bot A, `colo.toml` = experiment B; `*_strict.toml` = C/D,
+  the same with `max_disagree` 0.04 for a paired test, see `reports/39`).
 - `pmbot/ops.py`, `scripts/tg_bot.py` — Telegram control bot (`/status /pnl /trades /server /log /stop /resume /update`).
 - `deploy/` — systemd units and server scripts (`bootstrap.sh`, `setup.sh`, `autoupdate.sh`, `push_reports.sh`, `cleanup.sh`).
 - Python ≥ 3.11 (`tomllib`). Tests: `python -m pytest -q`.

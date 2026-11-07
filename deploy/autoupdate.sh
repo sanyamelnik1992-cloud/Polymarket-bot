@@ -64,7 +64,7 @@ fi
 
 # restart only what is running. Bots stop gracefully (cancel all orders, wait for settlements), so --no-block.
 RESTARTED=()
-for u in pmbot-5m pmbot-5m-b pmbot-hourly pmbot-tg; do
+for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-hourly pmbot-tg; do
   if systemctl is-active -q "$u"; then systemctl restart --no-block "$u"; RESTARTED+=("$u"); fi
 done
 if echo "$CHANGED" | grep -qE '^(pmbot/recorder.py|scripts/record_live.py|deploy/pmbot-recorder.service)$' \

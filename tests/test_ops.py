@@ -77,3 +77,18 @@ def test_tg_bot_obeys_only_its_chat(tmp_path, monkeypatch):
     assert (tmp_path / "STOP").exists() and "STOP" in sent[-1][1]
     tg.handle({"chat": {"id": 42}, "text": "/status@mybot"})
     assert "pmbot-5m" in sent[-1][1]
+
+
+def test_deployed_5m_units_are_paper_with_own_journal_and_state():
+    """Every 5m unit in deploy/ loads, is paper, and has its own journal dir and risk state file (a shared
+    state file would mix the daily-loss kill switch of two bots)."""
+    from pmbot.bot.config import load_config
+    journals, states = set(), set()
+    for unit in [u for u in ops.BOT_UNITS if u.startswith("pmbot-5m")]:
+        path = ops.unit_config(unit)
+        assert path, unit
+        cfg = load_config(os.path.join(ops.REPO, path))
+        assert cfg.execution.mode == "paper" and not ops.unit_is_live(unit), unit
+        assert cfg.journal_dir not in journals and cfg.risk.state_file not in states, unit
+        journals.add(cfg.journal_dir)
+        states.add(cfg.risk.state_file)

@@ -1,0 +1,41 @@
+# D = B (config/colo.toml, 1c from mid) with a strict model/market agreement filter: max_disagree 0.10 -> 0.04.
+# Night paper run 6-7 Nov: B's fills at |fair - mid| <= 4c made +$70 over 46 windows (t 2.1), the rest lost.
+# Runs next to B on the same markets for a paired test. PAPER.
+journal_dir = "data/journal-colo-strict"
+
+[strategy]
+assets = ["btc", "eth", "sol"]
+half_spread = 0.01            # 1c from the book mid: + only with queue priority (reports/38); experimental
+model_weight = 0.0
+quote_size = 10
+join_only = true
+start_s = 5
+stop_s = 240
+skew_per_share = 0.002
+
+[filters]
+max_disagree = 0.04          # A/B: 0.10 (see header)
+max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.10
+fair_move_window_ms = 5000
+toxic_shares = 10
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
+
+[risk]
+state_file = "data/state/risk_5m_colo_strict_paper.json"
+max_net_shares_per_window = 20
+max_cost_per_window = 12
+max_open_worst_loss = 60
+daily_loss_limit = 50
+max_actions_per_sec = 50
+
+[execution]
+mode = "paper"
+tick_ms = 10                  # 10 ms decisions: in the fixed replay positive on 4 of 4 recordings (reports/38)
+fast_react = true
+fast_move_sigmas = 1.0
+place_latency_ms = 10
+cancel_latency_ms = 10
