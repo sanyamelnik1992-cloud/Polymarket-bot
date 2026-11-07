@@ -13,11 +13,12 @@ def main():
     text = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else sys.stdin.read()
     if not (token and chat and text.strip()):
         return
-    try:
-        requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                      json={"chat_id": chat, "text": text[:4000], "disable_web_page_preview": True}, timeout=15)
-    except requests.RequestException:
-        pass
+    for one in [c.strip() for c in chat.split(",") if c.strip()]:
+        try:
+            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                          json={"chat_id": one, "text": text[:4000], "disable_web_page_preview": True}, timeout=15)
+        except requests.RequestException:
+            pass
 
 
 if __name__ == "__main__":

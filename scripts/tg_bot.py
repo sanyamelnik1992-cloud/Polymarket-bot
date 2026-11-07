@@ -1,6 +1,7 @@
 """Telegram control bot for the server: status, PnL, trades, server health, logs, emergency stop, updates.
 
-  env: PMBOT_TG_TOKEN (from @BotFather), PMBOT_TG_CHAT (your chat id; only this chat is obeyed)
+  env: PMBOT_TG_TOKEN (from @BotFather), PMBOT_TG_CHAT (chat ids separated by commas; all of them receive every
+       message, the FIRST one is the owner with full control, the others are read-only viewers)
        PMBOT_TG_DIGEST_HOURS=6,12,18   UTC hours of the digest ("" = off); the nightly review comes at 00:20 UTC
                                        from pmbot-review.timer
   run: python scripts/tg_bot.py          (systemd unit pmbot-tg)
@@ -23,7 +24,11 @@ from pmbot.notify import esc, label  # noqa: E402
 
 log = logging.getLogger("tg")
 TOKEN = os.environ.get("PMBOT_TG_TOKEN", "").strip()
-CHAT = os.environ.get("PMBOT_TG_CHAT", "").strip()
+CHAT = os.environ.get("PMBOT_TG_CHAT", "").strip().replace(" ", "")      # everyone who receives broadcasts
+CHATS = [c for c in CHAT.split(",") if c]
+OWNER = CHATS[0] if CHATS else ""
+VIEWER_COMMANDS = {"/start", "/help", "/status", "/trades", "/server", "/chart", "/review"}   # read-only
+_reply_chat = None   # chat of the command being handled (cmd_chart sends its picture there)
 DIGEST_HOURS = sorted({int(h) % 24 for h in os.environ.get("PMBOT_TG_DIGEST_HOURS", "6,12,18").replace(" ", "").split(",")
                         if h.isdigit()})
 API = f"https://api.telegram.org/bot{TOKEN}"
@@ -128,7 +133,7 @@ def cmd_chart(arg):
     png = charts.equity_png(days)
     if not png:
         return "за этот период закрытых окон нет"
-    send_photo(TOKEN, CHAT, png, f"📈 Накопленный PnL за {days} дн. (пунктир — строгие близнецы)")
+    send_photo(TOKEN, _reply_chat or CHAT, png, f"📈 Накопленный PnL за {days} дн. (пунктир — строгие близнецы)")
     return None
 
 
@@ -165,7 +170,7 @@ def handle(msg):
         log.info("message from chat %s: %s", chat, text[:50])
         send(f"Твой chat id: {chat}\nВпиши его в /etc/pmbot/pmbot.env как PMBOT_TG_CHAT и перезапусти pmbot-tg.", chat)
         return
-    if chat != CHAT:
+    if chat not in CHATS:
         log.warning("ignored message from foreign chat %s", chat)
         return
     parts = text.split()
@@ -174,15 +179,24 @@ def handle(msg):
     cmd = parts[0].split("@")[0].lower()
     fn = COMMANDS.get(cmd)
     if fn is None:
-        send("не понял. /help — список команд")
+        send("не понял. /help — список команд", chat)
         return
+    if chat != OWNER and cmd not in VIEWER_COMMANDS:
+        log.warning("viewer %s tried %s", chat, cmd)
+        send("⛔ это управляющая команда, она доступна только владельцу. Тебе доступно: "
+             + " ".join(sorted(VIEWER_COMMANDS - {"/start"})), chat)
+        return
+    global _reply_chat
+    _reply_chat = chat
     try:
         reply = fn(parts[1] if len(parts) > 1 else "")
         if reply:
-            send(reply)
+            send(reply, chat)
     except Exception as e:  # noqa: BLE001
         log.exception("command %s failed", cmd)
-        send(f"ошибка: {esc(e)}")
+        send(f"ошибка: {esc(e)}", chat)
+    finally:
+        _reply_chat = None
 
 
 # ---------------------------------------------------------------- background notifications

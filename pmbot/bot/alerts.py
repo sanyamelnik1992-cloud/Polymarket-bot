@@ -82,18 +82,34 @@ class TelegramAlerts:
             send_html(self.token, self.chat, text)
 
 
+def chat_ids(chat):
+    """PMBOT_TG_CHAT may hold several chat ids separated by commas (the first is the owner)."""
+    return [c.strip() for c in str(chat or "").split(",") if c.strip()]
+
+
 def send_photo(token, chat, png, caption=""):
-    """Send a PNG with an HTML caption (Telegram caption limit 1024)."""
-    try:
-        r = requests.post(f"https://api.telegram.org/bot{token}/sendPhoto",
-                          data={"chat_id": chat, "caption": caption[:1024], "parse_mode": "HTML"},
-                          files={"photo": ("chart.png", png, "image/png")}, timeout=30)
-        return r.status_code == 200
-    except requests.RequestException:
-        return False
+    """Send a PNG with an HTML caption (Telegram caption limit 1024) to every chat in `chat`."""
+    ok = False
+    for one in chat_ids(chat):
+        try:
+            r = requests.post(f"https://api.telegram.org/bot{token}/sendPhoto",
+                              data={"chat_id": one, "caption": caption[:1024], "parse_mode": "HTML"},
+                              files={"photo": ("chart.png", png, "image/png")}, timeout=30)
+            ok = r.status_code == 200 or ok
+        except requests.RequestException:
+            pass
+    return ok
 
 
 def send_html(token, chat, text):
+    """Send to every chat in `chat`; True if at least one got it."""
+    ok = False
+    for one in chat_ids(chat):
+        ok = _send_html_one(token, one, text) or ok
+    return ok
+
+
+def _send_html_one(token, chat, text):
     """Send as HTML; if Telegram rejects the markup, resend the same text without tags."""
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     try:
