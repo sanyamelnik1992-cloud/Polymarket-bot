@@ -1,0 +1,21 @@
+run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261107-074240
+mode: paper  duration: 19.5 min  events: {'start': 1, 'vol_seed': 3, 'window': 18, 'filters': 1320, 'status': 38, 'strike_est': 12, 'fv': 3069, 'quote': 959, 'fill': 7, 'side_block': 7, 'settle': 2}
+
+filter reasons (state changes): {'model_disagrees': 797, 'jump_cooldown': 386, 'fair_unstable': 360, 'wide_spread': 297, 'p_out_of_range': 207, 'too_early': 74, 'no_strike': 70, 'no_fair_value': 70, 'too_late': 69, 'no_book': 56, 'chainlink_stale': 17, 'binance_stale': 6, 'clob_stale': 4}
+quotes placed: 959
+
+fills: 7  shares: 55  notional: $30.20
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        5   35.33    21.399       0.56   84.779
+eth        1   10.00     8.000       0.80  114.128
+sol        1   10.00     0.800       0.08  122.455
+
+settled windows:
+       windows  cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                            
+btc          1  15.8  4.246            4.2   0.046       1.0  4.246  4.246  0.269
+eth          1   8.0  2.022            2.0   0.022       1.0  2.022  2.022  0.253
+
+TOTAL pnl $+6.27 (ex-rebate $+6.20) on cost $23.80 -> ROI +26.34%; windows 2, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
