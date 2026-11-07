@@ -1,8 +1,8 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo-v2-strict/20261107-104744
-mode: paper  duration: 553.5 min  events: {'start': 1, 'vol_seed': 3, 'window': 339, 'filters': 35844, 'status': 1106, 'strike_est': 333, 'fv': 98676, 'quote': 4414, 'fill': 38, 'side_block': 30, 'settle': 25}
+mode: paper  duration: 613.6 min  events: {'start': 1, 'vol_seed': 3, 'window': 375, 'filters': 39925, 'status': 1226, 'strike_est': 369, 'fv': 109429, 'quote': 4518, 'fill': 38, 'side_block': 30, 'settle': 25}
 
-filter reasons (state changes): {'model_disagrees': 27303, 'p_out_of_range': 18874, 'jump_cooldown': 12271, 'fair_unstable': 10972, 'wide_spread': 10137, 'too_late': 7550, 'too_early': 1922, 'no_book': 1811, 'no_strike': 1282, 'no_fair_value': 1282, 'vol_spike': 1016, 'chainlink_stale': 275, 'clob_stale': 16, 'binance_stale': 6}
-quotes placed: 4414
+filter reasons (state changes): {'model_disagrees': 30480, 'p_out_of_range': 21548, 'jump_cooldown': 14051, 'fair_unstable': 12099, 'wide_spread': 11334, 'too_late': 7990, 'too_early': 2145, 'no_book': 2109, 'no_strike': 1412, 'no_fair_value': 1412, 'vol_spike': 1316, 'chainlink_stale': 288, 'clob_stale': 16, 'binance_stale': 6}
+quotes placed: 4518
 
 fills: 38  shares: 305  notional: $139.63
        fills   shares  notional  avg_price  med_rel

@@ -1,8 +1,8 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261107-104744
-mode: paper  duration: 553.5 min  events: {'start': 1, 'vol_seed': 3, 'window': 339, 'filters': 50099, 'status': 1106, 'strike_est': 330, 'fv': 97754, 'quote': 9115, 'fill': 62, 'side_block': 51, 'settle': 37}
+mode: paper  duration: 613.6 min  events: {'start': 1, 'vol_seed': 3, 'window': 375, 'filters': 55909, 'status': 1226, 'strike_est': 366, 'fv': 108506, 'quote': 9261, 'fill': 62, 'side_block': 51, 'settle': 38}
 
-filter reasons (state changes): {'model_disagrees': 39653, 'p_out_of_range': 26794, 'jump_cooldown': 17046, 'wide_spread': 16618, 'fair_unstable': 11788, 'too_late': 11261, 'too_early': 2330, 'no_book': 1855, 'no_strike': 1766, 'no_fair_value': 1766, 'vol_spike': 1229, 'chainlink_stale': 459, 'clob_stale': 11, 'binance_stale': 6}
-quotes placed: 9115
+filter reasons (state changes): {'model_disagrees': 44420, 'p_out_of_range': 30704, 'jump_cooldown': 19462, 'wide_spread': 18559, 'fair_unstable': 12978, 'too_late': 11884, 'too_early': 2615, 'no_book': 2169, 'no_strike': 1936, 'no_fair_value': 1936, 'vol_spike': 1816, 'chainlink_stale': 507, 'clob_stale': 12, 'binance_stale': 6}
+quotes placed: 9261
 
 fills: 62  shares: 498  notional: $233.08
        fills   shares  notional  avg_price  med_rel
@@ -15,8 +15,8 @@ settled windows:
        windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst    best    roi
 asset                                                                                 
 btc         22  145.711  19.366         18.328   1.038     0.545 -5.666  11.468  0.133
-eth          7   29.258   5.069          4.871   0.198     0.571 -5.365   5.834  0.173
+eth          8   36.058  -1.701         -1.929   0.228     0.500 -6.770   5.834 -0.047
 sol          8   51.311   6.043          5.730   0.313     0.500 -5.365   5.722  0.118
 
-TOTAL pnl $+30.48 (ex-rebate $+28.93) on cost $226.28 -> ROI +13.47%; windows 37, t-stat +1.11
+TOTAL pnl $+23.71 (ex-rebate $+22.13) on cost $233.08 -> ROI +10.17%; windows 38, t-stat +0.83
 max drawdown $-19.96; hedged windows (both sides filled): 11
