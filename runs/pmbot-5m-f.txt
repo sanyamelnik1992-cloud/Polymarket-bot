@@ -1,0 +1,5 @@
+run: /home/pmbot/Polymarket-bot/data/journal-v3/20261108-105047
+mode: paper  duration: 11.5 min  events: {'start': 1, 'vol_seed': 1, 'window': 4, 'filters': 226, 'status': 22, 'strike_est': 2, 'fv': 436}
+
+filter reasons (state changes): {'calm_market': 226, 'daily loss limit 2.0 reached': 226, 'too_late': 111, 'model_disagrees': 106, 'wide_spread': 68, 'no_strike': 32, 'no_fair_value': 32, 'jump_cooldown': 18, 'too_early': 11, 'chainlink_stale': 10, 'no_book': 6, 'binance_stale': 3, 'clob_stale': 1, 'p_out_of_range': 1, 'loop_lag': 1}
+no fills

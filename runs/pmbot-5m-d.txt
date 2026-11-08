@@ -1,6 +1,11 @@
-run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261108-095624
-mode: paper  duration: 4.0 min  events: {'start': 1, 'vol_seed': 3, 'window': 9, 'filters': 247, 'status': 7, 'strike_est': 3, 'fv': 63, 'quote': 86}
+run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261108-105651
+mode: paper  duration: 5.4 min  events: {'start': 1, 'vol_seed': 3, 'window': 9, 'filters': 307, 'status': 10, 'strike_est': 3, 'fv': 399, 'quote': 152, 'fill': 2, 'fill_ctx': 2, 'side_block': 4}
 
-filter reasons (state changes): {'no_strike': 220, 'no_fair_value': 220, 'wide_spread': 103, 'too_late': 68, 'too_early': 26, 'jump_cooldown': 20, 'model_disagrees': 19, 'binance_stale': 9, 'chainlink_stale': 6, 'no_book': 6, 'clob_stale': 3, 'fair_unstable': 3}
-quotes placed: 86
-no fills
+filter reasons (state changes): {'no_strike': 222, 'no_fair_value': 222, 'too_late': 150, 'wide_spread': 109, 'model_disagrees': 52, 'too_early': 18, 'jump_cooldown': 18, 'binance_stale': 8, 'chainlink_stale': 7, 'no_book': 7, 'fair_unstable': 7, 'p_out_of_range': 4, 'clob_stale': 3}
+quotes placed: 152
+
+fills: 2  shares: 20  notional: $10.80
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        2    20.0      10.8       0.54   48.897
+no settled windows yet
