@@ -15,6 +15,7 @@ join_only = true
 start_s = 5
 stop_s = 240
 skew_per_share = 0.002        # as D
+max_open_price = 0.50         # open only on the cheap side: unpaired loss <= $2.5, win >= $2.5 (owner 8 Nov)
 
 [filters]
 max_disagree = 0.10          # model is only a sanity check now

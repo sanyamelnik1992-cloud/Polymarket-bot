@@ -20,6 +20,9 @@ class StrategyCfg:
     model_weight: float = 1.0        # quote around w*model + (1-w)*book mid (1 = pure model)
     t_df: float = 4.0                # Student-t degrees of freedom of the TWAP model
     vol_halflife_s: float = 900.0
+    max_open_price: float = 1.0      # a bid that does NOT reduce the net position (an opening leg) only at <= this:
+                                     # an unpaired window then loses <= price*size and wins >= (1-price)*size.
+                                     # Closing legs (they complete a pair) are not limited. 1.0 = off
 
 
 @dataclass

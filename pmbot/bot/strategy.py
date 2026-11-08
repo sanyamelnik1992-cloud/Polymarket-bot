@@ -50,6 +50,9 @@ def target_quotes(w: Window, p_up: float, bu: Book, bd: Book, pos: Position, sc:
         budget = rc.max_cost_per_window - pos.cost
         if px > 0:
             size = min(size, math.floor(budget / px))
+        opening = inv_sign * net >= -1e-9          # this bid does not reduce our net position
+        if opening and px > sc.max_open_price + 1e-9:
+            size = 0
         if px < tick or px > 0.99 or size < max(w.min_size, 5):
             out[side] = None
         else:
