@@ -152,3 +152,10 @@ def test_config_is_paper_only(tmp_path):
     p.write_text('[rewards]\nmode = "live"\n')
     with pytest.raises(ValueError):
         load_rewards_config(str(p))
+
+
+def test_zero_size_print_is_not_a_fill(tmp_path):
+    f = farmer_with_market(tmp_path)
+    asyncio.run(f.quote_once())
+    f.on_trade("Y", "SELL", 0.40, 0.0, int(time.time() * 1000) + 1000)
+    assert "m" not in f.pos and f.markets["m"].cooldown_until == 0

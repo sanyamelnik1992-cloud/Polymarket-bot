@@ -178,6 +178,8 @@ class Farmer:
         return m.get("no") if token == m.get("yes") else m.get("yes")
 
     def on_fill(self, fill):
+        if fill["size"] <= 1e-9:            # zero-size public prints exist; they must not trigger a cooldown
+            return
         slug = fill["key"]
         ps = self.pos.setdefault(slug, Position())
         if fill["side"] == "Y":
