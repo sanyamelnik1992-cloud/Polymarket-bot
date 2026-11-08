@@ -656,10 +656,7 @@ def test_v3_config_loads_and_quotes_at_the_best_bid():
     pos = Position()
     bu, bd = book(0.55, 0.56), book(0.44, 0.45)
     q = target_quotes(w, 0.555, bu, bd, pos, cfg.strategy, cfg.risk)
-    assert q["U"] is None and q["D"][0] == 0.44                  # at the touch; Up 0.55 > max_open_price
-    cfg.strategy.max_open_price = 1.0
-    q = target_quotes(w, 0.555, bu, bd, pos, cfg.strategy, cfg.risk)
-    assert q["U"][0] == 0.55                                     # at the touch as well
+    assert q["U"][0] == 0.55 and q["D"][0] == 0.44               # both at the touch, both inside the 0.40-0.60 band
     live = load_config("config/live_d.toml")
     q = target_quotes(w, 0.555, bu, bd, pos, live.strategy, live.risk)
     assert q["U"][0] == 0.54 and q["D"][0] == 0.43               # the D/live config rests one tick below
@@ -734,13 +731,16 @@ def test_calm_market_filter():
     assert "calm_market" not in check(w, st, fv, now, cfg.filters, cfg.strategy)
 
 
-def test_opening_leg_only_on_the_cheap_side_closing_leg_any_price():
+def test_opening_legs_only_near_half_closing_leg_any_price():
     cfg = load_config("config/live_v3.toml")
-    assert cfg.strategy.max_open_price == 0.50
+    assert (cfg.strategy.min_open_price, cfg.strategy.max_open_price) == (0.40, 0.60)
     w = mk_window()
-    bu, bd = book(0.61, 0.62), book(0.38, 0.39)          # Up expensive, Down cheap
+    bu, bd = book(0.55, 0.56), book(0.44, 0.45)          # near 0.5: both sides rest at once, a pair can form
+    q = target_quotes(w, 0.555, bu, bd, Position(), cfg.strategy, cfg.risk)
+    assert q["U"][0] == 0.55 and q["D"][0] == 0.44
+    bu, bd = book(0.61, 0.62), book(0.38, 0.39)          # tails: favourite above 0.60, underdog below 0.40
     q = target_quotes(w, 0.615, bu, bd, Position(), cfg.strategy, cfg.risk)
-    assert q["U"] is None and q["D"] is not None and q["D"][0] <= 0.50       # flat: open only Down
-    pos = Position(up=0.0, down=5.0, cost=1.9)                               # long Down 5 @ 0.38
+    assert q["U"] is None and q["D"] is None                                  # flat: nothing opens
+    pos = Position(up=0.0, down=5.0, cost=1.9)                               # long Down 5 from an earlier fill
     q = target_quotes(w, 0.615, bu, bd, pos, cfg.strategy, cfg.risk)
-    assert q["U"] is not None and q["U"][0] > 0.50                            # closing leg at 0.61 allowed
+    assert q["U"] is not None and q["U"][0] > 0.60 and q["D"] is None        # closing leg at 0.61 allowed

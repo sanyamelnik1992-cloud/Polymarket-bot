@@ -16,7 +16,9 @@ join_only = true
 start_s = 5
 stop_s = 240
 skew_per_share = 0.002        # as D
-max_open_price = 0.50         # open only on the cheap side: unpaired loss <= $2.5, win >= $2.5 (owner 8 Nov)
+max_open_price = 0.60         # open only near 0.5, on both sides so a pair can form. With "<= 0.50" (8 Nov from 12:00 UTC)
+min_open_price = 0.40         # live had 5 of 5 one-sided losing windows at 0.19-0.48; the tails (< 0.40, > 0.60) lost in
+                              # both halves of the paper data (reports/42). Unpaired loss <= $3.0, win >= $2.0
 
 [filters]
 max_disagree = 0.10          # model is only a sanity check now
