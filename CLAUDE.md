@@ -29,5 +29,7 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   the same with `max_disagree` 0.04 for a paired test, see `reports/39`).
 - `pmbot/ops.py`, `scripts/tg_bot.py` — Telegram control bot (`/status /chart /review /trades /server /log /stop /resume /update`);
   all Telegram texts (HTML) are built in `pmbot/notify.py`, bot labels A/B/C/D live in `notify.BOTS`.
+- `pmbot/rewards/`, `scripts/run_rewards.py`, `config/rewards.toml` — liquidity-rewards farmer R (unit `pmbot-rewards`,
+  paper only, its own journal events `rstatus`/`rsample`/`rfill`; report `scripts/report_rewards.py`).
 - `deploy/` — systemd units and server scripts (`bootstrap.sh`, `setup.sh`, `autoupdate.sh`, `push_reports.sh`, `cleanup.sh`).
 - Python ≥ 3.11 (`tomllib`). Tests: `python -m pytest -q`.
