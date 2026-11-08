@@ -1,18 +1,18 @@
 run: /home/pmbot/Polymarket-bot/data/journal-live-v3/20261108-184256
-mode: live  duration: 78.4 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 18, 'filters': 1141, 'status': 156, 'strike_est': 15, 'fv': 4276, 'side_block': 774, 'order_placed': 27, 'quote': 27, 'order_cancelled': 27, 'fill': 9, 'fill_ctx': 9, 'order_rejected': 4, 'cancel_late': 5, 'side_hit': 5, 'provisional': 3, 'settle': 3}
+mode: live  duration: 139.0 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 2, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 30, 'filters': 2494, 'status': 277, 'strike_est': 27, 'fv': 7893, 'side_block': 1312, 'order_placed': 65, 'quote': 65, 'order_cancelled': 64, 'fill': 19, 'fill_ctx': 19, 'order_rejected': 4, 'cancel_late': 11, 'side_hit': 11, 'provisional': 7, 'settle': 7, 'api_error': 1, 'order_error': 1, 'orders_reset': 1, 'broker_health': 2}
 
-filter reasons (state changes): {'calm_market': 753, 'wide_spread': 375, 'model_disagrees': 307, 'jump_cooldown': 305, 'p_out_of_range': 142, 'too_late': 119, 'no_strike': 118, 'no_fair_value': 118, 'too_early': 69, 'no_book': 53, 'chainlink_stale': 33, 'binance_stale': 5, 'loop_lag': 2, 'clob_stale': 1}
-quotes placed: 27
+filter reasons (state changes): {'calm_market': 1574, 'model_disagrees': 1121, 'jump_cooldown': 918, 'wide_spread': 798, 'p_out_of_range': 672, 'too_late': 307, 'no_strike': 136, 'no_fair_value': 136, 'too_early': 131, 'no_book': 124, 'vol_spike': 76, 'chainlink_stale': 48, 'binance_stale': 6, 'loop_lag': 3, 'clob_stale': 1, 'api_backoff': 1}
+quotes placed: 65
 
-fills: 9  shares: 29  notional: $13.93
+fills: 19  shares: 71  notional: $33.83
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        9  28.565    13.935      0.471  151.024
+btc       19  70.506    33.834      0.477  105.044
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc          3  13.935 -0.255         -0.354   0.099     0.667 -1.185  0.895 -0.018
+btc          7  33.834 -0.111         -0.353   0.242     0.714 -1.185  0.895 -0.003
 
-TOTAL pnl $-0.26 (ex-rebate $-0.35) on cost $13.93 -> ROI -1.83%; windows 3, t-stat -0.14
-max drawdown $-1.18; hedged windows (both sides filled): 3
+TOTAL pnl $-0.11 (ex-rebate $-0.35) on cost $33.83 -> ROI -0.33%; windows 7, t-stat -0.07
+max drawdown $-1.18; hedged windows (both sides filled): 7
