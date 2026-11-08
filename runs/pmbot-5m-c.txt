@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo-v2-strict/20261107-104744
-mode: paper  duration: 1154.0 min  events: {'start': 1, 'vol_seed': 3, 'window': 699, 'filters': 80260, 'status': 2307, 'strike_est': 690, 'fv': 205292, 'quote': 6438, 'fill': 62, 'side_block': 45, 'settle': 42, 'pause': 1}
+mode: paper  duration: 1213.1 min  events: {'start': 1, 'vol_seed': 3, 'window': 735, 'filters': 83976, 'status': 2425, 'strike_est': 726, 'fv': 215867, 'quote': 6762, 'fill': 63, 'side_block': 46, 'settle': 42, 'pause': 1}
 
-filter reasons (state changes): {'model_disagrees': 62577, 'p_out_of_range': 43921, 'jump_cooldown': 29834, 'wide_spread': 24196, 'fair_unstable': 23952, 'too_late': 14212, 'too_early': 4227, 'no_book': 3996, 'losing_streak_pause': 3122, 'no_strike': 3113, 'no_fair_value': 3113, 'vol_spike': 2340, 'chainlink_stale': 564, 'clob_stale': 30, 'binance_stale': 6}
-quotes placed: 6438
+filter reasons (state changes): {'model_disagrees': 65514, 'p_out_of_range': 46009, 'jump_cooldown': 30941, 'wide_spread': 25266, 'fair_unstable': 24982, 'too_late': 14825, 'too_early': 4460, 'no_book': 4151, 'no_strike': 3224, 'no_fair_value': 3224, 'losing_streak_pause': 3122, 'vol_spike': 2436, 'chainlink_stale': 594, 'clob_stale': 31, 'binance_stale': 6}
+quotes placed: 6762
 
-fills: 62  shares: 510  notional: $233.49
+fills: 63  shares: 520  notional: $238.29
        fills   shares  notional  avg_price  med_rel
 asset                                              
 btc       47  386.196   176.674      0.467   68.514
 eth        2   10.000     4.700      0.470  113.446
-sol       13  114.003    52.116      0.468  201.158
+sol       14  124.003    56.916      0.469  188.951
 
 settled windows:
        windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
