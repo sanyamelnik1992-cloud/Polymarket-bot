@@ -435,6 +435,8 @@ class Engine:
         for asset, start, side, shares, avg, slug in rows:
             if shares <= 0:
                 continue
+            if self.risk.is_settled(f"{asset}-{start}"):
+                continue          # resolved and already counted; losing tokens stay in the wallet forever
             e = await asyncio.to_thread(fetch_event, slug)
             if not e:
                 continue

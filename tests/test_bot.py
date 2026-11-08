@@ -626,3 +626,19 @@ def test_routine_cross_rejection_is_not_an_alert():
     a.enabled = False
     assert a.render("order_rejected", {"code": "post_only_would_cross"}) is None
     assert a.render("broker_fatal", {"op": "place", "status": 403, "error": "x"})
+
+
+def test_restart_does_not_settle_a_window_twice(tmp_path):
+    """Live 8 Nov: after a restart the wallet's losing tokens of an already settled window were loaded as an
+    existing position and settled again (-2.10 phantom loss in the daily counter)."""
+    cfg = BotConfig()
+    cfg.risk.state_file = str(tmp_path / "r.json")
+    cfg.risk.kill_file = ""
+    r = RiskManager(cfg.risk)
+    r.on_fill("btc-1", "D", 0.42, 5, 0.0)
+    assert r.on_settle("btc-1", "Up", rebate_share=0.0)["pnl"] == pytest.approx(-2.1)
+    r2 = RiskManager(cfg.risk)                               # restart
+    assert r2.is_settled("btc-1")
+    r2.on_fill("btc-1", "D", 0.42, 5, 0.0)                    # leftover tokens loaded again
+    assert r2.on_settle("btc-1", "Up", rebate_share=0.0) is None
+    assert r2.realized_by_day[r2.today()] == pytest.approx(-2.1) and not r2.unresolved
