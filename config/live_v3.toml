@@ -1,0 +1,53 @@
+# LIVE (real money, kopecks): v3 = paper bot F (config/v3.toml) with real execution. Owner 8 Nov: "run it on kopecks
+# just to check". Its paper twin is F (identical strategy/filters/risk, a test checks it). Fixes (reports/40):
+#  - bid AT the best bid (half_spread 0.001) instead of one tick below it (1c spread: mid - 1c rounds down to bid - 1c,
+#    so the live bot was filled only when the whole best level was swept); queue-imbalance guard 0.30 (re-enter 0.50); model sigma x2,
+#    model only as a gross sanity check (it predicts worse than the book mid at every second of the window);
+#  - paper fills with the back-of-queue model (execution.paper_queue). Compare with E / live on markouts.
+journal_dir = "data/journal-live-v3"
+
+[strategy]
+assets = ["btc"]              # D made most of its fills on BTC; one market = one clean comparison, less CPU
+half_spread = 0.001          # = at the best bid (join_only caps at it)
+model_weight = 0.0
+vol_mult = 2.0                # realized BTC sigma at 30-300 s is ~0.20 bp/sqrt(s), the 1 s estimate gives 0.06-0.13
+quote_size = 5                # exchange minimum
+join_only = true
+start_s = 5
+stop_s = 240
+skew_per_share = 0.002        # as D
+
+[filters]
+max_disagree = 0.10          # model is only a sanity check now
+max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.0           # off: model jitter, not market risk
+fair_move_window_ms = 5000
+toxic_shares = 5              # one full quote swept -> block that side 30 s (D: 10 = its quote size)
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
+# live safety: in paper a dead feed also stops the simulated fills, live orders keep resting while we are blind
+bn_max_age_ms = 1500          # BTCUSDT bookTicker updates many times a second; 1.5 s of silence = feed problem
+book_max_age_ms = 4000        # CLOB socket answers PING every 2 s; 4 s of silence = dead socket
+max_loop_lag_ms = 200
+min_queue_imbalance = 0.30    # the guard: leave below 0.30 ...
+queue_imbalance_hysteresis = 0.20   # ... re-enter at 0.50 (smoke run: 0.35/0.45 flickered, 84 re-placements in 5 min)
+
+[risk]
+state_file = "data/state/risk_5m_live_v3.json"
+max_net_shares_per_window = 5   # one unpaired lot: no 2nd bid on a side until the other side fills
+max_cost_per_window = 5       # ~2 fills of 5 shares per window
+max_open_worst_loss = 6       # all unresolved windows + resting bids (also capped at 95% of the wallet balance)
+daily_loss_limit = 2          # kopeck test: -$2 a day and stop
+max_losing_windows_in_row = 3
+pause_after_losses_s = 1800
+max_actions_per_sec = 5
+kill_file = "STOP"
+
+[execution]
+mode = "live"
+tick_ms = 10
+fast_react = true
+fast_move_sigmas = 1.0
+heartbeat_s = 4

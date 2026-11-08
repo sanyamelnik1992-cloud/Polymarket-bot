@@ -1,0 +1,20 @@
+[Unit]
+Description=pmbot nested 5m/15m arbitrage LIVE (pmbot/arb_live.py: only sets that pay >= $1 for < $0.98 with fees; $2 per set trade, $6 per day; REAL MONEY)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY but only locked sets (published strikes, set cost + taker fees <= $0.98). Kill file STOP pauses it.
+ExecStart=__REPO__/.venv/bin/python -u -m pmbot.arb_live data/arb-live --live --min-edge 0.02 --usd-per-pair 2 --usd-per-day 6
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

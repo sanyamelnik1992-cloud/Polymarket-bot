@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot 5m maker LIVE (config/live_d.toml = D at minimum size, BTC only; REAL MONEY)
+Description=pmbot 5m maker LIVE (config/live_v3.toml = v3 on kopecks: 5 shares, -$2/day stop; REAL MONEY)
 After=network-online.target
 Wants=network-online.target
 # a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes
@@ -12,7 +12,7 @@ WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
 # REAL MONEY. Needs PMBOT_PRIVATE_KEY, PMBOT_WALLET, PMBOT_LIVE_CONFIRM in /etc/pmbot/pmbot.env.
 # Not enabled at boot by setup: start it by hand (Telegram: /restart pmbot-5m-live). Daily stop = stays stopped.
-ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/live_d.toml --live
+ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/live_v3.toml --live
 Restart=on-failure
 RestartSec=30
 KillSignal=SIGINT

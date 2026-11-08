@@ -67,7 +67,7 @@ fi
 RESTARTED=()
 RUNTIME="$(echo "$CHANGED" | grep -vE '\.md$|^reports/|^tests/' || true)"
 if [ -n "$RUNTIME" ]; then
-  for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-live pmbot-hourly pmbot-tg; do
+  for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-live pmbot-arb pmbot-hourly pmbot-tg; do
     if systemctl is-active -q "$u"; then systemctl restart --no-block "$u"; RESTARTED+=("$u"); fi
   done
 fi

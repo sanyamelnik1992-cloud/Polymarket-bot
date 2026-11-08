@@ -94,7 +94,7 @@ def test_deployed_5m_units_are_paper_with_own_journal_and_state():
         # exactly one unit may trade real money, and its config and --live flag must agree
         if unit == "pmbot-5m-live":
             assert cfg.execution.mode == "live" and ops.unit_is_live(unit), unit
-            assert cfg.risk.max_open_worst_loss <= 10 and cfg.risk.daily_loss_limit <= 5, "live limits raised?"
+            assert cfg.risk.max_open_worst_loss <= 6 and cfg.risk.daily_loss_limit <= 2, "kopeck limits raised?"
         else:
             assert cfg.execution.mode == "paper" and not ops.unit_is_live(unit), unit
         assert cfg.journal_dir not in journals and cfg.risk.state_file not in states, unit

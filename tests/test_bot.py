@@ -441,8 +441,10 @@ def test_geoblock_allows_api_only_countries():
         check_geoblock(gb)
 
 
-def test_live_configs_load_and_twin_matches_live():
-    live, twin = load_config("config/live_d.toml"), load_config("config/live_d_twin.toml")
+@pytest.mark.parametrize("live_path,twin_path", [("config/live_d.toml", "config/live_d_twin.toml"),
+                                                 ("config/live_v3.toml", "config/v3.toml")])
+def test_live_configs_load_and_twin_matches_live(live_path, twin_path):
+    live, twin = load_config(live_path), load_config(twin_path)
     assert live.execution.mode == "live" and twin.execution.mode == "paper"
     assert live.strategy == twin.strategy and live.filters == twin.filters
     for k in ("max_net_shares_per_window", "max_cost_per_window", "max_open_worst_loss", "daily_loss_limit",
@@ -451,7 +453,7 @@ def test_live_configs_load_and_twin_matches_live():
     assert live.risk.state_file != twin.risk.state_file and not live.risk.resume_next_day
     assert live.risk.max_open_worst_loss <= 10 and live.risk.daily_loss_limit <= 5 and live.strategy.quote_size == 5
     with pytest.raises(ValueError, match="paper-only"):
-        load_config("config/live_d.toml", {"risk": {"resume_next_day": True}})
+        load_config(live_path, {"risk": {"resume_next_day": True}})
 
 
 def test_paper_control_resumes_next_day_live_does_not(tmp_path):
