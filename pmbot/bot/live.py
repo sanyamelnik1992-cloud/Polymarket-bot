@@ -177,6 +177,14 @@ class LiveBroker:
                 asset_id=token, side="BUY", price=f"{price:.2f}", size=f"{size:.2f}",
                 post_only=True, expiration=int(expiration_s) if expiration_s else None)
         except Exception as e:  # noqa: BLE001
+            if getattr(e, "status", None) == 400:
+                # request refused, nothing was created (e.g. "invalid post-only order: order crosses book" when
+                # the book moved during our latency): a normal rejection, no reset and no backoff
+                msg = str(e)
+                code = "post_only_would_cross" if "crosses book" in msg else "http_400"
+                self.log("order_rejected", token=token, key=key, side=side, price=price, size=size, code=code,
+                         message=msg[:200], latency_ms=round((time.perf_counter() - t0) * 1000, 1))
+                return None
             self.note_error("place", e)
             raise                     # the engine resets: the order may or may not exist now
         lat = round((time.perf_counter() - t0) * 1000, 1)
@@ -209,10 +217,18 @@ class LiveBroker:
             self.orders.pop(oid, None)
         self.log("order_cancelled", order_ids=list(getattr(resp, "canceled", ())), latency_ms=lat)
         nc = getattr(resp, "not_canceled", {}) or {}
+        gone = set()
         if nc:
-            self.log("cancel_failed", details={k: str(v)[:100] for k, v in nc.items()})
-            for oid in nc:            # usually already filled or expired; a late fill is still counted (self.known)
+            late = {k: v for k, v in nc.items() if "matched" in str(v) or "already canceled" in str(v)}
+            other = {k: v for k, v in nc.items() if k not in late}
+            if late:   # normal: it was (probably) filled a moment ago, the fill event follows 0.2-1 s later
+                self.log("cancel_late", order_ids=list(late))
+                gone = set(late)
+            if other:
+                self.log("cancel_failed", details={k: str(v)[:100] for k, v in other.items()})
+            for oid in nc:            # a late fill is still counted (self.known)
                 self.orders.pop(oid, None)
+        return gone
 
     async def cancel_all(self, now_ms=None):
         try:

@@ -69,6 +69,7 @@ class ExecCfg:
     fast_move_sigmas: float = 1.0
     gtd_min_lifetime_s: int = 185           # GTD expiration must be >= now+180s (exchange rule)
     heartbeat_s: float = 4.0                # live: order heartbeat period (server cancels all after 10s silence)
+    hit_pause_ms: int = 2000                # live: cancel answered "matched" -> no new bid on that side for this long
 
 
 @dataclass

@@ -218,7 +218,8 @@ class Engine:
             big_up = price >= cur["price"] + sc.requote_ticks * 0.01 - 1e-9
             if not (moving_down or shrink) and (not big_up or now - cur["t"] < sc.min_requote_ms):
                 return
-            await self._cancel(key, cur, now)
+            if not await self._cancel(key, cur, now):
+                return
         resting = sum(q["price"] * q["size"] for q in self.quotes.values())
         size = self.risk.clamp_size(w.key, price, size, resting)
         if size < max(w.min_size, 5):
@@ -243,9 +244,19 @@ class Engine:
         self.quotes.pop(key, None)
         self.stats["cancelled"] += 1
         try:
-            await self.broker.cancel([cur["oid"]], now)
+            gone = await self.broker.cancel([cur["oid"]], now)
         except Exception as e:  # noqa: BLE001
             self._order_error("cancel", e)
+            return False
+        if gone:
+            # live: the order was matched while we cancelled it. Its fill reaches us 0.2-1 s later, so position and
+            # risk limits do not know it yet, and the market is moving through our price: wait before re-bidding
+            k, side = key
+            self.st.side_block_until[(k, side)] = max(self.st.side_block_until.get((k, side), 0),
+                                                      now + self.cfg.execution.hit_pause_ms)
+            self.journal.log("side_hit", key=k, side=side, pause_ms=self.cfg.execution.hit_pause_ms)
+            return False
+        return True
 
     async def cancel_everything(self, reason):
         now = self.clock()
