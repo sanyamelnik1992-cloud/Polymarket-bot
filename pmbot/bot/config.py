@@ -124,8 +124,8 @@ def validate(cfg: BotConfig):
     s, r, e = cfg.strategy, cfg.risk, cfg.execution
     if e.mode not in ("paper", "live"):
         raise ValueError("execution.mode must be 'paper' or 'live'")
-    if not 0 < s.half_spread < 0.5:
-        raise ValueError("strategy.half_spread must be in (0, 0.5)")
+    if not 0 <= s.half_spread < 0.5:
+        raise ValueError("strategy.half_spread must be in [0, 0.5)")
     if s.quote_size < 5:
         raise ValueError("strategy.quote_size must be >= 5 shares (market minimum)")
     if not 0 < s.p_min < s.p_max < 1:

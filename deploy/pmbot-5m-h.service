@@ -1,0 +1,21 @@
+[Unit]
+Description=pmbot 5m maker H (v3 + stricter queue-imbalance guard 0.50/0.60; paper)
+After=network-online.target
+Wants=network-online.target
+# a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. Experiment from reports/42 section 5 (compare with F by markout-60).
+ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/h.toml
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=1500
+
+[Install]
+WantedBy=multi-user.target

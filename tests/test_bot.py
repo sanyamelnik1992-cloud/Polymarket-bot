@@ -927,3 +927,21 @@ def test_paper_requote_never_fills_both_old_and_new_bid():
     n2 = run(pb2.place("U1", "k", "U", 0.78, 5, now_ms=1000, queue_ahead=0))
     pb2.on_public_trade("U1", comp, "SELL", 0.70, 100, 1200)
     assert fills[-1]["order_id"] == n2
+
+
+def test_paper_experiments_g_and_h_differ_from_f_only_where_planned():
+    f, g, h = load_config("config/v3.toml"), load_config("config/g.toml"), load_config("config/h.toml")
+    for c in (g, h):
+        assert c.execution.mode == "paper" and c.execution.paper_queue and c.risk.resume_next_day
+        assert c.strategy.assets == ["btc"] and c.risk.state_file not in (f.risk.state_file, "")
+        assert c.journal_dir not in (f.journal_dir, "data/journal-live-v3")
+        assert (c.strategy.min_open_price, c.strategy.max_open_price) == (0.40, 0.60) and c.strategy.close_through_filters
+    assert g.filters.min_queue_imbalance == f.filters.min_queue_imbalance and h.filters.min_queue_imbalance == 0.50
+    assert h.strategy == f.strategy
+    w = mk_window()
+    q = target_quotes(w, 0.50, book(0.48, 0.52), book(0.48, 0.52), Position(), g.strategy, g.risk)
+    assert q["U"][0] == 0.50 and q["D"][0] == 0.50          # 4c spread: G bids inside it, first in the queue
+    q = target_quotes(w, 0.50, book(0.48, 0.52), book(0.48, 0.52), Position(), f.strategy, f.risk)
+    assert q["U"][0] == 0.48                                  # F joins the back of the best bid
+    q = target_quotes(w, 0.495, book(0.49, 0.50), book(0.50, 0.51), Position(), g.strategy, g.risk)
+    assert q["U"][0] == 0.49 and q["D"][0] == 0.50          # 1c spread: G = F (join the best bid)
