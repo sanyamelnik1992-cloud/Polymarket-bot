@@ -27,9 +27,10 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
 - `pmbot/bot/` — engine, strategy, filters, risk, paper/live brokers, replay; `scripts/run_bot.py` runs it.
 - `config/*.toml` — bot configs (`colo_v2.toml` = main 5m bot A, `colo.toml` = experiment B; `*_strict.toml` = C/D,
   the same with `max_disagree` 0.04 for a paired test, see `reports/39`).
-- **Live (real money)**: unit `pmbot-5m-live` = `config/live_d.toml` (D strategy, BTC only, 5 shares, $9 open risk,
-  −$5 daily stop that stays stopped). Its paper twin `pmbot-5m-e` = `config/live_d_twin.toml` (must stay identical
-  except execution; a test checks it). Compare: `scripts/live_vs_paper.py`. Telegram: `/restart pmbot-5m-live` starts it,
+- **Live (real money)**: unit `pmbot-5m-live` = `config/live_v3.toml` (v3 since 8 Nov: bids at the best bid, opening
+  legs only at 0.40–0.60, closing bids through opening filters; BTC only, 5 shares, $6 open risk, −$2 daily stop that
+  stays stopped). Its paper twin `pmbot-5m-f` = `config/v3.toml` (must stay identical except execution; a test checks
+  it). `pmbot-5m-e` = `config/live_d_twin.toml` is the twin of the old live config `config/live_d.toml`. Compare: `scripts/live_vs_paper.py`. Telegram: `/restart pmbot-5m-live` starts it,
   `/off pmbot-5m-live` stops it, `/stop` stops everything. Paper bots resume by themselves after a daily stop
   (`risk.resume_next_day`), live never does.
 - `pmbot/ops.py`, `scripts/tg_bot.py` — Telegram control bot (`/status /chart /review /trades /server /log /stop /resume /update`);
