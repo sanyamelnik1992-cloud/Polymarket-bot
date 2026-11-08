@@ -1,0 +1,5 @@
+run: /home/pmbot/Polymarket-bot/data/journal-g/20261108-175354
+mode: paper  duration: 7.4 min  events: {'start': 1, 'vol_seed': 1, 'window': 4, 'filters': 187, 'status': 14, 'strike_est': 2, 'fv': 380}
+
+filter reasons (state changes): {'calm_market': 187, 'wide_spread': 80, 'too_late': 80, 'jump_cooldown': 45, 'no_strike': 21, 'no_fair_value': 21, 'no_book': 7, 'too_early': 5, 'chainlink_stale': 4, 'p_out_of_range': 4, 'binance_stale': 3, 'clob_stale': 1}
+no fills
