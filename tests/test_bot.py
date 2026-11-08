@@ -689,3 +689,20 @@ def test_paper_queue_model_fills_only_after_the_queue_ahead():
     n = len(fills)
     old.on_public_trade("U1", comp, "SELL", 0.55, 50, 10)
     assert len(fills) == n
+
+
+def test_one_unpaired_lot_and_partial_fills_cannot_exceed_net_limit():
+    cfg = load_config("config/live_d.toml")
+    assert cfg.risk.max_net_shares_per_window == 5
+    w = mk_window()
+    bu, bd = book(0.49, 0.50), book(0.50, 0.51)
+    pos = Position(up=5.0, down=0.0, cost=2.45)
+    q = target_quotes(w, 0.5, bu, bd, pos, cfg.strategy, cfg.risk)
+    assert q["U"] is None and q["D"] is not None                 # long Up: only Down may be bid
+    pos = Position(up=0.97 + 3.02, down=0.0, cost=0.64)          # partial fills: 3.99 Up
+    q = target_quotes(w, 0.5, bu, bd, pos, cfg.strategy, cfg.risk)
+    assert q["U"] is None                                       # room 1.01 < 5 shares minimum -> no new Up bid
+    pos = Position(up=5.0, down=5.0, cost=4.9)                   # paired: inventory allows both sides again ...
+    cfg.risk.max_cost_per_window = 20                            # (... the $5 window budget would stop it in live)
+    q = target_quotes(w, 0.5, bu, bd, pos, cfg.strategy, cfg.risk)
+    assert q["U"] is not None and q["D"] is not None

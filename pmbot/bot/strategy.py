@@ -42,9 +42,10 @@ def target_quotes(w: Window, p_up: float, bu: Book, bd: Book, pos: Position, sc:
             px = min(px, bid)                            # never improve the market
         px = round(px, 2)
         size = sc.quote_size
-        # inventory limit on the net position
-        if inv_sign * net >= rc.max_net_shares_per_window:
-            size = 0
+        # inventory limit on the net position: never let a fill take |net| above the limit (partial fills of
+        # several orders used to: live 8 Nov, 10.97 shares on one side with a limit of 10)
+        room = rc.max_net_shares_per_window - inv_sign * net
+        size = 0 if room < 1e-9 else min(size, math.floor(room + 1e-9))
         # $ budget per window
         budget = rc.max_cost_per_window - pos.cost
         if px > 0:

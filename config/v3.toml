@@ -36,7 +36,7 @@ queue_imbalance_hysteresis = 0.20   # ... re-enter at 0.50 (smoke run: 0.35/0.45
 [risk]
 state_file = "data/state/risk_5m_v3_paper.json"
 resume_next_day = true       # paper: wait for the next UTC day instead of exiting
-max_net_shares_per_window = 10
+max_net_shares_per_window = 5   # one unpaired lot: no 2nd bid on a side until the other side fills
 max_cost_per_window = 5       # ~2 fills of 5 shares per window
 max_open_worst_loss = 9       # all unresolved windows + resting bids (also capped at 95% of the wallet balance)
 daily_loss_limit = 5
