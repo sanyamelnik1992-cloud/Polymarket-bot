@@ -9,7 +9,7 @@ from ..http import get_json
 from .config import BotConfig
 from .fair import fair_value
 from .feeds import ClobFeed, binance_feed, rtds_feed
-from .filters import check, side_blocks
+from .filters import check, imbalance_blocks, queue_imbalance, side_blocks
 from .journal import Journal
 from .risk import RiskManager
 from .state import State, Window, now_ms
@@ -96,6 +96,7 @@ class Engine:
                     b = self.st.books.get(tok)
                     ctx[nm + "_bid"] = b.best_bid() if b else None
                     ctx[nm + "_ask"] = b.best_ask() if b else None
+                    ctx[nm + "_imb"] = round(queue_imbalance(b), 3) if b and queue_imbalance(b) is not None else None
                 ctx["bn"] = self.st.prices[w.asset].bn_mid()
                 ctx["rel"] = round(self.clock() / 1000 - w.start, 2)
             self.journal.log("fill_ctx", **ctx)
@@ -229,15 +230,21 @@ class Engine:
             return
         token = w.token_up if side == "U" else w.token_down
         exp = max(int(now / 1000) + self.cfg.execution.gtd_min_lifetime_s, w.start + int(sc.stop_s) + 60)
+        book = self.st.books.get(token)
+        queue_ahead = book.bids.get(price, 0.0) if book else 0.0
         try:
-            oid = await self.broker.place(token, w.key, side, price, size, now, expiration_s=exp)
+            oid = await self.broker.place(token, w.key, side, price, size, now, expiration_s=exp,
+                                          queue_ahead=queue_ahead)
         except Exception as e:  # noqa: BLE001
             self._order_error("place", e)
             return
         if oid:
             self.quotes[key] = {"oid": oid, "price": price, "size": size, "t": now}
             self.stats["placed"] += 1
-            self.journal.log("quote", key=w.key, side=side, price=price, size=size, oid=oid)
+            bb = book.best_bid() if book else None
+            self.journal.log("quote", key=w.key, side=side, price=price, size=size, oid=oid, q_ahead=queue_ahead,
+                             at_best=(bb is not None and abs(price - bb) < 1e-9),
+                             imb=round(queue_imbalance(book), 3) if book and queue_imbalance(book) is not None else None)
 
     async def _cancel(self, key, cur, now):
         self.risk.allow_action()  # cancels always go through, but consume budget
@@ -345,6 +352,16 @@ class Engine:
                 tg = target_quotes(w, p_q, self.st.books[w.token_up], self.st.books[w.token_down], pos, sc,
                                    self.cfg.risk)
                 blocked = side_blocks(w, self.st, now, self.cfg.filters)
+                if self.cfg.filters.min_queue_imbalance > 0:
+                    own = {}
+                    for s_, tok in (("U", w.token_up), ("D", w.token_down)):
+                        q = self.quotes.get((w.key, s_))
+                        b = self.st.books.get(tok)
+                        if q and b and b.best_bid() is not None and abs(q["price"] - b.best_bid()) < 1e-9 \
+                                and self.broker.mode == "live":
+                            own[s_] = q["size"]          # our live order is part of the public best bid
+                    quoting = {s_: (w.key, s_) in self.quotes for s_ in ("U", "D")}
+                    blocked = blocked | imbalance_blocks(w, self.st, self.cfg.filters, quoting, own)
                 for side in blocked:
                     if tg.get(side) is not None:
                         tg[side] = None

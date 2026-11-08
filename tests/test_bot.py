@@ -642,3 +642,49 @@ def test_restart_does_not_settle_a_window_twice(tmp_path):
     r2.on_fill("btc-1", "D", 0.42, 5, 0.0)                    # leftover tokens loaded again
     assert r2.on_settle("btc-1", "Up", rebate_share=0.0) is None
     assert r2.realized_by_day[r2.today()] == pytest.approx(-2.1) and not r2.unresolved
+
+
+# ---------------------------------------------------------------- v3 microstructure (reports/40)
+def test_v3_config_loads_and_quotes_at_the_best_bid():
+    cfg = load_config("config/v3.toml")
+    assert cfg.execution.mode == "paper" and cfg.execution.paper_queue and cfg.filters.min_queue_imbalance == 0.35
+    w = mk_window()
+    pos = Position()
+    bu, bd = book(0.55, 0.56), book(0.44, 0.45)
+    q = target_quotes(w, 0.555, bu, bd, pos, cfg.strategy, cfg.risk)
+    assert q["U"][0] == 0.55 and q["D"][0] == 0.44               # at the touch
+    live = load_config("config/live_d.toml")
+    q = target_quotes(w, 0.555, bu, bd, pos, live.strategy, live.risk)
+    assert q["U"][0] == 0.54 and q["D"][0] == 0.43               # the D/live config rests one tick below
+
+
+def test_queue_imbalance_guard_with_hysteresis():
+    from pmbot.bot.filters import imbalance_blocks, queue_imbalance
+    cfg = load_config("config/v3.toml")
+    st, w = mk_state(T0 * 1000 + 30_000)
+    st.books["U1"] = Book(bids={0.55: 10}, asks={0.56: 190}, last_rx=1)     # thin bid: I = 0.05
+    st.books["D1"] = Book(bids={0.44: 190}, asks={0.45: 10}, last_rx=1)     # thick bid: I = 0.95
+    assert queue_imbalance(st.books["U1"]) == pytest.approx(0.05)
+    assert imbalance_blocks(w, st, cfg.filters, {}, {}) == {"U"}
+    st.books["U1"] = Book(bids={0.55: 40}, asks={0.56: 60}, last_rx=1)      # I = 0.40
+    assert "U" in imbalance_blocks(w, st, cfg.filters, {"U": False}, {})     # not quoting: needs 0.45
+    assert "U" not in imbalance_blocks(w, st, cfg.filters, {"U": True}, {})  # quoting: keeps until 0.35
+    assert "U" in imbalance_blocks(w, st, cfg.filters, {"U": True}, {"U": 10})  # own size excluded: 30/90
+
+
+def test_paper_queue_model_fills_only_after_the_queue_ahead():
+    fills = []
+    pb = PaperBroker(0, 0, on_fill=fills.append, queue=True)
+    run(pb.place("U1", "k", "U", 0.55, 5, now_ms=0, queue_ahead=20))
+    comp = lambda t: "D1" if t == "U1" else "U1"   # noqa: E731
+    pb.on_public_trade("U1", comp, "SELL", 0.55, 15, 10)     # eats 15 of the 20 ahead
+    assert not fills
+    pb.on_public_trade("D1", comp, "BUY", 0.45, 8, 20)       # complement buy at 0.45 = sell at 0.55: 5 ahead, 3 us
+    assert len(fills) == 1 and fills[0]["size"] == 3
+    pb.on_public_trade("U1", comp, "SELL", 0.54, 100, 30)    # trade-through: the rest
+    assert sum(f["size"] for f in fills) == 5
+    old = PaperBroker(0, 0, on_fill=fills.append)            # default model unchanged: at-price prints never fill
+    run(old.place("U1", "k", "U", 0.55, 5, now_ms=0, queue_ahead=0))
+    n = len(fills)
+    old.on_public_trade("U1", comp, "SELL", 0.55, 50, 10)
+    assert len(fills) == n

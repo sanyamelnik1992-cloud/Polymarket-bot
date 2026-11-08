@@ -1,0 +1,21 @@
+[Unit]
+Description=pmbot 5m maker F (config/v3.toml = live config + microstructure fixes, paper with queue model)
+After=network-online.target
+Wants=network-online.target
+# a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. v3 candidate for the live bot (reports/40_microstructure.md).
+ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/v3.toml
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=1500
+
+[Install]
+WantedBy=multi-user.target

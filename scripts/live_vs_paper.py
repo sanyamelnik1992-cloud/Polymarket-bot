@@ -1,11 +1,13 @@
 """Live bot vs its paper twin on the same 5m windows: what the paper simulation gets wrong.
 
   python scripts/live_vs_paper.py [--live data/journal-live] [--paper data/journal-live-twin] [--hours 24]
+                                 [--also F=data/journal-v3 ...]
 
 Prints: orders placed / rejected (by code) / API errors, place & cancel latency, fills and PnL per side of the pair
 on common windows, fills that only one side got, and fill prices. Run on the server (journals live there).
 """
 import argparse
+import bisect
 import glob
 import json
 import os
@@ -56,6 +58,36 @@ def summarize(journal_dir, since):
     return s
 
 
+def markouts(journal_dir, since, horizons=(10, 60)):
+    """Per-share edge of every fill against the book mid of our token `h` seconds later (1 Hz fv trace):
+    mid(t+h) - price. With a calibrated book this is an unbiased estimate of the expected PnL per share, with far
+    less variance than the window outcome (reports/40)."""
+    fv, fills = defaultdict(list), []
+    for run in sorted(glob.glob(os.path.join(journal_dir, "*", "events.jsonl"))):
+        if os.path.getmtime(run) < since:
+            continue
+        with open(run) as f:
+            for line in f:
+                if '"type":"fv"' in line:
+                    e = json.loads(line)
+                    if e.get("mid") is not None and e["t"] >= since:
+                        fv[e["key"]].append((e["t"] * 1000, e["mid"]))
+                elif '"type":"fill"' in line:
+                    e = json.loads(line)
+                    if e["t"] >= since:
+                        fills.append(e)
+    out = {h: [] for h in horizons}
+    for e in fills:
+        h_ = fv.get(e["key"], [])
+        ts = [x[0] for x in h_]
+        for h in horizons:
+            j = bisect.bisect_left(ts, e["ts"] + h * 1000)
+            if j < len(h_):
+                mid = h_[j][1] if e["side"] == "U" else 1 - h_[j][1]
+                out[h].append(((mid - e["price"]) * 100, e["size"]))
+    return out
+
+
 def pct(xs, q):
     xs = sorted(xs)
     return xs[min(len(xs) - 1, int(q * len(xs)))] if xs else None
@@ -66,6 +98,7 @@ def main():
     ap.add_argument("--live", default="data/journal-live")
     ap.add_argument("--paper", default="data/journal-live-twin")
     ap.add_argument("--hours", type=float, default=24)
+    ap.add_argument("--also", nargs="*", default=["F=data/journal-v3"], help="more journals NAME=dir for markouts")
     a = ap.parse_args()
     since = time.time() - a.hours * 3600
     L, P = summarize(a.live, since), summarize(a.paper, since)
@@ -84,6 +117,14 @@ def main():
     print("no-quote time reasons (broker health):", dict(L["health"]) or "none")
     if L["kills"]:
         print("kills:", L["kills"])
+    print("\nedge per share vs the book mid N s after the fill (cents; the main metric, reports/40):")
+    for name, jd in [("live", a.live), ("twin E", a.paper)] + [tuple(x.split("=", 1)) for x in a.also]:
+        mk = markouts(jd, since)
+        cells = []
+        for h, xs in mk.items():
+            sh = sum(s for _, s in xs)
+            cells.append(f"+{h}s: {sum(c * s for c, s in xs) / sh:+.1f}c" if sh else f"+{h}s: -")
+        print(f"  {name:7s} fills {len(mk[10]):4d} | " + " | ".join(cells))
     common = sorted(set(L["settle"]) & set(P["settle"]))
     only_l = sorted(set(L["fills"]) - set(P["fills"]))
     only_p = sorted(set(P["fills"]) - set(L["fills"]))

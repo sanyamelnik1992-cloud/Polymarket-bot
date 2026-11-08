@@ -5,6 +5,9 @@ Fill rule (conservative "trade-through", identical to pmbot.maker_sim):
     - a taker SELL of X executed at a price  < b        (we would have been the better bid)
     - a taker BUY of the complement at q with 1-q < b   (mint match against our bid)
   Equal price = we would be in the queue behind earlier orders -> no fill.
+Queue model (paper_queue=True): the order joins the back of the queue at its price, behind the size shown there
+at placement; trades AT our price first use up that queue, the rest fills us. Cancellations of orders ahead of us
+are ignored (we never move up without trades), so this still undercounts fills at the touch.
 Latency: an order becomes live `place_latency_ms` after the decision; a cancel takes effect
 `cancel_latency_ms` after the decision. Trades are compared on the exchange match timestamp.
 """
@@ -26,6 +29,7 @@ class PaperOrder:
     live_from: int
     cancel_at: int | None = None
     expires_at: int | None = None
+    q_ahead: float | None = None   # queue model: shares ahead of us at our price (None = model off)
 
     def live_at(self, ts):
         if ts < self.live_from:
@@ -40,10 +44,12 @@ class PaperOrder:
 class PaperBroker:
     mode = "paper"
 
-    def __init__(self, place_latency_ms=150, cancel_latency_ms=150, on_fill=None, journal=None, fill_at_touch=False):
+    def __init__(self, place_latency_ms=150, cancel_latency_ms=150, on_fill=None, journal=None, fill_at_touch=False,
+                 queue=False):
         self.place_latency = place_latency_ms
         self.cancel_latency = cancel_latency_ms
         self.touch = 1e-9 if fill_at_touch else -1e-9   # >0: a print at our price fills us (front of the queue)
+        self.queue = queue
         self.orders = {}
         self._ids = itertools.count(1)
         self.on_fill = on_fill
@@ -55,11 +61,12 @@ class PaperBroker:
     async def stop(self):
         await self.cancel_all()
 
-    async def place(self, token, key, side, price, size, now_ms, expiration_s=None):
+    async def place(self, token, key, side, price, size, now_ms, expiration_s=None, queue_ahead=None):
         oid = f"p{next(self._ids)}"
         exp = (expiration_s - 60) * 1000 if expiration_s else None   # GTD: effective expiry is 60s earlier
         self.orders[oid] = PaperOrder(oid, token, key, side, price, size, size, now_ms + self.place_latency,
-                                      expires_at=exp)
+                                      expires_at=exp,
+                                      q_ahead=float(queue_ahead or 0.0) if self.queue else None)
         return oid
 
     async def cancel(self, oids, now_ms):
@@ -87,15 +94,25 @@ class PaperBroker:
         for o in self.orders.values():
             if not o.live_at(ts_ms):
                 continue
-            if o.token == token and side == "SELL" and price < o.price + self.touch:
-                cands.append(o)
-            elif o.token == other and side == "BUY" and (1 - price) < o.price + self.touch:
-                cands.append(o)
+            if o.token == token and side == "SELL":
+                px = price
+            elif o.token == other and side == "BUY":
+                px = 1 - price
+            else:
+                continue
+            if px < o.price + self.touch:
+                cands.append((o, size))
+            elif o.q_ahead is not None and abs(px - o.price) < 1e-6:
+                # a print AT our price: it eats the queue ahead of us first
+                used = min(o.q_ahead, size)
+                o.q_ahead -= used
+                if size - used > 1e-9:
+                    cands.append((o, size - used))
         left = size
-        for o in sorted(cands, key=lambda x: -x.price):   # best bid first
+        for o, avail in sorted(cands, key=lambda x: -x[0].price):   # best bid first
             if left <= 1e-9:
                 break
-            q = min(o.remaining, left)
+            q = min(o.remaining, left, avail)
             o.remaining -= q
             left -= q
             fill = {"order_id": o.id, "token": o.token, "key": o.key, "side": o.side, "price": o.price,

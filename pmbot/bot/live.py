@@ -168,7 +168,7 @@ class LiveBroker:
                  error=str(e)[:300], backoff_s=float(wait))
 
     # ------------------------------------------------------------ orders
-    async def place(self, token, key, side, price, size, now_ms, expiration_s=None):
+    async def place(self, token, key, side, price, size, now_ms, expiration_s=None, queue_ahead=None):
         if self._stopping:
             return None
         t0 = time.perf_counter()

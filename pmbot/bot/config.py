@@ -41,6 +41,9 @@ class FilterCfg:
     toxic_window_ms: int = 5000
     toxic_cooldown_ms: int = 30000   # ... blocks that side for this long
     max_loop_lag_ms: int = 0         # event loop late by more than this = our view of the market is old (0=off)
+    min_queue_imbalance: float = 0.0  # do not bid a token whose best-level imbalance bid/(bid+ask) is below this:
+                                      # a thin bid queue is about to be eaten (BTC 5m: I<0.1 -> bid drops 57% vs
+                                      # rises 29% within 5 s, reports/40). 0 = off. Re-enter at +0.10 (hysteresis)
 
 
 @dataclass
@@ -64,6 +67,8 @@ class ExecCfg:
     place_latency_ms: int = 150             # paper: order becomes live this long after the decision
     cancel_latency_ms: int = 150            # paper: cancel takes effect this long after the decision
     paper_fill_at_touch: bool = False       # paper: also fill when a trade prints AT our price (front of queue)
+    paper_queue: bool = False               # paper: join the back of the queue at our price (size shown at placement)
+                                            # and fill from trades AT our price once that queue is used up
     tick_ms: int = 200                      # decision loop period
     fast_react: bool = True                 # a Binance move > fast_move_sigmas * sigma_1s wakes the loop at once
     fast_move_sigmas: float = 1.0

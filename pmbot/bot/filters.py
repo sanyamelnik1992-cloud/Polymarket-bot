@@ -70,6 +70,31 @@ def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc:
     return reasons
 
 
+def queue_imbalance(book: Book, own_size=0.0):
+    """bid/(bid+ask) size at the best level of one token (own resting size at the best bid excluded)."""
+    bb, ba = book.best_bid(), book.best_ask()
+    if bb is None or ba is None:
+        return None
+    b = max(book.bids.get(bb, 0.0) - own_size, 0.0)
+    a = book.asks.get(ba, 0.0)
+    return b / (b + a) if b + a > 0 else None
+
+
+def imbalance_blocks(w: Window, st: State, fc: FilterCfg, quoting: dict, own: dict) -> set:
+    """Sides whose own token book has a thin best bid queue (about to tick down through our bid).
+    quoting[side] = we rest a bid there now (hysteresis: leave below the threshold, re-enter 0.10 above it)."""
+    out = set()
+    if fc.min_queue_imbalance <= 0:
+        return out
+    for side, tok in (("U", w.token_up), ("D", w.token_down)):
+        b = st.books.get(tok)
+        imb = queue_imbalance(b, own.get(side, 0.0)) if b else None
+        need = fc.min_queue_imbalance + (0.0 if quoting.get(side) else 0.10)
+        if imb is None or imb < need:
+            out.add(side)
+    return out
+
+
 def side_blocks(w: Window, st: State, now_ms: int, fc: FilterCfg) -> set:
     """Sides ('U'/'D') that must not be quoted: recently swept = toxic flow -> block for a cooldown."""
     out = set()

@@ -53,7 +53,8 @@ def main():
     else:
         def factory(on_fill, journal):
             return PaperBroker(cfg.execution.place_latency_ms, cfg.execution.cancel_latency_ms,
-                               on_fill=on_fill, journal=journal, fill_at_touch=cfg.execution.paper_fill_at_touch)
+                               on_fill=on_fill, journal=journal, fill_at_touch=cfg.execution.paper_fill_at_touch,
+                               queue=cfg.execution.paper_queue)
 
     eng = Engine(cfg, factory, journal, duration_s=args.minutes * 60 if args.minutes else None)
 
