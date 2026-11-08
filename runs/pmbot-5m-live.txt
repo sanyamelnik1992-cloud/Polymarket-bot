@@ -1,18 +1,18 @@
-run: /home/pmbot/Polymarket-bot/data/journal-live-v3/20261108-120242
-mode: live  duration: 118.0 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 26, 'filters': 1761, 'status': 235, 'strike_est': 23, 'fv': 6611, 'side_block': 394, 'order_placed': 130, 'quote': 130, 'order_cancelled': 129, 'cancel_late': 2, 'side_hit': 2, 'fill': 4, 'fill_ctx': 4, 'settle': 3, 'pause': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-live-v3/20261108-184256
+mode: live  duration: 18.9 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 6, 'filters': 343, 'status': 37, 'strike_est': 3, 'fv': 710, 'side_block': 354, 'order_placed': 14, 'quote': 14, 'order_cancelled': 14, 'fill': 7, 'fill_ctx': 7, 'order_rejected': 3, 'cancel_late': 3, 'side_hit': 3, 'provisional': 1, 'settle': 1}
 
-filter reasons (state changes): {'calm_market': 880, 'model_disagrees': 803, 'jump_cooldown': 766, 'p_out_of_range': 544, 'wide_spread': 360, 'too_late': 204, 'no_book': 155, 'vol_spike': 88, 'too_early': 87, 'no_strike': 66, 'no_fair_value': 66, 'chainlink_stale': 30, 'losing_streak_pause': 30, 'loop_lag': 15, 'binance_stale': 3, 'clob_stale': 3}
-quotes placed: 130
+filter reasons (state changes): {'calm_market': 139, 'wide_spread': 134, 'no_strike': 100, 'no_fair_value': 100, 'model_disagrees': 87, 'jump_cooldown': 62, 'too_late': 39, 'too_early': 10, 'chainlink_stale': 9, 'no_book': 8, 'binance_stale': 3, 'p_out_of_range': 3, 'clob_stale': 1}
+quotes placed: 14
 
-fills: 4  shares: 17  notional: $5.57
+fills: 7  shares: 19  notional: $8.93
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        4  16.923     5.573      0.353   60.457
+btc        7  18.565     8.935      0.463  162.018
 
 settled windows:
-       windows   cost   pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best   roi
 asset                                                                            
-btc          3  3.623 -3.59         -3.623   0.033       0.0 -1.734 -0.916 -0.991
+btc          1  4.976  0.895          0.857   0.038       1.0  0.895  0.895  0.18
 
-TOTAL pnl $-3.59 (ex-rebate $-3.62) on cost $3.62 -> ROI -99.08%; windows 3, t-stat -4.45
-max drawdown $-2.65; hedged windows (both sides filled): 0
+TOTAL pnl $+0.89 (ex-rebate $+0.86) on cost $4.98 -> ROI +17.98%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 1
