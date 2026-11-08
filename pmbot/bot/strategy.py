@@ -51,8 +51,16 @@ def target_quotes(w: Window, p_up: float, bu: Book, bd: Book, pos: Position, sc:
         if px > 0:
             size = min(size, math.floor(budget / px))
         opening = inv_sign * net >= -1e-9          # this bid does not reduce our net position
-        if opening and not (sc.min_open_price - 1e-9 <= px <= sc.max_open_price + 1e-9):
+        in_band = sc.min_open_price - 1e-9 <= px <= sc.max_open_price + 1e-9
+        if opening and not in_band:
             size = 0                                # opening legs only inside the band; closing legs at any price
+        elif not opening and not in_band and size > abs(net) + 1e-9:
+            # a closing bid larger than the unpaired lot opens the rest outside the band (live 8 Nov: Down 1.92
+            # unpaired, a 5-share Up bid at 0.65 would add 3.08 Up at 0.65). Allowed only if the pairs it locks pay
+            # for that rest (Up at 0.15: the window can no longer lose); otherwise close only what is open
+            up2, dn2 = pos.up + (size if side == "U" else 0.0), pos.down + (size if side == "D" else 0.0)
+            if pos.cost + px * size - min(up2, dn2) > pos.worst_loss() + 1e-9:
+                size = math.floor(abs(net) + 1e-9)
         if px < tick or px > 0.99 or size < max(w.min_size, 5):
             out[side] = None
         else:

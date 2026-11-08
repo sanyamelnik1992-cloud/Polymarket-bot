@@ -25,6 +25,11 @@ class StrategyCfg:
                                      # Closing legs (they complete a pair) are not limited. 1.0 = off
     min_open_price: float = 0.0      # ... and only at >= this. A band symmetric around 0.5 lets both sides rest at once
                                      # (a pair can form) and opens nothing in the tails. 0.0 = off
+    close_through_filters: bool = False  # an unpaired lot keeps its closing bid (other side, at the best bid) while
+                                     # opening filters (calm market, model, p range, jumps, too late, losing-streak
+                                     # pause...) are on: its fill only removes risk. Live 8 Nov: 4 of 6 losing
+                                     # windows swung our way first, but the filters had pulled the closing bid
+    close_stop_s: float = 290.0      # ... until start + this (opening bids still stop at stop_s)
 
 
 @dataclass
@@ -65,6 +70,9 @@ class RiskCfg:
     max_actions_per_sec: float = 8.0        # order placements + cancels
     kill_file: str = "STOP"                 # create this file to cancel everything and stop
     state_file: str = ""                    # daily PnL + kill flag survive restarts (required in live mode)
+    daily_loss_hard: bool = False           # daily_loss_limit counts from the day's best realized PnL (not from 0)
+                                            # and an opening bid is placed only if losing it and every open lot
+                                            # cannot pass the limit: the day never gives back more than the limit
     resume_next_day: bool = False           # after a daily-loss kill keep running idle and resume at 00:00 UTC
                                             # (paper controls of paired tests); live: false = stop, human restarts
 
@@ -124,6 +132,8 @@ def validate(cfg: BotConfig):
         raise ValueError("strategy.p_min < p_max inside (0,1)")
     if not 0 <= s.start_s < s.stop_s <= 300:
         raise ValueError("strategy.start_s < stop_s <= 300")
+    if not s.stop_s <= s.close_stop_s < 300:
+        raise ValueError("strategy.stop_s <= close_stop_s < 300")
     for name in ("max_cost_per_window", "max_open_worst_loss", "daily_loss_limit", "max_net_shares_per_window"):
         if getattr(r, name) <= 0:
             raise ValueError(f"risk.{name} must be > 0")

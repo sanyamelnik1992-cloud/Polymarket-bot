@@ -45,6 +45,9 @@ class RiskManager:
         self.settled = []                        # recently settled window keys (persisted: a restart must not
                                                  # settle a window again from the wallet's leftover tokens)
         self.kill_kind = ""                      # "daily" (loss limit) | "file" (STOP) | "fatal" (broker) | ...
+        self.provisional = {}                    # window key -> expected PnL counted at the window end (the official
+                                                 # result arrives ~5 min later and replaces it)
+        self.peak_by_day = defaultdict(float)    # UTC day -> best realized PnL of the day (>= 0)
         self.limiter = RateLimiter(rc.max_actions_per_sec, clock=clock)
         self._load_state()
 
@@ -58,6 +61,9 @@ class RiskManager:
         except (OSError, ValueError):
             return
         self.realized_by_day.update(d.get("realized_by_day", {}))
+        self.peak_by_day.update(d.get("peak_by_day", {}))
+        for day, v in d.get("realized_by_day", {}).items():       # older state files: the peak is at least now
+            self.peak_by_day[day] = max(self.peak_by_day.get(day, 0.0), v, 0.0)
         self.settled = list(d.get("settled", []))[-500:]
         if d.get("killed_day") == self.today():
             self.killed, self.kill_reason = True, d.get("kill_reason", "killed earlier today")
@@ -70,7 +76,7 @@ class RiskManager:
         os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
-            json.dump({"realized_by_day": dict(self.realized_by_day),
+            json.dump({"realized_by_day": dict(self.realized_by_day), "peak_by_day": dict(self.peak_by_day),
                        "killed_day": (self.killed_day or self.today()) if self.killed else None,
                        "kill_reason": self.kill_reason, "kill_kind": self.kill_kind,
                        "settled": self.settled[-500:]}, f)
@@ -86,6 +92,22 @@ class RiskManager:
 
     def open_worst_loss(self):
         return sum(self.positions[k].worst_loss() for k in self.unresolved)
+
+    def day_pnl(self, day=None):
+        """Realized PnL of the day plus expected losses of ended windows not settled yet."""
+        day = day or self.today()
+        return self.realized_by_day[day] + sum(min(v, 0.0) for v in self.provisional.values())
+
+    def day_drawdown(self, day=None):
+        """Loss counted against the daily limit: from 0, or from the day's best realized PnL (daily_loss_hard)."""
+        day = day or self.today()
+        peak = max(self.peak_by_day.get(day, 0.0), 0.0) if self.rc.daily_loss_hard else 0.0
+        return peak - self.day_pnl(day)
+
+    def day_room(self):
+        """$ the day may still lose before the daily stop, after a total loss of every open lot."""
+        open_w = sum(self.positions[k].worst_loss() for k in self.unresolved if k not in self.provisional)
+        return self.rc.daily_loss_limit - self.day_drawdown() - open_w
 
     def kill(self, reason, kind="other"):
         if not self.killed:
@@ -121,19 +143,30 @@ class RiskManager:
         self._maybe_resume()
         if self.killed or self.check_kill_file():
             return False, self.kill_reason
-        if self.realized_by_day[self.day(now)] <= -self.rc.daily_loss_limit:
-            self.kill(f"daily loss limit {self.rc.daily_loss_limit} reached", kind="daily")
+        if self.day_drawdown(self.day(now)) >= self.rc.daily_loss_limit - 1e-9:
+            peak = self.peak_by_day.get(self.day(now), 0.0) if self.rc.daily_loss_hard else 0.0
+            self.kill(f"daily loss limit {self.rc.daily_loss_limit} reached"
+                      + (f" (from the day's best {peak:+.2f})" if peak > 0 else ""), kind="daily")
             return False, self.kill_reason
         if now < self.paused_until:
             return False, "losing_streak_pause"
         return True, ""
 
-    def clamp_size(self, key, price, size, resting_notional=0.0):
-        """Reduce a new bid so worst-case open loss + all resting bids stay under the global cap."""
-        room = self.rc.max_open_worst_loss - self.open_worst_loss() - resting_notional
-        if room <= 0 or price <= 0:
+    def clamp_size(self, key, price, size, resting_notional=0.0, no_new_risk=False, resting_opening=None):
+        """Reduce a new bid so worst-case open loss + all resting bids stay under the global cap.
+        no_new_risk = the bid closes an unpaired lot and its fill cannot raise the worst case: never limited.
+        daily_loss_hard: an opening bid must also fit the day's remaining loss budget (a total loss of it and of every
+        open lot cannot pass the daily stop)."""
+        if price <= 0:
             return 0.0
-        return float(min(size, int(room / price)))
+        if no_new_risk:
+            return float(size)
+        room = self.rc.max_open_worst_loss - self.open_worst_loss() - resting_notional
+        if self.rc.daily_loss_hard:
+            room = min(room, self.day_room() - (resting_notional if resting_opening is None else resting_opening))
+        if room <= 0:
+            return 0.0
+        return float(min(size, int(room / price + 1e-9)))
 
     def allow_action(self):
         return self.limiter.allow()
@@ -153,21 +186,7 @@ class RiskManager:
     def is_settled(self, key):
         return key in self.settled
 
-    def on_settle(self, key, winner, rebate_share=0.2, ts=None):
-        p = self.positions.get(key)
-        if p is None or key not in self.unresolved or key in self.settled:
-            self.unresolved.discard(key)
-            return None
-        payoff = p.up if winner == "Up" else p.down
-        rebate = rebate_share * p.fee_eq
-        pnl = payoff - p.cost + rebate
-        self.realized_by_day[self.day(ts or self.clock())] += pnl
-        self.realized_total += pnl
-        self.rebates_total += rebate
-        self.unresolved.discard(key)
-        if key not in self.settled:
-            self.settled.append(key)
-        self._save_state()
+    def _count_result(self, pnl):
         if pnl < 0:
             self.losing_streak += 1
             if self.losing_streak >= self.rc.max_losing_windows_in_row:
@@ -177,4 +196,36 @@ class RiskManager:
                 self.losing_streak = 0
         elif pnl > 0:
             self.losing_streak = 0
+
+    def on_provisional(self, key, winner):
+        """The window ended and its book shows `winner`; the official result comes ~5 min later. Counts the
+        expected result for the losing streak and (losses only) for the daily stop right now."""
+        p = self.positions.get(key)
+        if p is None or key not in self.unresolved or key in self.settled or key in self.provisional:
+            return None
+        pnl = (p.up if winner == "Up" else p.down) - p.cost
+        self.provisional[key] = pnl
+        self._count_result(pnl)
+        return pnl
+
+    def on_settle(self, key, winner, rebate_share=0.2, ts=None):
+        p = self.positions.get(key)
+        counted = self.provisional.pop(key, None) is not None
+        if p is None or key not in self.unresolved or key in self.settled:
+            self.unresolved.discard(key)
+            return None
+        payoff = p.up if winner == "Up" else p.down
+        rebate = rebate_share * p.fee_eq
+        pnl = payoff - p.cost + rebate
+        day = self.day(ts or self.clock())
+        self.realized_by_day[day] += pnl
+        self.peak_by_day[day] = max(self.peak_by_day.get(day, 0.0), self.realized_by_day[day])
+        self.realized_total += pnl
+        self.rebates_total += rebate
+        self.unresolved.discard(key)
+        if key not in self.settled:
+            self.settled.append(key)
+        self._save_state()
+        if not counted:                       # the streak already counted this window at its end
+            self._count_result(pnl)
         return {"pnl": pnl, "payoff": payoff, "cost": p.cost, "rebate": rebate, "up": p.up, "down": p.down}
