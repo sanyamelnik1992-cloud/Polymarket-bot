@@ -42,7 +42,8 @@ min_queue_imbalance = 0.30    # the guard: leave below 0.30 ...
 queue_imbalance_hysteresis = 0.20   # ... re-enter at 0.50 (smoke run: 0.35/0.45 flickered, 84 re-placements in 5 min)
 
 [risk]
-state_file = "data/state/risk_5m_live_v3.json"
+state_file = "data/state/risk_5m_live_v3b.json"   # new file 8 Nov 18:30 UTC (owner): start live today; the old
+                              # file keeps the 8 Nov daily stop (-3.06). The -$2 stop counts again from this restart
 max_net_shares_per_window = 5   # one unpaired lot: no 2nd bid on a side until the other side fills
 max_cost_per_window = 5       # ~2 fills of 5 shares per window
 max_open_worst_loss = 6       # all unresolved windows + resting bids (also capped at 95% of the wallet balance)
