@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo/20261108-120243
-mode: paper  duration: 117.9 min  events: {'start': 1, 'vol_seed': 3, 'window': 78, 'filters': 8220, 'status': 235, 'strike_est': 69, 'fv': 19826}
+mode: paper  duration: 177.7 min  events: {'start': 1, 'vol_seed': 3, 'window': 114, 'filters': 13599, 'status': 355, 'strike_est': 105, 'fv': 30537}
 
-filter reasons (state changes): {'daily loss limit 50.0 reached': 8220, 'model_disagrees': 4389, 'p_out_of_range': 3146, 'jump_cooldown': 2698, 'wide_spread': 2334, 'fair_unstable': 1933, 'too_late': 1180, 'no_book': 513, 'too_early': 409, 'no_strike': 352, 'no_fair_value': 352, 'chainlink_stale': 135, 'vol_spike': 84, 'binance_stale': 9, 'clob_stale': 4}
+filter reasons (state changes): {'daily loss limit 50.0 reached': 13599, 'model_disagrees': 8165, 'p_out_of_range': 6181, 'jump_cooldown': 5332, 'wide_spread': 3989, 'fair_unstable': 3338, 'too_late': 2253, 'no_book': 788, 'too_early': 688, 'no_strike': 513, 'no_fair_value': 513, 'vol_spike': 145, 'chainlink_stale': 140, 'binance_stale': 9, 'clob_stale': 9}
 no fills

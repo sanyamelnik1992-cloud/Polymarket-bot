@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-live-twin/20261108-120243
-mode: paper  duration: 118.0 min  events: {'start': 1, 'vol_seed': 1, 'window': 26, 'filters': 1813, 'status': 235, 'strike_est': 24, 'fv': 6910}
+mode: paper  duration: 177.8 min  events: {'start': 1, 'vol_seed': 1, 'window': 38, 'filters': 2906, 'status': 355, 'strike_est': 36, 'fv': 10487}
 
-filter reasons (state changes): {'daily loss limit 5.0 reached': 1813, 'model_disagrees': 1265, 'p_out_of_range': 797, 'jump_cooldown': 713, 'fair_unstable': 481, 'wide_spread': 376, 'too_late': 177, 'no_book': 138, 'too_early': 91, 'vol_spike': 76, 'no_strike': 40, 'no_fair_value': 40, 'chainlink_stale': 23, 'loop_lag': 9, 'binance_stale': 2, 'clob_stale': 2}
+filter reasons (state changes): {'daily loss limit 5.0 reached': 2906, 'model_disagrees': 2140, 'p_out_of_range': 1313, 'jump_cooldown': 1203, 'fair_unstable': 819, 'wide_spread': 645, 'too_late': 280, 'no_book': 204, 'too_early': 152, 'vol_spike': 106, 'no_strike': 61, 'no_fair_value': 61, 'chainlink_stale': 31, 'loop_lag': 18, 'clob_stale': 8, 'binance_stale': 2}
 no fills

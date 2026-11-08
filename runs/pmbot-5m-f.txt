@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-v3/20261108-120243
-mode: paper  duration: 118.0 min  events: {'start': 1, 'vol_seed': 1, 'window': 26, 'filters': 1781, 'status': 235, 'strike_est': 21, 'fv': 6018}
+mode: paper  duration: 177.8 min  events: {'start': 1, 'vol_seed': 1, 'window': 38, 'filters': 2905, 'status': 355, 'strike_est': 33, 'fv': 9595}
 
-filter reasons (state changes): {'daily loss limit 2.0 reached': 1781, 'calm_market': 826, 'model_disagrees': 796, 'jump_cooldown': 783, 'p_out_of_range': 542, 'wide_spread': 363, 'too_late': 209, 'no_book': 169, 'no_strike': 158, 'no_fair_value': 158, 'too_early': 99, 'vol_spike': 91, 'chainlink_stale': 34, 'loop_lag': 26, 'clob_stale': 5, 'binance_stale': 2}
+filter reasons (state changes): {'daily loss limit 2.0 reached': 2905, 'model_disagrees': 1421, 'jump_cooldown': 1303, 'calm_market': 1278, 'p_out_of_range': 977, 'wide_spread': 628, 'too_late': 311, 'no_book': 233, 'no_strike': 176, 'no_fair_value': 176, 'too_early': 156, 'vol_spike': 125, 'chainlink_stale': 39, 'loop_lag': 33, 'clob_stale': 8, 'binance_stale': 2}
 no fills
