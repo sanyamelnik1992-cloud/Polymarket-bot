@@ -1,11 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261108-105651
-mode: paper  duration: 5.4 min  events: {'start': 1, 'vol_seed': 3, 'window': 9, 'filters': 307, 'status': 10, 'strike_est': 3, 'fv': 399, 'quote': 152, 'fill': 2, 'fill_ctx': 2, 'side_block': 4}
+mode: paper  duration: 64.2 min  events: {'start': 1, 'vol_seed': 3, 'window': 45, 'filters': 4929, 'status': 128, 'strike_est': 39, 'fv': 10935, 'quote': 2584, 'fill': 21, 'fill_ctx': 21, 'side_block': 29, 'settle': 8}
 
-filter reasons (state changes): {'no_strike': 222, 'no_fair_value': 222, 'too_late': 150, 'wide_spread': 109, 'model_disagrees': 52, 'too_early': 18, 'jump_cooldown': 18, 'binance_stale': 8, 'chainlink_stale': 7, 'no_book': 7, 'fair_unstable': 7, 'p_out_of_range': 4, 'clob_stale': 3}
-quotes placed: 152
+filter reasons (state changes): {'model_disagrees': 3011, 'wide_spread': 1328, 'fair_unstable': 1208, 'too_late': 1098, 'p_out_of_range': 1046, 'jump_cooldown': 888, 'no_strike': 341, 'no_fair_value': 341, 'too_early': 251, 'no_book': 185, 'chainlink_stale': 23, 'binance_stale': 8, 'clob_stale': 3}
+quotes placed: 2584
 
-fills: 2  shares: 20  notional: $10.80
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-btc        2    20.0      10.8       0.54   48.897
-no settled windows yet
+fills: 21  shares: 166  notional: $78.57
+       fills   shares  notional  avg_price  med_rel
+asset                                              
+btc       17  144.183    65.591      0.432   75.581
+eth        3   11.667     7.183      0.570  121.766
+sol        1   10.000     5.800      0.580   56.774
+
+settled windows:
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+btc          6  64.091 -1.531         -1.908   0.376     0.333 -3.287  2.256 -0.024
+eth          1   7.183  2.854          2.817   0.038     1.000  2.854  2.854  0.397
+sol          1   5.800  4.234          4.200   0.034     1.000  4.234  4.234  0.730
+
+TOTAL pnl $+5.56 (ex-rebate $+5.11) on cost $77.07 -> ROI +7.21%; windows 8, t-stat +0.79
+max drawdown $-3.29; hedged windows (both sides filled): 7
