@@ -710,3 +710,22 @@ def test_one_unpaired_lot_and_partial_fills_cannot_exceed_net_limit():
     cfg.risk.max_cost_per_window = 20                            # (... the $5 window budget would stop it in live)
     q = target_quotes(w, 0.5, bu, bd, pos, cfg.strategy, cfg.risk)
     assert q["U"] is not None and q["D"] is not None
+
+
+def test_calm_market_filter():
+    import math
+    now = T0 * 1000 + 30_000
+    st, w = mk_state(now)
+    cfg = load_config("config/v3.toml")
+    assert cfg.filters.min_vol_5m_bp == 2.7
+    px = st.prices["btc"]
+    px.cl_by_sec.clear()
+    s0 = now // 1000
+    for i, s in enumerate(range(s0 - 600, s0)):                 # calm: alternating 0.02 bp moves
+        px.cl_by_sec[s] = 100.0 * (1 + 0.000002 * (i % 2))
+    fv = fair_value(w, px, now)
+    assert "calm_market" in check(w, st, fv, now, cfg.filters, cfg.strategy)
+    for i, s in enumerate(range(s0 - 600, s0)):                 # volatile: alternating 0.5 bp moves
+        px.cl_by_sec[s] = 100.0 * (1 + 0.00005 * (i % 2))
+    assert px.cl_vol_5m_bp(s0) > 2.7
+    assert "calm_market" not in check(w, st, fv, now, cfg.filters, cfg.strategy)

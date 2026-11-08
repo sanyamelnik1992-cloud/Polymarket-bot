@@ -44,6 +44,8 @@ class FilterCfg:
     min_queue_imbalance: float = 0.0  # do not bid a token whose best-level imbalance bid/(bid+ask) is below this:
                                       # a thin bid queue is about to be eaten (BTC 5m: I<0.1 -> bid drops 57% vs
                                       # rises 29% within 5 s, reports/40). 0 = off
+    min_vol_5m_bp: float = 0.0       # skip calm markets: Chainlink realized vol of the last 10 min, in bp per 5 min,
+                                     # below this = no quotes (calm windows lost most in both halves, reports/40 §6)
     queue_imbalance_hysteresis: float = 0.10  # ... re-enter only at min + this (each re-entry = back of the queue)
 
 

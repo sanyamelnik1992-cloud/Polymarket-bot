@@ -83,6 +83,18 @@ class AssetPrices:
             for s in sorted(self.cl_by_sec)[:1000]:
                 self.cl_by_sec.pop(s, None)
 
+    def cl_vol_5m_bp(self, now_sec, lookback=600):
+        """Realized vol of Chainlink 1 s prints over the last `lookback` s, scaled to bp per 5 minutes
+        (None if fewer than 80% of the seconds are present). Same estimator as the analysis in reports/40."""
+        xs = [self.cl_by_sec[s] for s in range(now_sec - lookback, now_sec) if s in self.cl_by_sec]
+        if len(xs) < 0.8 * lookback:
+            return None
+        r = [math.log(b / a) for a, b in zip(xs[:-1], xs[1:]) if a > 0 and b > 0]
+        if len(r) < 2:
+            return None
+        m = sum(r) / len(r)
+        return math.sqrt(sum((x - m) ** 2 for x in r) / len(r)) * 1e4 * math.sqrt(300)
+
     def cl_twap(self, end_sec, lookback=60):
         """Mean of Chainlink prints over [end-lookback, end-1]; returns (value, seconds_present)."""
         xs = [self.cl_by_sec[s] for s in range(end_sec - lookback, end_sec) if s in self.cl_by_sec]

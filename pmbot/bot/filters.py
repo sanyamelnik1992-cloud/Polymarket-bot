@@ -52,6 +52,11 @@ def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc:
             st.cooldown_until[w.asset] = now_ms + fc.jump_cooldown_ms
     if now_ms < st.cooldown_until.get(w.asset, 0):
         reasons.append("jump_cooldown")
+    # --- calm market: fills there are the most toxic (only informed flow trades)
+    if fc.min_vol_5m_bp > 0:
+        v = px.cl_vol_5m_bp(now_ms // 1000)
+        if v is None or v < fc.min_vol_5m_bp:
+            reasons.append("calm_market")
     # --- our own process is late: the book / Binance we look at are older than they seem
     if fc.max_loop_lag_ms > 0 and now_ms < st.lag_block_until:
         reasons.append("loop_lag")

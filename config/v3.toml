@@ -30,6 +30,7 @@ toxic_cooldown_ms = 30000
 bn_max_age_ms = 1500          # BTCUSDT bookTicker updates many times a second; 1.5 s of silence = feed problem
 book_max_age_ms = 4000        # CLOB socket answers PING every 2 s; 4 s of silence = dead socket
 max_loop_lag_ms = 200
+min_vol_5m_bp = 2.7           # trade only after a volatile 10 min (BTC top tercile, reports/40 section 6)
 min_queue_imbalance = 0.30    # the guard: leave below 0.30 ...
 queue_imbalance_hysteresis = 0.20   # ... re-enter at 0.50 (smoke run: 0.35/0.45 flickered, 84 re-placements in 5 min)
 
