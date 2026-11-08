@@ -23,6 +23,8 @@ class StrategyCfg:
     max_open_price: float = 1.0      # a bid that does NOT reduce the net position (an opening leg) only at <= this:
                                      # an unpaired window then loses <= price*size and wins >= (1-price)*size.
                                      # Closing legs (they complete a pair) are not limited. 1.0 = off
+    min_open_price: float = 0.0      # ... and only at >= this. A band symmetric around 0.5 lets both sides rest at once
+                                     # (a pair can form) and opens nothing in the tails. 0.0 = off
     close_through_filters: bool = False  # an unpaired lot keeps its closing bid (other side, at the best bid) while
                                      # opening filters (calm market, model, p range, jumps, too late, losing-streak
                                      # pause...) are on: its fill only removes risk. Live 8 Nov: 4 of 6 losing
