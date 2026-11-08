@@ -1,0 +1,5 @@
+run: /home/pmbot/Polymarket-bot/data/journal-live/20261108-090105
+mode: live  duration: 0.1 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'existing_position': 1, 'vol_seed': 1, 'window': 2, 'filters': 4, 'settle': 1}
+
+filter reasons (state changes): {'no_strike': 4, 'no_fair_value': 4, 'chainlink_stale': 3, 'binance_stale': 2, 'clob_stale': 1, 'no_book': 1}
+no fills

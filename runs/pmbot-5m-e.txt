@@ -1,0 +1,5 @@
+run: /home/pmbot/Polymarket-bot/data/journal-live-twin/20261108-090102
+mode: paper  duration: 0.0 min  events: {'start': 1, 'vol_seed': 1, 'window': 2, 'filters': 4}
+
+filter reasons (state changes): {'no_strike': 4, 'no_fair_value': 4, 'binance_stale': 3, 'chainlink_stale': 2, 'clob_stale': 1, 'no_book': 1}
+no fills
