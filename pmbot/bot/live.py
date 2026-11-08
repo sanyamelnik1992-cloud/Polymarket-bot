@@ -243,8 +243,11 @@ class LiveBroker:
         pass
 
     # ------------------------------------------------------------ restart safety
-    def existing_positions(self, assets, get_json=None):
-        """OPEN 5m Up/Down positions already held by the wallet (e.g. after a restart).
+    def existing_positions(self, assets, get_json=None, now=None):
+        """OPEN 5m Up/Down positions already held by the wallet (e.g. after a restart), only in windows that have
+        not ended yet. Tokens of ended windows are either already paid out or worthless leftovers that stay in the
+        wallet forever ("REDEEMABLE" with value 0): counting them again settled phantom losses (8 Nov: -10.81 on a
+        fresh state file -> kill switch before the first order).
 
         Returns [(asset, window_start, side, shares, avg_price, slug)] so the risk manager can count them.
         """
@@ -260,11 +263,14 @@ class LiveBroker:
             if cursor:
                 params["cursor"] = cursor
             d = get_json(f"{DATA}/positions", params)
+            now_s = now if now is not None else time.time()
             for r in d.get("data", []):
                 slug = r.get("slug") or ""
                 parts = slug.split("-")
                 if len(parts) != 4 or parts[1] != "updown" or parts[2] != "5m" or parts[0] not in assets:
                     continue
+                if not parts[3].isdigit() or int(parts[3]) + 300 <= now_s or r.get("redeemable"):
+                    continue          # window over: resolved, nothing left to risk
                 side = "U" if r.get("outcome") == "Up" else "D"
                 out.append((parts[0], int(parts[3]), side, float(r.get("current_size") or 0),
                             float(r.get("avg_price") or 0), slug))

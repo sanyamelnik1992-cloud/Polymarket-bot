@@ -380,6 +380,8 @@ def test_live_existing_positions_are_parsed():
         {"slug": "eth-updown-15m-1800000000", "outcome": "Up", "current_size": 5.0, "avg_price": 0.5},   # not 5m
         {"slug": "xrp-updown-5m-1800000000", "outcome": "Down", "current_size": 5.0, "avg_price": 0.5},  # not traded
         {"slug": "will-x-happen", "outcome": "Yes", "current_size": 5.0, "avg_price": 0.5},
+        {"slug": "btc-updown-5m-1794132000", "outcome": "Up", "current_size": 5.0, "avg_price": 0.64,
+         "redeemable": True},                                              # ended window: worthless leftover
     ], "pagination": {"has_more": False}}]
     calls = []
 
