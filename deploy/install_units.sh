@@ -13,7 +13,7 @@ done
 
 # the Telegram bot may start/stop/restart exactly these units and trigger an update -- nothing else
 CMDS=""
-for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-hourly pmbot-rewards pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
+for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-live pmbot-hourly pmbot-rewards pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
   for a in start restart stop; do CMDS="$CMDS, /usr/bin/systemctl $a --no-block $u"; done
 done
 echo "$USER_NAME ALL=(root) NOPASSWD: ${CMDS#, }" > /etc/sudoers.d/pmbot

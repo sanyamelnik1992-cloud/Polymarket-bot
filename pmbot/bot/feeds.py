@@ -87,7 +87,7 @@ class ClobFeed:
                     pinger = asyncio.create_task(self._ping(ws))
                     try:
                         while self.alive():
-                            msg = await asyncio.wait_for(ws.recv(), timeout=30)
+                            msg = await asyncio.wait_for(ws.recv(), timeout=10)
                             rx = now_ms()
                             self.st.feed_alive["clob"][self.asset] = rx
                             if msg == "PONG":
@@ -105,9 +105,11 @@ class ClobFeed:
                 await asyncio.sleep(1)
 
     @staticmethod
-    async def _ping(ws):
+    async def _ping(ws, every_s=2.0):
+        # PONG every 2 s keeps feed_alive fresh even on a quiet book, so filters.book_max_age_ms of a few seconds
+        # detects a silently dead socket quickly (in live our orders rest while we are blind)
         while True:
-            await asyncio.sleep(10)
+            await asyncio.sleep(every_s)
             await ws.send("PING")
 
 

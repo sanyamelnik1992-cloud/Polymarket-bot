@@ -430,3 +430,153 @@ def test_fast_react_wakes_on_binance_move():
     px.on_binance(100.01, 1200)                   # 1bp > 1 sigma -> wake now
     eng.st.on_tick("btc")
     assert eng._wake.is_set() and eng.stats["fast_wakes"] == 1
+
+
+# ---------------------------------------------------------------- live hardening (first $10 test)
+def test_geoblock_allows_api_only_countries():
+    ie = lambda url, timeout: types.SimpleNamespace(json=lambda: {"blocked": True, "country": "IE"})  # noqa: E731
+    gb = lambda url, timeout: types.SimpleNamespace(json=lambda: {"blocked": True, "country": "GB"})  # noqa: E731
+    assert check_geoblock(ie)["country"] == "IE"
+    with pytest.raises(LiveGateError, match="blocked"):
+        check_geoblock(gb)
+
+
+def test_live_configs_load_and_twin_matches_live():
+    live, twin = load_config("config/live_d.toml"), load_config("config/live_d_twin.toml")
+    assert live.execution.mode == "live" and twin.execution.mode == "paper"
+    assert live.strategy == twin.strategy and live.filters == twin.filters
+    for k in ("max_net_shares_per_window", "max_cost_per_window", "max_open_worst_loss", "daily_loss_limit",
+              "max_actions_per_sec", "max_losing_windows_in_row"):
+        assert getattr(live.risk, k) == getattr(twin.risk, k)
+    assert live.risk.state_file != twin.risk.state_file and not live.risk.resume_next_day
+    assert live.risk.max_open_worst_loss <= 10 and live.risk.daily_loss_limit <= 5 and live.strategy.quote_size == 5
+    with pytest.raises(ValueError, match="paper-only"):
+        load_config("config/live_d.toml", {"risk": {"resume_next_day": True}})
+
+
+def test_paper_control_resumes_next_day_live_does_not(tmp_path):
+    clock = [T0]
+    for resume in (True, False):
+        cfg = BotConfig()
+        cfg.risk.state_file = str(tmp_path / f"r{resume}.json")
+        cfg.risk.kill_file = ""
+        cfg.risk.daily_loss_limit = 5
+        cfg.risk.resume_next_day = resume
+        clock[0] = T0
+        r = RiskManager(cfg.risk, clock=lambda: clock[0])
+        r.on_fill("a", "U", 0.5, 20, 0.0)
+        r.on_settle("a", "Down", rebate_share=0.0)
+        assert not r.can_quote()[0] and r.killed
+        assert r.stays_alive_when_killed == resume
+        clock[0] = T0 + 86400
+        assert r.can_quote()[0] == resume
+
+
+def test_live_balance_gate_uses_window_budget():
+    cfg = load_config("config/live_d.toml")
+    env = {"PMBOT_LIVE_CONFIRM": CONFIRM_PHRASE, "PMBOT_PRIVATE_KEY": "0xabc"}
+    ok_geo = lambda url, timeout: types.SimpleNamespace(json=lambda: {"blocked": False})  # noqa: E731
+    with pytest.raises(LiveGateError, match="balance"):
+        run(LiveBroker(cfg, client=FakeClient(4), geoblock_get=ok_geo, env=env).start())
+    lb = LiveBroker(cfg, client=FakeClient(7), geoblock_get=ok_geo, env=env)
+
+    async def scenario():
+        lb._user_stream = lambda: asyncio.sleep(0)
+        await lb.start()
+        await lb.stop()
+    run(scenario())
+    assert lb.balance_usd == pytest.approx(7)
+
+
+class Rejected(Exception):
+    def __init__(self, status):
+        super().__init__("forbidden")
+        self.status = status
+
+
+def test_live_broker_health_and_fatal_on_403():
+    cfg = load_config("config/live_d.toml")
+    lb = LiveBroker(cfg, client=FakeClient(100), env={})
+    assert lb.health() == (False, "user_stream_down")
+    lb.stream_ok = True
+    assert lb.health()[0]
+    lb.note_error("place", RuntimeError("timeout"))
+    assert lb.health() == (False, "api_backoff") and not lb.fatal
+    lb.note_error("place", Rejected(403))
+    assert lb.fatal and lb.health() == (False, "broker_fatal")
+
+
+def test_late_fill_after_cancel_is_still_counted():
+    """cancel says 'not canceled' (matched) and the fill event arrives afterwards: the position must count it."""
+    fills = []
+    fc = FakeClient(100)
+
+    async def nc(order_ids):
+        return types.SimpleNamespace(canceled=(), not_canceled={o: "matched" for o in order_ids})
+    fc.cancel_orders = nc
+    lb = LiveBroker(load_config("config/live_d.toml"), client=fc, env={}, on_fill=fills.append)
+
+    async def scenario():
+        oid = await lb.place("U1", "k", "U", 0.45, 5, now_ms=0, expiration_s=1234)
+        await lb.cancel([oid], now_ms=0)
+        assert oid not in lb.orders and oid in lb.known
+        mo = types.SimpleNamespace(order_id=oid, matched_amount="5", price="0.45")
+        ev = types.SimpleNamespace(type="trade", payload=types.SimpleNamespace(
+            id="t1", status="MATCHED", maker_orders=(mo,), matched_at=None))
+
+        class Stream:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *a):
+                lb._stopping = True
+
+            def __aiter__(self):
+                async def gen():
+                    yield ev
+                return gen()
+
+        async def subscribe(specs):
+            return Stream()
+        fc.subscribe = subscribe
+        await lb._user_stream()
+    run(scenario())
+    assert len(fills) == 1 and fills[0]["size"] == 5 and fills[0]["key"] == "k"
+
+
+def test_engine_survives_order_errors_and_resets():
+    from pmbot.bot.engine import Engine
+    from pmbot.bot.journal import Journal
+    import tempfile
+    cfg = load_config(None, {"strategy": {"assets": ["btc"]}})
+
+    class Flaky(PaperBroker):
+        fail = True
+        resets = 0
+
+        async def place(self, *a, **kw):
+            if self.fail:
+                raise RuntimeError("network down")
+            return await super().place(*a, **kw)
+
+        async def cancel_all(self, now_ms=None):
+            Flaky.resets += 1
+            await super().cancel_all(now_ms)
+
+    eng = Engine(cfg, lambda on_fill, journal: Flaky(on_fill=on_fill), Journal(tempfile.mkdtemp()))
+    w = mk_window()
+    eng.st.add_window(w)
+    run(eng.set_quote(w, "U", (0.45, 10.0), T0 * 1000 + 10_000))
+    assert eng._need_reset and eng.stats["order_errors"] == 1 and not eng.quotes
+    run(eng._reset_orders(T0 * 1000 + 10_050))
+    assert not eng._need_reset and Flaky.resets == 1
+
+
+def test_loop_lag_filter_blocks_quoting():
+    now = T0 * 1000 + 30_000
+    st, w = mk_state(now)
+    cfg = load_config(None, {"filters": {"max_loop_lag_ms": 200}})
+    fv = fair_value(w, st.prices["btc"], now)
+    assert "loop_lag" not in check(w, st, fv, now, cfg.filters, cfg.strategy)
+    st.lag_block_until = now + 500
+    assert "loop_lag" in check(w, st, fv, now, cfg.filters, cfg.strategy)

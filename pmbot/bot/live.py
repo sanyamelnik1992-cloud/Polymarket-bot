@@ -3,13 +3,18 @@
   1. execution.mode = "live" in the config AND the --live CLI flag
   2. env PMBOT_LIVE_CONFIRM == "I_UNDERSTAND_REAL_MONEY_RISK"
   3. env PMBOT_PRIVATE_KEY present (use a dedicated wallet / session key with a small balance)
-  4. https://polymarket.com/api/geoblock says blocked == false for this machine
-  5. collateral balance >= risk.max_open_worst_loss (the bot never needs more than that)
+  4. https://polymarket.com/api/geoblock says blocked == false for this machine, or the country is one where only
+     the website is restricted and the API is allowed (API_OK_COUNTRIES, see docs.polymarket.com geoblock page)
+  5. collateral balance >= risk.max_cost_per_window; the engine caps risk.max_open_worst_loss at the balance
 
 Safety mechanisms while running:
   * every order is post-only (never pays taker fees, never crosses) and GTD (expires by itself)
   * order heartbeat every few seconds: if the bot dies, the exchange cancels all orders after ~10s
   * cancel_all on start and on shutdown (also on kill switch)
+  * health(): no quoting while the user (fill) stream is down, heartbeats fail or the API asked us to back off;
+    a 401/403 from the API (auth / region) is fatal -> kill switch
+  * fills are attributed by every order id we ever placed (not only resting ones): a fill that arrives after
+    the cancel answered "not canceled" is still counted in the position
 The private key is read from the environment only and never logged.
 """
 import asyncio
@@ -20,6 +25,9 @@ import requests
 
 CONFIRM_PHRASE = "I_UNDERSTAND_REAL_MONEY_RISK"
 GEOBLOCK_URL = "https://polymarket.com/api/geoblock"
+# "close-only on the frontend only, API not restricted" (docs.polymarket.com/developers/CLOB/geoblock, Nov 2026).
+# Only the country this bot actually runs from is listed; add others only after checking that page again.
+API_OK_COUNTRIES = {"IE"}
 
 
 class LiveGateError(RuntimeError):
@@ -29,7 +37,7 @@ class LiveGateError(RuntimeError):
 def check_geoblock(get=requests.get):
     r = get(GEOBLOCK_URL, timeout=15)
     d = r.json()
-    if d.get("blocked", True):
+    if d.get("blocked", True) and d.get("country") not in API_OK_COUNTRIES:
         raise LiveGateError(f"Polymarket geoblock: trading is blocked from this location "
                             f"(country={d.get('country')}, region={d.get('region')}). Live mode refused.")
     return d
@@ -52,7 +60,13 @@ class LiveBroker:
         self.client = client          # injected in tests; created in start() otherwise
         self._geoblock_get = geoblock_get
         self._env = env
-        self.orders = {}              # order_id -> dict(token,key,side,price,size,remaining)
+        self.orders = {}              # order_id -> dict(token,key,side,price,size,remaining): believed resting
+        self.known = {}               # every order id placed by this process (fills are attributed through it)
+        self.balance_usd = None
+        self.fatal = ""               # set on 401/403: the engine kills itself
+        self.backoff_until = 0.0      # monotonic seconds: API asked us to slow down / is restarting
+        self.stream_ok = False
+        self.hb_ok_at = 0.0           # monotonic time of the last successful heartbeat
         self._hb_id = ""
         self._tasks = []
         self._seen_fills = set()
@@ -76,10 +90,11 @@ class LiveBroker:
             )
         bal = await self.client.get_balance_allowance(asset_type="COLLATERAL")
         usd = bal.balance / 1e6
+        self.balance_usd = usd
         self.log("balance", pusd=usd)
-        need = self.cfg.risk.max_open_worst_loss
+        need = self.cfg.risk.max_cost_per_window
         if usd < need:
-            raise LiveGateError(f"collateral balance {usd:.2f} < risk.max_open_worst_loss {need:.2f}")
+            raise LiveGateError(f"collateral balance {usd:.2f} < risk.max_cost_per_window {need:.2f}")
         await self.cancel_all()
         await self._heartbeat_once()
         self._tasks = [asyncio.create_task(self._heartbeat_loop()), asyncio.create_task(self._user_stream())]
@@ -109,6 +124,7 @@ class LiveBroker:
             except OrderHeartbeatMismatchError as e:
                 hb = await self.client.send_order_heartbeat(heartbeat_id=e.heartbeat_id)
             self._hb_id = hb.heartbeat_id
+            self.hb_ok_at = time.monotonic()
 
     async def _heartbeat_loop(self):
         while not self._stopping:
@@ -116,40 +132,94 @@ class LiveBroker:
             try:
                 await self._heartbeat_once()
             except Exception as e:  # noqa: BLE001
+                self.note_error("heartbeat", e)
                 self.log("heartbeat_error", error=str(e)[:200])
+
+    # ------------------------------------------------------------ health
+    def health(self):
+        """(ok, reason). Not ok = do not quote (the engine also cancels what rests)."""
+        if self.fatal:
+            return False, "broker_fatal"
+        now = time.monotonic()
+        if now < self.backoff_until:
+            return False, "api_backoff"
+        if not self.stream_ok:
+            return False, "user_stream_down"
+        if self.hb_ok_at and now - self.hb_ok_at > 2 * self.cfg.execution.heartbeat_s + 1:
+            return False, "heartbeat_down"      # the exchange cancels everything ~10 s after the last heartbeat
+        return True, ""
+
+    def note_error(self, op, e):
+        """Classify an API exception: fatal (auth / region), back off for a while, or transient."""
+        status = getattr(e, "status", None)
+        name = type(e).__name__
+        if status in (401, 403):
+            self.fatal = f"{op}: HTTP {status} {str(e)[:150]}"
+            self.log("broker_fatal", op=op, status=status, error=str(e)[:300])
+            return
+        if name == "RateLimitError":
+            wait = getattr(e, "retry_after", None) or 5.0
+        elif getattr(e, "restriction", None):            # exchange restarting / cancel-only / post-only mode
+            wait = getattr(e, "retry_after", None) or 10.0
+        else:
+            wait = 2.0
+        self.backoff_until = max(self.backoff_until, time.monotonic() + float(wait))
+        self.log("api_error", op=op, err=name, status=status, restriction=getattr(e, "restriction", None),
+                 error=str(e)[:300], backoff_s=float(wait))
 
     # ------------------------------------------------------------ orders
     async def place(self, token, key, side, price, size, now_ms, expiration_s=None):
         if self._stopping:
             return None
-        resp = await self.client.place_limit_order(
-            asset_id=token, side="BUY", price=f"{price:.2f}", size=f"{size:.2f}",
-            post_only=True, expiration=int(expiration_s) if expiration_s else None)
+        t0 = time.perf_counter()
+        try:
+            resp = await self.client.place_limit_order(
+                asset_id=token, side="BUY", price=f"{price:.2f}", size=f"{size:.2f}",
+                post_only=True, expiration=int(expiration_s) if expiration_s else None)
+        except Exception as e:  # noqa: BLE001
+            self.note_error("place", e)
+            raise                     # the engine resets: the order may or may not exist now
+        lat = round((time.perf_counter() - t0) * 1000, 1)
         if not getattr(resp, "ok", False):
-            self.log("order_rejected", token=token, key=key, side=side, price=price, size=size,
-                     code=getattr(resp, "code", "?"), message=getattr(resp, "message", "")[:200])
+            code = getattr(resp, "code", "?")
+            self.log("order_rejected", token=token, key=key, side=side, price=price, size=size, latency_ms=lat,
+                     code=code, message=getattr(resp, "message", "")[:200])
+            if code == "not_enough_balance":
+                self.backoff_until = max(self.backoff_until, time.monotonic() + 30)
             return None
-        self.orders[resp.order_id] = {"token": token, "key": key, "side": side, "price": price,
-                                      "size": size, "remaining": size}
+        o = {"token": token, "key": key, "side": side, "price": price, "size": size, "remaining": size}
+        self.orders[resp.order_id] = o
+        self.known[resp.order_id] = o
         self.log("order_placed", order_id=resp.order_id, token=token, key=key, side=side, price=price, size=size,
-                 expiration=expiration_s)
+                 expiration=expiration_s, latency_ms=lat, status=getattr(resp, "status", None))
         return resp.order_id
 
     async def cancel(self, oids, now_ms):
         oids = [o for o in oids if o in self.orders]
         if not oids:
             return
-        resp = await self.client.cancel_orders(order_ids=oids)
+        t0 = time.perf_counter()
+        try:
+            resp = await self.client.cancel_orders(order_ids=oids)
+        except Exception as e:  # noqa: BLE001
+            self.note_error("cancel", e)
+            raise
+        lat = round((time.perf_counter() - t0) * 1000, 1)
         for oid in getattr(resp, "canceled", ()):
             self.orders.pop(oid, None)
+        self.log("order_cancelled", order_ids=list(getattr(resp, "canceled", ())), latency_ms=lat)
         nc = getattr(resp, "not_canceled", {}) or {}
         if nc:
             self.log("cancel_failed", details={k: str(v)[:100] for k, v in nc.items()})
-            for oid in nc:            # usually already filled or expired
+            for oid in nc:            # usually already filled or expired; a late fill is still counted (self.known)
                 self.orders.pop(oid, None)
 
     async def cancel_all(self, now_ms=None):
-        resp = await self.client.cancel_all()
+        try:
+            resp = await self.client.cancel_all()
+        except Exception as e:  # noqa: BLE001
+            self.note_error("cancel_all", e)
+            raise
         self.orders.clear()
         self.log("cancel_all", canceled=len(getattr(resp, "canceled", ()) or ()))
 
@@ -197,14 +267,20 @@ class LiveBroker:
         while not self._stopping:
             try:
                 async with await self.client.subscribe([UserSpec()]) as stream:
+                    self.stream_ok = True
+                    self.log("user_stream_up")
                     async for ev in stream:
                         if getattr(ev, "type", None) != "trade":
                             continue
                         pl = ev.payload
+                        status = str(getattr(pl, "status", "") or "")
                         for mo in pl.maker_orders or ():
-                            o = self.orders.get(mo.order_id)
+                            o = self.known.get(mo.order_id)
                             uid = (pl.id, mo.order_id)
                             if o is None or uid in self._seen_fills:
+                                continue
+                            if status.upper() == "FAILED":
+                                self.log("fill_failed", trade_id=pl.id, order_id=mo.order_id)
                                 continue
                             self._seen_fills.add(uid)
                             q = float(mo.matched_amount)
@@ -212,9 +288,11 @@ class LiveBroker:
                             o["remaining"] -= q
                             if o["remaining"] <= 1e-9:
                                 self.orders.pop(mo.order_id, None)
+                            m_at = getattr(pl, "matched_at", None)
                             fill = {"order_id": mo.order_id, "token": o["token"], "key": o["key"], "side": o["side"],
                                     "price": px, "size": q, "fee_eq": fee_per_share(px) * q,
-                                    "ts": int(time.time() * 1000), "trade_id": pl.id}
+                                    "ts": int(time.time() * 1000), "trade_id": pl.id, "status": status,
+                                    "match_ts": int(m_at.timestamp() * 1000) if m_at else None}
                             self.log("fill", **fill)
                             if self.on_fill:
                                 self.on_fill(fill)
@@ -222,6 +300,8 @@ class LiveBroker:
                 raise
             except Exception as e:  # noqa: BLE001
                 self.log("user_stream_error", error=str(e)[:200])
+            self.stream_ok = False
+            if not self._stopping:
                 await asyncio.sleep(2)
 
 

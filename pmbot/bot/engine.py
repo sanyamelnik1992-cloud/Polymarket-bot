@@ -33,7 +33,12 @@ class Engine:
         self.to_settle = {}       # window key -> Window (ended, has position)
         self.last_reasons = {}
         self._last_fv_log = {}
-        self.stats = {"placed": 0, "cancelled": 0, "fills": 0, "rejected_rate": 0, "fast_wakes": 0}
+        self.stats = {"placed": 0, "cancelled": 0, "fills": 0, "rejected_rate": 0, "fast_wakes": 0,
+                      "order_errors": 0, "lag_max_ms": 0, "lag_blocks": 0}
+        self._need_reset = False          # an order call failed: cancel_all and forget local quotes first
+        self._reset_after = 0             # ms: earliest next cancel_all attempt (backoff)
+        self._reset_failures = 0
+        self._broker_down = ""            # last broker health reason (journal only on change)
         self._stop = False
         self._wake = asyncio.Event()
         self._decided_mid = {}            # asset -> Binance mid at the last decision
@@ -61,6 +66,7 @@ class Engine:
 
     def on_fill(self, fill):
         self.stats["fills"] += 1
+        self._log_fill_ctx(fill)
         self.st.record_fill(fill["key"], fill["side"], self.clock(), fill["size"])
         self.risk.on_fill(fill["key"], fill["side"], fill["price"], fill["size"], fill["fee_eq"])
         q = self.quotes.get((fill["key"], fill["side"]))
@@ -76,6 +82,48 @@ class Engine:
                 cur = self.quotes.get((w.key, fill["side"]))
                 if cur:
                     asyncio.get_running_loop().create_task(self._cancel((w.key, fill["side"]), cur, self.clock()))
+
+    def _log_fill_ctx(self, fill):
+        """Fair value, both books and Binance at the moment the fill reached us (the 1 Hz fv trace is too coarse)."""
+        try:
+            w = self.st.windows.get(fill["key"])
+            fh = self.st.fair_hist.get(fill["key"])
+            ctx = {"key": fill["key"], "order_id": fill["order_id"], "ts": fill["ts"], "side": fill["side"],
+                   "price": fill["price"], "p_up": round(fh[-1][1], 4) if fh else None,
+                   "p_age_ms": (self.clock() - fh[-1][0]) if fh else None}
+            if w:
+                for nm, tok in (("up", w.token_up), ("dn", w.token_down)):
+                    b = self.st.books.get(tok)
+                    ctx[nm + "_bid"] = b.best_bid() if b else None
+                    ctx[nm + "_ask"] = b.best_ask() if b else None
+                ctx["bn"] = self.st.prices[w.asset].bn_mid()
+                ctx["rel"] = round(self.clock() / 1000 - w.start, 2)
+            self.journal.log("fill_ctx", **ctx)
+        except Exception as e:  # noqa: BLE001  (diagnostics must never break fill accounting)
+            log.warning("fill_ctx failed: %s", e)
+
+    def _order_error(self, op, e):
+        self.stats["order_errors"] += 1
+        self._need_reset = True
+        self.journal.log("order_error", op=op, err=type(e).__name__, error=str(e)[:300])
+        log.warning("order %s failed: %s %s", op, type(e).__name__, str(e)[:200])
+
+    async def _reset_orders(self, now):
+        """After a failed place/cancel we do not know what rests on the exchange: cancel everything, forget quotes."""
+        if now < self._reset_after:
+            return
+        self.quotes.clear()
+        try:
+            await self.broker.cancel_all(now)
+        except Exception as e:  # noqa: BLE001
+            self._reset_failures += 1
+            self._reset_after = now + min(30_000, 1000 * 2 ** min(self._reset_failures, 5))
+            self.journal.log("reset_failed", error=str(e)[:200], failures=self._reset_failures)
+            if self._reset_failures >= 8:
+                raise          # crash: heartbeats stop, the exchange cancels our orders, systemd restarts
+            return
+        self._need_reset, self._reset_failures = False, 0
+        self.journal.log("orders_reset")
 
     # ------------------------------------------------------------ discovery & strikes
     async def bootstrap_vol(self):
@@ -180,7 +228,11 @@ class Engine:
             return
         token = w.token_up if side == "U" else w.token_down
         exp = max(int(now / 1000) + self.cfg.execution.gtd_min_lifetime_s, w.start + int(sc.stop_s) + 60)
-        oid = await self.broker.place(token, w.key, side, price, size, now, expiration_s=exp)
+        try:
+            oid = await self.broker.place(token, w.key, side, price, size, now, expiration_s=exp)
+        except Exception as e:  # noqa: BLE001
+            self._order_error("place", e)
+            return
         if oid:
             self.quotes[key] = {"oid": oid, "price": price, "size": size, "t": now}
             self.stats["placed"] += 1
@@ -188,15 +240,21 @@ class Engine:
 
     async def _cancel(self, key, cur, now):
         self.risk.allow_action()  # cancels always go through, but consume budget
-        await self.broker.cancel([cur["oid"]], now)
         self.quotes.pop(key, None)
         self.stats["cancelled"] += 1
+        try:
+            await self.broker.cancel([cur["oid"]], now)
+        except Exception as e:  # noqa: BLE001
+            self._order_error("cancel", e)
 
     async def cancel_everything(self, reason):
         now = self.clock()
         for key, cur in list(self.quotes.items()):
             await self._cancel(key, cur, now)
-        await self.broker.cancel_all(now)
+        try:
+            await self.broker.cancel_all(now)
+        except Exception as e:  # noqa: BLE001
+            self._order_error("cancel_all", e)
         self.journal.log("cancel_everything", reason=reason)
 
     async def decide_loop(self):
@@ -213,14 +271,30 @@ class Engine:
 
     async def decide_once(self, now) -> bool:
         """One decision pass over all windows at time `now` (ms). Returns False when the bot must stop."""
+        fatal = getattr(self.broker, "fatal", "")
+        if fatal:
+            self.risk.kill(f"broker: {fatal}", kind="fatal")
         ok, why = self.risk.can_quote(now / 1000)
         if not ok:
             if self.quotes:
                 await self.cancel_everything(why)
-            if self.risk.killed:
+            if self.risk.killed and not self.risk.stays_alive_when_killed:
                 log.error("KILL SWITCH: %s", why)
                 self._stop = True
                 return False
+        if self._need_reset:
+            await self._reset_orders(now)
+            if self._need_reset:
+                return True
+        health = getattr(self.broker, "health", None)
+        b_ok, b_why = health() if health else (True, "")
+        if b_why != self._broker_down:
+            self.journal.log("broker_health", ok=b_ok, reason=b_why)
+            self._broker_down = b_why
+        if not b_ok and ok:
+            ok, why = False, b_why
+            if self.quotes:
+                await self.cancel_everything(why)
         sc = self.cfg.strategy
         for a in self.st.assets:
             self._decided_mid[a] = self.st.prices[a].bn_mid()
@@ -325,6 +399,21 @@ class Engine:
             log.info(msg)
             self.journal.log("status", pnl=self.risk.realized_total, open_worst=self.risk.open_worst_loss(),
                              stats=dict(self.stats))
+            self.stats["lag_max_ms"] = 0          # max event-loop lag per 30 s status interval
+
+    async def lag_loop(self, period_s=0.05):
+        """Event-loop lag: a busy/slow process sees the market late (and the exchange drops slow consumers).
+        Above filters.max_loop_lag_ms quoting stops for a second (filter 'loop_lag')."""
+        lim = self.cfg.filters.max_loop_lag_ms
+        while self.alive():
+            t = time.perf_counter()
+            await asyncio.sleep(period_s)
+            lag = (time.perf_counter() - t - period_s) * 1000
+            if lag > self.stats["lag_max_ms"]:
+                self.stats["lag_max_ms"] = int(lag)
+            if lim and lag > lim:
+                self.stats["lag_blocks"] += 1
+                self.st.lag_block_until = now_ms() + 1000
 
     # ------------------------------------------------------------ run
     async def load_existing_positions(self):
@@ -350,12 +439,17 @@ class Engine:
 
     async def run(self):
         await self.broker.start()
+        bal = getattr(self.broker, "balance_usd", None)
+        if bal is not None and bal < self.cfg.risk.max_open_worst_loss:
+            # never commit more than the wallet holds (after losses the bot keeps working with what is left)
+            self.journal.log("risk_capped_by_balance", balance=bal, was=self.cfg.risk.max_open_worst_loss)
+            self.cfg.risk.max_open_worst_loss = round(bal * 0.95, 2)
         self.journal.log("start", mode=self.broker.mode, config=_cfg_dict(self.cfg))
         await self.load_existing_positions()
         await self.bootstrap_vol()
         tasks = [asyncio.create_task(c) for c in (
             self.discover_loop(), rtds_feed(self.st, self.alive), binance_feed(self.st, self.alive),
-            self.decide_loop(), self.status_loop())]
+            self.decide_loop(), self.status_loop(), self.lag_loop())]
         tasks += [asyncio.create_task(f.run()) for f in self.feeds.values()]
         settle = asyncio.create_task(self.settle_loop())
         try:
