@@ -45,7 +45,8 @@ HELP = """🤖 <b>pmbot — команды</b>
 ⛔ /stop — <b>АВАРИЙНЫЙ СТОП</b>: снять все заявки и остановить торговлю
 ▶️ /resume — снять STOP и запустить ботов снова
 🔄 /update — подтянуть код с GitHub
-♻️ /restart [юнит] — перезапустить юнит
+♻️ /restart [юнит] — перезапустить (или запустить) юнит
+⏹ /off юнит — остановить один юнит (например /off pmbot-5m-live)
 
 <b>Боты</b>
 """ + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS if u.startswith("pmbot-5m")) + """
@@ -110,6 +111,15 @@ def cmd_resume(_):
     return msg
 
 
+def cmd_off(arg):
+    """Stop one unit (it stays stopped until /restart <unit>); /stop is the all-bots emergency stop."""
+    if not arg or arg not in ops.ALL_UNITS or arg == "pmbot-tg":
+        return f"укажи юнит: /off pmbot-5m-live. Юниты: {', '.join(u for u in ops.ALL_UNITS if u != 'pmbot-tg')}"
+    ok, out = systemctl("stop", "--no-block", arg)
+    return (f"⏹ останавливаю {label(arg)}: снимет заявки и выключится. Вернуть: /restart {arg}" if ok
+            else f"не получилось: {esc(out[:500])}")
+
+
 def cmd_update(_):
     ok, out = systemctl("start", "--no-block", "pmbot-autoupdate.service")
     return "🔄 Проверяю GitHub, результат придёт сюда." if ok else f"не получилось: {esc(out[:500])}"
@@ -159,7 +169,7 @@ COMMANDS = {
     "/status": lambda a: notify.format_status(),
     "/trades": lambda a: notify.format_trades(), "/server": lambda a: notify.format_server(),
     "/chart": cmd_chart, "/review": cmd_review,
-    "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart,
+    "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart, "/off": cmd_off,
 }
 
 

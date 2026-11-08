@@ -40,6 +40,7 @@ class FilterCfg:
     toxic_fills: int = 0             # ... or >= this many separate fills (0=off)
     toxic_window_ms: int = 5000
     toxic_cooldown_ms: int = 30000   # ... blocks that side for this long
+    max_loop_lag_ms: int = 0         # event loop late by more than this = our view of the market is old (0=off)
 
 
 @dataclass
@@ -53,6 +54,8 @@ class RiskCfg:
     max_actions_per_sec: float = 8.0        # order placements + cancels
     kill_file: str = "STOP"                 # create this file to cancel everything and stop
     state_file: str = ""                    # daily PnL + kill flag survive restarts (required in live mode)
+    resume_next_day: bool = False           # after a daily-loss kill keep running idle and resume at 00:00 UTC
+                                            # (paper controls of paired tests); live: false = stop, human restarts
 
 
 @dataclass
@@ -112,6 +115,8 @@ def validate(cfg: BotConfig):
             raise ValueError(f"risk.{name} must be > 0")
     if e.mode == "live" and not r.state_file:
         raise ValueError("risk.state_file is required in live mode (daily loss + kill switch must survive restarts)")
+    if e.mode == "live" and r.resume_next_day:
+        raise ValueError("risk.resume_next_day is paper-only: a live bot stopped by the daily loss limit waits for a human")
     if r.max_cost_per_window > r.max_open_worst_loss:
         raise ValueError("risk.max_cost_per_window cannot exceed risk.max_open_worst_loss")
     bad = [a for a in s.assets if a not in ("btc", "eth", "sol", "xrp")]

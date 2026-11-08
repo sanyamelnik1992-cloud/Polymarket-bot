@@ -30,6 +30,7 @@ max_cost_per_window = 12
 max_open_worst_loss = 60
 daily_loss_limit = 50
 max_actions_per_sec = 50
+resume_next_day = true       # paper control: after the daily stop wait for 00:00 UTC instead of exiting
 
 [execution]
 mode = "paper"

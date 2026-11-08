@@ -41,6 +41,8 @@ class RiskManager:
         self.paused_until = 0.0
         self.killed = False
         self.kill_reason = ""
+        self.killed_day = None                   # UTC day of the kill
+        self.kill_kind = ""                      # "daily" (loss limit) | "file" (STOP) | "fatal" (broker) | ...
         self.limiter = RateLimiter(rc.max_actions_per_sec, clock=clock)
         self._load_state()
 
@@ -56,6 +58,7 @@ class RiskManager:
         self.realized_by_day.update(d.get("realized_by_day", {}))
         if d.get("killed_day") == self.today():
             self.killed, self.kill_reason = True, d.get("kill_reason", "killed earlier today")
+            self.killed_day, self.kill_kind = d["killed_day"], d.get("kill_kind", "daily")
 
     def _save_state(self):
         p = getattr(self.rc, "state_file", "")
@@ -65,7 +68,8 @@ class RiskManager:
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
             json.dump({"realized_by_day": dict(self.realized_by_day),
-                       "killed_day": self.today() if self.killed else None, "kill_reason": self.kill_reason}, f)
+                       "killed_day": (self.killed_day or self.today()) if self.killed else None,
+                       "kill_reason": self.kill_reason, "kill_kind": self.kill_kind}, f)
         os.replace(tmp, p)
 
     # ------------------------------------------------------------ state
@@ -79,26 +83,42 @@ class RiskManager:
     def open_worst_loss(self):
         return sum(self.positions[k].worst_loss() for k in self.unresolved)
 
-    def kill(self, reason):
+    def kill(self, reason, kind="other"):
         if not self.killed:
             self.killed = True
             self.kill_reason = reason
+            self.kill_kind = kind
+            self.killed_day = self.today()
             if self.journal:
-                self.journal.log("kill", reason=reason)
+                self.journal.log("kill", reason=reason, kill_kind=kind)
             self._save_state()
 
     def check_kill_file(self):
         if self.rc.kill_file and os.path.exists(self.rc.kill_file):
-            self.kill(f"kill file {self.rc.kill_file} present")
+            self.kill(f"kill file {self.rc.kill_file} present", kind="file")
         return self.killed
+
+    @property
+    def stays_alive_when_killed(self):
+        """Paper controls wait for the next UTC day instead of exiting (only after a daily-loss kill)."""
+        return self.rc.resume_next_day and self.kill_kind == "daily"
+
+    def _maybe_resume(self):
+        if self.killed and self.stays_alive_when_killed and self.killed_day != self.today():
+            if self.journal:
+                self.journal.log("resume", reason="new UTC day", was=self.kill_reason)
+            self.killed, self.kill_reason, self.kill_kind, self.killed_day = False, "", "", None
+            self.losing_streak, self.paused_until = 0, 0.0
+            self._save_state()
 
     # ------------------------------------------------------------ gates
     def can_quote(self, now=None):
         now = now or self.clock()
+        self._maybe_resume()
         if self.killed or self.check_kill_file():
             return False, self.kill_reason
         if self.realized_by_day[self.day(now)] <= -self.rc.daily_loss_limit:
-            self.kill(f"daily loss limit {self.rc.daily_loss_limit} reached")
+            self.kill(f"daily loss limit {self.rc.daily_loss_limit} reached", kind="daily")
             return False, self.kill_reason
         if now < self.paused_until:
             return False, "losing_streak_pause"

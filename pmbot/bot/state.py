@@ -168,6 +168,7 @@ class State:
         self.fair_hist = {}        # window key -> deque[(ms, p_up)]
         self.fill_hist = {}        # (window key, side) -> deque[(ms, size)]
         self.side_block_until = {}  # (window key, side) -> ms
+        self.lag_block_until = 0   # ms: event loop was late -> do not quote until then (filters.max_loop_lag_ms)
 
     def record_fair(self, key, ms, p):
         d = self.fair_hist.setdefault(key, deque(maxlen=200))

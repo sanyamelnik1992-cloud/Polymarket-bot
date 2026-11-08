@@ -52,6 +52,9 @@ def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc:
             st.cooldown_until[w.asset] = now_ms + fc.jump_cooldown_ms
     if now_ms < st.cooldown_until.get(w.asset, 0):
         reasons.append("jump_cooldown")
+    # --- our own process is late: the book / Binance we look at are older than they seem
+    if fc.max_loop_lag_ms > 0 and now_ms < st.lag_block_until:
+        reasons.append("loop_lag")
     # --- volatility burst: short-horizon vol far above the usual level
     if fc.vol_spike_ratio > 0:
         ss, sl = px.sigma_short(), px.sigma()

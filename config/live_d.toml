@@ -1,0 +1,48 @@
+# LIVE (real money) 5m maker, first test with ~$10. Strategy = paper bot D (config/colo_strict.toml: 1c from the book
+# mid, strict model/market filter 0.04), but BTC only, minimum size and live-safety filters. Its exact paper twin is
+# config/live_d_twin.toml (unit pmbot-5m-e): same everything except simulated execution -> live vs twin shows what
+# paper gets wrong. Compare with scripts/live_vs_paper.py. Raising any [risk] number is a real-money decision.
+journal_dir = "data/journal-live"
+
+[strategy]
+assets = ["btc"]              # D made most of its fills on BTC; one market = one clean comparison, less CPU
+half_spread = 0.01
+model_weight = 0.0
+quote_size = 5                # exchange minimum
+join_only = true
+start_s = 5
+stop_s = 240
+skew_per_share = 0.002        # as D
+
+[filters]
+max_disagree = 0.04           # as D
+max_spread = 0.03
+vol_spike_ratio = 2.0
+max_fair_move = 0.10
+fair_move_window_ms = 5000
+toxic_shares = 5              # one full quote swept -> block that side 30 s (D: 10 = its quote size)
+toxic_fills = 2
+toxic_window_ms = 5000
+toxic_cooldown_ms = 30000
+# live safety: in paper a dead feed also stops the simulated fills, live orders keep resting while we are blind
+bn_max_age_ms = 1500          # BTCUSDT bookTicker updates many times a second; 1.5 s of silence = feed problem
+book_max_age_ms = 4000        # CLOB socket answers PING every 2 s; 4 s of silence = dead socket
+max_loop_lag_ms = 200         # our process is late by > 200 ms = what we see is old
+
+[risk]
+state_file = "data/state/risk_5m_live.json"
+max_net_shares_per_window = 10
+max_cost_per_window = 5       # ~2 fills of 5 shares per window
+max_open_worst_loss = 9       # all unresolved windows + resting bids (also capped at 95% of the wallet balance)
+daily_loss_limit = 5          # -$5 realised in a UTC day -> cancel all and stop; restart only by a human
+max_losing_windows_in_row = 6
+pause_after_losses_s = 1800
+max_actions_per_sec = 5
+kill_file = "STOP"
+
+[execution]
+mode = "live"
+tick_ms = 10
+fast_react = true
+fast_move_sigmas = 1.0
+heartbeat_s = 4
