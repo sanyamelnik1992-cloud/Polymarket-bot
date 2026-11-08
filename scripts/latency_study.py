@@ -29,6 +29,20 @@ STRATEGIES = {
     "mid_h2_touch": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.02}, "execution": {"paper_fill_at_touch": True}}),
     "mid_h1": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}}),
     "mid_h1_touch": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}, "execution": {"paper_fill_at_touch": True}}),
+    # variants around D (colo_strict = the live test's config): reaction threshold, disagreement guard, distance
+    "d": ("config/colo_strict.toml", {}),
+    "d_fast05": ("config/colo_strict.toml", {"execution": {"fast_move_sigmas": 0.5}}),
+    "d_fast2": ("config/colo_strict.toml", {"execution": {"fast_move_sigmas": 2.0}}),
+    "d_dis02": ("config/colo_strict.toml", {"filters": {"max_disagree": 0.02}}),
+    "d_h2": ("config/colo_strict.toml", {"strategy": {"half_spread": 0.02}}),
+    "d_vol18": ("config/colo_strict.toml", {"strategy": {"vol_mult": 1.8}}),       # calibrated model (reports/23)
+    "d_start30": ("config/colo_strict.toml", {"strategy": {"start_s": 30}}),       # no quotes in the first 30 s
+    "d_skew005": ("config/colo_strict.toml", {"strategy": {"skew_per_share": 0.005}}),  # stronger pairing skew
+    "d_skew01": ("config/colo_strict.toml", {"strategy": {"skew_per_share": 0.010}}),
+    # 1c without the strict guard: enough fills per recording to compare timing / skew / reaction variants
+    "m1_start30": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01, "start_s": 30}}),
+    "m1_skew005": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01, "skew_per_share": 0.005}}),
+    "m1_fast05": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}, "execution": {"fast_move_sigmas": 0.5}}),
 }
 BN_STALE_OFF = "--bn-stale-off" in sys.argv   # old recordings stored only BBO changes -> staleness is an artifact
 
