@@ -42,6 +42,8 @@ class RiskManager:
         self.killed = False
         self.kill_reason = ""
         self.killed_day = None                   # UTC day of the kill
+        self.settled = []                        # recently settled window keys (persisted: a restart must not
+                                                 # settle a window again from the wallet's leftover tokens)
         self.kill_kind = ""                      # "daily" (loss limit) | "file" (STOP) | "fatal" (broker) | ...
         self.limiter = RateLimiter(rc.max_actions_per_sec, clock=clock)
         self._load_state()
@@ -56,6 +58,7 @@ class RiskManager:
         except (OSError, ValueError):
             return
         self.realized_by_day.update(d.get("realized_by_day", {}))
+        self.settled = list(d.get("settled", []))[-500:]
         if d.get("killed_day") == self.today():
             self.killed, self.kill_reason = True, d.get("kill_reason", "killed earlier today")
             self.killed_day, self.kill_kind = d["killed_day"], d.get("kill_kind", "daily")
@@ -69,7 +72,8 @@ class RiskManager:
         with open(tmp, "w") as f:
             json.dump({"realized_by_day": dict(self.realized_by_day),
                        "killed_day": (self.killed_day or self.today()) if self.killed else None,
-                       "kill_reason": self.kill_reason, "kill_kind": self.kill_kind}, f)
+                       "kill_reason": self.kill_reason, "kill_kind": self.kill_kind,
+                       "settled": self.settled[-500:]}, f)
         os.replace(tmp, p)
 
     # ------------------------------------------------------------ state
@@ -146,9 +150,13 @@ class RiskManager:
         p.fills += 1
         self.unresolved.add(key)
 
+    def is_settled(self, key):
+        return key in self.settled
+
     def on_settle(self, key, winner, rebate_share=0.2, ts=None):
         p = self.positions.get(key)
-        if p is None or key not in self.unresolved:
+        if p is None or key not in self.unresolved or key in self.settled:
+            self.unresolved.discard(key)
             return None
         payoff = p.up if winner == "Up" else p.down
         rebate = rebate_share * p.fee_eq
@@ -157,6 +165,8 @@ class RiskManager:
         self.realized_total += pnl
         self.rebates_total += rebate
         self.unresolved.discard(key)
+        if key not in self.settled:
+            self.settled.append(key)
         self._save_state()
         if pnl < 0:
             self.losing_streak += 1

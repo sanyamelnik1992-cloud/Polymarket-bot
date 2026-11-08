@@ -15,9 +15,11 @@ import time
 import requests
 
 ALERT_TYPES = {"start", "kill", "pause", "order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error",
-               "settle_timeout", "existing_position", "final", "settle", "geoblock_ok", "balance"}
+               "broker_fatal", "api_error", "reset_failed", "settle_timeout", "existing_position", "final", "settle", "geoblock_ok", "balance"}
 LIVE_ONLY = {"start", "pause", "final", "settle", "existing_position", "geoblock_ok", "balance"}
-RATE_LIMITED = {"order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error", "settle_timeout"}
+RATE_LIMITED = {"order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error", "settle_timeout",
+                "api_error", "reset_failed"}
+NORMAL_REJECTS = {"post_only_would_cross"}   # the book moved during our latency: routine for a maker, not an alert
 ERROR_EVERY_S = 600
 
 
@@ -46,6 +48,8 @@ class TelegramAlerts:
     def render(self, kind, rec):
         """HTML text for an event, or None (not an alert / rate-limited / paper window)."""
         if kind not in ALERT_TYPES:
+            return None
+        if kind == "order_rejected" and rec.get("code") in NORMAL_REJECTS:
             return None
         if kind in LIVE_ONLY and self.mode != "live" and not (kind == "settle" and self.per_window):
             return None

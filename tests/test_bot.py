@@ -580,3 +580,65 @@ def test_loop_lag_filter_blocks_quoting():
     assert "loop_lag" not in check(w, st, fv, now, cfg.filters, cfg.strategy)
     st.lag_block_until = now + 500
     assert "loop_lag" in check(w, st, fv, now, cfg.filters, cfg.strategy)
+
+
+def test_post_only_cross_400_is_a_plain_rejection():
+    fc = FakeClient(100)
+
+    async def cross(**kw):
+        raise Rejected(400)
+    fc.place_limit_order = cross
+    lb = LiveBroker(load_config("config/live_d.toml"), client=fc, env={})
+    lb.stream_ok = True
+    assert run(lb.place("U1", "k", "U", 0.45, 5, now_ms=0, expiration_s=1234)) is None
+    assert lb.health()[0] and not lb.fatal          # no backoff, no reset
+
+
+def test_matched_on_cancel_pauses_that_side_and_skips_rebid():
+    from pmbot.bot.engine import Engine
+    from pmbot.bot.journal import Journal
+    import tempfile
+    cfg = load_config(None, {"strategy": {"assets": ["btc"]}})
+    placed = []
+
+    class HitBroker(PaperBroker):
+        async def place(self, *a, **kw):
+            placed.append(a)
+            return await super().place(*a, **kw)
+
+        async def cancel(self, oids, now_ms):
+            await super().cancel(oids, now_ms)
+            return set(oids)                      # "already canceled or matched"
+
+    eng = Engine(cfg, lambda on_fill, journal: HitBroker(on_fill=on_fill), Journal(tempfile.mkdtemp()))
+    w = mk_window()
+    eng.st.add_window(w)
+    now = T0 * 1000 + 10_000
+    run(eng.set_quote(w, "U", (0.45, 10.0), now))
+    run(eng.set_quote(w, "U", (0.44, 10.0), now + 100))       # requote down -> cancel answers "matched"
+    assert len(placed) == 1 and ("btc-%d" % T0, "U") not in eng.quotes
+    assert eng.st.side_block_until[(w.key, "U")] >= now + 100 + cfg.execution.hit_pause_ms
+
+
+def test_routine_cross_rejection_is_not_an_alert():
+    from pmbot.bot.alerts import TelegramAlerts
+    a = TelegramAlerts(token="t", chat="c", mode="live")
+    a.enabled = False
+    assert a.render("order_rejected", {"code": "post_only_would_cross"}) is None
+    assert a.render("broker_fatal", {"op": "place", "status": 403, "error": "x"})
+
+
+def test_restart_does_not_settle_a_window_twice(tmp_path):
+    """Live 8 Nov: after a restart the wallet's losing tokens of an already settled window were loaded as an
+    existing position and settled again (-2.10 phantom loss in the daily counter)."""
+    cfg = BotConfig()
+    cfg.risk.state_file = str(tmp_path / "r.json")
+    cfg.risk.kill_file = ""
+    r = RiskManager(cfg.risk)
+    r.on_fill("btc-1", "D", 0.42, 5, 0.0)
+    assert r.on_settle("btc-1", "Up", rebate_share=0.0)["pnl"] == pytest.approx(-2.1)
+    r2 = RiskManager(cfg.risk)                               # restart
+    assert r2.is_settled("btc-1")
+    r2.on_fill("btc-1", "D", 0.42, 5, 0.0)                    # leftover tokens loaded again
+    assert r2.on_settle("btc-1", "Up", rebate_share=0.0) is None
+    assert r2.realized_by_day[r2.today()] == pytest.approx(-2.1) and not r2.unresolved
