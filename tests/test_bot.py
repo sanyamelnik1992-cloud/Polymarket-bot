@@ -744,3 +744,164 @@ def test_opening_leg_only_on_the_cheap_side_closing_leg_any_price():
     pos = Position(up=0.0, down=5.0, cost=1.9)                               # long Down 5 @ 0.38
     q = target_quotes(w, 0.615, bu, bd, pos, cfg.strategy, cfg.risk)
     assert q["U"] is not None and q["U"][0] > 0.50                            # closing leg at 0.61 allowed
+
+
+# ---------------------------------------------------------------- 8 Nov evening: closing bids, hard daily stop
+def _engine_with_lot(tmp_path, cfg, net_up=5.0, price=0.44):
+    from pmbot.bot.engine import Engine
+    from pmbot.bot.journal import Journal
+    now = T0 * 1000 + 30_000
+    clk = {"t": now}
+    eng = Engine(cfg, lambda on_fill, journal: PaperBroker(0, 0, on_fill=on_fill), Journal(str(tmp_path)),
+                 clock=lambda: clk["t"])
+    eng.clk = clk
+    st, w = mk_state(now)
+    eng.st = st
+    if net_up:
+        eng.risk.on_fill(w.key, "U", price, net_up, 0.0)          # unpaired: long Up
+    return eng, w, now
+
+
+def test_closing_bid_survives_opening_filters(tmp_path):
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": ""}})
+    assert cfg.strategy.close_through_filters and cfg.filters.min_vol_5m_bp > 0
+    eng, w, now = _engine_with_lot(tmp_path, cfg)
+    fv = fair_value(w, eng.st.prices["btc"], now, cfg.strategy.vol_mult, cfg.strategy.t_df)
+    assert "calm_market" in check(w, eng.st, fv, now, cfg.filters, cfg.strategy)   # an opening filter is on
+    run(eng.decide_once(now))
+    assert (w.key, "D") in eng.quotes and (w.key, "U") not in eng.quotes          # close Down, never open more Up
+    assert eng.quotes[(w.key, "D")]["size"] == 5
+    # flat window under the same filter: nothing at all
+    eng2, w2, _ = _engine_with_lot(tmp_path / "b", cfg, net_up=0)
+    run(eng2.decide_once(now))
+    assert not eng2.quotes
+    # the old behaviour: the filter pulled the closing bid too
+    cfg_off = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": ""},
+                                             "strategy": {"close_through_filters": False}})
+    eng3, w3, _ = _engine_with_lot(tmp_path / "c", cfg_off)
+    run(eng3.decide_once(now))
+    assert not eng3.quotes
+
+
+def test_closing_bid_stops_on_hard_reasons_and_after_close_stop(tmp_path):
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": ""}})
+    eng, w, now = _engine_with_lot(tmp_path, cfg)
+    eng.st.feed_alive["clob"]["btc"] = now - 10_000                                # book feed dead: no price
+    run(eng.decide_once(now))
+    assert not eng.quotes
+    eng, w, now = _engine_with_lot(tmp_path / "b", cfg)
+    late = T0 * 1000 + 250_000                                                     # after stop_s, before close_stop_s
+    eng.clk["t"] = late
+    st, _ = mk_state(late)
+    eng.st = st
+    run(eng.decide_once(late))
+    assert (w.key, "D") in eng.quotes
+    too_late = T0 * 1000 + 292_000
+    eng.clk["t"] = too_late
+    st, _ = mk_state(too_late)
+    eng.st, eng.quotes = st, {}
+    run(eng.decide_once(too_late))
+    assert not eng.quotes
+
+
+def test_losing_streak_pause_keeps_only_closing_bids(tmp_path):
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": ""},
+                                         "filters": {"min_vol_5m_bp": 0}})
+    eng, w, now = _engine_with_lot(tmp_path, cfg)
+    eng.risk.paused_until = now / 1000 + 600
+    assert eng.risk.can_quote(now / 1000) == (False, "losing_streak_pause")
+    run(eng.decide_once(now))
+    assert (w.key, "D") in eng.quotes and (w.key, "U") not in eng.quotes
+    eng.risk.kill("test", kind="file")                                             # a real kill stops closing too
+    run(eng.decide_once(now))
+    assert not eng.quotes
+
+
+def test_closing_bid_never_opens_the_expensive_side():
+    cfg = load_config("config/live_v3.toml")
+    w = mk_window()
+    pos = Position(up=0.0, down=1.92, cost=0.92)                 # live 8 Nov 13:45: a partial lot of Down
+    q = target_quotes(w, 0.605, book(0.60, 0.61), book(0.39, 0.40), pos, cfg.strategy, cfg.risk)
+    assert q["U"] is None                                         # 5 Up at 0.60 would open 3.08 Up at 0.60
+    q = target_quotes(w, 0.455, book(0.45, 0.46), book(0.54, 0.55), pos, cfg.strategy, cfg.risk)
+    assert q["U"] == (0.45, 5.0)                                  # cheap: the rest is a normal cheap opening
+
+
+def test_hard_daily_stop_counts_from_the_peak_and_budgets_open_lots():
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": "", "daily_loss_hard": True}})
+    assert cfg.risk.daily_loss_limit == 2                          # = live v3 risk, with the hard mode switched on
+    r = RiskManager(cfg.risk)
+    assert r.clamp_size("x", 0.40, 5) == 5 and r.clamp_size("x", 0.45, 5) == 4     # a lot may lose at most $2
+    r.on_fill("a", "U", 0.30, 5, 0.0)
+    r.on_fill("a", "D", 0.40, 5, 0.0)
+    r.on_settle("a", "Up", rebate_share=0.0)                       # +1.50 locked pair: the day's best
+    r.on_fill("b", "U", 0.19, 5, 0.0)
+    assert r.clamp_size("x", 0.21, 5) == 5 and r.clamp_size("x", 0.22, 5) == 4     # open lot 0.95 counts
+    assert r.clamp_size("b", 0.80, 5, no_new_risk=True) == 5                       # closing: never limited
+    r.on_settle("b", "Down", rebate_share=0.0)                     # -0.95: day +0.55, 0.95 below the best
+    assert r.can_quote()[0]
+    r.on_fill("c", "D", 0.21, 5, 0.0)
+    r.on_settle("c", "Up", rebate_share=0.0)                       # -1.05: 2.00 below the best, still +-0.50 on the day
+    ok, why = r.can_quote()
+    assert not ok and "from the day's best +1.50" in why and r.realized_by_day[r.today()] == pytest.approx(-0.5)
+    assert not load_config("config/live_v3.toml").risk.daily_loss_hard   # off until the owner picks the stop
+
+
+def test_window_end_counts_the_expected_result_before_the_official_one(tmp_path):
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": "", "max_losing_windows_in_row": 1}})
+    eng, w, now = _engine_with_lot(tmp_path, cfg, net_up=5.0, price=0.44)
+    eng._last_mid[w.key] = 0.02                                    # book at the end: Up lost
+    end = (w.end + 1) * 1000
+    eng.clk["t"] = end
+    st, _ = mk_state(end)
+    st.add_window(w)
+    eng.st = st
+    run(eng.decide_once(end))
+    assert eng.risk.provisional[w.key] == pytest.approx(-2.2)
+    assert eng.risk.paused_until > end / 1000                       # the pause starts at the window end
+    assert eng.risk.day_pnl() == pytest.approx(-2.2) and not eng.risk.can_quote(end / 1000)[0]
+    eng.risk.paused_until = 0
+    res = eng.risk.on_settle(w.key, "Down", rebate_share=0.0)       # official result 5 min later
+    assert res["pnl"] == pytest.approx(-2.2) and not eng.risk.provisional
+    assert eng.risk.realized_by_day[eng.risk.today()] == pytest.approx(-2.2)   # counted once
+    assert eng.risk.losing_streak == 0                               # the streak was not counted twice
+
+
+def test_unclear_window_end_waits_for_the_official_result(tmp_path):
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": ""}})
+    eng, w, now = _engine_with_lot(tmp_path, cfg)
+    eng._last_mid[w.key] = 0.60                                     # too close to call
+    end = (w.end + 1) * 1000
+    eng.clk["t"] = end
+    st, _ = mk_state(end)
+    st.add_window(w)
+    eng.st = st
+    run(eng.decide_once(end))
+    assert not eng.risk.provisional
+
+
+def test_peak_survives_restart(tmp_path):
+    cfg = load_config("config/live_v3.toml", {"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": "",
+                                                       "daily_loss_hard": True}})
+    r = RiskManager(cfg.risk)
+    r.on_fill("a", "U", 0.30, 5, 0.0)
+    r.on_settle("a", "Up", rebate_share=0.0)                       # +3.50
+    r.on_fill("b", "U", 0.40, 5, 0.0)
+    r.on_settle("b", "Down", rebate_share=0.0)                     # -2.00 -> 2.00 below the best: stop
+    assert not r.can_quote()[0]
+    r2 = RiskManager(cfg.risk)
+    assert r2.peak_by_day[r2.today()] == pytest.approx(3.5) and r2.killed
+
+
+def test_partial_lot_is_closed_only_when_the_excess_is_paid_for(tmp_path):
+    cfg = load_config("config/v3.toml", {"risk": {"state_file": "", "kill_file": ""}})
+    from pmbot.bot.engine import Engine
+    pos = Position(up=0.0, down=1.92, cost=0.92)                      # live 8 Nov 13:45: Down 1.92 at 0.48
+    assert Engine._no_new_risk(pos, "U", 0.15, 5)                       # Up fell to 0.14-0.16: 1.92 pairs + 3.08 Up,
+    assert not Engine._no_new_risk(pos, "U", 0.45, 5)                   # worst case 0.92 -> -0.25; at 0.45 it grows
+    eng, w, now = _engine_with_lot(tmp_path, cfg, net_up=0)
+    eng.risk.on_fill(w.key, "D", 0.48, 1.92, 0.0)
+    eng.st.books["U1"] = book(0.15, 0.16)
+    eng.st.books["D1"] = book(0.84, 0.85)
+    run(eng.decide_once(now))                                          # calm_market is on (an opening filter)
+    assert eng.quotes.get((w.key, "U"), {}).get("size") == 5 and (w.key, "D") not in eng.quotes

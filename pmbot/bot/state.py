@@ -85,15 +85,21 @@ class AssetPrices:
 
     def cl_vol_5m_bp(self, now_sec, lookback=600):
         """Realized vol of Chainlink 1 s prints over the last `lookback` s, scaled to bp per 5 minutes
-        (None if fewer than 80% of the seconds are present). Same estimator as the analysis in reports/40."""
+        (None if fewer than 80% of the seconds are present). Same estimator as the analysis in reports/40.
+        Cached per second: the filters ask ~100 times a second and the inputs change once a second."""
+        ck = (now_sec, lookback, len(self.cl_by_sec), self.cl_by_sec.get(now_sec - 1),
+              self.cl_by_sec.get(now_sec - lookback))
+        if getattr(self, "_vol_ck", None) == ck:
+            return self._vol_val
         xs = [self.cl_by_sec[s] for s in range(now_sec - lookback, now_sec) if s in self.cl_by_sec]
-        if len(xs) < 0.8 * lookback:
-            return None
-        r = [math.log(b / a) for a, b in zip(xs[:-1], xs[1:]) if a > 0 and b > 0]
-        if len(r) < 2:
-            return None
-        m = sum(r) / len(r)
-        return math.sqrt(sum((x - m) ** 2 for x in r) / len(r)) * 1e4 * math.sqrt(300)
+        v = None
+        if len(xs) >= 0.8 * lookback:
+            r = [math.log(b / a) for a, b in zip(xs[:-1], xs[1:]) if a > 0 and b > 0]
+            if len(r) >= 2:
+                m = sum(r) / len(r)
+                v = math.sqrt(sum((x - m) ** 2 for x in r) / len(r)) * 1e4 * math.sqrt(300)
+        self._vol_ck, self._vol_val = ck, v
+        return v
 
     def cl_twap(self, end_sec, lookback=60):
         """Mean of Chainlink prints over [end-lookback, end-1]; returns (value, seconds_present)."""

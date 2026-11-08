@@ -53,6 +53,10 @@ def target_quotes(w: Window, p_up: float, bu: Book, bd: Book, pos: Position, sc:
         opening = inv_sign * net >= -1e-9          # this bid does not reduce our net position
         if opening and px > sc.max_open_price + 1e-9:
             size = 0
+        elif not opening and px > sc.max_open_price + 1e-9 and size > abs(net) + 1e-9:
+            # a closing bid larger than the unpaired lot opens the rest on the expensive side (live 8 Nov: Down 1.92
+            # unpaired, a 5-share Up bid at 0.6 would add 3.08 Up at 0.6): close only what is open
+            size = math.floor(abs(net) + 1e-9)
         if px < tick or px > 0.99 or size < max(w.min_size, 5):
             out[side] = None
         else:

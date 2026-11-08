@@ -9,7 +9,7 @@ from ..http import get_json
 from .config import BotConfig
 from .fair import fair_value
 from .feeds import ClobFeed, binance_feed, rtds_feed
-from .filters import check, imbalance_blocks, queue_imbalance, side_blocks
+from .filters import CLOSE_OK, check, imbalance_blocks, queue_imbalance, side_blocks
 from .journal import Journal
 from .risk import RiskManager
 from .state import State, Window, now_ms
@@ -42,6 +42,8 @@ class Engine:
         self._stop = False
         self._wake = asyncio.Event()
         self._decided_mid = {}            # asset -> Binance mid at the last decision
+        self._last_mid = {}               # window key -> last Up book mid while the window traded
+        self._provisioned = set()         # window keys whose expected result was counted at the window end
         if cfg.execution.fast_react:
             self.st.on_tick = self._maybe_wake
 
@@ -222,7 +224,9 @@ class Engine:
             if not await self._cancel(key, cur, now):
                 return
         resting = sum(q["price"] * q["size"] for q in self.quotes.values())
-        size = self.risk.clamp_size(w.key, price, size, resting)
+        resting_open = sum(q["price"] * q["size"] for (k, s_), q in self.quotes.items() if not self._closes(k, s_))
+        safe = self._closes(w.key, side) and self._no_new_risk(self.risk.positions[w.key], side, price, size)
+        size = self.risk.clamp_size(w.key, price, size, resting, no_new_risk=safe, resting_opening=resting_open)
         if size < max(w.min_size, 5):
             return
         if not self.risk.allow_action():
@@ -293,7 +297,10 @@ class Engine:
         if fatal:
             self.risk.kill(f"broker: {fatal}", kind="fatal")
         ok, why = self.risk.can_quote(now / 1000)
-        if not ok:
+        sc = self.cfg.strategy
+        # the losing-streak pause stops opening, not closing (closing bids only remove risk)
+        soft = not ok and why == "losing_streak_pause" and sc.close_through_filters
+        if not ok and not soft:
             if self.quotes:
                 await self.cancel_everything(why)
             if self.risk.killed and not self.risk.stays_alive_when_killed:
@@ -309,11 +316,10 @@ class Engine:
         if b_why != self._broker_down:
             self.journal.log("broker_health", ok=b_ok, reason=b_why)
             self._broker_down = b_why
-        if not b_ok and ok:
-            ok, why = False, b_why
+        if not b_ok and (ok or soft):
+            ok, soft, why = False, False, b_why
             if self.quotes:
                 await self.cancel_everything(why)
-        sc = self.cfg.strategy
         for a in self.st.assets:
             self._decided_mid[a] = self.st.prices[a].bn_mid()
         for w in list(self.st.windows.values()):
@@ -321,12 +327,15 @@ class Engine:
                 for side in ("U", "D"):
                     if (w.key, side) in self.quotes:
                         await self._cancel((w.key, side), self.quotes[(w.key, side)], now)
+                self._provisional_result(w)
                 continue
             if now / 1000 < w.start:
                 continue
             fv = fair_value(w, self.st.prices[w.asset], now, sc.vol_mult, sc.t_df)
             reasons = check(w, self.st, fv, now, self.cfg.filters, sc)
             mid = self._mid(w.token_up)
+            if mid is not None:
+                self._last_mid[w.key] = mid
             if fv is not None:
                 self.st.record_fair(w.key, now, fv.p_up)
                 sec = now // 1000
@@ -342,15 +351,29 @@ class Engine:
                 self.journal.log("filters", key=w.key, reasons=reasons,
                                  p=round(fv.p_up, 4) if fv else None, mid=mid)
                 self.last_reasons[w.key] = reasons
-            if reasons:
+            pos = self.risk.positions[w.key]
+            close_side = None             # the side whose bid completes our unpaired lot
+            if sc.close_through_filters and abs(pos.net) > 1e-9:
+                close_side = "D" if pos.net > 0 else "U"
+            closing_only = (bool(reasons) and close_side is not None and now / 1000 - w.start < sc.close_stop_s
+                            and all(r in CLOSE_OK for r in reasons))
+            if reasons and not closing_only:
                 tg = {"U": None, "D": None}
             else:
                 # quote around a blend of the model and the book mid (model_weight=1 -> pure model)
-                p_q = fv.p_up if (sc.model_weight >= 1 or mid is None) else \
-                    sc.model_weight * fv.p_up + (1 - sc.model_weight) * mid
-                pos = self.risk.positions[w.key]
+                if fv is None:
+                    p_q = mid                 # closing only: the book alone prices a bid at the touch
+                elif sc.model_weight >= 1 or mid is None:
+                    p_q = fv.p_up
+                else:
+                    p_q = sc.model_weight * fv.p_up + (1 - sc.model_weight) * mid
                 tg = target_quotes(w, p_q, self.st.books[w.token_up], self.st.books[w.token_down], pos, sc,
                                    self.cfg.risk)
+                if closing_only:          # opening filters are on: keep only a closing bid that adds no risk
+                    for s_ in ("U", "D"):
+                        t_ = tg.get(s_)
+                        if t_ is not None and (s_ != close_side or not self._no_new_risk(pos, s_, *t_)):
+                            tg[s_] = None
                 blocked = side_blocks(w, self.st, now, self.cfg.filters)
                 if self.cfg.filters.min_queue_imbalance > 0:
                     own = {}
@@ -361,7 +384,9 @@ class Engine:
                                 and self.broker.mode == "live":
                             own[s_] = q["size"]          # our live order is part of the public best bid
                     quoting = {s_: (w.key, s_) in self.quotes for s_ in ("U", "D")}
-                    blocked = blocked | imbalance_blocks(w, self.st, self.cfg.filters, quoting, own)
+                    ib = imbalance_blocks(w, self.st, self.cfg.filters, quoting, own)
+                    ib.discard(close_side)    # a closing fill just before a 1c tick-down still locks the pair
+                    blocked = blocked | ib
                 for side in blocked:
                     if tg.get(side) is not None:
                         tg[side] = None
@@ -372,6 +397,32 @@ class Engine:
                 await self.set_quote(w, side, tg[side], now)
         self.broker.gc(now)
         return True
+
+    def _closes(self, key, side):
+        """True if a bid on `side` reduces the unpaired lot of window `key`."""
+        p = self.risk.positions.get(key)
+        return bool(p) and ((side == "D" and p.net > 1e-9) or (side == "U" and p.net < -1e-9))
+
+    @staticmethod
+    def _no_new_risk(pos, side, price, size):
+        """A fill of this bid cannot raise the window's worst-case loss: it completes pairs, and any excess over the
+        unpaired lot (5-share minimum vs a partial lot) is paid for by the profit those pairs lock."""
+        up = pos.up + (size if side == "U" else 0.0)
+        down = pos.down + (size if side == "D" else 0.0)
+        return pos.cost + price * size - min(up, down) <= pos.worst_loss() + 1e-9
+
+    def _provisional_result(self, w):
+        """At the window end the book already shows the winner (~0.99 / 0.01); the official result comes ~5 min
+        later. Count the expected result now so the losing-streak pause and the daily stop act before the next window
+        (live 8 Nov: the 13:55 window was entered while the 13:50 loss was still unknown)."""
+        if w.key in self._provisioned or w.key not in self.risk.unresolved:
+            return
+        self._provisioned.add(w.key)
+        m = self._last_mid.get(w.key)
+        winner = "Up" if m is not None and m >= 0.95 else "Down" if m is not None and m <= 0.05 else None
+        res = self.risk.on_provisional(w.key, winner) if winner else None
+        self.journal.log("provisional", key=w.key, last_mid=m, winner=winner,
+                         pnl=round(res, 4) if res is not None else None)
 
     def _mid(self, token):
         b = self.st.books.get(token)

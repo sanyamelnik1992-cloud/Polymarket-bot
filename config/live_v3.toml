@@ -17,6 +17,9 @@ start_s = 5
 stop_s = 240
 skew_per_share = 0.002        # as D
 max_open_price = 0.50         # open only on the cheap side: unpaired loss <= $2.5, win >= $2.5 (owner 8 Nov)
+close_through_filters = true  # keep the bid that closes an unpaired lot while opening filters are on (live 8 Nov: 4 of 6
+                              # losing windows swung our way first, filters had pulled the closing bid)
+close_stop_s = 290            # closing bids until start+290 s (opening bids stop at stop_s)
 
 [filters]
 max_disagree = 0.10          # model is only a sanity check now
@@ -41,7 +44,9 @@ state_file = "data/state/risk_5m_live_v3.json"
 max_net_shares_per_window = 5   # one unpaired lot: no 2nd bid on a side until the other side fills
 max_cost_per_window = 5       # ~2 fills of 5 shares per window
 max_open_worst_loss = 6       # all unresolved windows + resting bids (also capped at 95% of the wallet balance)
-daily_loss_limit = 2          # kopeck test: -$2 a day and stop
+daily_loss_limit = 2          # kopeck test: -$2 a day and stop (a lost window counts at its end, not 5 min later)
+daily_loss_hard = false       # true = counted from the day's best + no lot opens whose total loss could pass
+                              # the limit. Off: with the 0.40-0.60 band a lot risks up to $3 > $2 (owner decides)
 max_losing_windows_in_row = 3
 pause_after_losses_s = 1800
 max_actions_per_sec = 5

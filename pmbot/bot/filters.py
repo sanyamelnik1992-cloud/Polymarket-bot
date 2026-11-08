@@ -4,6 +4,15 @@ from .fair import Fair
 from .state import Book, State, Window
 
 
+# Reasons that only guard OPENING new risk. With strategy.close_through_filters the bid that completes an unpaired lot
+# stays up while only these are on: its fill turns a directional bet into a locked pair, it can only remove risk.
+# Not here (they stop closing too): no_book / clob_stale (no price to bid at), loop_lag (our position may be stale),
+# kill switch, kill file and broker health (user stream / heartbeat down).
+CLOSE_OK = frozenset({"too_early", "too_late", "no_strike", "chainlink_stale", "binance_stale", "wide_spread",
+                      "no_fair_value", "p_out_of_range", "vol_too_high", "model_disagrees", "jump_cooldown",
+                      "calm_market", "vol_spike", "fair_unstable", "losing_streak_pause"})
+
+
 def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc: StrategyCfg) -> list:
     reasons = []
     px = st.prices[w.asset]
