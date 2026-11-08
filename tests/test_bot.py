@@ -647,7 +647,7 @@ def test_restart_does_not_settle_a_window_twice(tmp_path):
 # ---------------------------------------------------------------- v3 microstructure (reports/40)
 def test_v3_config_loads_and_quotes_at_the_best_bid():
     cfg = load_config("config/v3.toml")
-    assert cfg.execution.mode == "paper" and cfg.execution.paper_queue and cfg.filters.min_queue_imbalance == 0.35
+    assert cfg.execution.mode == "paper" and cfg.execution.paper_queue and cfg.filters.min_queue_imbalance == 0.30
     w = mk_window()
     pos = Position()
     bu, bd = book(0.55, 0.56), book(0.44, 0.45)
@@ -664,6 +664,7 @@ def test_queue_imbalance_guard_with_hysteresis():
     st, w = mk_state(T0 * 1000 + 30_000)
     st.books["U1"] = Book(bids={0.55: 10}, asks={0.56: 190}, last_rx=1)     # thin bid: I = 0.05
     st.books["D1"] = Book(bids={0.44: 190}, asks={0.45: 10}, last_rx=1)     # thick bid: I = 0.95
+    cfg.filters.min_queue_imbalance, cfg.filters.queue_imbalance_hysteresis = 0.35, 0.10
     assert queue_imbalance(st.books["U1"]) == pytest.approx(0.05)
     assert imbalance_blocks(w, st, cfg.filters, {}, {}) == {"U"}
     st.books["U1"] = Book(bids={0.55: 40}, asks={0.56: 60}, last_rx=1)      # I = 0.40

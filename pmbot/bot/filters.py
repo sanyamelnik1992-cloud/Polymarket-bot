@@ -89,7 +89,7 @@ def imbalance_blocks(w: Window, st: State, fc: FilterCfg, quoting: dict, own: di
     for side, tok in (("U", w.token_up), ("D", w.token_down)):
         b = st.books.get(tok)
         imb = queue_imbalance(b, own.get(side, 0.0)) if b else None
-        need = fc.min_queue_imbalance + (0.0 if quoting.get(side) else 0.10)
+        need = fc.min_queue_imbalance + (0.0 if quoting.get(side) else fc.queue_imbalance_hysteresis)
         if imb is None or imb < need:
             out.add(side)
     return out

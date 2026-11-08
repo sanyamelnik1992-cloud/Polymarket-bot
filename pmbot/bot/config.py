@@ -43,7 +43,8 @@ class FilterCfg:
     max_loop_lag_ms: int = 0         # event loop late by more than this = our view of the market is old (0=off)
     min_queue_imbalance: float = 0.0  # do not bid a token whose best-level imbalance bid/(bid+ask) is below this:
                                       # a thin bid queue is about to be eaten (BTC 5m: I<0.1 -> bid drops 57% vs
-                                      # rises 29% within 5 s, reports/40). 0 = off. Re-enter at +0.10 (hysteresis)
+                                      # rises 29% within 5 s, reports/40). 0 = off
+    queue_imbalance_hysteresis: float = 0.10  # ... re-enter only at min + this (each re-entry = back of the queue)
 
 
 @dataclass
