@@ -327,6 +327,13 @@ class LiveBroker:
                 await asyncio.sleep(2)
 
 
+def price_str(p):
+    """Price for the client: no trailing zero digits. The client rejects '0.980' on a 0.01-tick market ("max_price must
+    conform to tick size 0.01 with at most 2 decimal places", dry run 8 Nov 22:55 UTC); '0.98' / '0.975' are fine."""
+    s = f"{p:.3f}"
+    return s[:-1] if s.endswith("0") else s
+
+
 class TakerLiveBroker:
     """Minimal live taker (FAK) broker for the hourly strategy; same start gates as LiveBroker."""
     mode = "live"
@@ -357,7 +364,8 @@ class TakerLiveBroker:
 
     async def place_fak(self, token, key, side, limit, usd):
         resp = await self.client.place_market_order(asset_id=token, side="BUY", amount=f"{usd:.2f}",
-                                                    max_spend=f"{usd:.2f}", max_price=f"{limit:.3f}", order_type="FAK")
+                                                    max_spend=f"{usd:.2f}", max_price=price_str(limit),
+                                                    order_type="FAK")
         if not getattr(resp, "ok", False):
             self.log("order_rejected", key=key, side=side, limit=limit, code=getattr(resp, "code", "?"),
                      message=getattr(resp, "message", "")[:200])

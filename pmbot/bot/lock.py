@@ -495,8 +495,9 @@ class LockBot:
     async def _execute(self, w, sig, shares, ctx):
         key = w.key
         token = w.token_up if sig["side"] == "U" else w.token_down
-        tick = 0.001 if w.tick < 0.01 else 0.01
-        limit = round(tick_floor(sig["limit"], tick), 3)
+        # always on the 0.01 grid: valid whether the market tick is 0.01 or 0.001 (a 3-decimal cap on a 0.01 market
+        # is rejected by the client); the limit is only a cap, fills happen at the resting asks
+        limit = round(tick_floor(sig["limit"], 0.01), 2)
         t_sent = now_ms()
         self.stats["orders"] += 1
         try:

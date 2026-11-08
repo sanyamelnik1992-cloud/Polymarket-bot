@@ -178,9 +178,13 @@ def test_units_wire_the_configs():
         assert ("--live" in text) == live
 
 
-def test_tick_floor():
+def test_tick_floor_and_price_string():
+    from pmbot.bot.live import price_str
     assert tick_floor(0.9749, 0.01) == pytest.approx(0.97)
     assert tick_floor(0.9749, 0.001) == pytest.approx(0.974)
+    assert tick_floor(0.98, 0.01) == pytest.approx(0.98)          # no float drift below the grid
+    assert price_str(0.98) == "0.98" and price_str(0.975) == "0.975" and price_str(0.9) == "0.90"
+    assert price_str(round(tick_floor(0.9749, 0.01), 2)) == "0.97"
 
 
 def test_paper_taker_walks_the_asks():
