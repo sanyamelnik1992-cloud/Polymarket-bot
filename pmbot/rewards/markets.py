@@ -34,8 +34,14 @@ class RMarket:
     extra: dict = field(default_factory=dict)
 
 
-def rate_of(m):
-    return sum(float(c.get("rate_per_day") or 0) for c in (m.get("rewards_config") or []))
+def rate_of(m, today=None):
+    """Daily pool of a market: only the reward configs that are running today (UTC dates)."""
+    today = today or time.strftime("%Y-%m-%d", time.gmtime())
+    tot = 0.0
+    for c in m.get("rewards_config") or []:
+        if (c.get("start_date") or "0000-01-01") <= today <= (c.get("end_date") or "9999-12-31"):
+            tot += float(c.get("rate_per_day") or 0)
+    return tot
 
 
 def end_ts(m):
@@ -93,13 +99,17 @@ def book_levels(raw):
 def candidates(raw_markets, rc, now=None):
     """Filter the rewards collection by the config (pool size, time to resolution, price, excluded topics)."""
     now = now or time.time()
+    today = time.strftime("%Y-%m-%d", time.gmtime(now))
     excl = re.compile(rc.exclude_regex, re.I) if rc.exclude_regex else None
-    out = []
+    out, seen = [], set()
     for m in raw_markets:
         toks = m.get("tokens") or []
         if len(toks) != 2 or not m.get("condition_id"):
             continue
-        rate = rate_of(m)
+        if m["condition_id"] in seen:          # the collection repeats a row at page boundaries
+            continue
+        seen.add(m["condition_id"])
+        rate = rate_of(m, today)
         if rate < rc.min_rate:
             continue
         q = m.get("question") or ""
@@ -149,6 +159,8 @@ def select(rc, journal=None, raw_markets=None, books=None, now=None):
     """Pick markets by estimated reward per $ of capital until the budget or max_markets is reached.
     Empty-book markets (we would be the only quote) are capped at rc.max_empty_frac of the picks."""
     raw_markets = raw_markets if raw_markets is not None else fetch_reward_markets(rc.max_pages)
+    if not raw_markets:                        # an empty answer must not look like "no markets": keep the old selection
+        raise RuntimeError("empty rewards collection")
     cands = candidates(raw_markets, rc, now)
     cands = sorted(cands, key=lambda x: -x.rate)[: rc.max_candidates]
     books = books if books is not None else fetch_books([c.yes for c in cands])

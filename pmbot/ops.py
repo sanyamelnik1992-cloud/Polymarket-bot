@@ -288,11 +288,15 @@ def format_rewards():
             continue
         out.append(f"  рынков {st['markets']}, котирует {st['quoting']}, заявок на {st['bids_usd']}$; "
                    f"доля пулов сейчас ≈ {st['rate_now']}$/день")
-        out.append(f"  награды (оценка): сегодня {fmt_money(st['rewards_today'])}, всего {fmt_money(st['rewards_total'])}")
-        out.append(f"  позиции: стоимость {st['inv_value']}$ при затратах {st['inv_cost']}$ → {fmt_money(st['mtm_pnl'])} "
-                   f"(сегодня {fmt_money(st['mtm_pnl_today'])}); исполнений сегодня {st['fills_today']}, всего {st['fills_total']}")
-        out.append(f"  итого (оценка наград + позиции): {fmt_money(st['total_pnl'])}"
-                   + ("  ⛔ котировки выключены до 00:00 UTC" if st.get("halted") else ""))
+        out.append(f"  награды (оценка): сегодня {fmt_money(st['rewards_today'])}, всего {fmt_money(st['rewards_total'])}; "
+                   f"если придёт ещё один такой же мейкер: всего {fmt_money(st['stress_total'])}")
+        out.append(f"  позиции: стоимость {st['inv_value']}$ при затратах {st['inv_cost']}$, открыто "
+                   f"{fmt_money(st['open_pnl'])}; реализовано {fmt_money(st['realized'])}; "
+                   f"торговля сегодня {fmt_money(st['trading_pnl_today'])}")
+        out.append(f"  исполнений сегодня {st['fills_today']}, всего {st['fills_total']}; "
+                   f"итого (награды + торговля): {fmt_money(st['total_pnl'])}"
+                   + ("  ⛔ котировки выключены до 00:00 UTC" if st.get("halted") else "")
+                   + ("  ⚠️ фид молчит, котировок нет" if st.get("feed") is False else ""))
     return "\n".join(out)
 
 

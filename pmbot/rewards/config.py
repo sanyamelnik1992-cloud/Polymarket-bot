@@ -17,7 +17,7 @@ class RewardsCfg:
     exclude_regex: str = (r"\bvs\.?\b|o/u|spread:|handicap|game \d|map \d|\bset \d|winner|match|"
                           r"up or down|kills|total (?:goals|points|rounds)")
     max_pages: int = 4                   # rewards collection pages (500 markets each, best pools first)
-    max_candidates: int = 1500           # how many of the largest pools to price
+    max_candidates: int = 800            # how many of the largest pools to price (ranked by rate; ~2000 pools >= $20/d)
     max_markets: int = 30
     max_empty_frac: float = 0.5          # share of picks allowed where nobody else quotes in the reward zone
     quote_budget_usd: float = 1000.0     # pUSD all resting bids may tie up
@@ -26,15 +26,20 @@ class RewardsCfg:
     # quoting
     dist_cents: float = 1.0              # our bid/ask distance from the reference price
     size_mult: float = 1.0               # order size = max(rewards min size, min order) * size_mult
-    requote_min_s: float = 10.0          # do not move an order more often than this
+    requote_min_s: float = 5.0           # do not move a resting order more often than this (crossing orders move at once)
     competitive_spread_mult: float = 2.0 # book counts as "quoted by others" if spread <= mult * max spread
     # risk
-    cooldown_min: float = 15.0           # no quotes in a market after it filled us
+    min_fill_shares: float = 1.0         # fills at least this big start the cooldown and count toward the daily cap
+    cooldown_min: float = 15.0           # no quotes in a market after a material fill
     max_fills_per_market_day: int = 3
     max_inventory_usd_per_market: float = 40.0   # stop bidding a side once its unhedged inventory costs this much
-    daily_loss_limit: float = 100.0      # mark-to-market loss of today's fills -> stop quoting until 00:00 UTC
+    feed_stale_s: float = 45.0           # no websocket message for this long -> quote nothing
+    max_ref_disagree: float = 0.03       # no quotes while the last trade (<= trade_fresh_s old) is this far off the book
+    trade_fresh_s: float = 600.0
+    daily_loss_limit: float = 100.0      # trading loss of today (realised + marks) -> stop quoting until 00:00 UTC
     # bookkeeping
     sample_s: float = 60.0               # reward scoring sample period (Polymarket samples once a minute)
+    settle_s: float = 300.0              # how often to look for resolved markets (Gamma)
     status_s: float = 300.0
 
 

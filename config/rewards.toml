@@ -16,12 +16,16 @@ max_markets = 30
 max_empty_frac = 0.5          # at most half of the markets may be ones where nobody else quotes near the price
 quote_budget_usd = 1000       # paper pUSD all resting bids may tie up
 max_per_market_usd = 60
+max_candidates = 800
 reselect_min = 30
 # quoting
 dist_cents = 1.0              # bid at price - 1c, ask (= NO bid) at price + 1c
 size_mult = 1.0               # order size = the market's rewards min size
 # risk
-cooldown_min = 15             # after a fill: no quotes in that market for 15 min, then re-centre on the last trade
+min_fill_shares = 1           # smaller fills are kept in the position but do not pause the market
+cooldown_min = 15             # after a material fill: no quotes in that market for 15 min, then re-centre
 max_fills_per_market_day = 3
 max_inventory_usd_per_market = 40
-daily_loss_limit = 100        # mark-to-market loss of the day -> quotes off until 00:00 UTC
+daily_loss_limit = 100        # trading loss of the day (realised + marks) -> quotes off until 00:00 UTC
+feed_stale_s = 45            # no market-websocket message for this long -> no quotes
+max_ref_disagree = 0.03        # no quotes while a fresh trade (<= 10 min) is this far from the book mid

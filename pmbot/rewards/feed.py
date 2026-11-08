@@ -13,6 +13,8 @@ log = logging.getLogger("pmbot.rewards.feed")
 
 
 class BookFeed:
+    SILENT_RECONNECT_S = 120.0       # a socket with no message (PONG included) for this long is dead: reconnect
+
     def __init__(self, on_trade=None, alive=lambda: True):
         self.on_trade = on_trade          # (token, side, price, size, ts_ms)
         self.alive = alive
@@ -79,6 +81,7 @@ class BookFeed:
                 async with websockets.connect(WS_CLOB_MARKET, open_timeout=15, max_size=2**24, ping_interval=None,
                                               max_queue=None) as ws:
                     self.ws = ws
+                    self.last_msg = time.time()
                     want = sorted(self.want)
                     await ws.send(json.dumps({"assets_ids": want, "type": "market"}))
                     self.subscribed = set(want)
@@ -89,6 +92,8 @@ class BookFeed:
                             try:
                                 msg = await asyncio.wait_for(ws.recv(), timeout=30)
                             except asyncio.TimeoutError:
+                                if time.time() - self.last_msg > self.SILENT_RECONNECT_S:
+                                    raise ConnectionError(f"no websocket message for {self.SILENT_RECONNECT_S:.0f} s")
                                 continue
                             rx = int(time.time() * 1000)
                             self.last_msg = time.time()

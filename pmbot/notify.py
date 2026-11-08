@@ -71,7 +71,7 @@ def window_name(key, length_s=300):
 def unit_for_config(config_path):
     """Which deploy/<unit>.service runs this config (to label a trading bot's own alerts)."""
     want = os.path.normpath(str(config_path or ""))
-    for unit in ops.BOT_UNITS:
+    for unit in ops.BOT_UNITS + ops.REWARD_UNITS:
         cfg = ops.unit_config(unit)
         if cfg and os.path.normpath(cfg) == want:
             return unit
@@ -130,6 +130,8 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
         ru = next((r for k, r in KILL_RU if k in reason), reason)
         if "kill file" in reason:
             how = "Вернуть: /resume"
+        elif "награды" in reason:
+            how = "Котировки включатся сами в 00:00 UTC, /resume не нужен."
         elif "daily loss" in reason:
             how = "Сегодня бот больше не торгует. Новый день начнётся в 00:00 UTC (тогда /resume)."
         else:
@@ -271,7 +273,8 @@ def format_status():
         st = r["status"]
         if st:
             lines.append(f"   🎁 награды (оценка) сегодня {money(st['rewards_today'], True)} · всего {money(st['rewards_total'])}")
-            lines.append(f"   {dot(st['mtm_pnl'])} позиции {money(st['mtm_pnl'])} · исп. сегодня {st['fills_today']} · "
+            lines.append(f"   {dot(st['trading_pnl'])} торговля {money(st['trading_pnl'])} "
+                         f"(реализовано {money(st['realized'])}) · исп. сегодня {st['fills_today']} · "
                          f"рынков {st['markets']} (котирует {st['quoting']})")
             if st.get("halted"):
                 lines.append("   ⛔ котировки выключены до 00:00 UTC (дневной убыток)")
