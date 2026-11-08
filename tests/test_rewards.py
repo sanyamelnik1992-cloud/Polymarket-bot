@@ -188,6 +188,16 @@ def test_crossing_order_is_replaced_at_once(tmp_path):
     assert f.markets["m"].orders["Y"]["price"] < 0.49
 
 
+def test_unselected_markets_without_position_are_forgotten(tmp_path):
+    f = farmer_with_market(tmp_path)                       # selects "m"
+    f.apply_selection([])                                  # the next selection drops it
+    assert "m" not in f.markets and "m" not in f.meta
+    f2 = farmer_with_market(tmp_path)
+    f2.pos["m"] = Position(yes=5, no=0, cost=2.5)          # a position keeps its market and metadata
+    f2.apply_selection([])
+    assert "m" in f2.meta and "m" in f2.markets and f2.markets["m"].active is False
+
+
 def test_book_and_fresh_trade_disagree_means_no_quotes(tmp_path):
     """The book mid is ~0.50 but a trade just printed at 0.40 (7c away): quoting here is being picked off."""
     f = farmer_with_market(tmp_path)

@@ -268,7 +268,19 @@ class Farmer:
                 self.token_slug.setdefault(m["yes"], slug)
                 self.token_slug.setdefault(m["no"], slug)
         self.feed.set_tokens(tokens)
+        self._prune()
         log.info("selected %d markets (%d tokens subscribed) at %s", len(picks), len(tokens), now)
+
+    def _prune(self):
+        """Forget markets that are no longer selected, have no resting orders and no position (memory stays flat)."""
+        for slug in list(self.markets):
+            ms, ps = self.markets[slug], self.pos.get(slug)
+            if not ms.active and not ms.orders and not (ps and (ps.yes or ps.no)):
+                del self.markets[slug]
+        for slug in list(self.meta):
+            ps = self.pos.get(slug)
+            if slug not in self.markets and not (ps and (ps.yes or ps.no)):
+                del self.meta[slug]
 
     async def selector(self):
         while not self._stop:
