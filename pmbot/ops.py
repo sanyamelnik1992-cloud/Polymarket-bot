@@ -3,6 +3,7 @@
 
 Read-only except for `resume_after_stop()`. Never reads or prints secrets.
 """
+import bisect
 import json
 import os
 import re
@@ -15,6 +16,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-live", "pmbot-hourly"]
 ALL_UNITS = BOT_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
+WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
 
 
 def _run(cmd, timeout=10):
@@ -286,9 +288,117 @@ def format_status():
     if os.path.exists(KILL_FILE):
         lines.append("⛔ файл STOP есть: торговля остановлена (/resume — снять)")
     g = git_info()
+    w = wallet_line()
+    if w:
+        lines.append(w)
     lines.append(f"\nсегодня всего: {fmt_money(total)}")
     lines.append(f"код: {g['branch']} {g['commit']}")
     return "\n".join(lines)
+
+
+def wallet_line():
+    """Last real wallet balance (pmbot-wallet.timer): the check of live PnL against money, not against journals."""
+    try:
+        w = json.load(open(os.path.join(REPO, WALLET_FILE)))
+    except (OSError, ValueError):
+        return ""
+    when = datetime.fromtimestamp(w.get("t", 0), timezone.utc).strftime("%H:%M UTC")
+    if "usd" not in w:
+        return f"кошелёк: нет данных ({w.get('error', '?')}, {when})"
+    pos = f" + позиции {w['positions_value']:.2f}$" if w.get("positions_value") else ""
+    return f"кошелёк: {w['usd']:.2f}${pos} ({when})"
+
+
+_Q_WANTED = ('"type":"fv"', '"type":"fill"', '"type":"settle"', '"type":"order_placed"', '"type":"order_cancelled"',
+             '"type":"status"')
+
+
+def _pct(xs, q):
+    xs = sorted(xs)
+    return xs[min(len(xs) - 1, int(q * len(xs)))] if xs else None
+
+
+def quality(journal_dir, since_ts):
+    """Per bot since `since_ts`: markout 60 s after each fill (book mid of our token minus the price, cents per
+    share: the main metric of reports/40), windows with a pair / one side only, order latency, event-loop lag."""
+    fv, fills, settles, lat_p, lat_c = {}, [], [], [], []
+    lag_max, lag_blocks = 0, 0
+    for d in run_dirs(journal_dir, max_age_s=time.time() - since_ts + 3600):
+        first_blocks = last_blocks = None
+        try:
+            f = open(os.path.join(d, "events.jsonl"))
+        except OSError:
+            continue
+        with f:
+            for line in f:
+                if not any(w in line for w in _Q_WANTED):
+                    continue
+                try:
+                    e = json.loads(line)
+                except ValueError:
+                    continue
+                if e.get("t", 0) < since_ts:
+                    continue
+                t = e["type"]
+                if t == "fv":
+                    if e.get("mid") is not None:
+                        fv.setdefault(e["key"], []).append((e["t"] * 1000, e["mid"]))
+                elif t == "fill":
+                    fills.append(e)
+                elif t == "settle":
+                    settles.append(e)
+                elif t == "order_placed" and e.get("latency_ms") is not None:
+                    lat_p.append(e["latency_ms"])
+                elif t == "order_cancelled" and e.get("latency_ms") is not None:
+                    lat_c.append(e["latency_ms"])
+                elif t == "status":
+                    st = e.get("stats") or {}
+                    lag_max = max(lag_max, st.get("lag_max_ms", 0) or 0)
+                    if st.get("lag_blocks") is not None:
+                        first_blocks = st["lag_blocks"] if first_blocks is None else first_blocks
+                        last_blocks = st["lag_blocks"]
+        if first_blocks is not None:
+            lag_blocks += last_blocks - first_blocks
+    num = den = 0.0
+    for e in fills:
+        tr = fv.get(e["key"], [])
+        j = bisect.bisect_left([x[0] for x in tr], e.get("ts", e["t"] * 1000) + 60_000)
+        if j < len(tr):
+            mid = tr[j][1] if e["side"] == "U" else 1 - tr[j][1]
+            num += (mid - e["price"]) * 100 * e["size"]
+            den += e["size"]
+    paired = sum(1 for e in settles if min(e.get("up", 0), e.get("down", 0)) >= 0.8 * max(e.get("up", 0), e.get("down", 0)) > 0)
+    one = sum(1 for e in settles if min(e.get("up", 0), e.get("down", 0)) < 1e-9)
+    return {"fills": len(fills), "markout60": num / den if den else None, "windows": len(settles), "paired": paired,
+            "one_sided": one, "pnl": sum(e.get("pnl", 0) for e in settles),
+            "place_ms": (_pct(lat_p, .5), _pct(lat_p, .95)), "cancel_ms": (_pct(lat_c, .5), _pct(lat_c, .95)),
+            "lag_max_ms": lag_max, "lag_blocks": lag_blocks}
+
+
+def format_quality(hours=24):
+    """Quality table for the hourly report (reports/42 items 5-7): judge v3 by markout, not by a few windows."""
+    since = time.time() - hours * 3600
+    out = [f"за {hours:g} ч; маркаут-60 = цена нашей стороны через 60 с минус цена покупки, ¢ на акцию (> 0 хорошо)"]
+    for unit in BOT_UNITS:
+        journal, _, mode = bot_paths(unit)
+        if not journal or not run_dirs(journal, max_age_s=hours * 3600 + 3600):
+            continue
+        q = quality(journal, since)
+        if not q["fills"] and not q["windows"]:
+            continue
+        mk = f"{q['markout60']:+.1f}¢" if q["markout60"] is not None else "—"
+        line = (f"{unit} [{mode}]: исполнений {q['fills']}, маркаут-60 {mk}, окон {q['windows']} "
+                f"(пара {q['paired']}, одна сторона {q['one_sided']}), P&L {fmt_money(q['pnl'])}")
+        if q["place_ms"][0] is not None:
+            line += f"; заявка {q['place_ms'][0]:.0f}/{q['place_ms'][1]:.0f} мс (медиана/p95)"
+        if q["cancel_ms"][0] is not None:
+            line += f", отмена {q['cancel_ms'][0]:.0f}/{q['cancel_ms'][1]:.0f} мс"
+        line += f"; лаг цикла до {q['lag_max_ms']} мс, блокировок {q['lag_blocks']}"
+        out.append(line)
+    w = wallet_line()
+    if w:
+        out.append(w)
+    return "\n".join(out)
 
 
 def format_pnl(days=7):

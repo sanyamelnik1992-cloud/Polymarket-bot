@@ -100,3 +100,31 @@ def test_deployed_5m_units_are_paper_with_own_journal_and_state():
         assert cfg.journal_dir not in journals and cfg.risk.state_file not in states, unit
         journals.add(cfg.journal_dir)
         states.add(cfg.risk.state_file)
+
+
+def test_quality_markout_pairs_latency_and_wallet(tmp_path, monkeypatch):
+    root = make_repo(tmp_path, monkeypatch)
+    run = root / "data" / "j" / "20261108-170000"
+    run.mkdir(parents=True)
+    now = time.time()
+    t0 = now - 900
+    ev = [{"t": t0, "type": "status", "stats": {"lag_max_ms": 40, "lag_blocks": 3}},
+          {"t": t0 + 1, "type": "order_placed", "latency_ms": 50},
+          {"t": t0 + 2, "type": "order_placed", "latency_ms": 70},
+          {"t": t0 + 3, "type": "order_cancelled", "latency_ms": 45},
+          {"t": t0 + 10, "type": "fill", "key": "btc-9", "side": "U", "price": 0.40, "size": 5, "ts": (t0 + 10) * 1000},
+          {"t": t0 + 11, "type": "fill", "key": "btc-9", "side": "D", "price": 0.50, "size": 5, "ts": (t0 + 11) * 1000}]
+    ev += [{"t": t0 + 10 + i, "type": "fv", "key": "btc-9", "mid": 0.46} for i in range(0, 80, 5)]
+    ev += [{"t": t0 + 400, "type": "settle", "key": "btc-9", "pnl": 0.5, "up": 5, "down": 5},
+           {"t": t0 + 401, "type": "settle", "key": "btc-8", "pnl": -2.0, "up": 5, "down": 0},
+           {"t": t0 + 500, "type": "status", "stats": {"lag_max_ms": 120, "lag_blocks": 7}}]
+    (run / "events.jsonl").write_text("\n".join(json.dumps(e, separators=(",", ":")) for e in ev) + "\n")
+    q = ops.quality("data/j", now - 3600)
+    # Up bought 0.40, mid 60 s later 0.46: +6c; Down bought 0.50, Down mid 0.54: +4c -> +5c per share
+    assert abs(q["markout60"] - 5.0) < 1e-6 and q["fills"] == 3                 # 3 = the older run's fill too
+    assert (q["paired"], q["one_sided"]) == (1, 2) and q["lag_blocks"] == 4 and q["lag_max_ms"] == 120
+    assert q["place_ms"][0] in (50, 70) and q["cancel_ms"] == (45, 45)
+    (root / "data" / "state" / "wallet.json").write_text(json.dumps({"t": now, "usd": 4.3842, "positions_value": 0}))
+    assert "кошелёк: 4.38$" in ops.format_quality(24) and "кошелёк: 4.38$" in ops.format_status()
+    (root / "data" / "state" / "wallet.json").write_text(json.dumps({"t": now, "error": "TimeoutError"}))
+    assert "нет данных (TimeoutError" in ops.wallet_line()

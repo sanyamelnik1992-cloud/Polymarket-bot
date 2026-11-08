@@ -10,6 +10,9 @@ at placement; trades AT our price first use up that queue, the rest fills us. Ca
 are ignored (we never move up without trades), so this still undercounts fills at the touch.
 Latency: an order becomes live `place_latency_ms` after the decision; a cancel takes effect
 `cancel_latency_ms` after the decision. Trades are compared on the exchange match timestamp.
+Re-quotes follow the live sequence (cancel confirmed, then place): a replacement bid on the same window side goes
+live only after the old one is gone, and never if the old one filled while it was being cancelled (live gets
+"matched" back and skips the re-bid). Without this a fast sweep filled both and over-closed a pair (replay 8 Nov).
 """
 import itertools
 from dataclasses import dataclass
@@ -30,6 +33,7 @@ class PaperOrder:
     cancel_at: int | None = None
     expires_at: int | None = None
     q_ahead: float | None = None   # queue model: shares ahead of us at our price (None = model off)
+    after: frozenset = frozenset()  # ids of orders on the same window side that were being cancelled at placement
 
     def live_at(self, ts):
         if ts < self.live_from:
@@ -64,9 +68,15 @@ class PaperBroker:
     async def place(self, token, key, side, price, size, now_ms, expiration_s=None, queue_ahead=None):
         oid = f"p{next(self._ids)}"
         exp = (expiration_s - 60) * 1000 if expiration_s else None   # GTD: effective expiry is 60s earlier
-        self.orders[oid] = PaperOrder(oid, token, key, side, price, size, size, now_ms + self.place_latency,
+        live_from = now_ms + self.place_latency
+        prev = [o for o in self.orders.values() if o.key == key and o.side == side and o.remaining > 1e-9
+                and o.cancel_at is not None and o.cancel_at > now_ms]
+        if prev:                       # live: the re-bid is sent once the cancel is confirmed
+            live_from = max(live_from, max(o.cancel_at for o in prev) + self.place_latency)
+        self.orders[oid] = PaperOrder(oid, token, key, side, price, size, size, live_from,
                                       expires_at=exp,
-                                      q_ahead=float(queue_ahead or 0.0) if self.queue else None)
+                                      q_ahead=float(queue_ahead or 0.0) if self.queue else None,
+                                      after=frozenset(o.id for o in prev))
         return oid
 
     async def cancel(self, oids, now_ms):
@@ -115,6 +125,10 @@ class PaperBroker:
             q = min(o.remaining, left, avail)
             o.remaining -= q
             left -= q
+            if o.cancel_at is not None:    # filled while being cancelled: live would not have sent the re-bid
+                for n in self.orders.values():
+                    if o.id in n.after and (n.cancel_at is None or n.cancel_at > ts_ms):
+                        n.cancel_at = min(n.live_from, ts_ms)
             fill = {"order_id": o.id, "token": o.token, "key": o.key, "side": o.side, "price": o.price,
                     "size": q, "fee_eq": fee_per_share(o.price) * q, "ts": ts_ms}
             if self.journal:

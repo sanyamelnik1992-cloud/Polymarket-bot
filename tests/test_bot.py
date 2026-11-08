@@ -907,3 +907,23 @@ def test_partial_lot_is_closed_only_when_the_excess_is_paid_for(tmp_path):
     eng.st.books["D1"] = book(0.84, 0.85)
     run(eng.decide_once(now))                                          # calm_market is on (an opening filter)
     assert eng.quotes.get((w.key, "U"), {}).get("size") == 5 and (w.key, "D") not in eng.quotes
+
+
+def test_paper_requote_never_fills_both_old_and_new_bid():
+    fills = []
+    pb = PaperBroker(60, 50, on_fill=fills.append, queue=True)
+    comp = lambda t: "D1" if t == "U1" else "U1"   # noqa: E731
+    old = run(pb.place("U1", "k", "U", 0.80, 5, now_ms=0, queue_ahead=0))
+    run(pb.cancel([old], 1000))                              # re-quote down: cancel 0.80 ...
+    new = run(pb.place("U1", "k", "U", 0.78, 5, now_ms=1000, queue_ahead=0))   # ... and bid 0.78
+    assert pb.orders[new].live_from == 1000 + 50 + 60        # live: only after the cancel is confirmed
+    pb.on_public_trade("U1", comp, "SELL", 0.70, 100, 1020)  # a sweep hits the old bid while it is being cancelled
+    pb.on_public_trade("U1", comp, "SELL", 0.70, 100, 1200)  # ... and keeps going
+    assert sum(f["size"] for f in fills) == 5 and {f["order_id"] for f in fills} == {old}
+    # a normal re-quote (old bid not hit) still goes live
+    pb2 = PaperBroker(60, 50, on_fill=fills.append, queue=True)
+    o2 = run(pb2.place("U1", "k", "U", 0.80, 5, now_ms=0, queue_ahead=0))
+    run(pb2.cancel([o2], 1000))
+    n2 = run(pb2.place("U1", "k", "U", 0.78, 5, now_ms=1000, queue_ahead=0))
+    pb2.on_public_trade("U1", comp, "SELL", 0.70, 100, 1200)
+    assert fills[-1]["order_id"] == n2

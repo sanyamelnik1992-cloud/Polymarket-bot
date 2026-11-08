@@ -1,0 +1,11 @@
+[Unit]
+Description=pmbot: read the real wallet balance into data/state/wallet.json (numbers only) for /status and reports
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+ExecStart=__REPO__/.venv/bin/python scripts/wallet_balance.py data/state/wallet.json
+TimeoutStartSec=120

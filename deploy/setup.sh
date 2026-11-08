@@ -37,7 +37,7 @@ chown "$USER_NAME" /etc/pmbot/pmbot.env
 sudo -u "$USER_NAME" mkdir -p "$REPO/data/state"
 
 bash "$REPO/deploy/install_units.sh" "$USER_NAME"
-systemctl enable --now pmbot-autoupdate.timer pmbot-cleanup.timer
+systemctl enable --now pmbot-autoupdate.timer pmbot-cleanup.timer pmbot-wallet.timer
 systemctl enable pmbot-reports.timer      # started once the deploy key can push (see RUNBOOK)
 
 echo
