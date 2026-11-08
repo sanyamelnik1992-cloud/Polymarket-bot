@@ -1,13 +1,13 @@
-run: /home/pmbot/Polymarket-bot/data/journal-live-v3/20261108-105542
-mode: live  duration: 65.4 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 15, 'filters': 922, 'status': 130, 'strike_est': 13, 'fv': 3660, 'side_block': 105, 'order_placed': 75, 'quote': 75, 'order_cancelled': 75, 'fill': 1, 'fill_ctx': 1, 'cancel_late': 1, 'side_hit': 1, 'settle': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-live-v3/20261108-120242
+mode: live  duration: 58.8 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 14, 'filters': 779, 'status': 117, 'strike_est': 12, 'fv': 3376, 'side_block': 99, 'order_placed': 34, 'quote': 34, 'order_cancelled': 34, 'cancel_late': 1, 'side_hit': 1, 'fill': 1, 'fill_ctx': 1, 'settle': 1}
 
-filter reasons (state changes): {'calm_market': 887, 'model_disagrees': 292, 'jump_cooldown': 235, 'wide_spread': 226, 'too_late': 153, 'no_strike': 123, 'no_fair_value': 123, 'p_out_of_range': 99, 'no_book': 46, 'too_early': 45, 'chainlink_stale': 12, 'loop_lag': 4, 'binance_stale': 2, 'clob_stale': 1}
-quotes placed: 75
+filter reasons (state changes): {'calm_market': 649, 'model_disagrees': 305, 'jump_cooldown': 242, 'wide_spread': 183, 'too_late': 117, 'p_out_of_range': 107, 'no_book': 46, 'too_early': 33, 'no_strike': 22, 'no_fair_value': 22, 'chainlink_stale': 4, 'binance_stale': 3, 'clob_stale': 3, 'loop_lag': 2}
+quotes placed: 34
 
 fills: 1  shares: 5  notional: $0.95
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        1     5.0      0.95       0.19   46.454
+btc        1     5.0      0.95       0.19   58.758
 
 settled windows:
        windows  cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
