@@ -1,0 +1,21 @@
+[Unit]
+Description=pmbot TWAP-lock L LIVE (config/lock_live.toml: REAL MONEY, 5 shares per entry, $10 open, -$5/day stop)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY. Installed but NOT enabled/started: the owner starts it (Telegram /restart pmbot-lock-live).
+# A daily-loss stop exits the process; it stays stopped until a human starts it again.
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_live.toml --live
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

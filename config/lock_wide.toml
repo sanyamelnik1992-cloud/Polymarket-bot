@@ -1,0 +1,33 @@
+# TWAP-lock bot L2 (PAPER, experiment): the same rule as L (config/lock.toml) but also contested windows (asks 0.50-0.98).
+# Buys the decided side in the last minute of 5m windows (reports/44_twap_lock.md).
+# Research 7-9 Nov 2026 (recorder, conservative book replay, one entry per window, 10 shares):
+#   day 1 50/50 won +$28, day 2 (out of sample) 16/16 +$4.8; 4-day data-api history with a Binance proxy
+#   394 entries 97.97% won (99.5% where the proxy reproduces the outcome) +$75 at 10 shares.
+journal_dir = "data/journal-lock-wide"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+theta = 0.99          # lock probability with the Binance nowcast
+agree = 0.90          # ... and from received Chainlink prints only (glitch guard)
+dmin_bp = 0.5         # expected TWAP at least 0.5 bp past the strike in our favour
+adv1_bp = 1.0         # Binance against us <= 1 bp over 1 s ...
+adv3_bp = 2.0         # ... and <= 2 bp over 3 s
+jump_bp = 5.0         # |Binance 1 s move| > 5 bp = glitch / crash: no entry
+a_min = 0.50          # contested windows too: history 0.50-0.90 = 47 entries, 5 lost (89%), +$22.8 at 10 sh
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5            # the size the live version would use on a ~$15-20 wallet
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 10.0   # all four assets end at the same second: at most two entries at risk at once
+daily_loss_limit = 5.0
+state_file = "data/state/lock_wide_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300

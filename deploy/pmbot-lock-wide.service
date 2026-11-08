@@ -1,0 +1,20 @@
+[Unit]
+Description=pmbot TWAP-lock L2 (config/lock_wide.toml: L plus contested windows, asks 0.50-0.98; paper)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER experiment (reports/44_twap_lock.md): does buying contested windows (0.50-0.90) add money or only losses?
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_wide.toml
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

@@ -33,6 +33,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   it). `pmbot-5m-e` = `config/live_d_twin.toml` is the twin of the old live config `config/live_d.toml`. Compare: `scripts/live_vs_paper.py`. Telegram: `/restart pmbot-5m-live` starts it,
   `/off pmbot-5m-live` stops it, `/stop` stops everything. Paper bots resume by themselves after a daily stop
   (`risk.resume_next_day`), live never does.
+- **TWAP-lock bots** (`reports/44_twap_lock.md`, `pmbot/lockmodel.py`, `pmbot/bot/lock.py`, `scripts/run_lock.py`): in the
+  last minute of each window buy the side whose closing Chainlink TWAP (prints `[T+238, T+297]`, strike `[T-62, T-3]`)
+  is already decided, FAK, one entry per window, held to resolution. `pmbot-lock` = `config/lock.toml` (L, asks
+  0.90–0.98, paper, candidate for live), `pmbot-lock-wide` = `config/lock_wide.toml` (L2, 0.50–0.98, paper),
+  `pmbot-lock-live` = `config/lock_live.toml` (same rule as L — a test checks it; REAL MONEY, installed but started
+  only by the owner). Empirical tails: `config/lock_tables.npz` (rebuild: `scripts/build_lock_tables.py`); replay on a
+  recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44 section 8.
 - **Paper experiments vs F** (`reports/42` section 5): `pmbot-5m-g` = `config/g.toml` (front of the queue, no model
   filters), `pmbot-5m-h` = `config/h.toml` (imbalance guard 0.50/0.60). Judge by markout-60 in the hourly report
   (`ops.format_quality`), not by a few windows. B, D, E are stopped since 8 Nov evening (old one-tick-below scheme).

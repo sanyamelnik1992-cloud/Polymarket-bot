@@ -1,0 +1,29 @@
+# TWAP-lock bot L — LIVE (REAL MONEY). Same rule as config/lock.toml (its paper twin pmbot-lock, a test checks it).
+# Not started by default: the owner starts it (Telegram /restart pmbot-lock-live) after the paper night.
+journal_dir = "data/journal-lock-live"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+theta = 0.99
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.90
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 10.0
+daily_loss_limit = 5.0          # one or two losing entries a day and it stops until a human restarts it
+state_file = "data/state/lock_live.json"
+resume_next_day = false
+
+[execution]
+mode = "live"
