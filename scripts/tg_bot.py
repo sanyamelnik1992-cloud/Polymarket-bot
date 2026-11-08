@@ -48,7 +48,7 @@ HELP = """🤖 <b>pmbot — команды</b>
 ♻️ /restart [юнит] — перезапустить юнит
 
 <b>Боты</b>
-""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS if u.startswith("pmbot-5m")) + """
+""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS if u.startswith("pmbot-5m")) + f"\n{label('pmbot-rewards')} — <code>pmbot-rewards</code> (запуск: /restart pmbot-rewards)" + """
 
 Сам присылаю: сводку в """ + ", ".join(f"{h:02d}:00" for h in DIGEST_HOURS) + """ UTC, ночной разбор с графиком в 00:20 UTC,
 тревоги (стоп, ошибки, падение юнита, мало места)."""
@@ -99,7 +99,7 @@ def cmd_stop(_):
 def cmd_resume(_):
     removed, cleared = ops.resume_after_stop()
     started = []
-    for u in enabled_units(ops.BOT_UNITS):
+    for u in enabled_units(ops.BOT_UNITS + ops.REWARD_UNITS):
         ok, _ = systemctl("start", "--no-block", u)
         if ok:
             started.append(u)

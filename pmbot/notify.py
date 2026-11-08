@@ -17,6 +17,7 @@ BOTS = {
     "pmbot-5m-c": ("🔹", "C", "A + строгий фильтр"),
     "pmbot-5m-d": ("🔸", "D", "B + строгий фильтр"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
+    "pmbot-rewards": ("🎁", "R", "награды за ликвидность"),
     "pmbot-recorder": ("📼", "REC", "рекордер"),
     "pmbot-tg": ("🤖", "TG", "телеграм-бот"),
 }
@@ -261,6 +262,20 @@ def format_status():
             lines.append(f"   ⛔ kill switch: {esc(s['kill_reason'])}")
         lines.append("")
         total += s["pnl_today"] or 0
+    for unit in ops.REWARD_UNITS:
+        r = ops.rewards_summary(unit)
+        if not r:
+            continue
+        shown += 1
+        lines.append(f"{label(unit)}\n   {ops.STATE_RU.get(r['state'], esc(r['state']))} {ops.fmt_age(r['since'])} · paper")
+        st = r["status"]
+        if st:
+            lines.append(f"   🎁 награды (оценка) сегодня {money(st['rewards_today'], True)} · всего {money(st['rewards_total'])}")
+            lines.append(f"   {dot(st['mtm_pnl'])} позиции {money(st['mtm_pnl'])} · исп. сегодня {st['fills_today']} · "
+                         f"рынков {st['markets']} (котирует {st['quoting']})")
+            if st.get("halted"):
+                lines.append("   ⛔ котировки выключены до 00:00 UTC (дневной убыток)")
+        lines.append("")
     if not shown:
         lines.append("ни один бот не запущен\n")
     st, since = ops.unit_state("pmbot-recorder")

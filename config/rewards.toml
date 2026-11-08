@@ -1,0 +1,27 @@
+# Liquidity-rewards farmer, PAPER (pmbot/rewards, unit pmbot-rewards). Why and what to expect: PLAYBOOK.md 3.4,
+# reports/34 and reports/37. Real payouts are decided by Polymarket and can only be confirmed by a live test:
+# this bot measures what it can without money -- fills against the real trade stream and our estimated share
+# of each pool against the live books.
+journal_dir = "data/journal-rewards"
+
+[rewards]
+mode = "paper"
+state_file = "data/state/rewards_paper.json"
+# selection
+min_rate = 20                 # $/day pool of a market
+min_days_left = 2             # skip markets that end within 2 days (outcome often already known)
+price_lo = 0.10
+price_hi = 0.90
+max_markets = 30
+max_empty_frac = 0.5          # at most half of the markets may be ones where nobody else quotes near the price
+quote_budget_usd = 1000       # paper pUSD all resting bids may tie up
+max_per_market_usd = 60
+reselect_min = 30
+# quoting
+dist_cents = 1.0              # bid at price - 1c, ask (= NO bid) at price + 1c
+size_mult = 1.0               # order size = the market's rewards min size
+# risk
+cooldown_min = 15             # after a fill: no quotes in that market for 15 min, then re-centre on the last trade
+max_fills_per_market_day = 3
+max_inventory_usd_per_market = 40
+daily_loss_limit = 100        # mark-to-market loss of the day -> quotes off until 00:00 UTC
