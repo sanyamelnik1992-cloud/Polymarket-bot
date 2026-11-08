@@ -367,6 +367,8 @@ def quality(journal_dir, since_ts):
             mid = tr[j][1] if e["side"] == "U" else 1 - tr[j][1]
             num += (mid - e["price"]) * 100 * e["size"]
             den += e["size"]
+    traded = {e["key"] for e in fills}
+    settles = [e for e in settles if e["key"] in traded]    # not wallet leftovers settled again after a restart
     paired = sum(1 for e in settles if min(e.get("up", 0), e.get("down", 0)) >= 0.8 * max(e.get("up", 0), e.get("down", 0)) > 0)
     one = sum(1 for e in settles if min(e.get("up", 0), e.get("down", 0)) < 1e-9)
     return {"fills": len(fills), "markout60": num / den if den else None, "windows": len(settles), "paired": paired,
