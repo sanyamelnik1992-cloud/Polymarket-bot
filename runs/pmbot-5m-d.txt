@@ -1,22 +1,6 @@
-run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261107-104744
-mode: paper  duration: 1274.2 min  events: {'start': 1, 'vol_seed': 3, 'window': 771, 'filters': 126078, 'status': 2547, 'strike_est': 759, 'fv': 225900, 'quote': 14330, 'fill': 121, 'side_block': 118, 'settle': 71}
+run: /home/pmbot/Polymarket-bot/data/journal-colo-strict/20261108-095624
+mode: paper  duration: 4.0 min  events: {'start': 1, 'vol_seed': 3, 'window': 9, 'filters': 247, 'status': 7, 'strike_est': 3, 'fv': 63, 'quote': 86}
 
-filter reasons (state changes): {'model_disagrees': 102712, 'p_out_of_range': 70189, 'jump_cooldown': 44982, 'wide_spread': 43941, 'fair_unstable': 27965, 'too_late': 22614, 'too_early': 5960, 'no_book': 4500, 'no_strike': 4021, 'no_fair_value': 4021, 'vol_spike': 4002, 'chainlink_stale': 893, 'clob_stale': 33, 'binance_stale': 6}
-quotes placed: 14330
-
-fills: 121  shares: 1020  notional: $503.27
-       fills   shares  notional  avg_price  med_rel
-asset                                              
-btc       93  788.859   390.496      0.483   72.105
-eth       12   94.129    46.358      0.513   85.248
-sol       16  137.041    66.411      0.491  164.282
-
-settled windows:
-       windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst    best    roi
-asset                                                                                 
-btc         51  390.496  15.047         12.543   2.504     0.529 -5.666  11.468  0.039
-eth          9   46.358  -1.931         -2.229   0.298     0.444 -6.770   5.834 -0.042
-sol         11   66.411   1.047          0.630   0.418     0.455 -5.465   5.722  0.016
-
-TOTAL pnl $+14.16 (ex-rebate $+10.94) on cost $503.27 -> ROI +2.81%; windows 71, t-stat +0.41
-max drawdown $-20.47; hedged windows (both sides filled): 29
+filter reasons (state changes): {'no_strike': 220, 'no_fair_value': 220, 'wide_spread': 103, 'too_late': 68, 'too_early': 26, 'jump_cooldown': 20, 'model_disagrees': 19, 'binance_stale': 9, 'chainlink_stale': 6, 'no_book': 6, 'clob_stale': 3, 'fair_unstable': 3}
+quotes placed: 86
+no fills

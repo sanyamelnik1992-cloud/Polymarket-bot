@@ -1,22 +1,5 @@
-run: /home/pmbot/Polymarket-bot/data/journal-colo/20261107-104748
-mode: paper  duration: 1273.9 min  events: {'start': 1, 'vol_seed': 3, 'window': 771, 'filters': 126719, 'status': 2547, 'strike_est': 759, 'fv': 225938, 'quote': 28584, 'fill': 257, 'side_block': 258, 'settle': 128}
+run: /home/pmbot/Polymarket-bot/data/journal-colo/20261108-095429
+mode: paper  duration: 5.9 min  events: {'start': 1, 'vol_seed': 3, 'window': 12, 'filters': 314, 'status': 11, 'strike_est': 3, 'fv': 69}
 
-filter reasons (state changes): {'model_disagrees': 88448, 'p_out_of_range': 69574, 'jump_cooldown': 45793, 'wide_spread': 43974, 'fair_unstable': 29174, 'too_late': 22266, 'too_early': 5926, 'no_book': 4511, 'no_strike': 4069, 'no_fair_value': 4069, 'vol_spike': 3693, 'chainlink_stale': 796, 'clob_stale': 50, 'binance_stale': 11}
-quotes placed: 28584
-
-fills: 257  shares: 2057  notional: $972.86
-       fills    shares  notional  avg_price  med_rel
-asset                                               
-btc      201  1629.180   767.185      0.461   59.639
-eth       21   158.722    80.970      0.513  113.359
-sol       35   269.289   124.708      0.460  112.872
-
-settled windows:
-       windows     cost     pnl  pnl_ex_rebate  rebate  win_rate   worst    best    roi
-asset                                                                                  
-btc         87  757.268 -44.228        -49.318   5.090     0.368 -10.738  12.566 -0.058
-eth         14   80.970  12.024         11.520   0.504     0.500  -5.365   9.370  0.149
-sol         27  124.708  21.220         20.356   0.864     0.556  -5.365   7.942  0.170
-
-TOTAL pnl $-10.98 (ex-rebate $-17.44) on cost $962.95 -> ROI -1.14%; windows 128, t-stat -0.23
-max drawdown $-32.90; hedged windows (both sides filled): 59
+filter reasons (state changes): {'daily loss limit 50.0 reached': 314, 'no_strike': 284, 'no_fair_value': 284, 'wide_spread': 138, 'too_late': 78, 'too_early': 33, 'jump_cooldown': 21, 'model_disagrees': 17, 'no_book': 15, 'binance_stale': 8, 'chainlink_stale': 7, 'fair_unstable': 5, 'clob_stale': 3}
+no fills

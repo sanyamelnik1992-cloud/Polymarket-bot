@@ -1,5 +1,5 @@
-run: /home/pmbot/Polymarket-bot/data/journal-live/20261108-090105
-mode: live  duration: 0.1 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'existing_position': 1, 'vol_seed': 1, 'window': 2, 'filters': 4, 'settle': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-live/20261108-095433
+mode: live  duration: 5.9 min  events: {'geoblock_ok': 1, 'balance': 1, 'cancel_all': 1, 'start': 1, 'user_stream_up': 1, 'vol_seed': 1, 'window': 4, 'filters': 187, 'status': 11, 'strike_est': 1, 'fv': 25}
 
-filter reasons (state changes): {'no_strike': 4, 'no_fair_value': 4, 'chainlink_stale': 3, 'binance_stale': 2, 'clob_stale': 1, 'no_book': 1}
+filter reasons (state changes): {'no_strike': 173, 'no_fair_value': 173, 'wide_spread': 85, 'too_late': 68, 'too_early': 19, 'model_disagrees': 14, 'jump_cooldown': 10, 'no_book': 5, 'chainlink_stale': 3, 'loop_lag': 3, 'binance_stale': 2, 'clob_stale': 1}
 no fills
