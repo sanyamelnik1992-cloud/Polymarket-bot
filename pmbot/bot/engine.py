@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import time
+from collections import deque
 
 from ..config import BINANCE_REST, BINANCE_SYMBOL
 from ..gamma import fetch_event, parse_event, slug_for, window_start
@@ -33,6 +34,7 @@ class Engine:
         self.to_settle = {}       # window key -> Window (ended, has position)
         self.last_reasons = {}
         self._last_fv_log = {}
+        self._tok_hist = {}              # Up token -> deque of (ms, book mid) for the token-move filter
         self.stats = {"placed": 0, "cancelled": 0, "fills": 0, "rejected_rate": 0, "fast_wakes": 0,
                       "order_errors": 0, "lag_max_ms": 0, "lag_blocks": 0}
         self._need_reset = False          # an order call failed: cancel_all and forget local quotes first
@@ -314,12 +316,14 @@ class Engine:
                 for side in ("U", "D"):
                     if (w.key, side) in self.quotes:
                         await self._cancel((w.key, side), self.quotes[(w.key, side)], now)
+                self._tok_hist.pop(w.token_up, None)
                 continue
             if now / 1000 < w.start:
                 continue
             fv = fair_value(w, self.st.prices[w.asset], now, sc.vol_mult, sc.t_df)
-            reasons = check(w, self.st, fv, now, self.cfg.filters, sc)
             mid = self._mid(w.token_up)
+            reasons = check(w, self.st, fv, now, self.cfg.filters, sc,
+                            token_move=self._token_move(w, mid, now))
             if fv is not None:
                 self.st.record_fair(w.key, now, fv.p_up)
                 sec = now // 1000
@@ -355,6 +359,19 @@ class Engine:
                 await self.set_quote(w, side, tg[side], now)
         self.broker.gc(now)
         return True
+
+    def _token_move(self, w, mid, now):
+        """Change of the Up token's book mid over the last token_move_window_ms, None until it is known."""
+        if mid is None:
+            return None
+        dq = self._tok_hist.setdefault(w.token_up, deque())
+        dq.append((now, mid))
+        win = self.cfg.filters.token_move_window_ms
+        while len(dq) >= 2 and dq[1][0] <= now - win:     # keep the newest sample older than the window
+            dq.popleft()
+        if dq and dq[0][0] <= now - win:
+            return mid - dq[0][1]
+        return None
 
     def _mid(self, token):
         b = self.st.books.get(token)

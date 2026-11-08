@@ -41,6 +41,9 @@ class FilterCfg:
     toxic_window_ms: int = 5000
     toxic_cooldown_ms: int = 30000   # ... blocks that side for this long
     max_loop_lag_ms: int = 0         # event loop late by more than this = our view of the market is old (0=off)
+    max_token_move: float = 0.0      # the Up token's book mid moved more than this (price units) within the window below
+                                     # = a moving market, our quotes get traded through (0=off)
+    token_move_window_ms: int = 10000
 
 
 @dataclass

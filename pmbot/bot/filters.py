@@ -4,7 +4,8 @@ from .fair import Fair
 from .state import Book, State, Window
 
 
-def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc: StrategyCfg) -> list:
+def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc: StrategyCfg,
+          token_move: float | None = None) -> list:
     reasons = []
     px = st.prices[w.asset]
     rel = now_ms / 1000.0 - w.start
@@ -60,6 +61,9 @@ def check(w: Window, st: State, fv: Fair | None, now_ms: int, fc: FilterCfg, sc:
         ss, sl = px.sigma_short(), px.sigma()
         if ss and sl and ss / sl > fc.vol_spike_ratio:
             reasons.append("vol_spike")
+    # --- moving market: the token itself moved a lot in the last few seconds (quotes get traded through)
+    if fc.max_token_move > 0 and token_move is not None and abs(token_move) > fc.max_token_move:
+        reasons.append("token_moving")
     # --- unstable fair value: the model itself is moving fast -> it is likely to be wrong right now
     if fc.max_fair_move > 0 and fv is not None:
         hist = st.fair_hist.get(w.key)

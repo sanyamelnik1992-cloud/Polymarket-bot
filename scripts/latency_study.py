@@ -43,6 +43,9 @@ STRATEGIES = {
     "m1_start30": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01, "start_s": 30}}),
     "m1_skew005": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01, "skew_per_share": 0.005}}),
     "m1_fast05": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}, "execution": {"fast_move_sigmas": 0.5}}),
+    # token-move guard: no quotes while the token's book mid moved more than X in 10 s (theory: moving market = toxic)
+    "m1_mg3": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}, "filters": {"max_token_move": 0.03}}),
+    "m1_mg2": ("config/paper_v3.toml", {"strategy": {"half_spread": 0.01}, "filters": {"max_token_move": 0.02}}),
 }
 BN_STALE_OFF = "--bn-stale-off" in sys.argv   # old recordings stored only BBO changes -> staleness is an artifact
 
