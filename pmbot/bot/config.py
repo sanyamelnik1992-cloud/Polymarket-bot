@@ -30,6 +30,9 @@ class StrategyCfg:
                                      # pause...) are on: its fill only removes risk. Live 8 Nov: 4 of 6 losing
                                      # windows swung our way first, but the filters had pulled the closing bid
     close_stop_s: float = 290.0      # ... until start + this (opening bids still stop at stop_s)
+    favorite_only: float = 0.0       # > 0: an opening bid only on the side priced >= 0.5 + this (the market's favourite =
+                                     # ahead of the strike). All maker fills, BTC 8-9 Nov: ahead of the strike +1.3c a share
+                                     # at 60 s, behind -1.0c (reports/46). Closing legs are not limited. 0 = off
 
 
 @dataclass

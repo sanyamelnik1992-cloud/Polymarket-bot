@@ -945,3 +945,20 @@ def test_paper_experiments_g_and_h_differ_from_f_only_where_planned():
     assert q["U"][0] == 0.48                                  # F joins the back of the best bid
     q = target_quotes(w, 0.495, book(0.49, 0.50), book(0.50, 0.51), Position(), g.strategy, g.risk)
     assert q["U"][0] == 0.49 and q["D"][0] == 0.50          # 1c spread: G = F (join the best bid)
+
+
+def test_favorite_only_opens_only_the_favourite_and_still_closes_pairs():
+    cfg = load_config("config/g2.toml")
+    assert cfg.strategy.favorite_only == 0.02 and cfg.execution.mode == "paper"
+    w = mk_window()
+    bu, bd = book(0.55, 0.56), book(0.44, 0.45)          # Up is the favourite
+    q = target_quotes(w, 0.555, bu, bd, Position(), cfg.strategy, cfg.risk)
+    assert q["U"] is not None and q["D"] is None          # flat: open only the favourite
+    q = target_quotes(w, 0.505, book(0.50, 0.51), book(0.49, 0.50), Position(), cfg.strategy, cfg.risk)
+    assert q["U"] is None and q["D"] is None              # at the strike (0.505 < 0.52): nothing opens
+    pos = Position(up=5.0, down=0.0, cost=2.75)           # long Up: the Down bid closes the pair -> allowed
+    q = target_quotes(w, 0.555, bu, bd, pos, cfg.strategy, cfg.risk)
+    assert q["D"] is not None
+    g = load_config("config/g.toml")                      # off by default: G still quotes both sides
+    q = target_quotes(w, 0.555, bu, bd, Position(), g.strategy, g.risk)
+    assert q["U"] is not None and q["D"] is not None

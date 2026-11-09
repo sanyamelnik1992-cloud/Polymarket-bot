@@ -386,3 +386,15 @@ def test_maker_cancel_pulls_the_bid(tmp_path):
     asyncio.run(bot2._cancel_bid(w.key, 1000, "binance_against"))
     bot2._on_public_trade("u", "SELL", 0.97, 5.0, 1100, 1100)         # after the cancel: no fill
     assert bot2.filled(w.key) == 0 and w.key not in bot2.bids
+
+
+def test_lock_maker2_bids_lower_and_guards_binance_tighter():
+    from pmbot.bot.lock import maker_bid
+    lm = load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml"))
+    lm2 = load_lock_config(os.path.join(ROOT, "config", "lock_maker2.toml"))
+    assert lm2.execution.mode == "paper" and lm2.lock.entry == "maker"
+    assert (lm2.lock.a_max, lm2.lock.adv3_bp) == (0.96, 1.0)
+    assert lm2.risk.state_file != lm.risk.state_file and lm2.journal_dir != lm.journal_dir
+    assert maker_bid(lm.lock, 0.995, 0.99) == 0.98 and maker_bid(lm2.lock, 0.995, 0.99) == 0.96
+    for k in ("theta", "agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "min_edge", "rel_lo", "rel_hi", "shares"):
+        assert getattr(lm2.lock, k) == getattr(lm.lock, k), k          # only a_max and adv3_bp differ

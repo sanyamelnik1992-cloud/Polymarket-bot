@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-live", "pmbot-hourly"]
+BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-live", "pmbot-hourly"]
 ALL_UNITS = BOT_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
