@@ -1,3 +1,3 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-maker2/20261109-165000
-mode: paper  duration: 131.6 min  events: {'start': 1, 'status': 263, 'lock_state': 798, 'strike': 95, 'maker_bid': 381, 'maker_cancel': 381}
+mode: paper  duration: 190.6 min  events: {'start': 1, 'status': 381, 'lock_state': 1318, 'strike': 143, 'maker_bid': 634, 'maker_cancel': 634}
 no fills
