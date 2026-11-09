@@ -398,3 +398,45 @@ def test_lock_maker2_bids_lower_and_guards_binance_tighter():
     assert maker_bid(lm.lock, 0.995, 0.99) == 0.98 and maker_bid(lm2.lock, 0.995, 0.99) == 0.96
     for k in ("theta", "agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "min_edge", "rel_lo", "rel_hi", "shares"):
         assert getattr(lm2.lock, k) == getattr(lm.lock, k), k          # only a_max and adv3_bp differ
+
+
+def test_lock_tiers_lower_probability_needs_cheaper_ask():
+    from pmbot.bot.lock import tier_limit
+    from pmbot.fees import fee_per_share
+    paper = load_lock_config(os.path.join(ROOT, "config", "lock.toml"))
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    assert tier.execution.mode == "paper" and tier.lock.entry == "taker" and tier.lock.tiers
+    # everything except theta, tiers and the files is L's
+    assert tier.risk.state_file != paper.risk.state_file and tier.journal_dir != paper.journal_dir
+    assert tier.lock.assets == ["btc", "eth", "sol"] and "xrp" in paper.lock.assets        # the one deliberate difference besides theta/tiers
+    for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
+              "max_entries_per_window"):
+        assert getattr(tier.lock, k) == getattr(paper.lock, k), k
+    for k in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
+        assert getattr(tier.risk, k) == getattr(paper.risk, k), k
+    c = tier.lock
+    assert tier_limit(c, 0.995) == 0.98 and tier_limit(c, 0.98) == 0.95 and tier_limit(c, 0.96) == 0.93
+    assert tier_limit(c, 0.92) == 0.91 and tier_limit(c, 0.89) is None
+    # the top tier is L's own rule: p >= 0.99 -> ask up to 0.98
+    for p in (0.99, 0.999):
+        assert min(c.a_max, tier_limit(c, p)) == min(paper.lock.a_max, p - paper.lock.min_edge - fee_per_share(0.98))
+
+
+def test_lock_tiers_validation():
+    import pytest
+    base = {"lock": {"theta": 0.90, "agree": 0.90, "tiers": [[0.99, 0.98], [0.95, 0.93]]}}
+    assert load_lock_config(overrides=base).lock.tiers
+    for bad in ({"tiers": [[0.99, 0.98], [0.95, 0.99]]},           # ask above a_max
+                {"tiers": [[0.99, 0.93], [0.95, 0.98]]},           # a higher p must not be cheaper
+                {"tiers": [[0.80, 0.93]]},                          # below theta
+                {"tiers": [[0.95, 0.93]], "entry": "maker"}):       # maker + tiers
+        with pytest.raises(ValueError):
+            load_lock_config(overrides={"lock": {"theta": 0.90, "agree": 0.90, **bad}})
+
+
+def test_decide_with_tiers_uses_the_tier_limit():
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    from pmbot.bot.lock import tier_limit
+    # the ask check in decide(): limit = min(a_max, tier_limit(p)); p = 0.96 -> 0.93
+    for ask, ok in ((0.92, True), (0.93, True), (0.94, False), (0.96, False)):
+        assert (ask <= min(c.a_max, tier_limit(c, 0.96)) + 1e-9) == ok

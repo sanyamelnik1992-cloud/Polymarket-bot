@@ -62,6 +62,8 @@ class LockCfg:
     tick_ms: int = 50
     duration: int = 300                  # window length in s: 300 (5m markets) or 900 (15m markets)
     entry: str = "taker"                 # "taker": FAK at the ask (L); "maker": resting bid for the decided side (LM)
+    tiers: list = field(default_factory=list)   # [[p_min, ask_max], ...]: the lower the model probability, the cheaper the ask must
+                                         # be (L3, reports/47). Empty = the plain rule (p >= theta, ask <= min(a_max, p - edge - fee))
 
 
 @dataclass
@@ -132,6 +134,16 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError(f"lock.duration must be one of {sorted(DURATIONS)}")
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
+    if c.tiers:
+        if c.entry != "taker":
+            raise ValueError("lock.tiers only with entry = 'taker'")
+        ts = sorted((float(t[0]), float(t[1])) for t in c.tiers)
+        if any(len(t) != 2 for t in c.tiers) or any(not (0.5 < pm < 1 and c.a_min <= am <= c.a_max) for pm, am in ts):
+            raise ValueError("lock.tiers: [[p_min in (0.5,1), ask_max in [a_min, a_max]], ...]")
+        if any(b[1] < a[1] for a, b in zip(ts, ts[1:])):
+            raise ValueError("lock.tiers: a higher probability must not allow a cheaper ask")
+        if ts[0][0] < c.theta - 1e-12:
+            raise ValueError("lock.tiers: theta must be <= the lowest tier probability (the state filter runs first)")
     if c.entry == "maker" and e.mode != "paper":
         raise ValueError("lock.entry = 'maker' is paper-only for now (no live maker broker for the lock bot yet)")
     for name in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
@@ -198,6 +210,15 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
     return ("U" if up else "D"), p, ctx
 
 
+def tier_limit(c: LockCfg, p):
+    """Highest ask accepted at model probability p: the cheapest-tier rule of c.tiers that p reaches, None if p reaches none."""
+    best = None
+    for pm, am in c.tiers:
+        if p >= pm - 1e-12 and (best is None or am > best):
+            best = am
+    return best
+
+
 def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s, bn_3s,
            ask_up, ask_dn):
     """Pure taker decision. cl_last = (value, ts_ms, rx_ms); ask_* = (price, size) or None.
@@ -211,6 +232,9 @@ def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, 
         return None, {**ctx, "why": "no_ask"}
     a = ask[0]
     limit = min(c.a_max, p - c.min_edge - fee_per_share(a))
+    if c.tiers:                                 # L3: the margin is in the tier (a lower p must come cheaper), not in p - edge - fee
+        tl = tier_limit(c, p)
+        limit = min(c.a_max, tl) if tl is not None else 0.0
     ctx.update(ask=a, ask_sz=ask[1], limit=round(limit, 4))
     if a < c.a_min:
         return None, {**ctx, "why": "ask_too_low"}
