@@ -1,0 +1,3 @@
+run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261109-165030
+mode: paper  duration: 11.0 min  events: {'start': 1, 'status': 22, 'lock_state': 40, 'strike': 4}
+no fills
