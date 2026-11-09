@@ -1,5 +1,8 @@
-"""TWAP-lock bot ("L"): in the last minute of each 5m Up/Down window buy the side whose closing Chainlink TWAP is
-already (almost) decided while the book still sells it below our probability (reports/44_twap_lock.md).
+"""TWAP-lock bot ("L"): in the last minute of each 5m (or 15m) Up/Down window buy the side whose closing Chainlink
+TWAP is already (almost) decided while the book still sells it below our probability (reports/44_twap_lock.md).
+15m windows use the same rule (Gamma twapLookbackSeconds = 60; 30/30 windows checked on 9 Nov): strike = mean of the
+prints in [T-62, T-3], close = mean over [end-62, end-3]. One duration per process (lock.duration); times inside the
+closing minute are measured from the anchor Tc = end - 300, so the 5m model and its limits apply unchanged.
 
 Rule (all must hold at the decision moment, window second rel in [rel_lo, rel_hi]):
   * empirical lock probability with the Binance nowcast  p >= theta (0.99) for the side
@@ -29,6 +32,9 @@ log = logging.getLogger("pmbot.lock")
 
 
 # ------------------------------------------------------------------------------------------------ config
+DURATIONS = {300: "5m", 900: "15m"}     # window length -> slug tag (btc-updown-15m-<start>)
+
+
 @dataclass
 class LockCfg:
     assets: list = field(default_factory=lambda: ["btc", "eth", "sol", "xrp"])
@@ -53,6 +59,7 @@ class LockCfg:
     strike_tol_bp: float = 0.3           # published priceToBeat vs our [T-62, T-3] mean: skip the window if further
     tables: str = "config/lock_tables.npz"
     tick_ms: int = 50
+    duration: int = 300                  # window length in s: 300 (5m markets) or 900 (15m markets)
 
 
 @dataclass
@@ -117,6 +124,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock: 238 <= rel_lo < rel_hi < 300 (the model is valid inside the closing TWAP window only)")
     if c.shares < 1:
         raise ValueError("lock.shares must be >= 1")
+    if c.duration not in DURATIONS:
+        raise ValueError(f"lock.duration must be one of {sorted(DURATIONS)}")
     for name in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
         if getattr(r, name) <= 0:
             raise ValueError(f"risk.{name} must be > 0")
@@ -262,6 +271,8 @@ class LockBot:
         self.next_try = {}         # window key -> ms
         self.last_why = {}
         self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0}
+        self.dur = c.duration
+        self.tag = DURATIONS[c.duration]
         self._stop = False
         self.risk = {"realized_by_day": {}, "provisional": {}, "killed_day": None, "kill_reason": "", "settled": []}
         self._load_state()
@@ -301,6 +312,13 @@ class LockBot:
             json.dump(d, f)
         os.replace(tmp, p)
 
+    def anchor(self, start):
+        """Tc = end - 300: the closing TWAP is [Tc+238, Tc+297] and decision times are Tc+rel_lo..Tc+rel_hi."""
+        return int(start) + self.dur - 300
+
+    def end_of(self, key):
+        return int(key.rsplit("-", 1)[1]) + self.dur
+
     @staticmethod
     def today(ts=None):
         return time.strftime("%Y-%m-%d", time.gmtime(ts or time.time()))
@@ -309,7 +327,7 @@ class LockBot:
         d = self.today()
         return self.risk["realized_by_day"].get(d, 0.0) + sum(
             v for k, v in self.risk["provisional"].items() if k not in self.risk["settled"]
-            and self.today(int(k.rsplit("-", 1)[1]) + 300) == d)
+            and self.today(self.end_of(k)) == d)
 
     def open_cost(self):
         return sum(e["cost"] + e["fee"] for es in self.entries.values() for e in es)
@@ -342,14 +360,14 @@ class LockBot:
     async def discover_loop(self):
         while self.alive():
             now = time.time()
-            ws0 = window_start(now)
-            for start in (ws0, ws0 + 300):
+            ws0 = window_start(now, self.dur)
+            for start in (ws0, ws0 + self.dur):
                 for a in self.cfg.lock.assets:
                     key = f"{a}-{start}"
                     if key in self.meta:
                         continue
                     try:
-                        e = await asyncio.to_thread(fetch_event, slug_for(a, start))
+                        e = await asyncio.to_thread(fetch_event, slug_for(a, start, self.tag))
                     except Exception as ex:  # noqa: BLE001
                         log.warning("discover %s: %s", key, ex)
                         continue
@@ -358,17 +376,18 @@ class LockBot:
                         mk = e["markets"][0]
                         m["tick"] = float(mk.get("orderPriceMinTickSize") or 0.01)
                         self.meta[key] = m
-            # books only around the last minute (light feed): add at rel >= 200, drop after the end
+            # books only around the last minute (light feed): add 100 s before the end, drop after the end
             for key, m in list(self.meta.items()):
                 a, start = key.rsplit("-", 1)
                 start = int(start)
                 rel = now - start
-                if 200 <= rel < 305 and key not in self.st.windows:
+                if self.dur - 100 <= rel < self.dur + 5 and key not in self.st.windows:
                     self.st.add_window(Window(asset=a, start=start, slug=m["slug"], condition_id=m["condition_id"],
-                                              token_up=m["token_up"], token_down=m["token_down"], tick=m["tick"]))
-                if rel >= 305 and key in self.st.windows:
+                                              token_up=m["token_up"], token_down=m["token_down"], tick=m["tick"],
+                                              end=start + self.dur))
+                if rel >= self.dur + 5 and key in self.st.windows:
                     self.st.drop_window(key)
-                if rel > 900 and key not in self.entries:
+                if rel > self.dur + 600 and key not in self.entries:
                     self.meta.pop(key, None)
                     self.strikes.pop(key, None)
             for f in self.feeds.values():
@@ -392,7 +411,7 @@ class LockBot:
                 if not m or m.get("_checked") or K is None:
                     continue
                 a, T = key.rsplit("-", 1)
-                if time.time() - int(T) > 300:
+                if time.time() - int(T) > self.dur:
                     continue
                 try:
                     e = await asyncio.to_thread(fetch_event, m["slug"])
@@ -452,7 +471,8 @@ class LockBot:
         c = self.cfg.lock
         ok, why_risk = self.can_enter()
         for key, w in list(self.st.windows.items()):
-            rel = now / 1000 - w.start
+            Tc = self.anchor(w.start)
+            rel = now / 1000 - Tc
             if not (c.rel_lo <= rel <= c.rel_hi):
                 continue
             if key in self.busy or len(self.entries.get(key, [])) >= c.max_entries_per_window:
@@ -467,7 +487,7 @@ class LockBot:
             cl = px.cl_last
             bn_now = px.bn_mid()
             bn_at_last = px.bn_mid_at(cl[1] + 999) if cl else None
-            sig, ctx = decide(c, self.tables, w.asset, w.start, K, now, px.cl_by_sec, cl, self.sig[w.asset].sigma()
+            sig, ctx = decide(c, self.tables, w.asset, Tc, K, now, px.cl_by_sec, cl, self.sig[w.asset].sigma()
                               if self.sig[w.asset].n >= c.min_sigma_prints else None, bn_now, bn_at_last,
                               px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
                               self._book_ask(w.token_up), self._book_ask(w.token_down))
@@ -537,10 +557,10 @@ class LockBot:
         if key in self.risk["provisional"] or key in self.risk["settled"]:
             return
         a, T = key.rsplit("-", 1)
-        T = int(T)
+        Tc = self.anchor(T)
         K = self.strikes.get(key)
         cl = self.st.prices[a].cl_by_sec
-        xs = [cl.get(s) for s in range(T + 238, T + TW_HI + 1)]
+        xs = [cl.get(s) for s in range(Tc + 238, Tc + TW_HI + 1)]
         if K is None or any(x is None for x in xs):
             return
         up = sum(xs) / 60 >= K
@@ -558,12 +578,13 @@ class LockBot:
             for key in list(self.entries):
                 a, T = key.rsplit("-", 1)
                 T = int(T)
-                if now >= T + 302:
+                Tc = self.anchor(T)
+                if now >= Tc + 302:
                     self._provisional(key)
-                if now < T + 330:
+                if now < Tc + 330:
                     continue
                 m = self.meta.get(key)
-                slug = m["slug"] if m else slug_for(a, T)
+                slug = m["slug"] if m else slug_for(a, T, self.tag)
                 try:
                     e = await asyncio.to_thread(fetch_event, slug)
                     mm = parse_event(e) if e else None
@@ -571,7 +592,7 @@ class LockBot:
                     log.warning("settle %s: %s", key, ex)
                     continue
                 if not mm or not mm.get("winner"):
-                    if now > T + 3600:
+                    if now > Tc + 3600:
                         self.j.log("settle_timeout", key=key)
                     continue
                 self._settle(key, mm["winner"])
@@ -586,7 +607,7 @@ class LockBot:
         cost = sum(e["cost"] + e["fee"] for e in es)
         payoff = up if winner == "Up" else dn
         pnl = payoff - cost
-        day = self.today(int(key.rsplit("-", 1)[1]) + 300)
+        day = self.today(self.end_of(key))
         self.risk["realized_by_day"][day] = round(self.risk["realized_by_day"].get(day, 0.0) + pnl, 6)
         self.risk["settled"].append(key)
         self.risk["provisional"].pop(key, None)

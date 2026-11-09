@@ -172,6 +172,7 @@ def test_configs_load_and_live_is_the_twin():
 
 def test_units_wire_the_configs():
     for unit, cfg, live in (("pmbot-lock", "config/lock.toml", False), ("pmbot-lock-wide", "config/lock_wide.toml", False),
+                            ("pmbot-lock-15", "config/lock15.toml", False),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
@@ -274,3 +275,41 @@ def test_order_error_blocks_the_window_in_live_only(tmp_path, mode):
         assert blocked and bot.next_try[w.key] == float("inf")
     else:
         assert not blocked and bot.next_try[w.key] < float("inf")
+
+
+def test_l15_is_l_on_15m_windows(tmp_path):
+    """L15 = the L rule with duration 900: the closing TWAP is [end-62, end-3], decisions in the last minute."""
+    l5 = load_lock_config(os.path.join(ROOT, "config", "lock.toml"))
+    l15 = load_lock_config(os.path.join(ROOT, "config", "lock15.toml"))
+    assert l15.lock.duration == 900 and l5.lock.duration == 300 and l15.execution.mode == "paper"
+    a, b = dict(vars(l5.lock)), dict(vars(l15.lock))
+    a.pop("duration"), b.pop("duration")
+    assert a == b, "L15 must keep the L filters"
+    assert l15.risk.state_file != l5.risk.state_file and l15.journal_dir != l5.journal_dir
+    with pytest.raises(ValueError):
+        load_lock_config(overrides={"lock": {"duration": 600}})
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock15.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=PaperTaker(State(["btc"])), tables=_Tab())
+    assert bot.anchor(T) == T + 600 and bot.end_of(f"btc-{T}") == T + 900 and bot.tag == "15m"
+    # a 15m window locked in its last minute: same decision as a 5m window whose start is the anchor
+    from pmbot.gamma import slug_for
+    assert slug_for("btc", T, bot.tag) == f"btc-updown-15m-{T}"
+
+
+def test_l15_decides_on_the_closing_minute(tables):
+    """decide() with the 15m anchor Tc = start + 600 uses the prints of [start+838, start+897] and the start strike."""
+    c = load_lock_config(os.path.join(ROOT, "config", "lock15.toml")).lock
+    S = T                       # 15m window start
+    Tc = S + 600
+    K = 100.0
+    cl = {s: 100.0 for s in range(S - 70, S)}
+    cl.update({s: 100.05 for s in range(S, Tc + 250)})      # +5 bp all window long, 12 closing prints in
+    now = (Tc + 250) * 1000 + 300
+    last = (100.05, (Tc + 249) * 1000, now - 1200)
+    args = (cl, last, 0.00002, 100.05, 100.05, 100.05, 100.05, (0.95, 50.0), (0.06, 50.0))
+    sig, ctx = decide(c, tables, "btc", Tc, K, now, *args)
+    assert ctx["rel"] == pytest.approx(250.3, abs=0.01)
+    assert sig and sig["side"] == "U" and ctx["n"] == 12 and sig["p"] >= 0.99
+    sig, ctx = decide(c, tables, "btc", S, K, now, *args)       # the window start is not the anchor
+    assert sig is None and ctx["why"] == "time"

@@ -37,9 +37,16 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   last minute of each window buy the side whose closing Chainlink TWAP (prints `[T+238, T+297]`, strike `[T-62, T-3]`)
   is already decided, FAK, one entry per window, held to resolution. `pmbot-lock` = `config/lock.toml` (L, asks
   0.90–0.98, paper, candidate for live), `pmbot-lock-wide` = `config/lock_wide.toml` (L2, 0.50–0.98, paper),
-  `pmbot-lock-live` = `config/lock_live.toml` (same rule as L — a test checks it; REAL MONEY, installed but started
-  only by the owner). Empirical tails: `config/lock_tables.npz` (rebuild: `scripts/build_lock_tables.py`); replay on a
-  recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44 section 8.
+  `pmbot-lock-live` = `config/lock_live.toml` (same rule as L — a test checks it; REAL MONEY: running since 9 Nov
+  07:29 UTC on the owner's word "запусти на реальные деньги"; not enabled at boot). `pmbot-lock-15` =
+  `config/lock15.toml` (L15: the L rule on the 15-minute markets, `lock.duration = 900`, paper; same resolution rule,
+  30/30 windows checked). Empirical tails: `config/lock_tables.npz` (rebuild: `scripts/build_lock_tables.py`); replay
+  on a recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44 section 8.
+- Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`).
+  G (`pmbot-5m-g`) stays paper only: the owner does not want the maker live while it has many losing windows, and in
+  live our own bid would sit in the public book that `target_quotes` reads (G improves the best bid by 1c, so it would
+  ratchet itself up to ask - 1c; the books of Up/Down are mirrored, so our Up bid is also a Down ask). Fix that before
+  any maker goes live again.
 - **Paper experiments vs F** (`reports/42` section 5): `pmbot-5m-g` = `config/g.toml` (front of the queue, no model
   filters), `pmbot-5m-h` = `config/h.toml` (imbalance guard 0.50/0.60). Judge by markout-60 in the hourly report
   (`ops.format_quality`), not by a few windows. B, D, E are stopped since 8 Nov evening (old one-tick-below scheme).

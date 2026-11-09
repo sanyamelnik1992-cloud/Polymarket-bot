@@ -1,0 +1,33 @@
+# TWAP-lock bot L15 (PAPER): the L rule (config/lock.toml, identical [lock] except duration) on the 15-minute
+# Up/Down markets. Same resolution as 5m (Gamma twapLookbackSeconds = 60): strike = mean of the Chainlink prints in
+# [T-62, T-3], close = mean over [end-62, end-3]; checked on 9 Nov: 30 of 30 windows, median error 0.0001 bp.
+# Candidate to join the live L after a paper day (more windows at the same strict filters).
+journal_dir = "data/journal-lock-15"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+duration = 900        # 15m windows; times below are seconds of the closing 5 minutes (end - 300 + rel)
+theta = 0.99
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.90
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 10.0
+daily_loss_limit = 5.0
+state_file = "data/state/lock15_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300
