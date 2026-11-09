@@ -2,7 +2,8 @@
 # L3 = L with PRICE TIERS (reports/47): p>=.99 -> ask<=.98 (the old live rule L), p>=.97 -> <=.95, p>=.95 -> <=.93, p>=.90 -> <=.91.
 # Why (reports/50): the old rule L (p >= 0.99 only) made 0 live entries on 9 Nov — by the time the model reaches 0.99 other bots have
 # bought every ask <= 0.98; L3 buys earlier only at a cheaper ask (paper 9 Nov: 13 entries, 13 won; replay of 9 Nov with the live limits: 50 entries, 0 lost).
-# Risk limits unchanged from live L. Not started by default: the owner starts it (Telegram /restart pmbot-lock-live).
+# Risk: 5 shares, -$5/day as live L; open risk $5 = one entry at a time since reports/51 (live L had $10). Not started by default:
+# the owner starts it (Telegram /restart pmbot-lock-live).
 journal_dir = "data/journal-lock-live"
 
 [lock]
@@ -24,7 +25,7 @@ tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
 
 [risk]
 max_usd_per_entry = 5.0
-max_open_usd = 10.0
+max_open_usd = 5.0           # one entry at a time (reports/51): a reversal often hits several coins in the same window
 daily_loss_limit = 5.0          # one loss is ~-$4.6: a second one before ~10 wins stops it until a human restarts it
 state_file = "data/state/lock_live.json"
 resume_next_day = false

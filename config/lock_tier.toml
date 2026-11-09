@@ -27,7 +27,7 @@ tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
 
 [risk]
 max_usd_per_entry = 5.0
-max_open_usd = 10.0   # all four assets end at the same second: at most two entries at risk at once
+max_open_usd = 5.0    # = live (twin): one entry at a time (reports/51; replay 7-9 Nov: same P&L as $10, fewer losses)
 daily_loss_limit = 5.0
 state_file = "data/state/lock_tier_paper.json"
 resume_next_day = true

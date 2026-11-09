@@ -394,7 +394,11 @@ class LockBot:
             and self.today(self.end_of(k)) == d)
 
     def open_cost(self):
-        return sum(e["cost"] + e["fee"] for es in self.entries.values() for e in es)
+        """Cost still at risk: entries whose window outcome is not known yet. An entry stops counting once its
+        provisional result (Chainlink TWAP rule, seconds after the window end) is in day_pnl, not only at the Gamma
+        settle (median 5.4 min after the end on 9 Nov: with max_open_usd = 5 that blocked every next window)."""
+        prov = self.risk["provisional"]
+        return sum(e["cost"] + e["fee"] for k, es in self.entries.items() if k not in prov for e in es)
 
     def filled(self, key):
         return sum(e["shares"] for e in self.entries.get(key, []))

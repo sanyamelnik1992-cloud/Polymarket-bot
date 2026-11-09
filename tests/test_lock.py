@@ -255,6 +255,26 @@ def test_settle_and_daily_stop(tmp_path):
     assert bot2.can_enter() == (False, "kill_file") or bot2.can_enter()[1] == "killed"
 
 
+def test_open_cost_frees_an_entry_once_its_result_is_known(tmp_path):
+    """max_open_usd = 5 (live L3, reports/51) means one entry at a time. The entry must stop blocking the next window once
+    the window has ended and its provisional result is in day_pnl, not only when Gamma settles it minutes later."""
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": str(tmp_path / "STOP")}})
+    assert cfg.risk.max_open_usd == 5.0
+    bot = LockBot(cfg, _J(), broker=PaperTaker(State(["btc"])), tables=_Tab())
+    import time as _t
+    T0 = int(_t.time()) // 300 * 300 - 300
+    key = f"btc-{T0}"
+    bot.entries[key] = [{"side": "U", "shares": 5.0, "price": 0.91, "cost": 4.55, "fee": 0.02, "t": 0, "limit": 0.91,
+                         "p": 0.92}]
+    assert bot.open_cost() == pytest.approx(4.57)
+    assert bot.open_cost() + 5 * 0.91 > cfg.risk.max_open_usd          # a second entry is refused while the result is open
+    bot.risk["provisional"][key] = -4.57                                 # what _provisional writes at the window end
+    assert bot.open_cost() == 0.0 and bot.day_pnl() == pytest.approx(-4.57)
+    bot._settle(key, "Down")
+    assert bot.open_cost() == 0.0 and bot.day_pnl() == pytest.approx(-4.57)
+
+
 class _ErrBroker:
     def __init__(self, mode):
         self.mode = mode
@@ -419,8 +439,9 @@ def test_lock_tiers_lower_probability_needs_cheaper_ask():
     for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
               "assets", "max_entries_per_window"):
         assert getattr(tier.lock, k) == getattr(paper.lock, k), k
-    for k in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
+    for k in ("max_usd_per_entry", "daily_loss_limit"):
         assert getattr(tier.risk, k) == getattr(paper.risk, k), k
+    assert tier.risk.max_open_usd <= paper.risk.max_open_usd      # L3 = live twin: one entry at a time since reports/51
     c = tier.lock
     assert tier_limit(c, 0.995) == 0.98 and tier_limit(c, 0.98) == 0.95 and tier_limit(c, 0.96) == 0.93
     assert tier_limit(c, 0.92) == 0.91 and tier_limit(c, 0.89) is None

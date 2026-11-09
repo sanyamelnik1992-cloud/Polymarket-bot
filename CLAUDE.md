@@ -40,7 +40,7 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `pmbot-lock-live` = `config/lock_live.toml` (REAL MONEY since 9 Nov 07:29 UTC on the owner's word "запусти на реальные
   деньги"; not enabled at boot; the rule is L3 = price tiers since 9 Nov 16:27 UTC, `reports/50` + `reports/51`, on the owner's
   "выбери ... и запусти ... зарабатывали а не теряли" (L made 0 live entries; theta 0.98 lost money in replay), same rule as its
-  paper twin `pmbot-lock-tier` — a test checks it; limits those of live L: 5 shares, $10 open, −$5/day). `pmbot-lock-15` =
+  paper twin `pmbot-lock-tier` — a test checks it; limits: 5 shares, $5 open = one entry at a time (`reports/51`), −$5/day). `pmbot-lock-15` =
   `config/lock15.toml` (L15: the L rule on the 15-minute markets, `lock.duration = 900`, paper; same resolution rule,
   30/30 windows checked). `pmbot-lock-maker` = `config/lock_maker.toml` (LM: the L rule with a resting bid <= 0.98
   for the decided side instead of a taker buy, `lock.entry = "maker"`, paper-only, PaperBroker queue model) and
