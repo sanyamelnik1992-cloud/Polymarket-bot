@@ -130,3 +130,17 @@ def test_quality_markout_pairs_latency_and_wallet(tmp_path, monkeypatch):
     assert "кошелёк: 4.38$" in ops.format_quality(24) and "кошелёк: 4.38$" in ops.format_status()
     (root / "data" / "state" / "wallet.json").write_text(json.dumps({"t": now, "error": "TimeoutError"}))
     assert "нет данных (TimeoutError" in ops.wallet_line()
+
+
+def test_unit_cpu_priority_live_lock_above_paper_bots():
+    """Under CPU contention the live lock bot (real money, ~100 ms decisions) must outrank every paper bot and the recorder."""
+    import glob
+    import re
+
+    def weight(path):
+        m = re.search(r"(?m)^CPUWeight=(\d+)", open(path).read())
+        return int(m.group(1)) if m else 100
+    live = weight("deploy/pmbot-lock-live.service")
+    paper = [f for f in glob.glob("deploy/pmbot-*.service") if re.search(r"pmbot-(5m-g2?|lock|lock-wide|lock-15|lock-maker2?|recorder)\.service$", f)]
+    assert len(paper) == 8, paper
+    assert live > 100 and all(weight(f) < 100 for f in paper)
