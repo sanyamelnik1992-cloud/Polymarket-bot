@@ -40,8 +40,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `pmbot-lock-live` = `config/lock_live.toml` (same rule as L — a test checks it; REAL MONEY: running since 9 Nov
   07:29 UTC on the owner's word "запусти на реальные деньги"; not enabled at boot). `pmbot-lock-15` =
   `config/lock15.toml` (L15: the L rule on the 15-minute markets, `lock.duration = 900`, paper; same resolution rule,
-  30/30 windows checked). Empirical tails: `config/lock_tables.npz` (rebuild: `scripts/build_lock_tables.py`); replay
-  on a recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44 section 8.
+  30/30 windows checked). `pmbot-lock-maker` = `config/lock_maker.toml` (LM: the L rule with a resting bid <= 0.98
+  for the decided side instead of a taker buy, `lock.entry = "maker"`, paper-only, PaperBroker queue model) and
+  `pmbot-lock-maker2` = `config/lock_maker2.toml` (LM2, the brother's variant from `reports/46`: bid <= 0.96 and the
+  Binance guard 1 bp / 3 s; a test checks that only these differ). Empirical tails: `config/lock_tables.npz` (rebuild:
+  `scripts/build_lock_tables.py`); replay on a recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44
+  section 8; L15/LM criteria: report 45 section 6.
+- `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
+  the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`).
   G (`pmbot-5m-g`) stays paper only: the owner does not want the maker live while it has many losing windows, and in
   live our own bid would sit in the public book that `target_quotes` reads (G improves the best bid by 1c, so it would

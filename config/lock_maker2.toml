@@ -29,7 +29,8 @@ max_entries_per_window = 1
 
 [risk]
 max_usd_per_entry = 5.0
-max_open_usd = 10.0
+max_open_usd = 20.0   # paper: resting bids count, so $10 let only 2 of the 4 assets bid at once (9 Nov 08:35,
+                      # 21 "risk:max_open" skips in two windows); $20 measures every chance. A live LM gets its own limit
 daily_loss_limit = 5.0
 state_file = "data/state/lock_maker2_paper.json"
 resume_next_day = true
