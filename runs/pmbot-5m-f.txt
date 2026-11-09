@@ -1,13 +1,13 @@
 run: /home/pmbot/Polymarket-bot/data/journal-v3/20261108-225456
-mode: paper  duration: 125.7 min  events: {'start': 1, 'vol_seed': 1, 'window': 28, 'filters': 4139, 'status': 251, 'strike_est': 25, 'fv': 7205, 'resume': 1, 'side_block': 194, 'quote': 160, 'fill': 5, 'fill_ctx': 5, 'provisional': 2, 'settle': 2}
+mode: paper  duration: 186.9 min  events: {'start': 1, 'vol_seed': 1, 'window': 40, 'filters': 6350, 'status': 373, 'strike_est': 37, 'fv': 10864, 'resume': 1, 'side_block': 619, 'quote': 276, 'fill': 8, 'fill_ctx': 8, 'provisional': 3, 'settle': 2}
 
-filter reasons (state changes): {'jump_cooldown': 2523, 'model_disagrees': 2122, 'daily loss limit 2.0 reached': 1721, 'p_out_of_range': 1383, 'wide_spread': 1119, 'too_late': 570, 'no_book': 256, 'calm_market': 144, 'no_strike': 137, 'no_fair_value': 137, 'too_early': 137, 'loop_lag': 42, 'chainlink_stale': 31, 'binance_stale': 3, 'clob_stale': 3}
-quotes placed: 160
+filter reasons (state changes): {'jump_cooldown': 4187, 'model_disagrees': 3725, 'p_out_of_range': 2643, 'daily loss limit 2.0 reached': 1721, 'wide_spread': 1694, 'too_late': 765, 'no_book': 414, 'too_early': 205, 'no_strike': 162, 'no_fair_value': 162, 'calm_market': 144, 'loop_lag': 47, 'chainlink_stale': 36, 'clob_stale': 6, 'binance_stale': 3}
+quotes placed: 276
 
-fills: 5  shares: 20  notional: $9.31
+fills: 8  shares: 32  notional: $14.20
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        5   20.01     9.305      0.472  218.794
+btc        8  31.933    14.197      0.455  213.449
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
