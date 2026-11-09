@@ -243,3 +243,34 @@ def test_settle_and_daily_stop(tmp_path):
     # kill file blocks new entries
     open(cfg.risk.kill_file, "w").close()
     assert bot2.can_enter() == (False, "kill_file") or bot2.can_enter()[1] == "killed"
+
+
+class _ErrBroker:
+    def __init__(self, mode):
+        self.mode = mode
+        self.calls = 0
+
+    async def buy(self, *a):
+        self.calls += 1
+        raise TimeoutError("no reply")
+
+
+@pytest.mark.parametrize("mode", ["live", "paper"])
+def test_order_error_blocks_the_window_in_live_only(tmp_path, mode):
+    """A live order that errors (timeout) may still have been matched: no second order in that window."""
+    from pmbot.bot.state import Window
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    j = _J()
+    br = _ErrBroker(mode)
+    bot = LockBot(cfg, j, broker=br, tables=_Tab())
+    w = Window(asset="btc", start=T, slug="s", condition_id="c", token_up="u", token_down="d")
+    sig = {"side": "U", "limit": 0.97, "ask": 0.95, "p": 0.995}
+    bot.busy.add(w.key)
+    asyncio.run(bot._execute(w, sig, 5, {"rel": 250.0}))
+    assert br.calls == 1 and w.key not in bot.busy and not bot.entries.get(w.key)
+    blocked = any(k == "window_blocked" for k, _ in j.ev)
+    if mode == "live":
+        assert blocked and bot.next_try[w.key] == float("inf")
+    else:
+        assert not blocked and bot.next_try[w.key] < float("inf")

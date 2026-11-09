@@ -500,16 +500,23 @@ class LockBot:
         limit = round(tick_floor(sig["limit"], 0.01), 2)
         t_sent = now_ms()
         self.stats["orders"] += 1
+        err = False
         try:
             px, got, fee = await self.broker.buy(token, key, sig["side"], limit, shares)
         except Exception as e:  # noqa: BLE001
             self.j.log("order_error", key=key, error=str(e)[:300])
-            px, got, fee = 0.0, 0.0, 0.0
+            px, got, fee, err = 0.0, 0.0, 0.0, True
         finally:
             self.busy.discard(key)
         if got <= 1e-9:
             self.stats["missed"] += 1
-            self.next_try[key] = now_ms() + self.cfg.lock.retry_ms
+            if err and self.broker.mode == "live":
+                # a timeout / dropped reply may hide a matched order: never send a second one in this window
+                # (worst case one unknown entry <= max_usd_per_entry; the wallet balance shows it)
+                self.next_try[key] = float("inf")
+                self.j.log("window_blocked", key=key, reason="order_error")
+            else:
+                self.next_try[key] = now_ms() + self.cfg.lock.retry_ms
             self.j.log("lock_miss", key=key, side=sig["side"], limit=limit, ms=now_ms() - t_sent, **ctx)
             return
         self.stats["filled"] += 1
