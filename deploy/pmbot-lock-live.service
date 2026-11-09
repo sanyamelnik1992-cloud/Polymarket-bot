@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot TWAP-lock L LIVE (config/lock_live.toml: REAL MONEY, 5 shares per entry, $10 open, -$5/day stop)
+Description=pmbot TWAP-lock L3 LIVE (config/lock_live.toml: price tiers, REAL MONEY, 5 shares per entry, $10 open, -$5/day stop)
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=600

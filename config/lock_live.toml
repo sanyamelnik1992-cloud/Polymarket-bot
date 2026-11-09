@@ -1,10 +1,13 @@
-# TWAP-lock bot L — LIVE (REAL MONEY). Same rule as config/lock.toml (its paper twin pmbot-lock, a test checks it).
-# Not started by default: the owner starts it (Telegram /restart pmbot-lock-live) after the paper night.
+# TWAP-lock L3 — LIVE (REAL MONEY). Same rule as config/lock_tier.toml (its paper twin pmbot-lock-tier, a test checks it).
+# L3 = L with PRICE TIERS (reports/47): p>=.99 -> ask<=.98 (the old live rule L), p>=.97 -> <=.95, p>=.95 -> <=.93, p>=.90 -> <=.91.
+# Why (reports/50): the old rule L (p >= 0.99 only) made 0 live entries on 9 Nov — by the time the model reaches 0.99 other bots have
+# bought every ask <= 0.98; L3 buys earlier only at a cheaper ask (paper 9 Nov: 13 entries, 13 won; replay of 9 Nov with the live limits: 50 entries, 0 lost).
+# Risk limits unchanged from live L. Not started by default: the owner starts it (Telegram /restart pmbot-lock-live).
 journal_dir = "data/journal-lock-live"
 
 [lock]
 assets = ["btc", "eth", "sol", "xrp"]
-theta = 0.99
+theta = 0.90
 agree = 0.90
 dmin_bp = 0.5
 adv1_bp = 1.0
@@ -17,11 +20,12 @@ rel_lo = 240.0
 rel_hi = 299.5
 shares = 5
 max_entries_per_window = 1
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
 
 [risk]
 max_usd_per_entry = 5.0
 max_open_usd = 10.0
-daily_loss_limit = 5.0          # one or two losing entries a day and it stops until a human restarts it
+daily_loss_limit = 5.0          # one loss is ~-$4.6: a second one before ~10 wins stops it until a human restarts it
 state_file = "data/state/lock_live.json"
 resume_next_day = false
 

@@ -1,0 +1,249 @@
+# Сырые результаты отчёта 50 (9 ноября 2026, 15:45 UTC). Данные: окна 5m BTC/ETH/SOL/XRP 9 ноября 00:00-15:35 UTC (187 окон на монету,
+# все сделки с мейкерами, Data API v2), секундные цены Binance как прокси Chainlink, правила и таблицы не менялись (ступени отчёта 47).
+# Воспроизведение: reports/46_tools/dl_windows.py + dl_binance.py -> reports/47_tools/lockcands.py (LOCK_WIN=2.0 и 1.0)
+#   -> reports/47_tools/botsim.py, tiers.py; сравнение с бумажными ботами: reports/50_tools/compare.py settles.csv c2_*.json
+#   (settles.csv из ветки server-reports); дневной стоп: reports/50_tools/daystop_mc.py
+
+=== botsim, исполнения [s+0.3, s+2.0] с
+правило        вход. проигр.    P&L $ дней  ср.день худший день дней со стопом пропущено лимитом
+--- все монеты
+L сейчас          13       0     +2.2    1     +2.2        +2.2              0                 0
+ступени B         50       0    +18.1    1    +18.1       +18.1              0                 1
+ступени A         70       0    +25.6    1    +25.6       +25.6              0                 3
+B + широкий (цена от 0.50)    86       2    +50.7    1    +50.7       +50.7              0                 4
+B + широкий до 0.80 (T4 → 0.80)    60       0    +39.1    1    +39.1       +39.1              0                 1
+только широкий W (p≥.90, 0.50–0.80)    17       0    +23.5    1    +23.5       +23.5              0                 0
+запас 3¢          24       0     +9.4    1     +9.4        +9.4              0                 0
+запас 4¢          13       0     +5.2    1     +5.2        +5.2              0                 0
+дёшево ≤0.93      72       1    +23.1    1    +23.1       +23.1              0                 2
+--- без XRP
+L сейчас          12       0     +2.1    1     +2.1        +2.1              0                 0
+ступени B         47       0    +17.1    1    +17.1       +17.1              0                 0
+ступени A         65       0    +23.7    1    +23.7       +23.7              0                 1
+B + широкий (цена от 0.50)    75       2    +40.4    1    +40.4       +40.4              0                 2
+B + широкий до 0.80 (T4 → 0.80)    53       0    +31.7    1    +31.7       +31.7              0                 0
+только широкий W (p≥.90, 0.50–0.80)    12       0    +17.0    1    +17.0       +17.0              0                 0
+запас 3¢          22       0     +8.7    1     +8.7        +8.7              0                 0
+запас 4¢          11       0     +4.5    1     +4.5        +4.5              0                 0
+дёшево ≤0.93      66       1    +20.9    1    +20.9       +20.9              0                 0
+
+=== botsim, исполнения [s+0.3, s+1.0] с
+правило        вход. проигр.    P&L $ дней  ср.день худший день дней со стопом пропущено лимитом
+--- все монеты
+L сейчас          12       0     +1.7    1     +1.7        +1.7              0                 0
+ступени B         48       0    +17.1    1    +17.1       +17.1              0                 0
+ступени A         68       0    +24.6    1    +24.6       +24.6              0                 2
+B + широкий (цена от 0.50)    84       1    +54.7    1    +54.7       +54.7              0                 2
+B + широкий до 0.80 (T4 → 0.80)    59       0    +38.5    1    +38.5       +38.5              0                 0
+только широкий W (p≥.90, 0.50–0.80)    17       0    +23.5    1    +23.5       +23.5              0                 0
+запас 3¢          21       0     +8.1    1     +8.1        +8.1              0                 0
+запас 4¢          11       0     +4.3    1     +4.3        +4.3              0                 0
+дёшево ≤0.93      68       1    +21.5    1    +21.5       +21.5              0                 1
+--- без XRP
+L сейчас          11       0     +1.6    1     +1.6        +1.6              0                 0
+ступени B         46       0    +16.5    1    +16.5       +16.5              0                 0
+ступени A         64       0    +23.2    1    +23.2       +23.2              0                 1
+B + широкий (цена от 0.50)    74       1    +44.9    1    +44.9       +44.9              0                 2
+B + широкий до 0.80 (T4 → 0.80)    53       0    +31.5    1    +31.5       +31.5              0                 0
+только широкий W (p≥.90, 0.50–0.80)    12       0    +17.0    1    +17.0       +17.0              0                 0
+запас 3¢          20       0     +7.8    1     +7.8        +7.8              0                 0
+запас 4¢          10       0     +4.0    1     +4.0        +4.0              0                 0
+дёшево ≤0.93      64       1    +20.0    1    +20.0       +20.0              0                 0
+
+=== tiers (без лимитов риска), исполнения [s+0.3, s+2.0] с
+окон всего 748: btc 187, eth 187, sol 187, xrp 187
+
+L сейчас (p≥.99, ask≤.98)
+   всего: входов  13, проигр. 0, P&L   +2.21$ (+3.40¢/акц), ср. цена 0.964  (на 1000 окон: 17 входов)
+   btc : входов   3, проигр. 0, P&L   +0.65$ (+4.37¢/акц), ср. цена 0.953
+   eth : входов   4, проигр. 0, P&L   +0.79$ (+3.96¢/акц), ср. цена 0.958
+   sol : входов   5, проигр. 0, P&L   +0.65$ (+2.60¢/акц), ср. цена 0.972
+   xrp : входов   1, проигр. 0, P&L   +0.12$ (+2.31¢/акц), ср. цена 0.975
+--
+ступени B: .99→.98 | .97→.95 | .95→.93 | .90→.91
+   всего: входов  51, проигр. 0, P&L  +18.56$ (+7.28¢/акц), ср. цена 0.922  (на 1000 окон: 68 входов)
+   btc : входов  24, проигр. 0, P&L   +9.55$ (+7.96¢/акц), ср. цена 0.915
+   eth : входов  15, проигр. 0, P&L   +5.88$ (+7.83¢/акц), ср. цена 0.916
+   sol : входов   8, проигр. 0, P&L   +1.68$ (+4.19¢/акц), ср. цена 0.955
+   xrp : входов   4, проигр. 0, P&L   +1.46$ (+7.30¢/акц), ср. цена 0.922
+
+=== входы реплики по времени и что сделали бумажные боты (compare.py, окно [s+0.3, s+2.0] с)
+
+== L: 13 replay entries, lost 0
+  01:15 sol s=266 p=0.9913 px=0.980 won  +0.09  paper:-
+  01:35 sol s=288 p=0.9901 px=0.970 won  +0.14  paper:-
+  04:00 eth s=255 p=0.9904 px=0.980 won  +0.09  paper:-
+  04:50 btc s=247 p=0.9901 px=0.980 won  +0.09  paper:lock
+  05:35 xrp s=289 p=0.9925 px=0.975 won  +0.12  paper:-
+  06:05 eth s=279 p=0.9925 px=0.980 won  +0.09  paper:-
+  06:45 sol s=293 p=0.9982 px=0.971 won  +0.14  paper:-
+  07:45 sol s=290 p=0.9911 px=0.960 won  +0.19  paper:-
+  09:40 sol s=241 p=0.9931 px=0.980 won  +0.09  paper:-
+  12:30 eth s=285 p=0.9949 px=0.910 won  +0.42  paper:lock-tier
+  14:30 btc s=252 p=0.9906 px=0.980 won  +0.09  paper:-
+  14:30 eth s=260 p=0.9904 px=0.960 won  +0.18  paper:-
+  15:20 btc s=295 p=0.9999 px=0.900 won  +0.47  paper:-
+
+== L3: 51 replay entries, lost 0
+  00:15 sol s=271 p=0.9426 px=0.910 won  +0.42  paper:-
+  00:25 eth s=274 p=0.9163 px=0.910 won  +0.42  paper:-
+  00:45 xrp s=277 p=0.9096 px=0.900 won  +0.47  paper:-
+  01:05 btc s=250 p=0.9321 px=0.910 won  +0.42  paper:-
+  01:15 sol s=266 p=0.9913 px=0.980 won  +0.09  paper:-
+  01:35 btc s=240 p=0.9133 px=0.908 won  +0.43  paper:-
+  01:35 sol s=288 p=0.9901 px=0.970 won  +0.14  paper:-
+  01:50 btc s=254 p=0.9530 px=0.930 won  +0.33  paper:-
+  02:00 btc s=266 p=0.9053 px=0.900 won  +0.47  paper:-
+  02:25 btc s=240 p=0.9173 px=0.905 won  +0.44  paper:-
+  02:25 eth s=256 p=0.9334 px=0.903 won  +0.45  paper:-
+  03:15 btc s=271 p=0.9380 px=0.910 won  +0.42  paper:-
+  03:30 eth s=243 p=0.9042 px=0.902 won  +0.46  paper:-
+  04:00 btc s=245 p=0.9021 px=0.910 won  +0.42  paper:-
+  04:00 eth s=255 p=0.9904 px=0.980 won  +0.09  paper:-
+  04:10 btc s=240 p=0.9535 px=0.906 won  +0.44  paper:-
+  04:35 eth s=264 p=0.9537 px=0.901 won  +0.46  paper:-
+  04:35 xrp s=242 p=0.9034 px=0.903 won  +0.45  paper:-
+  04:50 btc s=247 p=0.9901 px=0.980 won  +0.09  paper:lock
+  04:50 eth s=269 p=0.9585 px=0.920 won  +0.37  paper:-
+  05:35 xrp s=289 p=0.9925 px=0.975 won  +0.12  paper:-
+  05:40 eth s=282 p=0.9353 px=0.909 won  +0.43  paper:-
+  06:05 eth s=279 p=0.9925 px=0.980 won  +0.09  paper:-
+  06:10 btc s=265 p=0.9228 px=0.910 won  +0.42  paper:-
+  06:10 eth s=250 p=0.9286 px=0.900 won  +0.47  paper:-
+  06:20 btc s=241 p=0.9141 px=0.910 won  +0.42  paper:-
+  06:45 sol s=293 p=0.9982 px=0.971 won  +0.14  paper:-
+  07:45 eth s=272 p=0.9074 px=0.900 won  +0.47  paper:-
+  07:45 sol s=290 p=0.9911 px=0.960 won  +0.19  paper:-
+  07:50 btc s=260 p=0.9463 px=0.910 won  +0.42  paper:-
+  08:00 btc s=261 p=0.9121 px=0.900 won  +0.47  paper:-
+  08:10 btc s=276 p=0.9511 px=0.930 won  +0.33  paper:-
+  08:25 btc s=242 p=0.9679 px=0.920 won  +0.37  paper:-
+  09:15 btc s=261 p=0.9071 px=0.900 won  +0.47  paper:-
+  09:40 sol s=241 p=0.9931 px=0.980 won  +0.09  paper:-
+  10:05 sol s=279 p=0.9632 px=0.921 won  +0.37  paper:-
+  10:15 btc s=265 p=0.9292 px=0.910 won  +0.42  paper:-
+  11:00 btc s=244 p=0.9109 px=0.900 won  +0.47  paper:-
+  12:00 btc s=265 p=0.9323 px=0.910 won  +0.42  paper:lock-tier
+  12:05 eth s=271 p=0.9069 px=0.910 won  +0.42  paper:-
+  12:30 eth s=285 p=0.9949 px=0.910 won  +0.42  paper:lock-tier
+  13:30 eth s=276 p=0.9109 px=0.900 won  +0.47  paper:-
+  13:30 sol s=255 p=0.9715 px=0.950 won  +0.23  paper:lock-tier
+  14:10 btc s=261 p=0.9364 px=0.910 won  +0.42  paper:lock-tier
+  14:30 btc s=252 p=0.9906 px=0.980 won  +0.09  paper:-
+  14:30 eth s=256 p=0.9654 px=0.900 won  +0.47  paper:-
+  14:30 xrp s=268 p=0.9546 px=0.910 won  +0.42  paper:lock-tier
+  14:50 btc s=247 p=0.9018 px=0.900 won  +0.47  paper:lock-tier
+  15:00 eth s=265 p=0.9556 px=0.920 won  +0.37  paper:-
+  15:20 btc s=295 p=0.9999 px=0.900 won  +0.47  paper:-
+  15:25 btc s=254 p=0.9090 px=0.910 won  +0.42  paper:-
+
+== L4: 90 replay entries, lost 2
+  00:15 sol s=255 p=0.9230 px=0.880 won  +0.56  paper:-
+  00:25 eth s=271 p=0.9006 px=0.890 won  +0.52  paper:-
+  00:45 xrp s=277 p=0.9096 px=0.900 won  +0.47  paper:-
+  00:50 eth s=272 p=0.9404 px=0.841 won  +0.75  paper:-
+  01:05 btc s=242 p=0.9023 px=0.769 won  +1.09  paper:-
+  01:05 eth s=276 p=0.9422 px=0.880 won  +0.56  paper:-
+  01:15 sol s=266 p=0.9913 px=0.980 won  +0.09  paper:-
+  01:15 xrp s=266 p=0.9069 px=0.700 won  +1.43  paper:-
+  01:20 sol s=288 p=0.9113 px=0.760 won  +1.14  paper:-
+  01:35 btc s=240 p=0.9133 px=0.908 won  +0.43  paper:-
+  01:35 sol s=288 p=0.9901 px=0.970 won  +0.14  paper:-
+  01:45 btc s=260 p=0.9006 px=0.860 won  +0.66  paper:-
+  01:45 eth s=242 p=0.9728 px=0.760 won  +1.14  paper:-
+  01:50 btc s=254 p=0.9530 px=0.930 won  +0.33  paper:-
+  02:00 btc s=243 p=0.9080 px=0.880 won  +0.56  paper:-
+  02:00 eth s=276 p=0.9001 px=0.820 won  +0.85  paper:-
+  02:25 btc s=240 p=0.9173 px=0.905 won  +0.44  paper:-
+  02:25 eth s=256 p=0.9334 px=0.903 won  +0.45  paper:-
+  03:00 btc s=257 p=0.9028 px=0.790 won  +0.99  paper:-
+  03:15 btc s=245 p=0.9040 px=0.899 won  +0.47  paper:-
+  03:30 eth s=243 p=0.9042 px=0.902 won  +0.46  paper:-
+  04:00 btc s=245 p=0.9021 px=0.910 won  +0.42  paper:-
+  04:00 eth s=242 p=0.9010 px=0.870 won  +0.61  paper:-
+  04:10 btc s=240 p=0.9535 px=0.906 won  +0.44  paper:-
+  04:35 btc s=264 p=0.9061 px=0.840 won  +0.75  paper:-
+  04:35 eth s=263 p=0.9225 px=0.890 won  +0.52  paper:-
+  04:35 xrp s=242 p=0.9034 px=0.903 won  +0.45  paper:-
+  04:45 sol s=260 p=0.9169 px=0.890 won  +0.52  paper:-
+  04:50 btc s=247 p=0.9901 px=0.980 won  +0.09  paper:lock
+  04:50 eth s=269 p=0.9585 px=0.920 won  +0.37  paper:-
+  05:35 xrp s=275 p=0.9088 px=0.800 won  +0.94  paper:-
+  05:40 eth s=278 p=0.9080 px=0.850 won  +0.71  paper:-
+  05:55 btc s=263 p=0.9112 px=0.810 won  +0.90  paper:-
+  06:05 eth s=275 p=0.9156 px=0.862 won  +0.65  paper:-
+  06:05 xrp s=279 p=0.9352 px=0.810 won  +0.90  paper:-
+  06:10 btc s=243 p=0.9002 px=0.853 won  +0.69  paper:-
+  06:10 eth s=243 p=0.9261 px=0.890 won  +0.52  paper:-
+  06:20 btc s=241 p=0.9141 px=0.910 won  +0.42  paper:-
+  06:20 eth s=242 p=0.9413 px=0.820 won  +0.85  paper:-
+  06:45 sol s=293 p=0.9982 px=0.971 won  +0.14  paper:-
+  07:15 eth s=244 p=0.9135 px=0.820 won  +0.85  paper:-
+  07:30 sol s=242 p=0.9035 px=0.870 won  +0.61  paper:-
+  07:30 xrp s=242 p=0.9090 px=0.860 won  +0.66  paper:-
+  07:45 btc s=240 p=0.9209 px=0.860 won  +0.66  paper:-
+  07:45 eth s=272 p=0.9074 px=0.900 won  +0.47  paper:-
+  07:45 sol s=287 p=0.9614 px=0.790 won  +0.99  paper:-
+  07:50 btc s=260 p=0.9463 px=0.910 won  +0.42  paper:-
+  07:50 eth s=270 p=0.9097 px=0.870 won  +0.61  paper:-
+  08:00 btc s=261 p=0.9121 px=0.900 won  +0.47  paper:-
+  08:00 eth s=281 p=0.9113 px=0.760 won  +1.14  paper:-
+  08:10 btc s=276 p=0.9511 px=0.930 won  +0.33  paper:-
+  08:25 btc s=242 p=0.9679 px=0.920 won  +0.37  paper:-
+  09:15 btc s=260 p=0.9017 px=0.770 won  +1.09  paper:-
+  09:25 btc s=246 p=0.9091 px=0.820 won  +0.85  paper:-
+  09:25 eth s=256 p=0.9253 px=0.850 won  +0.71  paper:-
+  09:40 sol s=240 p=0.9923 px=0.890 won  +0.52  paper:-
+  09:45 btc s=249 p=0.9001 px=0.897 won  +0.48  paper:-
+  09:45 xrp s=278 p=0.9320 px=0.831 won  +0.80  paper:-
+  09:55 btc s=258 p=0.9120 px=0.830 won  +0.80  paper:-
+  10:05 sol s=279 p=0.9632 px=0.921 won  +0.37  paper:-
+  10:15 btc s=260 p=0.9033 px=0.820 won  +0.85  paper:-
+  10:15 xrp s=275 p=0.9424 px=0.600 won  +1.92  paper:-
+  10:40 btc s=261 p=0.9220 px=0.850 won  +0.71  paper:-
+  10:50 eth s=269 p=0.9074 px=0.570 won  +2.06  paper:-
+  10:50 xrp s=263 p=0.9230 px=0.750 won  +1.18  paper:-
+  11:00 btc s=243 p=0.9068 px=0.820 won  +0.85  paper:-
+  11:00 eth s=277 p=0.9614 px=0.874 won  +0.59  paper:-
+  11:05 sol s=273 p=0.9032 px=0.504 won  +2.39  paper:-
+  12:00 btc s=265 p=0.9323 px=0.910 won  +0.42  paper:lock-tier
+  12:05 eth s=271 p=0.9069 px=0.910 won  +0.42  paper:-
+  12:10 btc s=254 p=0.9004 px=0.889 won  +0.52  paper:lock-tier
+  12:30 eth s=275 p=0.9130 px=0.710 won  +1.38  paper:lock-tier
+  12:40 xrp s=282 p=0.9732 px=0.850 won  +0.71  paper:-
+  12:50 sol s=264 p=0.9009 px=0.870 won  +0.61  paper:-
+  13:20 btc s=257 p=0.9020 px=0.885 won  +0.54  paper:-
+  13:30 btc s=240 p=0.9308 px=0.810 LOST -4.10  paper:-
+  13:30 eth s=241 p=0.9034 px=0.890 LOST -4.48  paper:-
+  13:30 sol s=252 p=0.9111 px=0.840 won  +0.75  paper:lock-tier
+  14:10 btc s=242 p=0.9060 px=0.870 won  +0.61  paper:lock-tier
+  14:30 btc s=252 p=0.9906 px=0.980 won  +0.09  paper:-
+  14:30 eth s=248 p=0.9189 px=0.670 won  +1.57  paper:-
+  14:30 xrp s=268 p=0.9546 px=0.910 won  +0.42  paper:lock-tier
+  14:35 xrp s=244 p=0.9104 px=0.867 won  +0.62  paper:-
+  14:50 btc s=247 p=0.9018 px=0.900 won  +0.47  paper:lock-tier
+  15:00 btc s=240 p=0.9060 px=0.890 won  +0.52  paper:-
+  15:00 eth s=265 p=0.9556 px=0.920 won  +0.37  paper:-
+  15:05 eth s=264 p=0.9483 px=0.870 won  +0.61  paper:-
+  15:20 btc s=286 p=0.9814 px=0.580 won  +2.02  paper:-
+  15:20 xrp s=269 p=0.9306 px=0.790 won  +0.99  paper:-
+  15:25 btc s=254 p=0.9090 px=0.910 won  +0.42  paper:-
+
+pmbot-lock: paper entries today: 04:50 btc
+
+pmbot-lock-tier: paper entries today: 12:00 btc, 12:10 btc, 12:30 eth, 12:50 eth, 13:30 sol, 13:30 xrp, 13:35 eth, 14:05 sol, 14:10 btc, 14:30 sol, 14:30 xrp, 14:50 btc, 14:50 eth
+
+=== daystop_mc.py
+90 entries/day, win +$0.34, loss -$4.6; break-even loss rate 6.9%
+loss rate  2.0%  stop -$5     days stopped   4.6%  mean day +20.87$
+loss rate  2.0%  stop -$10    days stopped   0.5%  mean day +21.66$
+loss rate  3.2%  stop -$5     days stopped  13.0%  mean day +14.77$
+loss rate  3.2%  stop -$10    days stopped   2.9%  mean day +16.10$
+loss rate  4.0%  stop -$5     days stopped  20.9%  mean day +10.90$
+loss rate  4.0%  stop -$10    days stopped   6.5%  mean day +12.31$
+loss rate  5.0%  stop -$5     days stopped  33.4%  mean day  +6.42$
+loss rate  5.0%  stop -$10    days stopped  14.1%  mean day  +7.78$
+loss rate  6.0%  stop -$5     days stopped  46.9%  mean day  +2.69$
+loss rate  6.0%  stop -$10    days stopped  24.2%  mean day  +3.47$
+loss rate  8.0%  stop -$5     days stopped  70.6%  mean day  -2.47$
+loss rate  8.0%  stop -$10    days stopped  49.7%  mean day  -3.56$

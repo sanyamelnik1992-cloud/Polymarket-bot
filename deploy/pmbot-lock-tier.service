@@ -9,7 +9,7 @@ StartLimitBurst=5
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# PAPER. reports/47. Compare with pmbot-lock (L) on the same windows; L is what pmbot-lock-live runs.
+# PAPER. reports/47, reports/50. The paper twin of pmbot-lock-live (live runs this L3 rule; a test checks it).
 ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_tier.toml
 # CPU priority: paper bots yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
 Nice=10

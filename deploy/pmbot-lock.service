@@ -9,7 +9,7 @@ StartLimitBurst=5
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# PAPER. reports/44_twap_lock.md. Its live version is pmbot-lock-live (config/lock_live.toml, same rule).
+# PAPER. reports/44_twap_lock.md. The plain L rule (p >= 0.99); pmbot-lock-live runs L3 (price tiers) since reports/50.
 ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock.toml
 # CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
 Nice=10
