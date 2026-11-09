@@ -1,0 +1,18 @@
+run: /home/pmbot/Polymarket-bot/data/journal-g2/20261109-083916
+mode: paper  duration: 23.2 min  events: {'start': 1, 'vol_seed': 1, 'window': 7, 'filters': 319, 'status': 46, 'strike_est': 4, 'fv': 1042, 'side_block': 1213, 'quote': 63, 'fill': 12, 'fill_ctx': 12, 'provisional': 3, 'settle': 2}
+
+filter reasons (state changes): {'wide_spread': 116, 'calm_market': 97, 'no_strike': 78, 'no_fair_value': 78, 'jump_cooldown': 74, 'no_book': 22, 'too_late': 18, 'too_early': 15, 'p_out_of_range': 6, 'loop_lag': 5, 'chainlink_stale': 4, 'binance_stale': 3, 'clob_stale': 3}
+quotes placed: 63
+
+fills: 12  shares: 45  notional: $19.41
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc       12  45.058    19.411      0.403   63.163
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
+asset                                                                            
+btc          2  9.649  0.425          0.351   0.074       1.0  0.135  0.29  0.044
+
+TOTAL pnl $+0.42 (ex-rebate $+0.35) on cost $9.65 -> ROI +4.40%; windows 2, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 2
