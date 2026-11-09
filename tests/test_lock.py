@@ -481,3 +481,22 @@ def test_lock_tier_wide_is_l3_with_a_lower_price_floor(tables):
     assert sig is None and ctx["why"] == "ask_too_low"          # L3: the market doubting this much is a reason to stay out
     sig, ctx = decide(wide.lock, *args, (0.70, 100.0), (0.30, 100.0))
     assert sig and sig["side"] == "U" and sig["ask"] == 0.70, ctx
+
+
+def test_lock_bot_reports_event_loop_lag(tmp_path):
+    """Lag and decide time are measured per status interval (the hourly report shows 'лаг цикла до X мс')."""
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=PaperTaker(State(["btc"])), tables=_Tab())
+    assert {"lag_max_ms", "lag_over_100ms", "decide_max_ms"} <= set(bot.stats)
+
+    async def go():
+        import time as _t
+        task = asyncio.create_task(bot.lag_loop(period_s=0.01))
+        await asyncio.sleep(0.03)
+        _t.sleep(0.15)                      # block the loop: a starved / busy process
+        await asyncio.sleep(0.03)
+        bot._stop = True
+        await task
+    asyncio.run(go())
+    assert bot.stats["lag_max_ms"] >= 100 and bot.stats["lag_over_100ms"] >= 1

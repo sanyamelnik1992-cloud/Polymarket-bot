@@ -333,7 +333,8 @@ class LockBot:
         self.busy = set()          # window keys with an order in flight
         self.next_try = {}         # window key -> ms
         self.last_why = {}
-        self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0}
+        self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0,
+                      "lag_max_ms": 0, "lag_over_100ms": 0, "decide_max_ms": 0}   # lag/decide: per 30 s status
         self.dur = c.duration
         self.tag = DURATIONS[c.duration]
         self._stop = False
@@ -531,7 +532,22 @@ class LockBot:
             except Exception as e:  # noqa: BLE001
                 log.exception("decide error: %s", e)
                 self.j.log("error", where="decide", error=str(e)[:300])
+            took = int((time.time() - t0) * 1000)
+            if took > self.stats["decide_max_ms"]:
+                self.stats["decide_max_ms"] = took
             await asyncio.sleep(max(0.0, c.tick_ms / 1000 - (time.time() - t0)))
+
+    async def lag_loop(self, period_s=0.05):
+        """Event-loop lag (a busy or starved process sees the market late): max per status interval, and how many
+        wake-ups came > 100 ms late. On 9 Nov the VPS lost 12-32 % of its CPU time to the hypervisor (steal)."""
+        while self.alive():
+            t = time.perf_counter()
+            await asyncio.sleep(period_s)
+            lag = int((time.perf_counter() - t - period_s) * 1000)
+            if lag > self.stats["lag_max_ms"]:
+                self.stats["lag_max_ms"] = lag
+            if lag > 100:
+                self.stats["lag_over_100ms"] += 1
 
     async def decide_once(self, now):
         if self.maker:
@@ -794,6 +810,7 @@ class LockBot:
             log.info(msg)
             self.j.log("status", pnl=round(self.day_pnl(), 4), open_worst=round(self.open_cost(), 4),
                        stats=dict(self.stats), sigma_bp=sg)
+            self.stats["lag_max_ms"] = self.stats["decide_max_ms"] = 0      # maxima per 30 s interval
             self._save_state()
 
     async def run(self):
@@ -801,7 +818,7 @@ class LockBot:
         self.j.log("start", mode=self.broker.mode, config=asdict(self.cfg))
         tasks = [asyncio.create_task(x) for x in (
             self.discover_loop(), rtds_feed(self.st, self.alive), binance_feed(self.st, self.alive),
-            self.decide_loop(), self.status_loop(), self.strike_check_loop())]
+            self.decide_loop(), self.status_loop(), self.strike_check_loop(), self.lag_loop())]
         tasks += [asyncio.create_task(f.run()) for f in self.feeds.values()]
         settle = asyncio.create_task(self.settle_loop())
         try:
