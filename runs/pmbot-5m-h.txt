@@ -1,18 +1,18 @@
 run: /home/pmbot/Polymarket-bot/data/journal-h/20261108-230108
-mode: paper  duration: 420.5 min  events: {'start': 1, 'vol_seed': 1, 'window': 86, 'filters': 11954, 'status': 840, 'strike_est': 84, 'fv': 24890, 'side_block': 6180, 'quote': 1334, 'fill': 37, 'fill_ctx': 37, 'provisional': 18, 'settle': 18}
+mode: paper  duration: 480.9 min  events: {'start': 1, 'vol_seed': 1, 'window': 98, 'filters': 13784, 'status': 961, 'strike_est': 96, 'fv': 28496, 'side_block': 6720, 'quote': 1495, 'fill': 41, 'fill_ctx': 41, 'provisional': 20, 'settle': 20}
 
-filter reasons (state changes): {'jump_cooldown': 7669, 'model_disagrees': 7537, 'p_out_of_range': 5909, 'wide_spread': 2865, 'too_late': 1688, 'no_book': 986, 'too_early': 429, 'calm_market': 198, 'no_strike': 190, 'no_fair_value': 190, 'chainlink_stale': 100, 'vol_spike': 77, 'loop_lag': 70, 'clob_stale': 28, 'binance_stale': 2}
-quotes placed: 1334
+filter reasons (state changes): {'jump_cooldown': 8963, 'model_disagrees': 8814, 'p_out_of_range': 6858, 'wide_spread': 3234, 'too_late': 1864, 'no_book': 1140, 'too_early': 483, 'no_strike': 219, 'no_fair_value': 219, 'calm_market': 198, 'chainlink_stale': 126, 'loop_lag': 106, 'vol_spike': 78, 'clob_stale': 32, 'binance_stale': 2}
+quotes placed: 1495
 
-fills: 37  shares: 165  notional: $81.03
+fills: 41  shares: 185  notional: $90.73
        fills   shares  notional  avg_price  med_rel
 asset                                              
-btc       37  165.492    81.032      0.492   46.096
+btc       41  185.492    90.732      0.492   45.866
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc         18  81.032 -6.893         -7.462   0.569     0.722 -2.883  0.436 -0.085
+btc         20  90.732 -6.524         -7.162   0.638      0.75 -2.883  0.436 -0.072
 
-TOTAL pnl $-6.89 (ex-rebate $-7.46) on cost $81.03 -> ROI -8.51%; windows 18, t-stat -1.53
-max drawdown $-5.22; hedged windows (both sides filled): 15
+TOTAL pnl $-6.52 (ex-rebate $-7.16) on cost $90.73 -> ROI -7.19%; windows 20, t-stat -1.43
+max drawdown $-5.22; hedged windows (both sides filled): 17
