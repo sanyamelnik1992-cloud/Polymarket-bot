@@ -35,10 +35,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (`risk.resume_next_day`), live never does.
 - **TWAP-lock bots** (`reports/44_twap_lock.md`, `pmbot/lockmodel.py`, `pmbot/bot/lock.py`, `scripts/run_lock.py`): in the
   last minute of each window buy the side whose closing Chainlink TWAP (prints `[T+238, T+297]`, strike `[T-62, T-3]`)
-  is already decided, FAK, one entry per window, held to resolution. `pmbot-lock` = `config/lock.toml` (L, asks
-  0.90–0.98, paper, candidate for live), `pmbot-lock-wide` = `config/lock_wide.toml` (L2, 0.50–0.98, paper),
-  `pmbot-lock-live` = `config/lock_live.toml` (same rule as L — a test checks it; REAL MONEY: running since 9 Nov
-  07:29 UTC on the owner's word "запусти на реальные деньги"; not enabled at boot). `pmbot-lock-15` =
+  is already decided, FAK, one entry per window, held to resolution. `pmbot-lock` = `config/lock.toml` (L, p >= 0.99,
+  asks 0.90–0.98, paper; was the live rule until `reports/50`), `pmbot-lock-wide` = `config/lock_wide.toml` (L2, 0.50–0.98, paper),
+  `pmbot-lock-live` = `config/lock_live.toml` (REAL MONEY since 9 Nov 07:29 UTC on the owner's word "запусти на реальные
+  деньги"; not enabled at boot; the rule is L3 = price tiers since `reports/50` (L made 0 live entries), same rule as its
+  paper twin `pmbot-lock-tier` — a test checks it; limits those of live L: 5 shares, $10 open, −$5/day). `pmbot-lock-15` =
   `config/lock15.toml` (L15: the L rule on the 15-minute markets, `lock.duration = 900`, paper; same resolution rule,
   30/30 windows checked). `pmbot-lock-maker` = `config/lock_maker.toml` (LM: the L rule with a resting bid <= 0.98
   for the decided side instead of a taker buy, `lock.entry = "maker"`, paper-only, PaperBroker queue model) and
@@ -47,8 +48,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `scripts/build_lock_tables.py`); replay on a recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44
   section 8; L15/LM criteria: report 45 section 6.
   Price tiers (`reports/47_lock_price_tiers.md`, `lock.tiers` + `tier_limit` in `pmbot/bot/lock.py`): `pmbot-lock-tier` = `config/lock_tier.toml`
-  (L3, a lower model probability is allowed only at a cheaper ask; paper) and `pmbot-lock-tier-wide` = `config/lock_tier_wide.toml` (L4, L3 with
-  the price floor 0.50; paper, riskier). Go-live rule for L3/L4: report 47 section 6. Analysis tools: `reports/46_tools`, `reports/47_tools`.
+  (L3, a lower model probability is allowed only at a cheaper ask; paper twin of live) and `pmbot-lock-tier-wide` = `config/lock_tier_wide.toml` (L4, L3 with
+  the price floor 0.50; paper, riskier). Go-live rule for L3/L4: report 47 section 6; why live moved to L3 early and when to stop it: report 50
+  section 5. Analysis tools: `reports/46_tools`, `reports/47_tools`, `reports/50_tools` (replay of a fresh day vs the paper bots' settles).
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

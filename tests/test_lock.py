@@ -152,13 +152,20 @@ def test_lock_state_nowcast_counts_unreceived_past_prints():
 
 def test_configs_load_and_live_is_the_twin():
     paper = load_lock_config(os.path.join(ROOT, "config", "lock.toml"))
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
     wide = load_lock_config(os.path.join(ROOT, "config", "lock_wide.toml"))
-    assert paper.execution.mode == "paper" and wide.execution.mode == "paper" and live.execution.mode == "live"
+    assert paper.execution.mode == "paper" and tier.execution.mode == "paper" and wide.execution.mode == "paper"
+    assert live.execution.mode == "live"
     assert live.risk.resume_next_day is False and live.risk.state_file
-    assert paper.lock == live.lock, "the live rule must stay identical to its paper twin pmbot-lock"
-    assert paper.risk.max_usd_per_entry == live.risk.max_usd_per_entry
-    assert paper.risk.max_open_usd == live.risk.max_open_usd
+    # live runs L3 (price tiers) since reports/50: its paper twin is pmbot-lock-tier = config/lock_tier.toml
+    assert tier.lock == live.lock, "the live rule must stay identical to its paper twin pmbot-lock-tier (L3)"
+    assert tier.lock.tiers and live.lock.theta < paper.lock.theta
+    assert tier.risk.max_usd_per_entry == live.risk.max_usd_per_entry
+    assert tier.risk.max_open_usd == live.risk.max_open_usd
+    # L -> L3 changed the rule, not the money: the live limits stay those of live L (raising them is the owner's call)
+    assert live.lock.shares <= 5 and live.risk.max_usd_per_entry <= 5.0
+    assert live.risk.max_open_usd <= 10.0 and live.risk.daily_loss_limit <= 5.0
     assert wide.lock.a_min < paper.lock.a_min
     raw = tomllib.load(open(os.path.join(ROOT, "config", "lock_live.toml"), "rb"))
     assert raw["execution"]["mode"] == "live"
@@ -174,6 +181,7 @@ def test_units_wire_the_configs():
     for unit, cfg, live in (("pmbot-lock", "config/lock.toml", False), ("pmbot-lock-wide", "config/lock_wide.toml", False),
                             ("pmbot-lock-15", "config/lock15.toml", False),
                             ("pmbot-lock-maker", "config/lock_maker.toml", False),
+                            ("pmbot-lock-tier", "config/lock_tier.toml", False),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
