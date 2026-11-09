@@ -512,10 +512,44 @@ def top_cpu(n=5):
     return rows
 
 
+def _is_ec2():
+    """True only when DMI / Xen say the machine is EC2 (or Lightsail): the metadata address is asked nowhere else."""
+    for f in ("sys_vendor", "board_vendor", "bios_vendor"):
+        try:
+            if "amazon" in open(f"/sys/devices/virtual/dmi/id/{f}").read().lower():
+                return True
+        except OSError:
+            pass
+    try:
+        return open("/sys/hypervisor/uuid").read().lower().startswith("ec2")
+    except OSError:
+        return False
+
+
+def instance_type(timeout=1.0):
+    """EC2 instance type from the instance metadata service (IMDSv2: a link-local address, no credentials are read);
+    '' outside EC2, when PMBOT_NO_IMDS is set, or when the service is unreachable. 't3.*' / 't4g.*' = CPU credits."""
+    if os.environ.get("PMBOT_NO_IMDS") or not _is_ec2():
+        return ""
+    import urllib.request
+    base = "http://169.254.169.254/latest"
+    try:
+        req = urllib.request.Request(base + "/api/token", method="PUT", headers={"X-aws-ec2-metadata-token-ttl-seconds": "60"})
+        tok = urllib.request.urlopen(req, timeout=timeout).read().decode()
+        req = urllib.request.Request(base + "/meta-data/instance-type", headers={"X-aws-ec2-metadata-token": tok})
+        return urllib.request.urlopen(req, timeout=timeout).read().decode().strip()
+    except Exception:  # noqa: BLE001  (IMDS disabled or no route: just no line)
+        return ""
+
+
 def load_report(sample_s=2.0):
     """Lines that say WHY a server is slow, not only that the load average is high (reports/48): CPU busy / disk wait /
     steal over `sample_s` seconds, the kernel's pressure numbers (PSI), a CPU speed probe and the top processes."""
     lines = []
+    it = instance_type()
+    if it:
+        lines.append(f"тип сервера: {it}" + (" (с кредитами процессора: после их исчерпания ядро урезается)"
+                                             if it.split(".")[0] in ("t2", "t3", "t3a", "t4g") else ""))
     try:
         a = parse_cpu_stat(open("/proc/stat").read())
         time.sleep(sample_s)

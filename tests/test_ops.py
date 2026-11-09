@@ -177,3 +177,50 @@ def test_cpu_probe_and_the_report_survives_a_failing_diagnostic(monkeypatch):
         raise RuntimeError("no /proc here")
     monkeypatch.setattr(ops, "load_report", boom)
     assert "CPU load" in ops.format_server() or "диск: свободно" in ops.format_server()
+
+
+def test_instance_type_is_asked_only_on_ec2_and_marks_burstable(monkeypatch):
+    import urllib.request
+
+    class Resp:
+        def __init__(self, body):
+            self.body = body
+
+        def read(self):
+            return self.body.encode()
+
+    def fake_urlopen(req, timeout=0):
+        return Resp("TOKEN" if req.full_url.endswith("/api/token") else "t3.small\n")
+
+    def never(*a, **k):
+        raise AssertionError("the metadata address must not be asked outside EC2")
+    monkeypatch.delenv("PMBOT_NO_IMDS", raising=False)
+    monkeypatch.setattr(urllib.request, "urlopen", never)
+    monkeypatch.setattr(ops, "_is_ec2", lambda: False)
+    assert ops.instance_type() == ""                                   # not EC2: no network call at all
+    monkeypatch.setattr(ops, "_is_ec2", lambda: True)
+    monkeypatch.setenv("PMBOT_NO_IMDS", "1")
+    assert ops.instance_type() == ""                                   # switched off
+    monkeypatch.delenv("PMBOT_NO_IMDS")
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    assert ops.instance_type() == "t3.small"
+    monkeypatch.setattr(ops, "cpu_probe", lambda *a, **k: 1.0)
+    monkeypatch.setattr(ops, "top_cpu", lambda *a, **k: [])
+    first = ops.load_report(sample_s=0.01)[0]
+    assert first.startswith("тип сервера: t3.small") and "кредитами" in first
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(OSError("no route")))
+    assert ops.instance_type() == "" and not any(x.startswith("тип сервера") for x in ops.load_report(sample_s=0.01))
+
+
+def test_is_ec2_reads_dmi(monkeypatch, tmp_path):
+    real_open = open
+
+    def fake_open(path, *a, **k):
+        if str(path).endswith("/sys_vendor"):
+            return real_open(tmp_path / "sys_vendor", *a, **k)
+        raise OSError("absent")
+    (tmp_path / "sys_vendor").write_text("Amazon EC2\n")
+    monkeypatch.setattr("builtins.open", fake_open)
+    assert ops._is_ec2() is True
+    (tmp_path / "sys_vendor").write_text("QEMU\n")
+    assert ops._is_ec2() is False
