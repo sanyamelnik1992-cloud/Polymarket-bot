@@ -61,6 +61,8 @@ def target_quotes(w: Window, p_up: float, bu: Book, bd: Book, pos: Position, sc:
             up2, dn2 = pos.up + (size if side == "U" else 0.0), pos.down + (size if side == "D" else 0.0)
             if pos.cost + px * size - min(up2, dn2) > pos.worst_loss() + 1e-9:
                 size = math.floor(abs(net) + 1e-9)
+        if opening and sc.favorite_only > 0 and p_tok < 0.5 + sc.favorite_only - 1e-9:
+            size = 0                                # behind the strike: maker fills there lose (reports/46)
         if px < tick or px > 0.99 or size < max(w.min_size, 5):
             out[side] = None
         else:
