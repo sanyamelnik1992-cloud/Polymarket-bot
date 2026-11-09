@@ -1,0 +1,20 @@
+[Unit]
+Description=pmbot TWAP-lock L3 price tiers (config/lock_tier.toml: L with price tiers: lower probability only at a cheaper ask; paper)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. reports/47. Compare with pmbot-lock (L) on the same windows; L is what pmbot-lock-live runs.
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_tier.toml
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

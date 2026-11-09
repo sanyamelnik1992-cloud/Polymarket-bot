@@ -46,6 +46,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   Binance guard 1 bp / 3 s; a test checks that only these differ). Empirical tails: `config/lock_tables.npz` (rebuild:
   `scripts/build_lock_tables.py`); replay on a recorder extraction: `scripts/replay_lock.py`. Go-live rule: report 44
   section 8; L15/LM criteria: report 45 section 6.
+  Price tiers (`reports/47_lock_price_tiers.md`, `lock.tiers` + `tier_limit` in `pmbot/bot/lock.py`): `pmbot-lock-tier` = `config/lock_tier.toml`
+  (L3, a lower model probability is allowed only at a cheaper ask; paper) and `pmbot-lock-tier-wide` = `config/lock_tier_wide.toml` (L4, L3 with
+  the price floor 0.50; paper, riskier). Go-live rule for L3/L4: report 47 section 6. Analysis tools: `reports/46_tools`, `reports/47_tools`.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`).

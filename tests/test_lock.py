@@ -398,3 +398,86 @@ def test_lock_maker2_bids_lower_and_guards_binance_tighter():
     assert maker_bid(lm.lock, 0.995, 0.99) == 0.98 and maker_bid(lm2.lock, 0.995, 0.99) == 0.96
     for k in ("theta", "agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "min_edge", "rel_lo", "rel_hi", "shares"):
         assert getattr(lm2.lock, k) == getattr(lm.lock, k), k          # only a_max and adv3_bp differ
+
+
+def test_lock_tiers_lower_probability_needs_cheaper_ask():
+    from pmbot.bot.lock import tier_limit
+    from pmbot.fees import fee_per_share
+    paper = load_lock_config(os.path.join(ROOT, "config", "lock.toml"))
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    assert tier.execution.mode == "paper" and tier.lock.entry == "taker" and tier.lock.tiers
+    # everything except theta, tiers and the files is L's
+    assert tier.risk.state_file != paper.risk.state_file and tier.journal_dir != paper.journal_dir
+    for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
+              "assets", "max_entries_per_window"):
+        assert getattr(tier.lock, k) == getattr(paper.lock, k), k
+    for k in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
+        assert getattr(tier.risk, k) == getattr(paper.risk, k), k
+    c = tier.lock
+    assert tier_limit(c, 0.995) == 0.98 and tier_limit(c, 0.98) == 0.95 and tier_limit(c, 0.96) == 0.93
+    assert tier_limit(c, 0.92) == 0.91 and tier_limit(c, 0.89) is None
+    # the top tier is L's own rule: p >= 0.99 -> ask up to 0.98
+    for p in (0.99, 0.999):
+        assert min(c.a_max, tier_limit(c, p)) == min(paper.lock.a_max, p - paper.lock.min_edge - fee_per_share(0.98))
+
+
+def test_lock_tiers_validation():
+    import pytest
+    base = {"lock": {"theta": 0.90, "agree": 0.90, "tiers": [[0.99, 0.98], [0.95, 0.93]]}}
+    assert load_lock_config(overrides=base).lock.tiers
+    for bad in ({"tiers": [[0.99, 0.98], [0.95, 0.99]]},           # ask above a_max
+                {"tiers": [[0.99, 0.93], [0.95, 0.98]]},           # a higher p must not be cheaper
+                {"tiers": [[0.80, 0.93]]},                          # below theta
+                {"tiers": [[0.95, 0.93]], "entry": "maker"}):       # maker + tiers
+        with pytest.raises(ValueError):
+            load_lock_config(overrides={"lock": {"theta": 0.90, "agree": 0.90, **bad}})
+
+
+def test_decide_with_tiers_end_to_end(tables):
+    """Same situation, probability between 0.95 and 0.97: L (theta 0.99) says no, L3 buys at <= 0.93 and not at 0.94."""
+    from pmbot.bot.lock import decide_state
+    paper = load_lock_config(os.path.join(ROOT, "config", "lock.toml")).lock
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    K, now_s, cl, last = scenario(bp=1.0, rel=270.0)
+    bn = 75000.0
+    now = int(now_s * 1000)
+    sigma = None
+    for sg in [x * 1e-5 for x in range(2, 80)]:             # find a sigma that puts the model in the 0.95-0.97 tier
+        side, p, _ = decide_state(tier, tables, "btc", T, K, now, cl, last, sg, bn, bn, bn, bn)
+        if side == "U" and 0.95 <= p < 0.97:
+            sigma = sg
+            break
+    assert sigma is not None, "no sigma gives p in [0.95, 0.97)"
+    asks = lambda a: (a, 100.0)  # noqa: E731
+    args = (tables, "btc", T, K, now, cl, last, sigma, bn, bn, bn, bn)
+    sig, ctx = decide(paper, *args, asks(0.92), (0.06, 100.0))
+    assert sig is None and ctx["why"] == "p"                  # L: p < 0.99
+    sig, ctx = decide(tier, *args, asks(0.92), (0.06, 100.0))
+    assert sig and sig["side"] == "U" and sig["limit"] == pytest.approx(0.93), ctx
+    sig, ctx = decide(tier, *args, asks(0.93), (0.06, 100.0))
+    assert sig, ctx
+    sig, ctx = decide(tier, *args, asks(0.94), (0.06, 100.0))
+    assert sig is None and ctx["why"] == "ask_too_high"       # a 0.97 probability must come cheaper than 0.94
+    sig, ctx = decide(tier, *args, asks(0.85), (0.06, 100.0))
+    assert sig is None and ctx["why"] == "ask_too_low"        # a_min 0.90 still holds
+
+
+def test_lock_tier_wide_is_l3_with_a_lower_price_floor(tables):
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    wide = load_lock_config(os.path.join(ROOT, "config", "lock_tier_wide.toml"))
+    assert wide.execution.mode == "paper" and wide.lock.a_min == 0.50 and tier.lock.a_min == 0.90
+    assert wide.risk.state_file != tier.risk.state_file and wide.journal_dir != tier.journal_dir
+    for k in ("theta", "agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
+              "assets", "tiers", "max_entries_per_window"):
+        assert getattr(wide.lock, k) == getattr(tier.lock, k), k
+    from pmbot.bot.lock import decide_state
+    K, now_s, cl, last = scenario(bp=1.0, rel=270.0)
+    bn = 75000.0
+    now = int(now_s * 1000)
+    sigma = next(sg for sg in [x * 1e-5 for x in range(2, 80)]
+                 if (lambda r: r[0] == "U" and 0.95 <= r[1] < 0.97)(decide_state(tier.lock, tables, "btc", T, K, now, cl, last, sg, bn, bn, bn, bn)))
+    args = (tables, "btc", T, K, now, cl, last, sigma, bn, bn, bn, bn)
+    sig, ctx = decide(tier.lock, *args, (0.70, 100.0), (0.30, 100.0))
+    assert sig is None and ctx["why"] == "ask_too_low"          # L3: the market doubting this much is a reason to stay out
+    sig, ctx = decide(wide.lock, *args, (0.70, 100.0), (0.30, 100.0))
+    assert sig and sig["side"] == "U" and sig["ask"] == 0.70, ctx
