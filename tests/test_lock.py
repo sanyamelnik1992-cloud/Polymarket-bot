@@ -434,9 +434,30 @@ def test_lock_tiers_validation():
             load_lock_config(overrides={"lock": {"theta": 0.90, "agree": 0.90, **bad}})
 
 
-def test_decide_with_tiers_uses_the_tier_limit():
-    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
-    from pmbot.bot.lock import tier_limit
-    # the ask check in decide(): limit = min(a_max, tier_limit(p)); p = 0.96 -> 0.93
-    for ask, ok in ((0.92, True), (0.93, True), (0.94, False), (0.96, False)):
-        assert (ask <= min(c.a_max, tier_limit(c, 0.96)) + 1e-9) == ok
+def test_decide_with_tiers_end_to_end(tables):
+    """Same situation, probability between 0.95 and 0.97: L (theta 0.99) says no, L3 buys at <= 0.93 and not at 0.94."""
+    from pmbot.bot.lock import decide_state
+    paper = load_lock_config(os.path.join(ROOT, "config", "lock.toml")).lock
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    K, now_s, cl, last = scenario(bp=1.0, rel=270.0)
+    bn = 75000.0
+    now = int(now_s * 1000)
+    sigma = None
+    for sg in [x * 1e-5 for x in range(2, 80)]:             # find a sigma that puts the model in the 0.95-0.97 tier
+        side, p, _ = decide_state(tier, tables, "btc", T, K, now, cl, last, sg, bn, bn, bn, bn)
+        if side == "U" and 0.95 <= p < 0.97:
+            sigma = sg
+            break
+    assert sigma is not None, "no sigma gives p in [0.95, 0.97)"
+    asks = lambda a: (a, 100.0)  # noqa: E731
+    args = (tables, "btc", T, K, now, cl, last, sigma, bn, bn, bn, bn)
+    sig, ctx = decide(paper, *args, asks(0.92), (0.06, 100.0))
+    assert sig is None and ctx["why"] == "p"                  # L: p < 0.99
+    sig, ctx = decide(tier, *args, asks(0.92), (0.06, 100.0))
+    assert sig and sig["side"] == "U" and sig["limit"] == pytest.approx(0.93), ctx
+    sig, ctx = decide(tier, *args, asks(0.93), (0.06, 100.0))
+    assert sig, ctx
+    sig, ctx = decide(tier, *args, asks(0.94), (0.06, 100.0))
+    assert sig is None and ctx["why"] == "ask_too_high"       # a 0.97 probability must come cheaper than 0.94
+    sig, ctx = decide(tier, *args, asks(0.85), (0.06, 100.0))
+    assert sig is None and ctx["why"] == "ask_too_low"        # a_min 0.90 still holds
