@@ -1,18 +1,18 @@
 run: /home/pmbot/Polymarket-bot/data/journal-g/20261108-230105
-mode: paper  duration: 240.4 min  events: {'start': 1, 'vol_seed': 1, 'window': 50, 'filters': 6411, 'status': 480, 'strike_est': 48, 'fv': 14125, 'side_block': 11316, 'quote': 611, 'fill': 101, 'fill_ctx': 101, 'provisional': 39, 'settle': 38}
+mode: paper  duration: 300.3 min  events: {'start': 1, 'vol_seed': 1, 'window': 62, 'filters': 7723, 'status': 600, 'strike_est': 60, 'fv': 17701, 'side_block': 13795, 'quote': 808, 'fill': 125, 'fill_ctx': 125, 'provisional': 48, 'settle': 47}
 
-filter reasons (state changes): {'jump_cooldown': 3880, 'wide_spread': 1940, 'p_out_of_range': 1750, 'too_late': 811, 'no_book': 557, 'too_early': 229, 'calm_market': 182, 'no_strike': 103, 'no_fair_value': 103, 'chainlink_stale': 58, 'loop_lag': 49, 'vol_spike': 20, 'clob_stale': 16, 'binance_stale': 3}
-quotes placed: 611
+filter reasons (state changes): {'jump_cooldown': 4677, 'p_out_of_range': 2279, 'wide_spread': 2269, 'too_late': 1088, 'no_book': 690, 'too_early': 293, 'calm_market': 182, 'no_strike': 132, 'no_fair_value': 132, 'chainlink_stale': 66, 'loop_lag': 55, 'vol_spike': 47, 'clob_stale': 19, 'binance_stale': 3}
+quotes placed: 808
 
-fills: 101  shares: 418  notional: $188.83
+fills: 125  shares: 517  notional: $233.62
        fills   shares  notional  avg_price  med_rel
 asset                                              
-btc      101  417.591   188.835      0.454   24.803
+btc      125  517.161   233.622      0.453   25.259
 
 settled windows:
        windows     cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                               
-btc         38  180.571  5.172          3.874   1.298     0.868 -2.633  3.934  0.029
+btc         47  224.156  5.545          3.928   1.617     0.872 -2.633  3.934  0.025
 
-TOTAL pnl $+5.17 (ex-rebate $+3.87) on cost $180.57 -> ROI +2.86%; windows 38, t-stat +0.82
-max drawdown $-3.31; hedged windows (both sides filled): 37
+TOTAL pnl $+5.54 (ex-rebate $+3.93) on cost $224.16 -> ROI +2.47%; windows 47, t-stat +0.87
+max drawdown $-3.31; hedged windows (both sides filled): 46
