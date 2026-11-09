@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier/20261109-165004
-mode: paper  duration: 190.6 min  events: {'start': 1, 'status': 381, 'lock_state': 1426, 'strike': 144, 'fill': 5, 'provisional': 5, 'settle': 5}
+mode: paper  duration: 251.1 min  events: {'start': 1, 'status': 502, 'lock_state': 1838, 'strike': 192, 'fill': 5, 'provisional': 5, 'settle': 5}
 
 fills: 5  shares: 25  notional: $22.70
        fills  shares  notional  avg_price  med_rel

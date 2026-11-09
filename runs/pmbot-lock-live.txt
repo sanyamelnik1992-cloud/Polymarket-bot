@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261109-165016
-mode: live  duration: 190.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 380, 'lock_state': 1319, 'strike': 140, 'order_error': 7, 'window_blocked': 7, 'order_filled': 3, 'fill': 3, 'provisional': 2, 'settle': 3}
+mode: live  duration: 251.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 502, 'lock_state': 1672, 'strike': 184, 'order_error': 8, 'window_blocked': 8, 'order_filled': 3, 'fill': 3, 'provisional': 2, 'settle': 3}
 
 fills: 3  shares: 15  notional: $13.56
        fills  shares  notional  avg_price  med_rel
