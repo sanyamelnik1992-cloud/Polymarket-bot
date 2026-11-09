@@ -408,9 +408,8 @@ def test_lock_tiers_lower_probability_needs_cheaper_ask():
     assert tier.execution.mode == "paper" and tier.lock.entry == "taker" and tier.lock.tiers
     # everything except theta, tiers and the files is L's
     assert tier.risk.state_file != paper.risk.state_file and tier.journal_dir != paper.journal_dir
-    assert tier.lock.assets == ["btc", "eth", "sol"] and "xrp" in paper.lock.assets        # the one deliberate difference besides theta/tiers
     for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
-              "max_entries_per_window"):
+              "assets", "max_entries_per_window"):
         assert getattr(tier.lock, k) == getattr(paper.lock, k), k
     for k in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
         assert getattr(tier.risk, k) == getattr(paper.risk, k), k
@@ -461,3 +460,24 @@ def test_decide_with_tiers_end_to_end(tables):
     assert sig is None and ctx["why"] == "ask_too_high"       # a 0.97 probability must come cheaper than 0.94
     sig, ctx = decide(tier, *args, asks(0.85), (0.06, 100.0))
     assert sig is None and ctx["why"] == "ask_too_low"        # a_min 0.90 still holds
+
+
+def test_lock_tier_wide_is_l3_with_a_lower_price_floor(tables):
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    wide = load_lock_config(os.path.join(ROOT, "config", "lock_tier_wide.toml"))
+    assert wide.execution.mode == "paper" and wide.lock.a_min == 0.50 and tier.lock.a_min == 0.90
+    assert wide.risk.state_file != tier.risk.state_file and wide.journal_dir != tier.journal_dir
+    for k in ("theta", "agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
+              "assets", "tiers", "max_entries_per_window"):
+        assert getattr(wide.lock, k) == getattr(tier.lock, k), k
+    from pmbot.bot.lock import decide_state
+    K, now_s, cl, last = scenario(bp=1.0, rel=270.0)
+    bn = 75000.0
+    now = int(now_s * 1000)
+    sigma = next(sg for sg in [x * 1e-5 for x in range(2, 80)]
+                 if (lambda r: r[0] == "U" and 0.95 <= r[1] < 0.97)(decide_state(tier.lock, tables, "btc", T, K, now, cl, last, sg, bn, bn, bn, bn)))
+    args = (tables, "btc", T, K, now, cl, last, sigma, bn, bn, bn, bn)
+    sig, ctx = decide(tier.lock, *args, (0.70, 100.0), (0.30, 100.0))
+    assert sig is None and ctx["why"] == "ask_too_low"          # L3: the market doubting this much is a reason to stay out
+    sig, ctx = decide(wide.lock, *args, (0.70, 100.0), (0.30, 100.0))
+    assert sig and sig["side"] == "U" and sig["ask"] == 0.70, ctx

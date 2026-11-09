@@ -1,6 +1,6 @@
 # L3 PAPER (unit pmbot-lock-tier): L with PRICE TIERS instead of the single threshold p >= 0.99 (reports/47).
 # The lower the model probability, the cheaper the ask must be: p>=.99 -> ask<=.98 (= L), p>=.97 -> <=.95, p>=.95 -> <=.93,
-# p>=.90 -> <=.91. Everything else is L's (a test checks it). Replay on public tapes (Binance 1 s as the Chainlink proxy,
+# p>=.90 -> <=.91, asks 0.90 and up. Everything else is L's (a test checks it). Replay on public tapes (Binance 1 s as the Chainlink proxy,
 # 5 shares, fills = taker executions 0.3-4 s after the signal): see reports/47 for entries / losses / P&L against L.
 # TWAP-lock bot L (PAPER): buy the decided side in the last minute of 5m windows (reports/44_twap_lock.md).
 # Research 7-9 Nov 2026 (recorder, conservative book replay, one entry per window, 10 shares):
@@ -9,7 +9,7 @@
 journal_dir = "data/journal-lock-tier"
 
 [lock]
-assets = ["btc", "eth", "sol"]   # L has xrp too. XRP is left out: cheap-zone entries lost 4 of 39 (89.7%) against 5 of 240 for BTC/ETH/SOL (reports/47)
+assets = ["btc", "eth", "sol", "xrp"]
 theta = 0.90          # lowest tier probability (L: 0.99); the tiers below set the price limit per probability
 agree = 0.90          # ... and from received Chainlink prints only (glitch guard)
 dmin_bp = 0.5         # expected TWAP at least 0.5 bp past the strike in our favour
