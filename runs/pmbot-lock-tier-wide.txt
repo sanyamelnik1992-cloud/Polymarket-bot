@@ -1,9 +1,10 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261109-165030
-mode: paper  duration: 311.1 min  events: {'start': 1, 'status': 622, 'lock_state': 2104, 'strike': 240, 'fill': 12, 'settle': 12, 'provisional': 7}
+mode: paper  duration: 370.1 min  events: {'start': 1, 'status': 740, 'lock_state': 2375, 'strike': 288, 'fill': 13, 'settle': 12, 'provisional': 8}
 
-fills: 12  shares: 60  notional: $52.41
+fills: 13  shares: 65  notional: $56.86
        fills  shares  notional  avg_price  med_rel
 asset                                             
+btc        1     5.0     4.450      0.890  274.724
 eth        3    15.0    12.505      0.834  256.009
 sol        7    35.0    30.900      0.883  245.333
 xrp        2    10.0     9.000      0.900  244.603
