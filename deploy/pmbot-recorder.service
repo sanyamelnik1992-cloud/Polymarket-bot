@@ -6,6 +6,9 @@ After=network-online.target
 User=__USER__
 WorkingDirectory=__REPO__
 ExecStart=/bin/bash -c '__REPO__/.venv/bin/python scripts/record_live.py data/rec/$(date +%%Y%%m%%d-%%H%%M) 1440'
+# CPU priority: the recorder yields to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov)
+Nice=10
+CPUWeight=20
 Restart=always
 RestartSec=10
 

@@ -12,6 +12,9 @@ WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
 # PAPER. Experiment from reports/42 section 5 (compare with F by markout-60).
 ExecStart=__REPO__/.venv/bin/python scripts/run_bot.py --config config/g2.toml
+# CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
+Nice=10
+CPUWeight=20
 Restart=on-failure
 RestartSec=30
 KillSignal=SIGINT

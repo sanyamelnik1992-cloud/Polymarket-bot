@@ -11,6 +11,9 @@ WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
 # PAPER. reports/44_twap_lock.md. Maker twin of pmbot-lock (same rule, entry = maker), reports/45 section 4.
 ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_maker.toml
+# CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
+Nice=10
+CPUWeight=20
 Restart=on-failure
 RestartSec=30
 KillSignal=SIGINT
