@@ -144,3 +144,36 @@ def test_unit_cpu_priority_live_lock_above_paper_bots():
     paper = [f for f in glob.glob("deploy/pmbot-*.service") if re.search(r"pmbot-(5m-g2?|lock|lock-wide|lock-15|lock-maker2?|lock-tier|lock-tier-wide|recorder)\.service$", f)]
     assert len(paper) == 10, paper
     assert live > 100 and all(weight(f) < 100 for f in paper)
+
+
+def test_cpu_stat_shares_and_psi_parsers():
+    a = ops.parse_cpu_stat("cpu  100 0 50 800 10 0 5 35 0 0\ncpu0 1 1 1 1 1 1 1 1\n")
+    b = ops.parse_cpu_stat("cpu  160 0 70 860 20 0 5 85 0 0\n")
+    s = ops.cpu_shares(a, b)                     # interval of 200 jiffies: idle 60, iowait 10, steal 50
+    assert s["steal"] == 25.0 and s["iowait"] == 5.0 and abs(s["busy"] - 65.0) < 1e-9
+    assert ops.cpu_shares(a, a) is None and ops.parse_cpu_stat("nothing") is None
+    psi = ops.parse_psi("some avg10=1.50 avg60=3.25 avg300=2.00 total=123\nfull avg10=0.00 avg60=0.50 avg300=0.10 total=45\n")
+    assert psi == {"some": 3.25, "full": 0.5} and ops.parse_psi("") == {}
+
+
+def test_short_cmd_and_top_cpu_skip_kernel_threads(monkeypatch):
+    assert ops.short_cmd("/x/.venv/bin/python scripts/run_lock.py --config config/lock.toml") == "run_lock.py lock.toml"
+    assert ops.short_cmd("/x/.venv/bin/python -u -m pmbot.arb_live data/arb-live --live") == "pmbot.arb_live"
+    assert ops.short_cmd("/usr/bin/python3 /srv/bot/scripts/tg_bot.py") == "tg_bot.py"
+
+    class R:
+        stdout = ("12.0 120000 /x/.venv/bin/python scripts/run_bot.py --config config/g.toml\n"
+                  " 9.5 3000 [kworker/0:1+events]\n"
+                  " 6.1 62000 /x/.venv/bin/python scripts/run_lock.py --config config/lock.toml\n")
+    monkeypatch.setattr(ops.subprocess, "run", lambda *a, **k: R())
+    assert ops.top_cpu(5) == [(12.0, 117, "run_bot.py g.toml"), (6.1, 60, "run_lock.py lock.toml")]
+
+
+def test_cpu_probe_and_the_report_survives_a_failing_diagnostic(monkeypatch):
+    assert ops.cpu_probe(0.02) >= 0.9            # wall time can never be shorter than the CPU time it burned
+    monkeypatch.setattr(ops, "load_report", lambda *a, **k: ["проверка 2 с: процессор занят 64 %, ждёт диск 1 %, украден гипервизором 22 %"])
+    assert "украден гипервизором 22 %" in ops.format_server()
+    def boom(*a, **k):
+        raise RuntimeError("no /proc here")
+    monkeypatch.setattr(ops, "load_report", boom)
+    assert "CPU load" in ops.format_server() or "диск: свободно" in ops.format_server()

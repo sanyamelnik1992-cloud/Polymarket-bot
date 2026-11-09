@@ -438,6 +438,110 @@ def format_trades(n=10):
     return "\n".join(out)
 
 
+def parse_cpu_stat(text):
+    """First line of /proc/stat -> jiffies by kind, None if it is not there."""
+    for line in text.splitlines():
+        if line.startswith("cpu "):
+            v = [int(x) for x in line.split()[1:]]
+            v += [0] * (8 - len(v))
+            user, nice, system, idle, iowait, irq, softirq, steal = v[:8]
+            return {"idle": idle, "iowait": iowait, "steal": steal,
+                    "total": user + nice + system + idle + iowait + irq + softirq + steal}
+    return None
+
+
+def cpu_shares(a, b):
+    """Percent of the interval a -> b that the CPUs were busy / waiting for the disk / stolen by the hypervisor."""
+    d = b["total"] - a["total"]
+    if d <= 0:
+        return None
+    pct = lambda k: 100.0 * (b[k] - a[k]) / d  # noqa: E731
+    return {"busy": 100.0 - pct("idle") - pct("iowait"), "iowait": pct("iowait"), "steal": pct("steal")}
+
+
+def parse_psi(text):
+    """/proc/pressure/{cpu,io,memory}: {'some': avg60, 'full': avg60} = % of the last 60 s that tasks waited."""
+    out = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) >= 3 and parts[0] in ("some", "full"):
+            kv = dict(p.split("=", 1) for p in parts[1:] if "=" in p)
+            if "avg60" in kv:
+                out[parts[0]] = float(kv["avg60"])
+    return out
+
+
+def cpu_probe(cpu_s=0.25):
+    """Burn cpu_s seconds of CPU time and return wall time / CPU time: ~1.0 on a free core, 2+ when this process had to
+    wait for a CPU (a throttled burstable instance, a busy host or too many runnable tasks)."""
+    w0, c0 = time.perf_counter(), time.process_time()
+    x = 0
+    while time.process_time() - c0 < cpu_s:
+        for i in range(2000):
+            x += i * i
+    return (time.perf_counter() - w0) / max(time.process_time() - c0, 1e-9)
+
+
+def short_cmd(args):
+    """'/x/.venv/bin/python scripts/run_lock.py --config config/lock.toml' -> 'run_lock.py lock.toml'."""
+    toks = args.split()
+    name = next((os.path.basename(t) for t in toks if t.endswith(".py")), None)
+    if name is None and "-m" in toks and toks.index("-m") + 1 < len(toks):
+        name = toks[toks.index("-m") + 1]
+    if name is None:
+        name = os.path.basename(toks[0]) if toks else "?"
+    m = re.search(r"--config\s+(\S+)", args)
+    return name + (" " + os.path.basename(m.group(1)) if m else "")
+
+
+def top_cpu(n=5):
+    """Top processes by their average CPU share since start (ps pcpu = CPU time / elapsed time): [(pcpu, rss_mb, name)]."""
+    try:
+        out = subprocess.run(["ps", "-eo", "pcpu,rss,args", "--sort=-pcpu", "--no-headers"], capture_output=True,
+                             text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    rows = []
+    for line in out.splitlines()[:n + 15]:
+        parts = line.split(None, 2)
+        if len(rows) < n and len(parts) == 3 and not parts[2].startswith("["):          # kernel threads are '[kworker/0:1]'
+            try:
+                rows.append((float(parts[0]), int(parts[1]) // 1024, short_cmd(parts[2])))
+            except ValueError:
+                continue
+    return rows
+
+
+def load_report(sample_s=2.0):
+    """Lines that say WHY a server is slow, not only that the load average is high (reports/48): CPU busy / disk wait /
+    steal over `sample_s` seconds, the kernel's pressure numbers (PSI), a CPU speed probe and the top processes."""
+    lines = []
+    try:
+        a = parse_cpu_stat(open("/proc/stat").read())
+        time.sleep(sample_s)
+        b = parse_cpu_stat(open("/proc/stat").read())
+        s = cpu_shares(a, b) if a and b else None
+        if s:
+            lines.append(f"проверка {sample_s:.0f} с: процессор занят {s['busy']:.0f} %, ждёт диск {s['iowait']:.0f} %, "
+                         f"украден гипервизором {s['steal']:.0f} %")
+    except (OSError, TypeError):
+        pass
+    try:
+        psi = {k: parse_psi(open(f"/proc/pressure/{k}").read()) for k in ("cpu", "io", "memory")}
+        if all(psi.values()):
+            lines.append(f"давление за 60 с (доля времени, когда задачи ждали): ядро {psi['cpu'].get('some', 0):.0f} %, "
+                         f"диск {psi['io'].get('some', 0):.0f} %, память {psi['memory'].get('some', 0):.0f} %")
+    except OSError:
+        pass
+    r = cpu_probe()
+    lines.append(f"проба скорости: 0.25 с работы заняли {0.25 * r:.2f} с на часах (x{r:.1f}; 1.0 норма, выше 1.5 — "
+                 f"ядро урезано или занято)")
+    top = top_cpu()
+    if top:
+        lines.append("топ по CPU (среднее с запуска): " + ", ".join(f"{n} {c:.0f} % ({m} МБ)" for c, m, n in top))
+    return lines
+
+
 def format_server():
     h = server_health()
     out = []
@@ -450,4 +554,8 @@ def format_server():
         out.append(f"записи рекордера: {h['rec_gb']:.1f} ГБ")
     if "uptime_s" in h:
         out.append(f"аптайм сервера: {fmt_age(time.time() - h['uptime_s'])}")
+    try:
+        out.extend(load_report())
+    except Exception:  # noqa: BLE001  (a diagnostic must never break the report)
+        pass
     return "\n".join(out)
