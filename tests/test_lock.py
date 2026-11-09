@@ -173,6 +173,7 @@ def test_configs_load_and_live_is_the_twin():
 def test_units_wire_the_configs():
     for unit, cfg, live in (("pmbot-lock", "config/lock.toml", False), ("pmbot-lock-wide", "config/lock_wide.toml", False),
                             ("pmbot-lock-15", "config/lock15.toml", False),
+                            ("pmbot-lock-maker", "config/lock_maker.toml", False),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
@@ -313,3 +314,75 @@ def test_l15_decides_on_the_closing_minute(tables):
     assert sig and sig["side"] == "U" and ctx["n"] == 12 and sig["p"] >= 0.99
     sig, ctx = decide(c, tables, "btc", S, K, now, *args)       # the window start is not the anchor
     assert sig is None and ctx["why"] == "time"
+
+
+def test_lm_config_is_l_with_a_maker_entry():
+    l5 = load_lock_config(os.path.join(ROOT, "config", "lock.toml"))
+    lm = load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml"))
+    assert lm.lock.entry == "maker" and l5.lock.entry == "taker" and lm.execution.mode == "paper"
+    a, b = dict(vars(l5.lock)), dict(vars(lm.lock))
+    a.pop("entry"), b.pop("entry")
+    assert a == b, "LM must keep the L rule"
+    assert lm.risk.state_file not in (l5.risk.state_file, "") and lm.journal_dir != l5.journal_dir
+    with pytest.raises(ValueError, match="paper-only"):
+        load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml"),
+                         overrides={"execution": {"mode": "live"}, "risk": {"resume_next_day": False}})
+
+
+def test_maker_bid_prices():
+    from pmbot.bot.lock import maker_bid
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml")).lock
+    assert maker_bid(c, 0.999, None) == 0.98                 # capped at a_max
+    assert maker_bid(c, 0.99, None) == 0.98                  # p - 0.005 = 0.985 -> 0.98
+    assert maker_bid(c, 0.999, 0.985) == 0.97                # one cent under the ask (post-only), 0.01 grid
+    assert maker_bid(c, 0.999, 0.95) == 0.94
+    assert maker_bid(c, 0.999, 0.905) is None                # would be below a_min 0.90
+
+
+def test_maker_fills_through_the_queue_and_settles(tmp_path):
+    """A resting LM bid fills only after the queue ahead of it is used up (or on a trade-through), never above the
+    lot, and the lot is settled like a taker entry."""
+    from pmbot.bot.state import Window
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    j = _J()
+    bot = LockBot(cfg, j, tables=_Tab())
+    assert bot.maker and bot.broker.queue
+    w = Window(asset="btc", start=T, slug="s", condition_id="c", token_up="u", token_down="d")
+    bot.st.add_window(w)
+    oid = asyncio.run(bot.broker.place("u", w.key, "U", 0.98, 5.0, now_ms=0, queue_ahead=10.0))
+    bot.bids[w.key] = {"oid": oid, "side": "U", "price": 0.98, "size": 5.0, "token": "u", "p": 0.995}
+    bot._on_public_trade("u", "SELL", 0.98, 8.0, 1000, 1000)     # eats 8 of the 10 ahead of us
+    assert bot.filled(w.key) == 0
+    bot._on_public_trade("u", "SELL", 0.98, 5.0, 1100, 1100)     # 2 more ahead, then 3 for us
+    assert bot.filled(w.key) == pytest.approx(3.0)
+    bot._on_public_trade("d", "BUY", 0.02, 1.0, 1150, 1150)      # Down bought at 0.02 = Up sold at 0.98: queue
+    bot._on_public_trade("u", "SELL", 0.96, 10.0, 1200, 1200)    # trade-through fills the rest, not more
+    assert bot.filled(w.key) == pytest.approx(5.0) and w.key not in bot.bids
+    assert all(e["price"] == 0.98 and e["fee"] == 0.0 for e in bot.entries[w.key])
+    bot._settle(w.key, "Up")
+    s = [kw for k, kw in j.ev if k == "settle"][-1]
+    assert s["pnl"] == pytest.approx(5 - 4.9, abs=1e-6)
+
+
+def test_maker_cancel_pulls_the_bid(tmp_path):
+    from pmbot.bot.state import Window
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), tables=_Tab())
+    w = Window(asset="btc", start=T, slug="s", condition_id="c", token_up="u", token_down="d")
+    bot.st.add_window(w)
+    oid = asyncio.run(bot.broker.place("u", w.key, "U", 0.98, 5.0, now_ms=0, queue_ahead=0.0))
+    bot.bids[w.key] = {"oid": oid, "side": "U", "price": 0.98, "size": 5.0, "token": "u", "p": 0.995}
+    asyncio.run(bot._cancel_bid(w.key, 1000, "binance_against"))   # effective 50 ms later
+    bot._on_public_trade("u", "SELL", 0.97, 5.0, 1020, 1020)          # inside the cancel latency: still fills
+    assert bot.filled(w.key) == pytest.approx(5.0)
+    cfg2 = load_lock_config(os.path.join(ROOT, "config", "lock_maker.toml"),
+                            overrides={"risk": {"state_file": str(tmp_path / "s2.json"), "kill_file": ""}})
+    bot2 = LockBot(cfg2, _J(), tables=_Tab())
+    bot2.st.add_window(w)
+    oid = asyncio.run(bot2.broker.place("u", w.key, "U", 0.98, 5.0, now_ms=0, queue_ahead=0.0))
+    bot2.bids[w.key] = {"oid": oid, "side": "U", "price": 0.98, "size": 5.0, "token": "u", "p": 0.995}
+    asyncio.run(bot2._cancel_bid(w.key, 1000, "binance_against"))
+    bot2._on_public_trade("u", "SELL", 0.97, 5.0, 1100, 1100)         # after the cancel: no fill
+    assert bot2.filled(w.key) == 0 and w.key not in bot2.bids

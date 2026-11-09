@@ -14,7 +14,7 @@ import time
 
 import websockets
 
-from .config import ASSETS, BINANCE_SYMBOL, CHAINLINK_SYMBOL, WINDOW, WS_BINANCE, WS_CLOB_MARKET, WS_RTDS
+from .config import ASSETS, BINANCE_SYMBOL, WINDOW, WS_BINANCE, WS_CLOB_MARKET, WS_RTDS
 from .gamma import fetch_event, parse_event, slug_for, window_start
 
 
@@ -164,7 +164,8 @@ class Recorder:
             await ws.send("PING")
 
     async def chainlink_loop(self):
-        syms = {CHAINLINK_SYMBOL[a] for a in self.assets}
+        # every symbol RTDS sends (9 Nov: btc eth sol xrp + doge bnb hype zec, 1/s each, ~6 MB a day per symbol):
+        # the history of assets the bots do not trade yet is what their lock tables are built from
         while self.alive:
             try:
                 async with websockets.connect(WS_RTDS, open_timeout=15, ping_interval=20) as ws:
@@ -177,7 +178,7 @@ class Recorder:
                             continue
                         d = json.loads(msg)
                         p = d.get("payload") or {}
-                        if p.get("symbol") in syms:
+                        if p.get("symbol") and p.get("value") is not None:
                             self.write("chainlink", {"sym": p["symbol"], "ts": p["timestamp"], "v": p["value"], "rx": rx})
             except Exception as ex:  # noqa: BLE001
                 print("chainlink ws error", type(ex).__name__, ex)

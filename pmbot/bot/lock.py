@@ -26,6 +26,7 @@ from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
 from ..lockmodel import (ClSigma, Tables, expected_dist_bp, lock_state, prob_up, strike_from_prints, TW_HI)
 from .feeds import ClobFeed, binance_feed, rtds_feed
+from .paper import PaperBroker
 from .state import State, Window, now_ms
 
 log = logging.getLogger("pmbot.lock")
@@ -60,6 +61,7 @@ class LockCfg:
     tables: str = "config/lock_tables.npz"
     tick_ms: int = 50
     duration: int = 300                  # window length in s: 300 (5m markets) or 900 (15m markets)
+    entry: str = "taker"                 # "taker": FAK at the ask (L); "maker": resting bid for the decided side (LM)
 
 
 @dataclass
@@ -76,6 +78,8 @@ class LockRisk:
 class LockExec:
     mode: str = "paper"
     paper_exec_ms: int = 300             # our ~60-90 ms to the exchange + its 150 ms taker delay, rounded up
+    paper_place_ms: int = 60             # maker: bid goes live (live 8 Nov: place median 52-62 ms)
+    paper_cancel_ms: int = 50            # maker: cancel takes effect (cancel median 40-49 ms)
 
 
 @dataclass
@@ -126,6 +130,10 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.shares must be >= 1")
     if c.duration not in DURATIONS:
         raise ValueError(f"lock.duration must be one of {sorted(DURATIONS)}")
+    if c.entry not in ("taker", "maker"):
+        raise ValueError("lock.entry must be 'taker' or 'maker'")
+    if c.entry == "maker" and e.mode != "paper":
+        raise ValueError("lock.entry = 'maker' is paper-only for now (no live maker broker for the lock bot yet)")
     for name in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit"):
         if getattr(r, name) <= 0:
             raise ValueError(f"risk.{name} must be > 0")
@@ -144,23 +152,23 @@ def tick_floor(x, tick):
     return math.floor(x / tick + 1e-9) * tick
 
 
-def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s, bn_3s,
-           ask_up, ask_dn):
-    """Pure decision. cl_last = (value, ts_ms, rx_ms); ask_* = (price, size) or None.
-    Returns (signal or None, context dict). signal = dict(side, limit, ask, p, ...)."""
+def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s,
+                 bn_3s):
+    """The book-independent part of the rule (time, strike, model, agreement, distance, spot, Binance guards).
+    Returns (side "U"/"D" or None, p, context dict); None = no trade, the reason is ctx["why"]."""
     now_s = now_ms_ / 1000.0
     rel = now_s - T
     ctx = {"rel": round(rel, 2)}
     if not (c.rel_lo <= rel <= c.rel_hi):
-        return None, {**ctx, "why": "time"}
+        return None, 0.0, {**ctx, "why": "time"}
     if K is None:
-        return None, {**ctx, "why": "no_strike"}
+        return None, 0.0, {**ctx, "why": "no_strike"}
     if sigma is None:
-        return None, {**ctx, "why": "no_sigma"}
+        return None, 0.0, {**ctx, "why": "no_sigma"}
     if cl_last is None or now_ms_ - cl_last[2] > c.cl_max_age_ms:
-        return None, {**ctx, "why": "cl_stale"}
+        return None, 0.0, {**ctx, "why": "cl_stale"}
     if not bn_now or not bn_at_last or not bn_1s or not bn_3s:
-        return None, {**ctx, "why": "no_binance"}
+        return None, 0.0, {**ctx, "why": "no_binance"}
     st = lock_state(cl_by_sec, cl_last[1] // 1000, cl_last[0], T, K, now_s, bn_now, bn_at_last)
     p_nc = prob_up(tables, asset, st["A_nc"], st["m_nc"], st["S_nc"], K, sigma)
     p_cl = prob_up(tables, asset, st["A"], st["m_cl"], st["S_cl"], K, sigma)
@@ -176,18 +184,29 @@ def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, 
                spot_bp=round(spot, 3), mv1=round(mv1, 3), mv3=round(mv3, 3), n=st["n"], m=st["m_nc"],
                sigma_bp=round(sigma * 1e4, 4))
     if p < c.theta:
-        return None, {**ctx, "why": "p"}
+        return None, 0.0, {**ctx, "why": "p"}
     if pc < c.agree:
-        return None, {**ctx, "why": "agree"}
+        return None, 0.0, {**ctx, "why": "agree"}
     if dist < c.dmin_bp:
-        return None, {**ctx, "why": "dist"}
+        return None, 0.0, {**ctx, "why": "dist"}
     if spot < 0:
-        return None, {**ctx, "why": "spot_side"}
+        return None, 0.0, {**ctx, "why": "spot_side"}
     if -sgn * mv1 > c.adv1_bp or -sgn * mv3 > c.adv3_bp:
-        return None, {**ctx, "why": "binance_against"}
+        return None, 0.0, {**ctx, "why": "binance_against"}
     if abs(mv1) > c.jump_bp:
-        return None, {**ctx, "why": "binance_jump"}
-    ask = ask_up if up else ask_dn
+        return None, 0.0, {**ctx, "why": "binance_jump"}
+    return ("U" if up else "D"), p, ctx
+
+
+def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s, bn_3s,
+           ask_up, ask_dn):
+    """Pure taker decision. cl_last = (value, ts_ms, rx_ms); ask_* = (price, size) or None.
+    Returns (signal or None, context dict). signal = dict(side, limit, ask, p, ...)."""
+    side, p, ctx = decide_state(c, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s,
+                                bn_3s)
+    if side is None:
+        return None, ctx
+    ask = ask_up if side == "U" else ask_dn
     if not ask:
         return None, {**ctx, "why": "no_ask"}
     a = ask[0]
@@ -197,7 +216,17 @@ def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, 
         return None, {**ctx, "why": "ask_too_low"}
     if a > limit + 1e-9:
         return None, {**ctx, "why": "ask_too_high"}
-    return {"side": "U" if up else "D", "limit": limit, "ask": a, "p": p}, ctx
+    return {"side": side, "limit": limit, "ask": a, "p": p}, ctx
+
+
+def maker_bid(c: LockCfg, p, best_ask):
+    """Maker price for the decided side: p - min_edge (a maker pays no taker fee), capped at a_max and one cent under
+    the best ask (post-only), on the 0.01 grid (valid at tick 0.01 and 0.001). None below a_min."""
+    b = tick_floor(min(c.a_max, p - c.min_edge), 0.01)
+    if best_ask is not None:
+        b = min(b, tick_floor(best_ask - 0.01, 0.01))
+    b = round(b, 2)
+    return b if b >= c.a_min - 1e-9 else None
 
 
 # ------------------------------------------------------------------------------------------------ brokers
@@ -261,9 +290,19 @@ class LockBot:
         self.st = State(c.assets)
         self.tables = tables or Tables(c.tables)
         self.sig = {a: ClSigma() for a in c.assets}
-        self.broker = broker or (LiveTaker(cfg.risk.max_usd_per_entry, journal) if cfg.execution.mode == "live"
-                                 else PaperTaker(self.st, cfg.execution.paper_exec_ms))
-        self.feeds = {a: ClobFeed(self.st, a, alive=self.alive) for a in c.assets}
+        self.maker = c.entry == "maker"
+        self.bids = {}             # maker: window key -> {"oid", "side", "price", "size", "token", "p"}
+        if broker is not None:
+            self.broker = broker
+        elif self.maker:           # paper only (load_lock_config): queue model of the paper maker bots
+            self.broker = PaperBroker(cfg.execution.paper_place_ms, cfg.execution.paper_cancel_ms,
+                                      on_fill=self._on_maker_fill, queue=True)
+        elif cfg.execution.mode == "live":
+            self.broker = LiveTaker(cfg.risk.max_usd_per_entry, journal)
+        else:
+            self.broker = PaperTaker(self.st, cfg.execution.paper_exec_ms)
+        self.feeds = {a: ClobFeed(self.st, a, on_trade=self._on_public_trade if self.maker else None,
+                                  alive=self.alive) for a in c.assets}
         self.meta = {}             # window key -> parsed market (from Gamma, fetched ahead)
         self.strikes = {}          # window key -> K
         self.entries = {}          # window key -> list of entry dicts (open until settled)
@@ -331,6 +370,9 @@ class LockBot:
 
     def open_cost(self):
         return sum(e["cost"] + e["fee"] for es in self.entries.values() for e in es)
+
+    def filled(self, key):
+        return sum(e["shares"] for e in self.entries.get(key, []))
 
     def alive(self):
         return not self._stop
@@ -468,6 +510,8 @@ class LockBot:
             await asyncio.sleep(max(0.0, c.tick_ms / 1000 - (time.time() - t0)))
 
     async def decide_once(self, now):
+        if self.maker:
+            return await self.maker_once(now)
         c = self.cfg.lock
         ok, why_risk = self.can_enter()
         for key, w in list(self.st.windows.items()):
@@ -505,6 +549,105 @@ class LockBot:
                 continue
             self.busy.add(key)
             asyncio.get_running_loop().create_task(self._execute(w, sig, shares, ctx))
+
+    # ---------------------------------------------------------------- maker entry (LM, paper)
+    def _on_public_trade(self, token, side, price, size, ts_ms, rx):
+        w = self.st.token_window.get(token)
+        if w is not None:
+            self.broker.on_public_trade(token, w.other, side, price, size, ts_ms)
+
+    def _on_maker_fill(self, fill):
+        key, q, px = fill["key"], float(fill["size"]), float(fill["price"])
+        b = self.bids.get(key)
+        e = {"side": fill["side"], "shares": round(q, 4), "price": round(px, 4), "cost": round(px * q, 6),
+             "fee": 0.0, "t": time.time(), "limit": px, "p": b["p"] if b else None}
+        self.entries.setdefault(key, []).append(e)
+        if b and b["oid"] == fill["order_id"]:
+            b["size"] -= q
+            if b["size"] <= 1e-9:
+                self.bids.pop(key, None)
+        self.stats["filled"] += 1
+        self._save_state()
+        self.j.log("fill", key=key, side=fill["side"], price=round(px, 4), size=round(q, 4), ts=fill["ts"], fee=0.0,
+                   order_id=fill["order_id"], mode=self.broker.mode)
+        self.j.log("lock_entry", key=key, maker=True, price=round(px, 4), shares=round(q, 4))
+        log.info("MAKER FILL %s %s %.2f sh @ %.2f", key, fill["side"], q, px)
+
+    async def _cancel_bid(self, key, now, why):
+        b = self.bids.pop(key, None)
+        if b:
+            await self.broker.cancel([b["oid"]], now)
+            self.j.log("maker_cancel", key=key, why=why, price=b["price"], side=b["side"])
+
+    def resting_cost(self, skip=None):
+        return sum(b["price"] * b["size"] for k, b in self.bids.items() if k != skip)
+
+    async def maker_once(self, now):
+        """LM: while the rule holds, keep one bid for the decided side at maker_bid(); pull it the moment the rule (or a
+        feed, or risk) fails. One lot of `shares` per window (partial fills count), held to resolution."""
+        c = self.cfg.lock
+        ok, why_risk = self.can_enter()
+        for key, w in list(self.st.windows.items()):
+            Tc = self.anchor(w.start)
+            rel = now / 1000 - Tc
+            have = self.filled(key)
+            if not (c.rel_lo <= rel <= c.rel_hi) or have >= c.shares - 1e-9:
+                await self._cancel_bid(key, now, "time" if have < c.shares - 1e-9 else "full")
+                continue
+            px = self.st.prices[w.asset]
+            if now - self.st.feed_alive.get("binance", 0) > c.bn_max_age_ms:
+                await self._cancel_bid(key, now, "bn_stale")
+                self._why(key, "bn_stale")
+                continue
+            K = self.strike(key, w.asset, w.start)
+            cl = px.cl_last
+            side, p, ctx = decide_state(c, self.tables, w.asset, Tc, K, now, px.cl_by_sec, cl,
+                                        self.sig[w.asset].sigma() if self.sig[w.asset].n >= c.min_sigma_prints
+                                        else None, px.bn_mid(), px.bn_mid_at(cl[1] + 999) if cl else None,
+                                        px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000))
+            if side is None or not ok:
+                why = ctx.get("why") if side is None else "risk:" + why_risk
+                await self._cancel_bid(key, now, why)
+                self._why(key, why, ctx)
+                continue
+            cur = self.bids.get(key)
+            if cur and cur["side"] != side:
+                await self._cancel_bid(key, now, "side_flip")
+                cur = None
+            token = w.token_up if side == "U" else w.token_down
+            ask = self._book_ask(token)
+            b = maker_bid(c, p, ask[0] if ask else None)
+            if b is None:
+                await self._cancel_bid(key, now, "bid_too_low")
+                self._why(key, "bid_too_low", ctx)
+                continue
+            if cur and abs(cur["price"] - b) < 1e-9:
+                continue                                   # already resting at the right price
+            size = min(c.shares, math.floor(self.cfg.risk.max_usd_per_entry / b * 100) / 100) - have
+            if size < max(w.min_size, 5) - 1e-9:         # exchange minimum: a partly filled lot is not topped up
+                await self._cancel_bid(key, now, "min_size")
+                continue
+            if self.open_cost() + self.resting_cost(skip=key) + size * b > self.cfg.risk.max_open_usd + 1e-9:
+                self.stats["skipped_risk"] += 1
+                await self._cancel_bid(key, now, "risk:max_open")
+                self._why(key, "risk:max_open", ctx)
+                continue
+            if cur:
+                await self._cancel_bid(key, now, "requote")
+            book = self.st.books.get(token)
+            q_ahead = book.bids.get(b, 0.0) if book else 0.0
+            oid = await self.broker.place(token, key, side, b, size, now, queue_ahead=q_ahead)
+            self.bids[key] = {"oid": oid, "side": side, "price": b, "size": size, "token": token, "p": p}
+            self.stats["signals"] += 1
+            self.stats["orders"] += 1
+            self._why(key, "bid", ctx)
+            self.j.log("maker_bid", key=key, side=side, price=b, size=size, q_ahead=q_ahead,
+                       ask=ask[0] if ask else None, **{k: v for k, v in ctx.items() if k != "side"})
+        for key in [k for k in self.bids if k not in self.st.windows]:
+            await self._cancel_bid(key, now, "window_gone")
+        gc = getattr(self.broker, "gc", None)
+        if gc:
+            gc(now)
 
     def _why(self, key, why, ctx=None):
         if self.last_why.get(key) != why:

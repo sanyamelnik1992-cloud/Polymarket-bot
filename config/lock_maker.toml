@@ -1,0 +1,36 @@
+# TWAP-lock maker LM (PAPER): the L rule (config/lock.toml, identical [lock] except entry), but instead of buying the
+# ask it keeps a BID for the decided side in the last minute: p - min_edge, capped at 0.98 and one cent under the
+# best ask, pulled the moment the rule fails (Binance against us, model, feeds, risk). One lot of 5 shares per window.
+# Exact-timing tape test on three recorder extractions (9 Nov, ~47 h): sellers hit bids <= 0.98 on the decided side
+# in 61 windows, all 61 won; 30 of them had no ask a taker could buy (reports/45 section 4).
+# Paper fills: the queue model of the paper makers (behind the size shown at our price; trade-through fills us).
+journal_dir = "data/journal-lock-maker"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+entry = "maker"
+theta = 0.99
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.90
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 10.0
+daily_loss_limit = 5.0
+state_file = "data/state/lock_maker_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_place_ms = 60
+paper_cancel_ms = 50
