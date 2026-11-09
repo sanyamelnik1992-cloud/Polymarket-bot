@@ -1,8 +1,8 @@
 run: /home/pmbot/Polymarket-bot/data/journal-v3/20261108-225456
-mode: paper  duration: 366.9 min  events: {'start': 1, 'vol_seed': 1, 'window': 76, 'filters': 10961, 'status': 733, 'strike_est': 73, 'fv': 21621, 'resume': 1, 'side_block': 1378, 'quote': 784, 'fill': 21, 'fill_ctx': 21, 'provisional': 9, 'settle': 9}
+mode: paper  duration: 426.6 min  events: {'start': 1, 'vol_seed': 1, 'window': 88, 'filters': 12477, 'status': 853, 'strike_est': 85, 'fv': 25193, 'resume': 1, 'side_block': 1494, 'quote': 889, 'fill': 21, 'fill_ctx': 21, 'provisional': 9, 'settle': 9}
 
-filter reasons (state changes): {'jump_cooldown': 7178, 'model_disagrees': 6886, 'p_out_of_range': 5357, 'wide_spread': 2709, 'daily loss limit 2.0 reached': 1721, 'too_late': 1527, 'no_book': 827, 'too_early': 387, 'no_strike': 233, 'no_fair_value': 233, 'calm_market': 144, 'chainlink_stale': 85, 'loop_lag': 62, 'vol_spike': 58, 'clob_stale': 17, 'binance_stale': 3}
-quotes placed: 784
+filter reasons (state changes): {'jump_cooldown': 8206, 'model_disagrees': 7898, 'p_out_of_range': 6221, 'wide_spread': 2970, 'daily loss limit 2.0 reached': 1721, 'too_late': 1686, 'no_book': 988, 'too_early': 449, 'no_strike': 250, 'no_fair_value': 250, 'calm_market': 144, 'vol_spike': 104, 'chainlink_stale': 91, 'loop_lag': 78, 'clob_stale': 17, 'binance_stale': 3}
+quotes placed: 889
 
 fills: 21  shares: 90  notional: $41.30
        fills  shares  notional  avg_price  med_rel
