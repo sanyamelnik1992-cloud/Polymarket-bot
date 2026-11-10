@@ -880,3 +880,48 @@ def test_live_fak_asks_for_whole_shares(tmp_path):
     sent = lt.b.client.placed[0]
     assert sent["amount"] == "4.75" and sent["max_spend"] == f"{fak_budget(5, 0.95):.2f}" == "4.78" and sent["max_price"] == "0.95"
     assert bot.entries[w.key][0]["shares"] == 5.0
+
+
+def test_ping_uses_the_sdk_client_and_an_error_is_not_fatal(tmp_path):
+    bot, j, w, lt = _live_bot(tmp_path, [])
+
+    class C:
+        n = 0
+
+        async def get_midpoint(self, token_id=None):
+            C.n += 1
+            if C.n == 2:
+                raise TimeoutError("x")
+            return 0.5
+    lt.b.client = C()
+    assert asyncio.run(lt.b.ping("tok")) >= 0 and asyncio.run(lt.b.ping("tok")) is None
+
+
+def test_warm_loop_pings_only_in_the_closing_minute_of_a_live_bot(tmp_path):
+    import time as _t
+    from pmbot.bot.state import Window
+    bot, j, w, lt = _live_bot(tmp_path / "a", [])
+    calls = []
+
+    async def ping(token):
+        calls.append(token)
+        bot._stop = True
+        return 27.0
+    lt.ping = ping
+    start = int(_t.time()) - 250                         # rel 250: inside [rel_lo - 15, rel_hi]
+    bot.st.windows = {"btc-x": Window(asset="btc", start=start, slug="s", condition_id="c", token_up="U1", token_down="D1")}
+    asyncio.run(bot.warm_loop(period_s=0.01))
+    assert calls == ["U1"] and bot.stats["ping_ms"] == 27.0
+    bot._stop, calls[:] = False, []
+    bot.st.windows = {"btc-x": Window(asset="btc", start=int(_t.time()) - 100, slug="s", condition_id="c", token_up="U1",
+                                      token_down="D1")}
+
+    async def go():
+        t = asyncio.create_task(bot.warm_loop(period_s=0.01))
+        await asyncio.sleep(0.05)
+        bot._stop = True
+        await t
+    asyncio.run(go())
+    assert calls == []                                   # mid-window: no requests
+    bot2, j2, w2 = _bot(tmp_path / "b", PaperTaker(State(["btc"])))
+    asyncio.run(bot2.warm_loop(period_s=0.01))           # paper: returns at once

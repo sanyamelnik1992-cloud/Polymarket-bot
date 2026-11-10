@@ -386,6 +386,18 @@ class TakerLiveBroker:
             return None
         return round((time.perf_counter() - t0) * 1000, 1)
 
+    async def ping(self, token):
+        """One cheap public CLOB request on the SDK's own connection pool. The pool drops a connection idle for 30 s and
+        a new one costs a TCP + TLS handshake: from Dublin 85-120 ms against 25-30 ms on a warm connection (10 Nov).
+        The prewarm runs ~40 s before the closing minute, so without this the first order of a window paid the handshake
+        (first live order with the prewarm: 585 ms, the next one a second later: 239 ms). Returns ms, None on an error."""
+        t0 = time.perf_counter()
+        try:
+            await self.client.get_midpoint(token_id=token)
+        except Exception:  # noqa: BLE001
+            return None
+        return round((time.perf_counter() - t0) * 1000, 1)
+
     async def place_fak(self, token, key, side, limit, usd, max_spend=None):
         """One FAK market BUY of `usd` capped at `limit`. Returns {"price", "size"} for a fill, else None with the
         reason in self.last_reject. "fak_not_filled" = the exchange matched nothing and created nothing (a new order

@@ -324,6 +324,9 @@ class LiveTaker:
     async def prewarm(self, token):
         return await self.b.prewarm(token)
 
+    async def ping(self, token):
+        return await self.b.ping(token)
+
     async def buy(self, token, key, side, limit, shares):
         from .live import NO_MATCH_CODES
         usd = round(shares * limit, 2)
@@ -526,6 +529,26 @@ class LockBot:
         t = asyncio.get_running_loop().create_task(run())
         self._bg.add(t)
         t.add_done_callback(self._bg.discard)
+
+    async def warm_loop(self, period_s=8.0):
+        """Live: keep the exchange connection open through the closing minute (TakerLiveBroker.ping). From 15 s before
+        the first decision to the window end, one cheap request every 8 s; the best time of the status interval is
+        reported as stats["ping_ms"] (the round trip to the exchange on a warm connection)."""
+        fn = getattr(self.broker, "ping", None)
+        if fn is None:
+            return
+        while self.alive():
+            try:
+                now = time.time()
+                w = next((w for w in self.st.windows.values()
+                          if self.cfg.lock.rel_lo - 15 <= now - self.anchor(w.start) <= self.cfg.lock.rel_hi), None)
+                if w is not None:
+                    ms = await fn(w.token_up)
+                    if ms is not None and (not self.stats.get("ping_ms") or ms < self.stats["ping_ms"]):
+                        self.stats["ping_ms"] = ms
+            except Exception as e:  # noqa: BLE001
+                log.warning("warm ping: %s", e)
+            await asyncio.sleep(period_s)
 
     def strike(self, key, asset, T):
         K = self.strikes.get(key)
@@ -894,6 +917,7 @@ class LockBot:
             self.j.log("status", pnl=round(self.day_pnl(), 4), open_worst=round(self.open_cost(), 4),
                        stats=dict(self.stats), sigma_bp=sg)
             self.stats["lag_max_ms"] = self.stats["decide_max_ms"] = 0      # maxima per 30 s interval
+            self.stats.pop("ping_ms", None)
             self._save_state()
 
     async def run(self):
@@ -901,7 +925,8 @@ class LockBot:
         self.j.log("start", mode=self.broker.mode, config=asdict(self.cfg))
         tasks = [asyncio.create_task(x) for x in (
             self.discover_loop(), rtds_feed(self.st, self.alive), binance_feed(self.st, self.alive),
-            self.decide_loop(), self.status_loop(), self.strike_check_loop(), self.lag_loop())]
+            self.decide_loop(), self.status_loop(), self.strike_check_loop(), self.lag_loop(),
+            self.warm_loop())]
         tasks += [asyncio.create_task(f.run()) for f in self.feeds.values()]
         settle = asyncio.create_task(self.settle_loop())
         try:
