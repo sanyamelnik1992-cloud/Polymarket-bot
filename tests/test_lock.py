@@ -189,6 +189,7 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
                             ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
                             ("pmbot-lock-tier-pb", "config/lock_tier_pb.toml", False),
+                            ("pmbot-lock-tier-late", "config/lock_tier_late.toml", False),
                             ("pmbot-lock-99", "config/lock_99.toml", False),
                             ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
@@ -1157,7 +1158,16 @@ def test_bottom_tier_only_late_in_the_window(tables):
     assert sig and sig["limit"] >= 0.93                       # the upper tiers enter early as before
     with pytest.raises(ValueError):
         load_lock_config(overrides={"lock": {"late_tier_rel": 200.0}})
-    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):      # not live, not on paper: an owner's decision
-        assert load_lock_config(path).lock.late_tier_rel == 0.0, path
+    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):      # on in one paper experiment only: live is an owner's decision
+        assert load_lock_config(path).lock.late_tier_rel == (260.0 if path.endswith("lock_tier_late.toml") else 0.0), path
+    # the experiment = the paper twin of live + the fourth tier from second 260; paper, and it does not stop for the day
+    import dataclasses as dc
+    twin = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    exp = load_lock_config(os.path.join(ROOT, "config", "lock_tier_late.toml"))
+    assert exp.execution.mode == "paper" and exp.risk.resume_next_day
+    assert dc.replace(exp.lock, theta=twin.lock.theta, tiers=twin.lock.tiers, late_tier_rel=0.0) == twin.lock
+    assert exp.lock.theta == 0.90 and sorted(map(tuple, exp.lock.tiers)) == sorted(map(tuple, FOUR_TIERS["lock"]["tiers"]))
+    assert dc.replace(exp.risk, daily_loss_limit=twin.risk.daily_loss_limit, state_file=twin.risk.state_file) == twin.risk
+    assert exp.journal_dir != twin.journal_dir and exp.risk.state_file != twin.risk.state_file
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml")).lock
     assert live.theta == 0.95 and min(t[0] for t in live.tiers) == 0.95    # reports/59: live has no tier below 0.95
