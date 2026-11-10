@@ -75,6 +75,10 @@ class LockCfg:
     shock_bp: float = 0.0                # no entry while a 3 s Binance move larger than this (bp, either way) ended within the
     shock_s: float = 10.0                # last shock_s seconds: after a jump the 15-minute sigma is stale and the price often
                                          # snaps back (live loss 10 Nov 10:25: -2.9 bp in 3 s, entry 3 s later). 0 = off
+    shock_sigmas: float = 0.0            # > 0: the pause threshold grows with volatility, max(shock_bp, shock_sigmas * sigma * sqrt(3))
+                                         # with the model's 1 s sigma. A fixed 2.5 bp is a shock at sigma 0.5 bp but an ordinary 3 s
+                                         # move at sigma 2 bp: on 10 Nov from 13:00 UTC the pause was on 50-95 % of the time and
+                                         # live made no entry for hours (reports/58). 0 = the fixed threshold
 
 
 @dataclass
@@ -153,6 +157,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.floor_free_p must be 0 (off) or in [0.9, 1)")
     if c.shock_bp < 0 or not 1 <= c.shock_s <= 60:
         raise ValueError("lock: shock_bp >= 0 and 1 <= shock_s <= 60")
+    if c.shock_sigmas and not 2 <= c.shock_sigmas <= 10:
+        raise ValueError("lock.shock_sigmas must be 0 (off) or in [2, 10]")
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
     if c.tiers:
@@ -268,7 +274,11 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
     if c.shock_bp > 0 and shock is not None:           # last and lazy: computed only when everything else passes
         sh = shock() if callable(shock) else shock
         ctx["shock_bp"] = round(sh, 3)
-        if sh > c.shock_bp:
+        lim = c.shock_bp
+        if c.shock_sigmas > 0:                         # a 3 s move of a random walk has std sigma * sqrt(3)
+            lim = max(lim, c.shock_sigmas * sigma * 1e4 * math.sqrt(3))
+            ctx["shock_lim"] = round(lim, 3)
+        if sh > lim:
             return None, 0.0, {**ctx, "why": "shock"}
     return ("U" if up else "D"), p, ctx
 

@@ -965,8 +965,9 @@ def test_top_tier_is_judged_by_the_unfloored_model(tables):
 
 def test_shock_blocks_an_entry_after_a_binance_jump(tables):
     """reports/55 (live loss 10 Nov 10:25): a 3 s Binance move > 2.5 bp within the last 10 s = no entry, either direction."""
+    import dataclasses
     from pmbot.bot.lock import bn_shock_bp, hist_samples, shock_from_samples
-    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    c = dataclasses.replace(load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock, shock_sigmas=0.0)   # the fixed threshold
     K, now_s, cl, last = scenario(bp=6.0, rel=262.0)
     now = int(now_s * 1000)
     bn = 75000.0
@@ -1079,3 +1080,37 @@ def test_polybolt_events_and_first_arrival_wins():
     assert px.cl_last == (100.2, 6000, 7400) and px.cl_by_sec == {5: 100.0, 6: 100.2}
     px.on_chainlink(99.9, 4000, 7500)                                                # a late older print fills its second only
     assert px.cl_last[1] == 6000 and px.cl_by_sec[4] == 99.9
+
+
+def test_shock_threshold_grows_with_volatility(tables):
+    """reports/58: a fixed 2.5 bp pause is a shock filter at sigma 0.5 bp and an off switch at sigma 2 bp (10 Nov from 13:00
+    UTC: on 50-95 % of the time, no live entry for hours). With shock_sigmas the threshold is max(shock_bp, k sigma sqrt(3))."""
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    assert c.shock_bp == 2.5 and c.shock_sigmas == 3.0
+    bn = 75000.0
+
+    def run(sigma, shock, bp):
+        K, now_s, cl, last = scenario(bp=bp, rel=262.0)
+        return decide(c, tables, "btc", T, K, int(now_s * 1000), cl, last, sigma, bn, bn, bn, bn, (0.91, 100.0), (0.10, 100.0),
+                      shock=shock)
+    # calm market (sigma at the 0.5 bp floor): the threshold stays ~2.6 bp, the live loss of 10 Nov (2.96 bp) is still blocked
+    sig, ctx = run(0.45e-4, 2.96, 6.0)
+    assert sig is None and ctx["why"] == "shock" and 2.5 <= ctx["shock_lim"] <= 2.6
+    sig, ctx = run(0.45e-4, 2.4, 6.0)
+    assert sig and 2.5 <= ctx["shock_lim"] <= 2.6
+    # volatile market (sigma 2 bp): a 4 bp move in 3 s is ordinary (1.15 sigma), a 12 bp move is a shock
+    sig, ctx = run(2.0e-4, 4.0, 40.0)
+    assert sig and ctx["shock_lim"] == pytest.approx(3 * 2.0 * math.sqrt(3), abs=1e-3)
+    sig, ctx = run(2.0e-4, 12.0, 40.0)
+    assert sig is None and ctx["why"] == "shock"
+    # off by default: the fixed threshold
+    import dataclasses
+    c0 = dataclasses.replace(c, shock_sigmas=0.0)
+    K, now_s, cl, last = scenario(bp=40.0, rel=262.0)
+    sig, ctx = decide(c0, tables, "btc", T, K, int(now_s * 1000), cl, last, 2.0e-4, bn, bn, bn, bn, (0.91, 100.0), (0.10, 100.0),
+                      shock=4.0)
+    assert sig is None and ctx["why"] == "shock" and "shock_lim" not in ctx
+    with pytest.raises(ValueError):
+        load_lock_config(overrides={"lock": {"shock_sigmas": 1.0}})
+    # the sniper (L99, a loss there costs 107 wins) keeps the fixed threshold
+    assert load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml")).lock.shock_sigmas == 0.0
