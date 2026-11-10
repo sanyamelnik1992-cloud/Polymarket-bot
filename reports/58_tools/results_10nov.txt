@@ -1,0 +1,51 @@
+# Сырые результаты отчёта 58 (10 ноября 2026, 16:30 UTC)
+
+## today.py: 10 ноября по часам UTC (ленты и Binance 1 с)
+hour UTC | sigma bp (median of the 4 coins) | windows where the model qualifies: plain / floor / floor+shock | tape entries: plain / floor / floor+shock (lost)
+   00    |  0.63  |   48 /  48 /  48  |   6 (0) /  3 (0) /  1 (0)
+   01    |  0.72  |   48 /  48 /  48  |   1 (0) /  1 (0) /  0 (0)
+   02    |  0.71  |   46 /  46 /  46  |   1 (0) /  1 (0) /  1 (0)
+   03    |  0.67  |   46 /  46 /  45  |   1 (0) /  1 (0) /  1 (0)
+   04    |  0.68  |   48 /  48 /  48  |   1 (0) /  1 (0) /  1 (0)
+   05    |  0.66  |   47 /  47 /  47  |   3 (0) /  1 (0) /  1 (0)
+   06    |  0.65  |   48 /  48 /  48  |   3 (0) /  2 (0) /  1 (0)
+   07    |  0.65  |   48 /  48 /  48  |   0 (0) /  0 (0) /  0 (0)
+   08    |  0.77  |   48 /  48 /  48  |   3 (1) /  1 (0) /  0 (0)
+   09    |  1.09  |   46 /  46 /  43  |   3 (0) /  3 (0) /  1 (0)
+   10    |  0.93  |   44 /  44 /  41  |   4 (1) /  4 (1) /  1 (0)
+   11    |  0.85  |   47 /  47 /  47  |   2 (0) /  2 (0) /  1 (0)
+   12    |  0.80  |   45 /  45 /  44  |   4 (0) /  2 (0) /  2 (0)
+   13    |  1.87  |   46 /  46 /  33  |   1 (0) /  1 (0) /  1 (0)
+   14    |  2.12  |   48 /  48 /  33  |   2 (0) /  2 (0) /  1 (0)
+   15    |  1.94  |   47 /  47 /  23  |   1 (0) /  1 (0) /  0 (0)
+   16    |  2.28  |   12 /  12 /   8  |   3 (0) /  3 (0) /  1 (0)
+
+## shock_scan.py: 1-9 ноября
+
+=== L3 (px >= 0.90), signal >= 1 s old, 1-9 Nov (Binance 1 s closes)
+  no pause:                           621 entries ( 70.6/day)  lost 26 ( 4.2%)  +3.01c/sh  +10.63$/day
+  pause if 3 s move > 4.0 bp:          586 entries ( 66.6/day)  lost 25 ( 4.3%)  +2.98c/sh   +9.93$/day
+  pause if 3 s move > 3.0 bp:          548 entries ( 62.3/day)  lost 23 ( 4.2%)  +3.06c/sh   +9.52$/day
+  pause if 3 s move > 2.5 bp:          514 entries ( 58.4/day)  lost 22 ( 4.3%)  +2.96c/sh   +8.66$/day
+  pause if 3 s move > 2.0 bp:          470 entries ( 53.4/day)  lost 21 ( 4.5%)  +2.81c/sh   +7.49$/day
+  pause if > max(2.5 bp, 2.5 sigma*sqrt3):  551 entries ( 62.6/day)  lost 22 ( 4.0%)  +3.30c/sh  +10.32$/day
+  pause if > max(2.5 bp, 3.0 sigma*sqrt3):  566 entries ( 64.3/day)  lost 23 ( 4.1%)  +3.23c/sh  +10.39$/day
+  entries of the plain rule by volatility regime (sigma bp):
+     sigma [0,0.5):  432 entries ( 49.1/day)  lost 20 ( 4.6%)  +2.43c/sh   +5.97$/day | of them the 2.5 bp pause would block 40 (2 losers)
+     sigma [0.5,1.0):  154 entries ( 17.5/day)  lost  6 ( 3.9%)  +3.63c/sh   +3.17$/day | of them the 2.5 bp pause would block 51 (3 losers)
+     sigma [1.0,2.0):   31 entries (  3.5/day)  lost  0 ( 0.0%)  +7.44c/sh   +1.31$/day | of them the 2.5 bp pause would block 23 (0 losers)
+     sigma [2.0,99):    4 entries (  0.5/day)  lost  0 ( 0.0%)  +7.72c/sh   +0.18$/day | of them the 2.5 bp pause would block 4 (0 losers)
+
+=== L4 (px >= 0.50), signal >= 1 s old, 1-9 Nov (Binance 1 s closes)
+  no pause:                           881 entries (100.1/day)  lost 60 ( 6.8%)  +6.41c/sh  +32.07$/day
+  pause if 3 s move > 4.0 bp:          805 entries ( 91.5/day)  lost 58 ( 7.2%)  +5.72c/sh  +26.15$/day
+  pause if 3 s move > 3.0 bp:          741 entries ( 84.2/day)  lost 55 ( 7.4%)  +5.30c/sh  +22.31$/day
+  pause if 3 s move > 2.5 bp:          695 entries ( 79.0/day)  lost 53 ( 7.6%)  +5.04c/sh  +19.91$/day
+  pause if 3 s move > 2.0 bp:          633 entries ( 71.9/day)  lost 53 ( 8.4%)  +4.26c/sh  +15.31$/day
+  pause if > max(2.5 bp, 2.5 sigma*sqrt3):  757 entries ( 86.0/day)  lost 56 ( 7.4%)  +5.46c/sh  +23.50$/day
+  pause if > max(2.5 bp, 3.0 sigma*sqrt3):  787 entries ( 89.4/day)  lost 57 ( 7.2%)  +5.61c/sh  +25.07$/day
+  entries of the plain rule by volatility regime (sigma bp):
+     sigma [0,0.5):  553 entries ( 62.8/day)  lost 43 ( 7.8%)  +4.66c/sh  +14.64$/day | of them the 2.5 bp pause would block 63 (3 losers)
+     sigma [0.5,1.0):  268 entries ( 30.5/day)  lost 17 ( 6.3%)  +8.35c/sh  +12.72$/day | of them the 2.5 bp pause would block 113 (6 losers)
+     sigma [1.0,2.0):   54 entries (  6.1/day)  lost  0 ( 0.0%)  +13.33c/sh   +4.09$/day | of them the 2.5 bp pause would block 47 (0 losers)
+     sigma [2.0,99):    6 entries (  0.7/day)  lost  0 ( 0.0%)  +18.09c/sh   +0.62$/day | of them the 2.5 bp pause would block 6 (0 losers)
