@@ -467,8 +467,8 @@ def test_decide_with_tiers_end_to_end(tables):
     """Same situation, probability between 0.95 and 0.97: L (theta 0.99) says no, L3 buys at <= 0.93 and not at 0.94."""
     from pmbot.bot.lock import decide_state
     paper = load_lock_config(os.path.join(ROOT, "config", "lock.toml")).lock
-    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
-    K, now_s, cl, last = scenario(bp=1.0, rel=270.0)
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides={"lock": {"sigma_floor_bp": 0.0}}).lock
+    K, now_s, cl, last = scenario(bp=1.0, rel=270.0)             # the tier logic itself: sigma floor off (reports/52)
     bn = 75000.0
     now = int(now_s * 1000)
     sigma = None
@@ -496,6 +496,9 @@ def test_lock_tier_wide_is_l3_with_a_lower_price_floor(tables):
     tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
     wide = load_lock_config(os.path.join(ROOT, "config", "lock_tier_wide.toml"))
     assert wide.execution.mode == "paper" and wide.lock.a_min == 0.50 and tier.lock.a_min == 0.90
+    # L4 stays the paper reference WITHOUT the sigma floor of reports/52 (what L3 was until 10 Nov, plus cheap asks)
+    assert wide.lock.sigma_floor_bp == 0.0 and tier.lock.sigma_floor_bp == 0.5
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides={"lock": {"sigma_floor_bp": 0.0}})
     assert wide.risk.state_file != tier.risk.state_file and wide.journal_dir != tier.journal_dir
     for k in ("theta", "agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
               "assets", "tiers", "max_entries_per_window"):
@@ -809,3 +812,51 @@ def test_lm3_bids_the_tier_price_of_the_model_probability():
     assert maker_bid(c, 0.96, None) == 0.93 and maker_bid(c, 0.92, None) == 0.91
     assert maker_bid(c, 0.89, None) is None
     assert maker_bid(c, 0.92, 0.91) == 0.90 and maker_bid(c, 0.92, 0.905) is None    # post-only: one cent under the ask
+
+
+def test_sigma_floor_is_in_live_and_its_twin():
+    """reports/52: live L3 and its paper twins (5m and 15m) run with sigma never below 0.5 bp. It only makes the rule
+    stricter (a floored sigma can only lower the model probability), so it is not a risk increase."""
+    for name in ("lock_live.toml", "lock_tier.toml", "lock15_tier.toml"):
+        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.sigma_floor_bp == 0.5, name
+    for name in ("lock.toml", "lock_wide.toml", "lock_tier_wide.toml"):
+        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.sigma_floor_bp == 0.0, name
+    with pytest.raises(ValueError):
+        load_lock_config(overrides={"lock": {"sigma_floor_bp": -0.1}})
+    with pytest.raises(ValueError):
+        load_lock_config(overrides={"lock": {"sigma_floor_bp": 50.0}})
+
+
+def test_sigma_floor_stops_a_small_lead_in_a_calm_market(tables):
+    """Calm market: EWMA sigma 0.15 bp, the price 1.5 bp past the strike with 46 prints to go. Plain L3 calls it
+    decided; with the 0.5 bp floor the model is no longer sure and stays out. A 6 bp lead is still bought."""
+    from pmbot.bot.lock import decide_state
+    off = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides={"lock": {"sigma_floor_bp": 0.0}}).lock
+    on = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    bn = 75000.0
+    K, now_s, cl, last = scenario(bp=1.5, rel=252.0)
+    args = (tables, "btc", T, K, int(now_s * 1000), cl, last, 0.15e-4, bn, bn, bn, bn)
+    side0, p0, ctx0 = decide_state(off, *args)
+    side1, p1, ctx1 = decide_state(on, *args)
+    assert side0 == "U" and p0 >= 0.97, ctx0
+    assert side1 is None and ctx1["why"] in ("p", "agree") and ctx1["p"] < p0, ctx1
+    assert ctx1["sigma_bp"] == 0.5 and ctx1["sigma_raw_bp"] == 0.15 and ctx0["sigma_bp"] == 0.15
+    sig, _ = decide(off, *args, (0.91, 100.0), (0.10, 100.0))
+    assert sig and sig["side"] == "U"
+    sig, _ = decide(on, *args, (0.91, 100.0), (0.10, 100.0))
+    assert sig is None
+    K, now_s, cl, last = scenario(bp=6.0, rel=252.0)
+    sig, ctx = decide(on, tables, "btc", T, K, int(now_s * 1000), cl, last, 0.15e-4, bn, bn, bn, bn, (0.91, 100.0), (0.10, 100.0))
+    assert sig and sig["side"] == "U", ctx
+
+
+def test_sigma_floor_changes_nothing_above_the_floor(tables):
+    from pmbot.bot.lock import decide_state
+    off = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides={"lock": {"sigma_floor_bp": 0.0}}).lock
+    on = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    bn = 75000.0
+    K, now_s, cl, last = scenario(bp=5.0, rel=262.0)
+    for sg in (0.5e-4, 0.8e-4, 1.5e-4):
+        a = decide_state(off, tables, "btc", T, K, int(now_s * 1000), cl, last, sg, bn, bn, bn, bn)
+        b = decide_state(on, tables, "btc", T, K, int(now_s * 1000), cl, last, sg, bn, bn, bn, bn)
+        assert a[0] == b[0] and a[1] == b[1] and a[2]["p_cl"] == b[2]["p_cl"]

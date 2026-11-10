@@ -22,6 +22,8 @@ rel_hi = 299.5
 shares = 5
 max_entries_per_window = 1
 tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+sigma_floor_bp = 0.5  # reports/52: sigma never below 0.5 bp -> no entry on a 1-2 bp lead in a calm market. Only stricter than plain L3
+                      # (every entry is also an L3 entry): ~40 % of the entries, ~1/4 of the losses in the replay of 7-10 Nov
 
 [risk]
 max_usd_per_entry = 5.0

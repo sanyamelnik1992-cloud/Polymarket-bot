@@ -65,6 +65,10 @@ class LockCfg:
     entry: str = "taker"                 # "taker": FAK at the ask (L); "maker": resting bid for the decided side (LM)
     tiers: list = field(default_factory=list)   # [[p_min, ask_max], ...]: the lower the model probability, the cheaper the ask must
                                          # be (L3, reports/47). Empty = the plain rule (p >= theta, ask <= min(a_max, p - edge - fee))
+    sigma_floor_bp: float = 0.0          # the model never uses a 1 s sigma below this (bp). The EWMA sigma of a calm market
+                                         # (0.1-0.3 bp) makes a 1-2 bp lead look decided. Replay 7-10 Nov with the live limits and
+                                         # Gamma outcomes: 0.5 bp -> 110 entries, 3 lost, +$32 (plain L3: 262, 13 lost, +$46); with
+                                         # fills 0.5 s late +$27 vs +$23 (reports/52). 0 = off
 
 
 @dataclass
@@ -133,6 +137,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.shares must be >= 1")
     if c.duration not in DURATIONS:
         raise ValueError(f"lock.duration must be one of {sorted(DURATIONS)}")
+    if not 0 <= c.sigma_floor_bp <= 5:
+        raise ValueError("lock.sigma_floor_bp must be in [0, 5] (bp of a 1 s return)")
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
     if c.tiers:
@@ -180,6 +186,8 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
         return None, 0.0, {**ctx, "why": "cl_stale"}
     if not bn_now or not bn_at_last or not bn_1s or not bn_3s:
         return None, 0.0, {**ctx, "why": "no_binance"}
+    sigma_raw = sigma
+    sigma = max(sigma, c.sigma_floor_bp * 1e-4)
     st = lock_state(cl_by_sec, cl_last[1] // 1000, cl_last[0], T, K, now_s, bn_now, bn_at_last)
     p_nc = prob_up(tables, asset, st["A_nc"], st["m_nc"], st["S_nc"], K, sigma)
     p_cl = prob_up(tables, asset, st["A"], st["m_cl"], st["S_cl"], K, sigma)
@@ -193,7 +201,7 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
     mv3 = math.log(bn_now / bn_3s) * 1e4
     ctx.update(side="U" if up else "D", p=round(p, 6), p_cl=round(pc, 6), dist_bp=round(dist, 3),
                spot_bp=round(spot, 3), mv1=round(mv1, 3), mv3=round(mv3, 3), n=st["n"], m=st["m_nc"],
-               sigma_bp=round(sigma * 1e4, 4))
+               sigma_bp=round(sigma * 1e4, 4), sigma_raw_bp=round(sigma_raw * 1e4, 4))
     if p < c.theta:
         return None, 0.0, {**ctx, "why": "p"}
     if pc < c.agree:
