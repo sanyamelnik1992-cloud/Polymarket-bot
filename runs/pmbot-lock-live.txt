@@ -1,22 +1,22 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261110-123605
-mode: live  duration: 24.5 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 49, 'prewarm': 20, 'lock_state': 180, 'strike': 16, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'order_rejected': 1, 'lock_miss': 1, 'settle': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261110-131514
+mode: live  duration: 46.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 93, 'prewarm': 36, 'lock_state': 836, 'strike': 32, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
 lock orders: sent 2  filled 1  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 430  p90 430  max 430
-  market prewarm (2 lookups + signing), ms: median 181  max 285  n 20
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 60-60 s before the end; model p 0.962-0.962
+  signal -> exchange answer, ms: median 285  p90 285  max 285
+  market prewarm (2 lookups + signing), ms: median 222  max 584  n 36
+  fill price minus the ask we saw, cents: mean +1.00  worst +1.0
+  misses came 50-50 s before the end; model p 0.905-0.905
   exchange rejections by code: {'fak_not_filled': 1}
 
 fills: 1  shares: 5  notional: $4.55
        fills  shares  notional  avg_price  med_rel
 asset                                             
-eth        1   5.056      4.55        0.9  240.666
+btc        1     5.0      4.55       0.91  254.529
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
-eth          1  4.582  0.474          0.474     0.0       1.0  0.474  0.474  0.103
+btc          1  4.579  0.421          0.421     0.0       1.0  0.421  0.421  0.092
 
-TOTAL pnl $+0.47 (ex-rebate $+0.47) on cost $4.58 -> ROI +10.34%; windows 1, t-stat +nan
+TOTAL pnl $+0.42 (ex-rebate $+0.42) on cost $4.58 -> ROI +9.20%; windows 1, t-stat +nan
 max drawdown $0.00; hedged windows (both sides filled): 0
