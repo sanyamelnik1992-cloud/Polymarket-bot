@@ -386,17 +386,20 @@ class TakerLiveBroker:
             return None
         return round((time.perf_counter() - t0) * 1000, 1)
 
-    async def place_fak(self, token, key, side, limit, usd):
+    async def place_fak(self, token, key, side, limit, usd, max_spend=None):
         """One FAK market BUY of `usd` capped at `limit`. Returns {"price", "size"} for a fill, else None with the
         reason in self.last_reject. "fak_not_filled" = the exchange matched nothing and created nothing (a new order
         is safe); any other reason means the order was refused or is still pending: do not repeat it blindly.
-        Raises when the outcome is unknown (timeout, 5xx, an unexpected 400)."""
+        Raises when the outcome is unknown (timeout, 5xx, an unexpected 400).
+
+        `max_spend` (default `usd`) is the all-in budget the SDK plans for: when it does not cover `usd` plus the taker
+        fee, the SDK lowers the notional and the order asks for a fractional share count (see LiveTaker.buy)."""
         self.last_reject = ""
         t0 = time.perf_counter()
         try:
             resp = await self.client.place_market_order(asset_id=token, side="BUY", amount=f"{usd:.2f}",
-                                                        max_spend=f"{usd:.2f}", max_price=price_str(limit),
-                                                        order_type="FAK")
+                                                        max_spend=f"{usd if max_spend is None else max_spend:.2f}",
+                                                        max_price=price_str(limit), order_type="FAK")
         except Exception as e:  # noqa: BLE001
             lat = round((time.perf_counter() - t0) * 1000, 1)
             msg = str(e)

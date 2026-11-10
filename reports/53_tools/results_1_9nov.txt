@@ -1,0 +1,344 @@
+# Сырые результаты отчёта 53 (10 ноября 2026). Данные: ленты последних 75 с каждого 5-минутного окна BTC/ETH/SOL/XRP,
+# 1 ноября 00:00 - 9 ноября 19:15 UTC (2510 окон на монету, Data API v2 с мейкерами), секундные цены Binance как замена
+# Chainlink, боевая модель pmbot/lockmodel.py и таблицы config/lock_tables.npz. Стаканы: 24 окна 9 ноября 19:24-21:19 UTC.
+# Воспроизведение: dl_lastmin.py + reports/46_tools/dl_binance.py -> cands9.py / cands9m.py -> an9*.py; book_sampler.py -> an_books.py
+
+################ an9
+windows 10040: btc 2510, eth 2510, sol 2510, xrp 2510 | 1 Nov 00:00 - 9 Nov 19:15 UTC
+
+=== L (no limits, 5 shares):  243 entries,   1 lost ( 0.4%), P&L   +37.07$, +3.05c/sh, avg px 0.963
+   1-4 Nov (before any tuning data)     73 entries,   0 lost ( 0.0%), P&L   +12.40$, +3.40c/sh, avg px 0.964
+   5-9 Nov                             170 entries,   1 lost ( 0.6%), P&L   +24.67$, +2.90c/sh, avg px 0.963
+   btc                                 103 entries,   0 lost ( 0.0%), P&L   +19.02$, +3.69c/sh, avg px 0.960
+   eth                                 103 entries,   0 lost ( 0.0%), P&L   +17.58$, +3.41c/sh, avg px 0.963
+   sol                                  21 entries,   1 lost ( 4.8%), P&L    -1.64$, -1.57c/sh, avg px 0.966
+   xrp                                  16 entries,   0 lost ( 0.0%), P&L    +2.12$, +2.65c/sh, avg px 0.972
+   by day: 01: 32/0 +5.6 | 02: 14/0 +2.4 | 03: 19/0 +3.4 | 04: 8/0 +1.0 | 05: 15/0 +3.2 | 06: 10/0 +1.1 | 07: 72/1 +8.1 | 08: 59/0 +10.1 | 09: 14/0 +2.3
+   live limits ($5 open = one at a time, stop -$5/day): 220 entries, 1 lost, P&L +33.07$, per day +3.67$, worst day +0.99$, days stopped 0 of 9
+   by day with limits: 01: 31/0 +5.5 | 02: 10/0 +1.8 | 03: 18/0 +3.1 | 04: 8/0 +1.0 | 05: 15/0 +3.2 | 06: 10/0 +1.1 | 07: 65/1 +6.9 | 08: 50/0 +8.4 | 09: 13/0 +2.1
+
+=== L3 (no limits, 5 shares):  787 entries,  32 lost ( 4.1%), P&L  +120.99$, +3.07c/sh, avg px 0.924
+   1-4 Nov (before any tuning data)    277 entries,  14 lost ( 5.1%), P&L   +31.83$, +2.30c/sh, avg px 0.921
+   5-9 Nov                             510 entries,  18 lost ( 3.5%), P&L   +89.16$, +3.50c/sh, avg px 0.925
+   btc                                 368 entries,  18 lost ( 4.9%), P&L   +47.52$, +2.58c/sh, avg px 0.920
+   eth                                 302 entries,   9 lost ( 3.0%), P&L   +59.49$, +3.94c/sh, avg px 0.926
+   sol                                  59 entries,   2 lost ( 3.4%), P&L    +9.17$, +3.11c/sh, avg px 0.931
+   xrp                                  58 entries,   3 lost ( 5.2%), P&L    +4.81$, +1.66c/sh, avg px 0.927
+   by day: 01: 76/3 +11.0 | 02: 68/6 -4.7 | 03: 77/2 +18.4 | 04: 56/3 +7.1 | 05: 90/6 +4.9 | 06: 99/7 +3.8 | 07: 140/5 +19.5 | 08: 122/0 +39.5 | 09: 59/0 +21.5
+   live limits ($5 open = one at a time, stop -$5/day): 572 entries, 22 lost, P&L +94.15$, per day +10.46$, worst day -6.50$, days stopped 2 of 9
+   by day with limits: 01: 66/1 +17.7 | 02: 23/3 -6.2* | 03: 67/2 +15.1 | 04: 52/3 +5.4 | 05: 22/3 -6.5* | 06: 80/5 +6.4 | 07: 115/5 +12.1 | 08: 99/0 +32.2 | 09: 48/0 +17.9
+
+=== L4 (no limits, 5 shares): 1148 entries,  75 lost ( 6.5%), P&L  +408.75$, +7.12c/sh, avg px 0.855
+   1-4 Nov (before any tuning data)    417 entries,  34 lost ( 8.2%), P&L  +125.19$, +6.00c/sh, avg px 0.850
+   5-9 Nov                             731 entries,  41 lost ( 5.6%), P&L  +283.56$, +7.76c/sh, avg px 0.858
+   btc                                 495 entries,  37 lost ( 7.5%), P&L  +146.73$, +5.93c/sh, avg px 0.858
+   eth                                 437 entries,  23 lost ( 5.3%), P&L  +168.52$, +7.71c/sh, avg px 0.863
+   sol                                 116 entries,   5 lost ( 4.3%), P&L   +64.69$, +11.15c/sh, avg px 0.837
+   xrp                                 100 entries,  10 lost (10.0%), P&L   +28.82$, +5.76c/sh, avg px 0.834
+   by day: 01: 99/6 +44.5 | 02: 100/15 -7.4 | 03: 121/6 +54.9 | 04: 97/7 +33.1 | 05: 141/12 +36.0 | 06: 155/13 +38.7 | 07: 174/9 +72.5 | 08: 154/5 +68.1 | 09: 107/2 +68.3
+   live limits ($5 open = one at a time, stop -$5/day): 724 entries, 43 lost, P&L +259.67$, per day +28.85$, worst day -7.25$, days stopped 2 of 9
+   by day with limits: 01: 82/4 +37.5 | 02: 13/3 -5.2* | 03: 94/5 +37.5 | 04: 77/6 +22.8 | 05: 30/5 -7.2* | 06: 110/9 +27.7 | 07: 131/7 +50.9 | 08: 115/3 +50.0 | 09: 72/1 +45.8
+
+=== L4 entries by price band and model p (5 shares)
+   px [0.500,0.700):   83 entries,  11 lost (13.3%), P&L  +104.35$, +25.14c/sh, avg px 0.599
+   px [0.700,0.800):  124 entries,  12 lost ( 9.7%), P&L   +83.80$, +13.52c/sh, avg px 0.755
+   px [0.800,0.900):  486 entries,  34 lost ( 7.0%), P&L  +152.27$, +6.27c/sh, avg px 0.859
+   px [0.900,0.915):  254 entries,  16 lost ( 6.3%), P&L   +31.86$, +2.51c/sh, avg px 0.906
+   px [0.915,0.935):   61 entries,   0 lost ( 0.0%), P&L   +21.29$, +6.98c/sh, avg px 0.925
+   px [0.935,0.955):   71 entries,   2 lost ( 2.8%), P&L    +7.40$, +2.08c/sh, avg px 0.948
+   px [0.955,0.985):   69 entries,   0 lost ( 0.0%), P&L    +7.79$, +2.26c/sh, avg px 0.976
+   p  [0.90,0.92):  580 entries,  50 lost ( 8.6%), P&L  +198.77$, +6.85c/sh, avg px 0.836
+   p  [0.92,0.95):  250 entries,  15 lost ( 6.0%), P&L  +118.33$, +9.47c/sh, avg px 0.836
+   p  [0.95,0.97):  116 entries,   5 lost ( 4.3%), P&L   +41.03$, +7.07c/sh, avg px 0.879
+   p  [0.97,0.99):  113 entries,   4 lost ( 3.5%), P&L   +34.23$, +6.06c/sh, avg px 0.898
+   p  [0.99,1.01):   89 entries,   1 lost ( 1.1%), P&L   +16.38$, +3.68c/sh, avg px 0.949
+
+################ an9b
+
+=== L3 (px >= 0.90): all first signals:  787 entries ( 89.4/day),  32 lost ( 4.1%), P&L  +120.99$ (+13.75/day), +3.07c/sh, avg px 0.924
+   signal is NEW this second (was not there 1 s ago):  324 entries ( 36.8/day),   7 lost ( 2.2%), P&L   +73.35$ ( +8.34/day), +4.53c/sh, avg px 0.929
+   signal already there 1 s ago:                      463 entries ( 52.6/day),  25 lost ( 5.4%), P&L   +47.64$ ( +5.41/day), +2.06c/sh, avg px 0.920
+   by Binance move over the last 3 s in our favour (bp):
+      mv3 [-2.1,-0.5):   60 entries (  6.8/day),   4 lost ( 6.7%), P&L    +3.19$ ( +0.36/day), +1.06c/sh, avg px 0.917
+      mv3 [-0.5,+0.5):  469 entries ( 53.3/day),  23 lost ( 4.9%), P&L   +52.67$ ( +5.99/day), +2.25c/sh, avg px 0.924
+      mv3 [+0.5,+1.5):  122 entries ( 13.9/day),   3 lost ( 2.5%), P&L   +29.42$ ( +3.34/day), +4.82c/sh, avg px 0.922
+      mv3 [+1.5,+3.0):   88 entries ( 10.0/day),   0 lost ( 0.0%), P&L   +32.32$ ( +3.67/day), +7.35c/sh, avg px 0.922
+      mv3 [+3.0,+99.0):   48 entries (  5.5/day),   2 lost ( 4.2%), P&L    +3.38$ ( +0.38/day), +1.41c/sh, avg px 0.940
+   RULE with a signal at least 1 s old:  621 entries ( 70.6/day),  26 lost ( 4.2%), P&L   +93.53$ (+10.63/day), +3.01c/sh, avg px 0.923
+   RULE with a signal at least 2 s old:  510 entries ( 58.0/day),  24 lost ( 4.7%), P&L   +64.68$ ( +7.35/day), +2.54c/sh, avg px 0.923
+        btc:  264 entries ( 30.0/day),  16 lost ( 6.1%), P&L   +19.68$ ( +2.24/day), +1.49c/sh, avg px 0.919
+        eth:  195 entries ( 22.2/day),   5 lost ( 2.6%), P&L   +43.28$ ( +4.92/day), +4.44c/sh, avg px 0.925
+        sol:   23 entries (  2.6/day),   2 lost ( 8.7%), P&L    -2.61$ ( -0.30/day), -2.27c/sh, avg px 0.931
+        xrp:   28 entries (  3.2/day),   1 lost ( 3.6%), P&L    +4.33$ ( +0.49/day), +3.09c/sh, avg px 0.929
+        by day: 01: 57/3 +4.5 | 02: 45/5 -7.4 | 03: 46/1 +13.0 | 04: 26/2 +0.4 | 05: 56/4 +2.5 | 06: 57/6 -7.4 | 07: 108/3 +19.7 | 08: 87/0 +29.2 | 09: 28/0 +10.2
+        px [0.900,0.915):  307 entries ( 34.9/day),  22 lost ( 7.2%), P&L   +25.98$ ( +2.95/day), +1.69c/sh, avg px 0.905
+        px [0.915,0.985):  203 entries ( 23.1/day),   2 lost ( 1.0%), P&L   +38.70$ ( +4.40/day), +3.81c/sh, avg px 0.949
+   RULE with a signal at least 3 s old:  426 entries ( 48.4/day),  23 lost ( 5.4%), P&L   +40.21$ ( +4.57/day), +1.89c/sh, avg px 0.922
+
+=== L4 (px >= 0.50): all first signals: 1148 entries (130.5/day),  75 lost ( 6.5%), P&L  +408.75$ (+46.45/day), +7.12c/sh, avg px 0.855
+   signal is NEW this second (was not there 1 s ago):  713 entries ( 81.0/day),  38 lost ( 5.3%), P&L  +328.12$ (+37.29/day), +9.20c/sh, avg px 0.846
+   signal already there 1 s ago:                      435 entries ( 49.4/day),  37 lost ( 8.5%), P&L   +80.63$ ( +9.16/day), +3.71c/sh, avg px 0.870
+   by Binance move over the last 3 s in our favour (bp):
+      mv3 [-2.1,-0.5):   87 entries (  9.9/day),   4 lost ( 4.6%), P&L   +30.88$ ( +3.51/day), +7.10c/sh, avg px 0.876
+      mv3 [-0.5,+0.5):  548 entries ( 62.3/day),  51 lost ( 9.3%), P&L   +86.63$ ( +9.84/day), +3.16c/sh, avg px 0.868
+      mv3 [+0.5,+1.5):  208 entries ( 23.6/day),   9 lost ( 4.3%), P&L  +102.58$ (+11.66/day), +9.86c/sh, avg px 0.850
+      mv3 [+1.5,+3.0):  172 entries ( 19.5/day),   5 lost ( 2.9%), P&L  +104.68$ (+11.90/day), +12.17c/sh, avg px 0.840
+      mv3 [+3.0,+99.0):  133 entries ( 15.1/day),   6 lost ( 4.5%), P&L   +83.99$ ( +9.54/day), +12.63c/sh, avg px 0.819
+   RULE with a signal at least 1 s old:  881 entries (100.1/day),  60 lost ( 6.8%), P&L  +282.21$ (+32.07/day), +6.41c/sh, avg px 0.860
+   RULE with a signal at least 2 s old:  694 entries ( 78.9/day),  52 lost ( 7.5%), P&L  +178.97$ (+20.34/day), +5.16c/sh, avg px 0.866
+        btc:  338 entries ( 38.4/day),  28 lost ( 8.3%), P&L   +72.20$ ( +8.20/day), +4.27c/sh, avg px 0.867
+        eth:  268 entries ( 30.5/day),  14 lost ( 5.2%), P&L   +87.06$ ( +9.89/day), +6.50c/sh, avg px 0.876
+        sol:   46 entries (  5.2/day),   4 lost ( 8.7%), P&L   +20.16$ ( +2.29/day), +8.76c/sh, avg px 0.816
+        xrp:   42 entries (  4.8/day),   6 lost (14.3%), P&L    -0.45$ ( -0.05/day), -0.21c/sh, avg px 0.851
+        by day: 01: 74/6 +22.3 | 02: 58/10 -17.1 | 03: 70/4 +30.7 | 04: 49/3 +18.6 | 05: 81/8 +13.6 | 06: 80/10 -6.5 | 07: 132/5 +57.8 | 08: 113/5 +42.9 | 09: 37/1 +16.6
+        px [0.500,0.800):   98 entries ( 11.1/day),  16 lost (16.3%), P&L   +63.04$ ( +7.16/day), +12.87c/sh, avg px 0.694
+        px [0.800,0.900):  283 entries ( 32.2/day),  23 lost ( 8.1%), P&L   +70.92$ ( +8.06/day), +5.01c/sh, avg px 0.860
+        px [0.900,0.915):  187 entries ( 21.2/day),  13 lost ( 7.0%), P&L   +17.37$ ( +1.97/day), +1.86c/sh, avg px 0.906
+        px [0.915,0.985):  126 entries ( 14.3/day),   0 lost ( 0.0%), P&L   +27.64$ ( +3.14/day), +4.39c/sh, avg px 0.953
+   RULE with a signal at least 3 s old:  569 entries ( 64.7/day),  44 lost ( 7.7%), P&L  +134.42$ (+15.27/day), +4.72c/sh, avg px 0.868
+
+################ an9c
+signal at least 1 s old; P&L without risk limits; 8.8 days
+
+=== L3 (px >= 0.90)
+ shares            coins entries/day  lost %  c/share  $ per day  $ at risk per entry
+      5         all four        70.6     4.2    +3.01     +10.63                    5
+     10         all four        64.8     4.0    +3.09     +20.04                    9
+     20         all four        57.4     4.4    +2.75     +31.58                   18
+     50         all four        44.2     4.6    +2.31     +51.07                   46
+    100         all four        35.5     4.5    +2.67     +94.54                   92
+    200         all four        25.6     5.3    +1.59     +81.32                  185
+      5              btc        35.2     5.5    +2.00      +3.52                    5
+     10              btc        34.7     4.9    +2.55      +8.83                    9
+     20              btc        32.8     5.2    +2.18     +14.32                   18
+     50              btc        29.4     5.8    +1.52     +22.43                   46
+    100              btc        26.9     4.6    +2.76     +74.21                   92
+    200              btc        22.4     5.6    +1.55     +69.32                  185
+      5              eth        26.5     2.6    +4.40      +5.83                    5
+     10              eth        23.4     2.9    +3.95      +9.24                    9
+     20              eth        19.9     2.3    +4.61     +18.34                   19
+     50              eth        12.4     1.8    +4.62     +28.62                   47
+    100              eth         7.4     3.1    +3.41     +25.16                   93
+    200              eth         2.8     4.0    +1.49      +8.45                  188
+      5          sol+xrp         8.9     3.8    +2.88      +1.28                    5
+     10          sol+xrp         6.7     3.4    +2.94      +1.97                    9
+     20          sol+xrp         4.7     7.3    -1.16      -1.08                   19
+     50          sol+xrp         2.4     4.8    +0.02      +0.02                   47
+    100          sol+xrp         1.1    10.0    -4.24      -4.82                   94
+    200          sol+xrp         0.3     0.0    +5.21      +3.55                  189
+
+=== L4 (px >= 0.50)
+ shares            coins entries/day  lost %  c/share  $ per day  $ at risk per entry
+      5         all four       100.1     6.8    +6.41     +32.07                    4
+     10         all four        93.9     6.8    +6.43     +60.37                    9
+     20         all four        84.8     6.8    +6.54    +110.80                   17
+     50         all four        72.7     7.3    +5.92    +215.38                   43
+    100         all four        57.0     7.0    +6.70    +382.32                   86
+    200         all four        43.5     7.8    +6.25    +543.76                  170
+      5              btc        46.0     8.4    +4.58     +10.54                    4
+     10              btc        46.0     8.1    +4.87     +22.44                    9
+     20              btc        45.2     8.3    +4.92     +44.49                   17
+     50              btc        44.5     8.4    +5.04    +112.15                   43
+    100              btc        42.4     8.0    +5.88    +249.36                   85
+    200              btc        37.8     8.4    +5.94    +449.61                  170
+      5              eth        38.0     4.5    +7.92     +15.03                    4
+     10              eth        35.1     4.5    +7.97     +27.98                    9
+     20              eth        30.6     4.5    +8.56     +52.34                   17
+     50              eth        23.3     4.9    +7.89     +91.89                   43
+    100              eth        12.6     2.7   +10.38    +130.99                   86
+    200              eth         4.9     2.3    +9.84     +96.18                  174
+      5          sol+xrp        16.1     7.7    +8.05      +6.50                    4
+     10          sol+xrp        12.7     8.0    +7.82      +9.96                    8
+     20          sol+xrp         9.0     7.6    +7.78     +13.97                   17
+     50          sol+xrp         4.9     9.3    +4.64     +11.34                   43
+    100          sol+xrp         2.0    11.1    +0.97      +1.97                   87
+    200          sol+xrp         0.8    14.3    -1.28      -2.04                  172
+
+taker volume bought on the model's side in the 2 s after a valid L3 signal (shares), by coin: median / p75 / p90
+   btc: 284 / 579 / 1109   (signal-seconds: 1257)
+   eth: 33 / 81 / 164   (signal-seconds: 830)
+   sol: 26 / 67 / 134   (signal-seconds: 122)
+   xrp: 10 / 32 / 77   (signal-seconds: 121)
+
+################ an9d
+L4 entries, signal >= 1 s old: 881, lost 60
+   ALL                        n  881  lost   6.8%  avg px 0.860  implied loss  14.0%   +6.41c/sh  P&L  +282.2$
+
+second of the window
+   [240, 243)                 n  213  lost   9.9%  avg px 0.878  implied loss  12.2%   +1.59c/sh  P&L   +16.9$
+   [243, 248)                 n  127  lost   3.9%  avg px 0.870  implied loss  13.0%   +8.33c/sh  P&L   +52.9$
+   [248, 255)                 n  139  lost   2.9%  avg px 0.867  implied loss  13.3%   +9.67c/sh  P&L   +67.2$
+   [255, 265)                 n  152  lost   7.9%  avg px 0.855  implied loss  14.5%   +5.82c/sh  P&L   +44.3$
+   [265, 280)                 n  181  lost   6.6%  avg px 0.846  implied loss  15.4%   +7.95c/sh  P&L   +71.9$
+   [280, 297)                 n   69  lost   8.7%  avg px 0.819  implied loss  18.1%   +8.43c/sh  P&L   +29.1$
+
+prints still unknown (m)
+   [0, 15)                    n   38  lost  10.5%  avg px 0.809  implied loss  19.1%   +7.62c/sh  P&L   +14.5$
+   [15, 30)                   n  161  lost   7.5%  avg px 0.837  implied loss  16.3%   +7.95c/sh  P&L   +64.0$
+   [30, 40)                   n  141  lost   7.1%  avg px 0.858  implied loss  14.2%   +6.27c/sh  P&L   +44.2$
+   [40, 50)                   n  178  lost   4.5%  avg px 0.861  implied loss  13.9%   +8.61c/sh  P&L   +76.7$
+   [50, 56)                   n  150  lost   3.3%  avg px 0.871  implied loss  12.9%   +8.79c/sh  P&L   +65.9$
+   [56, 61)                   n  213  lost   9.9%  avg px 0.878  implied loss  12.2%   +1.59c/sh  P&L   +16.9$
+
+model p
+   [0.9, 0.92)                n  351  lost   9.7%  avg px 0.844  implied loss  15.6%   +5.04c/sh  P&L   +88.5$
+   [0.92, 0.95)               n  244  lost   7.0%  avg px 0.845  implied loss  15.5%   +7.70c/sh  P&L   +94.0$
+   [0.95, 0.97)               n  111  lost   4.5%  avg px 0.864  implied loss  13.6%   +8.32c/sh  P&L   +46.2$
+   [0.97, 0.99)               n   91  lost   3.3%  avg px 0.889  implied loss  11.1%   +7.20c/sh  P&L   +32.8$
+   [0.99, 1.01)               n   84  lost   1.2%  avg px 0.935  implied loss   6.5%   +4.95c/sh  P&L   +20.8$
+
+model p minus price paid
+   [-0.1, 0)                  n   32  lost  12.5%  avg px 0.910  implied loss   9.0%   -4.06c/sh  P&L    -6.5$
+   [0, 0.02)                  n  140  lost   2.1%  avg px 0.924  implied loss   7.6%   +5.00c/sh  P&L   +35.0$
+   [0.02, 0.05)               n  273  lost   3.3%  avg px 0.912  implied loss   8.8%   +4.99c/sh  P&L   +68.2$
+   [0.05, 0.1)                n  230  lost   7.0%  avg px 0.865  implied loss  13.5%   +5.77c/sh  P&L   +66.3$
+   [0.1, 0.2)                 n  121  lost  12.4%  avg px 0.800  implied loss  20.0%   +6.45c/sh  P&L   +39.0$
+   [0.2, 0.6)                 n   85  lost  15.3%  avg px 0.643  implied loss  35.7%  +18.88c/sh  P&L   +80.2$
+
+distance of the expected TWAP from the strike, bp
+   [0.5, 1)                   n  159  lost  10.1%  avg px 0.809  implied loss  19.1%   +8.06c/sh  P&L   +64.1$
+   [1, 2)                     n  299  lost   7.7%  avg px 0.857  implied loss  14.3%   +5.80c/sh  P&L   +86.7$
+   [2, 3)                     n  212  lost   6.1%  avg px 0.882  implied loss  11.8%   +4.94c/sh  P&L   +52.4$
+   [3, 5)                     n  147  lost   4.8%  avg px 0.885  implied loss  11.5%   +6.10c/sh  P&L   +44.9$
+   [5, 8)                     n   44  lost   2.3%  avg px 0.868  implied loss  13.2%  +10.22c/sh  P&L   +22.5$
+   [8, 100)                   n   20  lost   0.0%  avg px 0.875  implied loss  12.5%  +11.77c/sh  P&L   +11.8$
+
+sigma (EWMA 900 s), bp per sqrt(s)
+   [0, 0.12)                  n   14  lost  14.3%  avg px 0.879  implied loss  12.1%   -2.82c/sh  P&L    -2.0$
+   [0.12, 0.18)               n  115  lost   3.5%  avg px 0.870  implied loss  13.0%   +8.81c/sh  P&L   +50.7$
+   [0.18, 0.25)               n  134  lost   6.0%  avg px 0.868  implied loss  13.2%   +6.50c/sh  P&L   +43.5$
+   [0.25, 0.35)               n  131  lost   7.6%  avg px 0.867  implied loss  13.3%   +4.91c/sh  P&L   +32.2$
+   [0.35, 0.5)                n  159  lost  11.9%  avg px 0.867  implied loss  13.3%   +0.56c/sh  P&L    +4.4$
+   [0.5, 5)                   n  328  lost   5.2%  avg px 0.846  implied loss  15.4%   +9.35c/sh  P&L  +153.4$
+
+vol burst: rms of last 30 s / sigma
+   [0, 0.6)                   n  253  lost   9.1%  avg px 0.869  implied loss  13.1%   +3.25c/sh  P&L   +41.1$
+   [0.6, 0.9)                 n  196  lost   5.6%  avg px 0.854  implied loss  14.6%   +8.20c/sh  P&L   +80.4$
+   [0.9, 1.2)                 n  186  lost   5.9%  avg px 0.867  implied loss  13.3%   +6.61c/sh  P&L   +61.5$
+   [1.2, 1.6)                 n  121  lost   5.8%  avg px 0.856  implied loss  14.4%   +7.82c/sh  P&L   +47.3$
+   [1.6, 2.2)                 n   78  lost   5.1%  avg px 0.848  implied loss  15.2%   +9.19c/sh  P&L   +35.9$
+   [2.2, 50)                  n   47  lost   8.5%  avg px 0.837  implied loss  16.3%   +6.88c/sh  P&L   +16.2$
+
+Binance last 10 s in our favour, bp
+   [-50, -2)                  n   47  lost   4.3%  avg px 0.890  implied loss  11.0%   +6.11c/sh  P&L   +14.4$
+   [-2, -0.5)                 n  123  lost   9.8%  avg px 0.867  implied loss  13.3%   +2.81c/sh  P&L   +17.3$
+   [-0.5, 0.5)                n  333  lost   7.2%  avg px 0.868  implied loss  13.2%   +5.23c/sh  P&L   +87.1$
+   [0.5, 2)                   n  161  lost   9.3%  avg px 0.854  implied loss  14.6%   +4.48c/sh  P&L   +36.0$
+   [2, 4)                     n  116  lost   2.6%  avg px 0.854  implied loss  14.6%  +11.17c/sh  P&L   +64.8$
+   [4, 50)                    n  101  lost   4.0%  avg px 0.827  implied loss  17.3%  +12.41c/sh  P&L   +62.6$
+
+Binance last 30 s in our favour, bp
+   [-50, -3)                  n   59  lost  10.2%  avg px 0.873  implied loss  12.7%   +1.80c/sh  P&L    +5.3$
+   [-3, -1)                   n  111  lost   4.5%  avg px 0.873  implied loss  12.7%   +7.45c/sh  P&L   +41.4$
+   [-1, 1)                    n  310  lost   7.4%  avg px 0.869  implied loss  13.1%   +4.95c/sh  P&L   +76.7$
+   [1, 3)                     n  184  lost   7.6%  avg px 0.854  implied loss  14.6%   +6.21c/sh  P&L   +57.1$
+   [3, 6)                     n  128  lost   3.9%  avg px 0.854  implied loss  14.6%   +9.89c/sh  P&L   +63.3$
+   [6, 50)                    n   89  lost   7.9%  avg px 0.826  implied loss  17.4%   +8.64c/sh  P&L   +38.5$
+
+hour UTC
+   [0, 4)                     n  160  lost   3.8%  avg px 0.862  implied loss  13.8%   +9.28c/sh  P&L   +74.2$
+   [4, 8)                     n  153  lost  10.5%  avg px 0.867  implied loss  13.3%   +2.12c/sh  P&L   +16.2$
+   [8, 12)                    n  160  lost   5.0%  avg px 0.862  implied loss  13.8%   +8.05c/sh  P&L   +64.4$
+   [12, 16)                   n  146  lost   4.8%  avg px 0.856  implied loss  14.4%   +8.80c/sh  P&L   +64.2$
+   [16, 20)                   n  136  lost  11.0%  avg px 0.856  implied loss  14.4%   +2.55c/sh  P&L   +17.3$
+   [20, 24)                   n  126  lost   6.3%  avg px 0.856  implied loss  14.4%   +7.27c/sh  P&L   +45.8$
+
+coin
+   btc                        n  405  lost   8.4%  avg px 0.862  implied loss  13.8%   +4.58c/sh  P&L   +92.8$
+   eth                        n  334  lost   4.5%  avg px 0.868  implied loss  13.2%   +7.92c/sh  P&L  +132.3$
+   sol                        n   77  lost   6.5%  avg px 0.831  implied loss  16.9%   +9.56c/sh  P&L   +36.8$
+   xrp                        n   65  lost   9.2%  avg px 0.836  implied loss  16.4%   +6.27c/sh  P&L   +20.4$
+
+price paid vs the last taker price of our side in the 2 s before (market moving toward / away from us)
+   no print before            n  190  lost   6.3%  avg px 0.865  implied loss  13.5%   +6.45c/sh  P&L   +61.2$
+   price rose >= 2c           n  289  lost   8.3%  avg px 0.836  implied loss  16.4%   +7.18c/sh  P&L  +103.8$
+   about the same             n  202  lost   6.9%  avg px 0.880  implied loss  12.0%   +4.40c/sh  P&L   +44.5$
+   price fell >= 2c           n  200  lost   5.0%  avg px 0.870  implied loss  13.0%   +7.28c/sh  P&L   +72.8$
+
+################ an9e
+
+=== L3 (px >= 0.90), signal >= 1 s old:  whole period | 1 Nov - 5 Nov 09:36 | 5 Nov 09:36 - 9 Nov
+   from second 240:   621 / 26 lost ( 4.2%)   +93.5$ +3.01c |  243 / 16 lost ( 6.6%)   +10.9$ +0.90c |  378 / 10 lost ( 2.6%)   +82.6$ +4.37c
+   from second 241:   597 / 23 lost ( 3.9%)   +99.4$ +3.33c |  231 / 13 lost ( 5.6%)   +21.4$ +1.85c |  366 / 10 lost ( 2.7%)   +78.0$ +4.26c
+   from second 242:   597 / 23 lost ( 3.9%)   +99.5$ +3.33c |  231 / 13 lost ( 5.6%)   +21.5$ +1.86c |  366 / 10 lost ( 2.7%)   +78.1$ +4.27c
+   from second 243:   551 / 22 lost ( 4.0%)   +88.5$ +3.21c |  214 / 13 lost ( 6.1%)   +14.5$ +1.35c |  337 /  9 lost ( 2.7%)   +74.0$ +4.39c
+   from second 244:   527 / 21 lost ( 4.0%)   +84.0$ +3.19c |  207 / 12 lost ( 5.8%)   +16.5$ +1.60c |  320 /  9 lost ( 2.8%)   +67.4$ +4.22c
+   from second 245:   527 / 21 lost ( 4.0%)   +84.0$ +3.19c |  207 / 12 lost ( 5.8%)   +16.5$ +1.60c |  320 /  9 lost ( 2.8%)   +67.4$ +4.22c
+   from second 247:   490 / 21 lost ( 4.3%)   +68.1$ +2.78c |  189 / 12 lost ( 6.3%)    +9.0$ +0.95c |  301 /  9 lost ( 3.0%)   +59.1$ +3.93c
+   from second 250:   440 / 20 lost ( 4.5%)   +55.2$ +2.51c |  177 / 12 lost ( 6.8%)    +4.0$ +0.45c |  263 /  8 lost ( 3.0%)   +51.2$ +3.90c
+   from second 255:   384 / 16 lost ( 4.2%)   +54.9$ +2.86c |  161 /  9 lost ( 5.6%)   +12.7$ +1.57c |  223 /  7 lost ( 3.1%)   +42.2$ +3.79c
+
+=== L4 (px >= 0.50), signal >= 1 s old:  whole period | 1 Nov - 5 Nov 09:36 | 5 Nov 09:36 - 9 Nov
+   from second 240:   881 / 60 lost ( 6.8%)  +282.2$ +6.41c |  366 / 34 lost ( 9.3%)   +88.4$ +4.83c |  515 / 26 lost ( 5.0%)  +193.8$ +7.53c
+   from second 241:   847 / 55 lost ( 6.5%)  +288.6$ +6.81c |  351 / 31 lost ( 8.8%)   +96.6$ +5.51c |  496 / 24 lost ( 4.8%)  +191.9$ +7.74c
+   from second 242:   843 / 52 lost ( 6.2%)  +300.9$ +7.14c |  350 / 30 lost ( 8.6%)  +100.5$ +5.74c |  493 / 22 lost ( 4.5%)  +200.4$ +8.13c
+   from second 243:   786 / 50 lost ( 6.4%)  +279.2$ +7.10c |  328 / 29 lost ( 8.8%)   +93.2$ +5.68c |  458 / 21 lost ( 4.6%)  +186.0$ +8.12c
+   from second 244:   754 / 48 lost ( 6.4%)  +270.9$ +7.19c |  320 / 28 lost ( 8.8%)   +95.1$ +5.95c |  434 / 20 lost ( 4.6%)  +175.8$ +8.10c
+   from second 245:   754 / 47 lost ( 6.2%)  +275.8$ +7.31c |  320 / 27 lost ( 8.4%)  +100.0$ +6.25c |  434 / 20 lost ( 4.6%)  +175.8$ +8.10c
+   from second 247:   703 / 46 lost ( 6.5%)  +246.6$ +7.01c |  297 / 26 lost ( 8.8%)   +92.9$ +6.26c |  406 / 20 lost ( 4.9%)  +153.6$ +7.57c
+   from second 250:   638 / 46 lost ( 7.2%)  +215.8$ +6.77c |  280 / 26 lost ( 9.3%)   +81.7$ +5.83c |  358 / 20 lost ( 5.6%)  +134.2$ +7.50c
+   from second 255:   562 / 44 lost ( 7.8%)  +175.0$ +6.23c |  256 / 26 lost (10.2%)   +60.6$ +4.74c |  306 / 18 lost ( 5.9%)  +114.4$ +7.48c
+
+=== where do the entries of the first seconds go? L3, rel_lo 240 vs 245: the windows entered at 240-244 under the live rule
+   entered at 240-244 under the live rule:  158 /  9 lost ( 5.7%)   +11.6$ +1.47c
+   ... of them still entered later with rel_lo 245:   64 /  4 lost ( 6.2%)    +2.1$ +0.65c (the later entry)
+   ... of them not entered at all with rel_lo 245:    94 /  1 lost ( 1.1%)   +27.1$ +5.76c (what the live rule got there)
+   new windows that only rel_lo 245 enters:     0
+
+################ an9m
+maker fills on the model's side (signal >= 1 s old), 5 shares, first per window:
+
+ LM  rule: p >= .99, price 0.90-0.98
+   at the makers' own price:         238 ( 27.0/day) lost   1 ( 0.4%) avg px 0.963 +3.34c/sh  +4.52$/day
+   paying 1c more to be first:       238 ( 27.0/day) lost   1 ( 0.4%) avg px 0.963 +2.33c/sh  +3.15$/day
+      btc:  126 ( 14.3/day) lost   1 ( 0.8%) avg px 0.963 +2.93c/sh  +2.09$/day
+      eth:   94 ( 10.7/day) lost   0 ( 0.0%) avg px 0.966 +3.47c/sh  +1.86$/day
+      sol:   12 (  1.4/day) lost   0 ( 0.0%) avg px 0.950 +5.07c/sh  +0.35$/day
+      xrp:    6 (  0.7/day) lost   0 ( 0.0%) avg px 0.935 +6.60c/sh  +0.22$/day
+
+ LM2 rule: p >= .99, price 0.90-0.96
+   at the makers' own price:          97 ( 11.0/day) lost   0 ( 0.0%) avg px 0.941 +6.02c/sh  +3.32$/day
+   paying 1c more to be first:        97 ( 11.0/day) lost   0 ( 0.0%) avg px 0.941 +5.00c/sh  +2.76$/day
+      btc:   56 (  6.4/day) lost   0 ( 0.0%) avg px 0.941 +6.00c/sh  +1.91$/day
+      eth:   29 (  3.3/day) lost   0 ( 0.0%) avg px 0.943 +5.73c/sh  +0.94$/day
+      sol:    7 (  0.8/day) lost   0 ( 0.0%) avg px 0.935 +6.53c/sh  +0.26$/day
+      xrp:    5 (  0.6/day) lost   0 ( 0.0%) avg px 0.929 +7.14c/sh  +0.20$/day
+
+ tiers, price >= 0.90 (L3 as a maker)
+   at the makers' own price:         731 ( 83.1/day) lost  16 ( 2.2%) avg px 0.924 +5.47c/sh +22.71$/day
+   paying 1c more to be first:       731 ( 83.1/day) lost  16 ( 2.2%) avg px 0.924 +4.45c/sh +18.50$/day
+      btc:  403 ( 45.8/day) lost   7 ( 1.7%) avg px 0.923 +6.09c/sh +13.94$/day
+      eth:  229 ( 26.0/day) lost   5 ( 2.2%) avg px 0.930 +4.96c/sh  +6.45$/day
+      sol:   48 (  5.5/day) lost   1 ( 2.1%) avg px 0.922 +5.79c/sh  +1.58$/day
+      xrp:   51 (  5.8/day) lost   3 ( 5.9%) avg px 0.917 +2.53c/sh  +0.73$/day
+
+ tiers, price >= 0.50 (L4 as a maker)
+   at the makers' own price:        1085 (123.3/day) lost  72 ( 6.6%) avg px 0.863 +7.24c/sh +44.65$/day
+   paying 1c more to be first:      1085 (123.3/day) lost  72 ( 6.6%) avg px 0.863 +6.23c/sh +38.42$/day
+      btc:  529 ( 60.1/day) lost  34 ( 6.4%) avg px 0.869 +6.81c/sh +20.47$/day
+      eth:  348 ( 39.5/day) lost  20 ( 5.7%) avg px 0.862 +8.24c/sh +16.28$/day
+      sol:   96 ( 10.9/day) lost   5 ( 5.2%) avg px 0.840 +10.95c/sh  +5.97$/day
+      xrp:  112 ( 12.7/day) lost  13 (11.6%) avg px 0.855 +3.02c/sh  +1.92$/day
+
+################ books
+polls with a valid state and p >= 0.90: 620 in 37 window-coins of 96
+  btc: polls  223 | spread of the decided side, cents: 1c  83%  2c   0%  3c+   0% | size at best bid: median 844, p25 243 | size at best ask: median 445 | ask within the L3 limit 1% of polls, within L4 1%
+  eth: polls  171 | spread of the decided side, cents: 1c  91%  2c   8%  3c+   1% | size at best bid: median 88, p25 55 | size at best ask: median 74 | ask within the L3 limit 0% of polls, within L4 1%
+  sol: polls  101 | spread of the decided side, cents: 1c  60%  2c  35%  3c+   5% | size at best bid: median 51, p25 17 | size at best ask: median 84 | ask within the L3 limit 0% of polls, within L4 0%
+  xrp: polls  125 | spread of the decided side, cents: 1c  54%  2c  31%  3c+  14% | size at best bid: median 18, p25 9 | size at best ask: median 37 | ask within the L3 limit 15% of polls, within L4 17%
+
+L3 signal (ask 0.90..limit): 3 signal starts in 2 window-coins
+   0.3 s later: ask still within the limit  100%  (of those, cheaper than at the signal:   0%)   gone    0%
+   0.6 s later: ask still within the limit   67%  (of those, cheaper than at the signal:   0%)   gone   33%
+   1.0 s later: ask still within the limit   33%  (of those, cheaper than at the signal:   0%)   gone   67%
+   2.0 s later: ask still within the limit   33%  (of those, cheaper than at the signal:   0%)   gone   67%
+   3.0 s later: ask still within the limit   33%  (of those, cheaper than at the signal:   0%)   gone   67%
+   size at the best ask when the signal starts: median 30, p25 26, p75 37 shares
+
+L4 signal (ask 0.50..limit): 6 signal starts in 3 window-coins
+   0.3 s later: ask still within the limit   50%  (of those, cheaper than at the signal:   0%)   gone   50%
+   0.6 s later: ask still within the limit   50%  (of those, cheaper than at the signal:   0%)   gone   50%
+   1.0 s later: ask still within the limit   17%  (of those, cheaper than at the signal:   0%)   gone   83%
+   2.0 s later: ask still within the limit   17%  (of those, cheaper than at the signal:   0%)   gone   83%
+   3.0 s later: ask still within the limit   17%  (of those, cheaper than at the signal:   0%)   gone   83%
+   size at the best ask when the signal starts: median 26, p25 20, p75 37 shares

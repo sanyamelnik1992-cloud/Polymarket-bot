@@ -296,6 +296,18 @@ class PaperTaker:
         return (cost / got if got else 0.0), got, fee
 
 
+def fak_budget(shares, limit):
+    """All-in budget for a FAK BUY of `shares` capped at `limit`: the notional plus the taker fee at the cap, plus a cent.
+
+    With the budget equal to the notional the SDK takes the fee out of the notional, and 5 shares at 0.95 become an
+    order for 4.9789 shares: below the exchange minimum of 5 shares, and with 5 decimals (4.97894) once the market's tick
+    is 0.001 (it switches when the price passes 0.96). That is the likely cause of the two "invalid amounts" rejections
+    of 9-10 Nov (caps 0.94-0.95): the exchange has long refused market BUYs with more than 4 decimals of shares
+    ("taker amount a max of 4 decimals"). Not confirmed on the server; with the fee on top the order is for exactly
+    `shares`, valid at any tick. Cost per entry: 5 x 0.91 + $0.03 fee = $4.58 (was $4.55 for 4.97 shares)."""
+    return math.ceil((shares * limit + shares * fee_per_share(limit)) * 100 - 1e-9) / 100 + 0.01
+
+
 class LiveTaker:
     mode = "live"
 
@@ -314,7 +326,8 @@ class LiveTaker:
 
     async def buy(self, token, key, side, limit, shares):
         from .live import NO_MATCH_CODES
-        r = await self.b.place_fak(token, key, "BUY", limit, round(shares * limit, 2))
+        usd = round(shares * limit, 2)
+        r = await self.b.place_fak(token, key, "BUY", limit, usd, max_spend=fak_budget(shares, limit))
         if not r:
             why = self.b.last_reject
             if why not in NO_MATCH_CODES:
