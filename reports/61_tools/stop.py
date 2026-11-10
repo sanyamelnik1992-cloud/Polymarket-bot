@@ -1,4 +1,4 @@
-"""Does cutting a lock entry help? After an entry of the reports/59 rule, sell (or buy the other side, the same thing) when the
+"""Does cutting a lock entry help? After an entry of the reports/60 rule, sell (or buy the other side, the same thing) when the
 model's probability of our side falls to X or lower. Exit price = what takers who sold our side got in the next 2 s on the tape
 (time order, N shares); no such prints in 6 s = no exit, the entry is held. Model on Binance 1 s closes, as in cands9.py.
 usage: stop.py SHARES TAPE_DIR(lm_<asset>.jsonl, bn_<SYMBOL>.json) S9_btc.json S9_eth.json S9_sol.json S9_xrp.json"""

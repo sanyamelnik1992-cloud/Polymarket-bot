@@ -1,4 +1,4 @@
-=== L3 as in reports/59 (bottom tier from second 260), 5 shares, 1-9 Nov: by entry price
+=== L3 as in reports/60 (bottom tier from second 260), 5 shares, 1-9 Nov: by entry price
   price [0.9,0.915):   185 entries  lost  9 ( 4.9%)  avg price 0.906  zero at  8.8% lost  1 loss =  10.3 wins  +3.96c/sh    +4.17$/day  worst day    -5.6$
   price [0.915,0.935):    94 entries  lost  1 ( 1.1%)  avg price 0.926  zero at  6.9% lost  1 loss =  13.4 wins  +5.87c/sh    +3.14$/day  worst day    +1.3$
   price [0.935,0.955):    64 entries  lost  1 ( 1.6%)  avg price 0.947  zero at  5.0% lost  1 loss =  19.0 wins  +3.43c/sh    +1.25$/day  worst day    -4.0$

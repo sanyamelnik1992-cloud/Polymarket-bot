@@ -82,7 +82,7 @@ class LockCfg:
     late_tier_rel: float = 0.0           # > 0: tiers with a probability below late_tier_p count only from this window second on.
     late_tier_p: float = 0.95            # With 40-57 closing prints still unknown a 0.90-0.95 model is wrong too often: tapes 1-9 Nov,
                                          # the bottom tier entered before second 260: 189 entries, 14 lost, +1.5 c a share; from 260 on:
-                                         # 75 entries, 2 lost, +6 c; live 9-10 Nov: 4 of the 5 losses were such early entries (reports/59). 0 = off
+                                         # 75 entries, 2 lost, +6 c; live 9-10 Nov: 4 of the 5 losses were such early entries (reports/60). 0 = off, and it is off in every config
 
 
 @dataclass
@@ -291,7 +291,7 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
 
 def tier_limit(c: LockCfg, p, rel=None):
     """Highest ask accepted at model probability p: the cheapest-tier rule of c.tiers that p reaches, None if p reaches none.
-    With lock.late_tier_rel and a window second rel before it, the tiers below late_tier_p do not count (reports/59)."""
+    With lock.late_tier_rel and a window second rel before it, the tiers below late_tier_p do not count (reports/60)."""
     best = None
     early = bool(c.late_tier_rel) and rel is not None and rel < c.late_tier_rel
     for pm, am in c.tiers:

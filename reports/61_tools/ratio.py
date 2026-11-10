@@ -1,4 +1,4 @@
-"""How many wins one loss costs, by entry price, and what the L3 rule of reports/59 (bottom tier from second 260, live pause)
+"""How many wins one loss costs, by entry price, and what the L3 rule of reports/60 (bottom tier from second 260, live pause)
 gives at larger sizes. Candidate lists of reports/53_tools/cands9.py with the "sh" field (reports/58_tools/shock_scan.py).
 usage: ratio.py S9_btc.json S9_eth.json S9_sol.json S9_xrp.json"""
 import collections, json, math, sys
@@ -41,7 +41,7 @@ def line(v, n="5"):
     return (f"{len(v):4d} entries  lost {lost:2d} ({100*lost/len(v):4.1f}%)  avg price {apx:.3f}  zero at {100*(1-be):4.1f}% lost  "
             f"1 loss = {wins_per_loss:5.1f} wins  {100*tot/(k*len(v)):+5.2f}c/sh  {tot/DAYS:+7.2f}$/day  worst day {min(byday.values()):+7.1f}$")
 e = run()
-print("=== L3 as in reports/59 (bottom tier from second 260), 5 shares, 1-9 Nov: by entry price")
+print("=== L3 as in reports/60 (bottom tier from second 260), 5 shares, 1-9 Nov: by entry price")
 for lo, hi in ((0.90, 0.915), (0.915, 0.935), (0.935, 0.955), (0.955, 0.985)):
     print(f"  price [{lo},{hi}): ", line([c for c in e if lo <= c["px"]["5"] < hi]))
 print("  all:                 ", line(e))

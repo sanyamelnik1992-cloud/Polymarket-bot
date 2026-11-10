@@ -23,6 +23,10 @@ def prints(level_by_sec):
     return dict(level_by_sec)
 
 
+# the L3 tiers until reports/59 (live and its twins dropped the last one on 10 Nov; L4, L3-15 and LM3 keep it on paper)
+FOUR_TIERS = {"lock": {"theta": 0.90, "tiers": [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]}}
+
+
 def test_tables_are_survival_functions(tables):
     assert set(tables.assets) == {"btc", "eth", "sol", "xrp"}
     for a in tables.assets:
@@ -449,7 +453,10 @@ def test_lock_tiers_lower_probability_needs_cheaper_ask():
     assert tier.risk.max_open_usd <= paper.risk.max_open_usd      # L3 = live twin: one entry at a time since reports/51
     c = tier.lock
     assert tier_limit(c, 0.995) == 0.98 and tier_limit(c, 0.98) == 0.95 and tier_limit(c, 0.96) == 0.93
-    assert tier_limit(c, 0.92) == 0.91 and tier_limit(c, 0.89) is None
+    # reports/59: the live rule and its twin have no p 0.90-0.95 tier any more (every loss of the filtered rule was there)
+    assert tier_limit(c, 0.92) is None and tier_limit(c, 0.89) is None and c.theta == 0.95
+    old = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides=FOUR_TIERS).lock
+    assert tier_limit(old, 0.92) == 0.91 and tier_limit(old, 0.89) is None
     # the top tier is L's own rule: p >= 0.99 -> ask up to 0.98
     for p in (0.99, 0.999):
         assert min(c.a_max, tier_limit(c, p)) == min(paper.lock.a_max, p - paper.lock.min_edge - fee_per_share(0.98))
@@ -501,7 +508,8 @@ def test_lock_tier_wide_is_l3_with_a_lower_price_floor(tables):
     assert wide.execution.mode == "paper" and wide.lock.a_min == 0.50 and tier.lock.a_min == 0.90
     # L4 stays the paper reference WITHOUT the sigma floor of reports/52 (what L3 was until 10 Nov, plus cheap asks)
     assert wide.lock.sigma_floor_bp == 0.0 and tier.lock.sigma_floor_bp == 0.5
-    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides={"lock": {"sigma_floor_bp": 0.0}})
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),      # L4 keeps the p 0.90-0.95 tier (reports/59)
+                            overrides={"lock": {"sigma_floor_bp": 0.0, **FOUR_TIERS["lock"]}})
     assert wide.risk.state_file != tier.risk.state_file and wide.journal_dir != tier.journal_dir
     for k in ("theta", "agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
               "assets", "tiers", "max_entries_per_window"):
@@ -786,8 +794,9 @@ def test_provisional_result_forward_fills_dropped_prints(tmp_path):
 
 
 def test_l3_on_15m_is_the_live_rule_with_another_duration():
-    """pmbot-lock-15-tier (reports/52): exactly the live L3 rule and its one-entry-at-a-time limit on 15m windows."""
-    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    """pmbot-lock-15-tier (reports/52): the L3 rule and its one-entry-at-a-time limit on 15m windows. It keeps the four
+    tiers live had until reports/59 (paper: the place where the p 0.90-0.95 tier is still measured with the filters on)."""
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides=FOUR_TIERS)
     l15 = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
     assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
     a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
@@ -800,7 +809,7 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
 def test_lm3_bids_the_tier_price_of_the_model_probability():
     """LM3 (reports/52): the L3 tiers as a resting bid. Paper only, like every maker entry of the lock bot."""
     from pmbot.bot.lock import maker_bid
-    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides=FOUR_TIERS)   # LM3 keeps four tiers
     lm2 = load_lock_config(os.path.join(ROOT, "config", "lock_maker2.toml"))
     lm3 = load_lock_config(os.path.join(ROOT, "config", "lock_maker_tier.toml"))
     c = lm3.lock
@@ -1117,12 +1126,16 @@ def test_shock_threshold_grows_with_volatility(tables):
 
 
 def test_bottom_tier_only_late_in_the_window(tables):
-    """reports/59: with 40-57 closing prints still unknown the bottom tier (p 0.90-0.95 at an ask <= 0.91) lost 7 % on the tapes of
-    1-9 Nov and 4 of the 5 live losses of 9-10 Nov; from second 260 on it lost 2 of 75. The other tiers are not touched."""
+    """reports/60: with 40-57 closing prints still unknown the bottom tier (p 0.90-0.95 at an ask <= 0.91) lost 7 % on the tapes of
+    1-9 Nov and 4 of the 5 live losses of 9-10 Nov; from second 260 on it lost 2 of 75. lock.late_tier_rel keeps that tier for
+    the late seconds only. It is OFF in every config: live and its twins have no bottom tier at all since reports/59."""
     import dataclasses
+    import glob
     from pmbot.bot.lock import tier_limit
-    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
-    assert c.late_tier_rel == 260.0 and c.late_tier_p == 0.95
+    off = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides=FOUR_TIERS).lock
+    assert off.late_tier_rel == 0.0 and off.late_tier_p == 0.95
+    c = dataclasses.replace(off, late_tier_rel=260.0)
+    assert tier_limit(off, 0.92, 244.0) == 0.91                  # off: the second does not matter
     assert tier_limit(c, 0.92) == 0.91 and tier_limit(c, 0.92, 262.0) == 0.91 and tier_limit(c, 0.92, 244.0) is None
     assert tier_limit(c, 0.96, 244.0) == 0.93 and tier_limit(c, 0.98, 244.0) == 0.95 and tier_limit(c, 0.995, 244.0) == 0.98
     bn = 75000.0
@@ -1131,10 +1144,9 @@ def test_bottom_tier_only_late_in_the_window(tables):
         K, now_s, cl, last = scenario(bp=bp, rel=rel)
         return decide(cfg, tables, "btc", T, K, int(now_s * 1000), cl, last, 0.6e-4, bn, bn, bn, bn, (ask, 100.0), (0.10, 100.0),
                       shock=0.0)
-    off = dataclasses.replace(c, late_tier_rel=0.0)
     bp = next(b / 10 for b in range(10, 200) if 0.91 <= run(off, 244.0, b / 10, 0.90)[1].get("p", 0) < 0.95)   # a bottom-tier state
     sig, ctx = run(off, 244.0, bp, 0.90)
-    assert sig and sig["limit"] == 0.91                       # the rule before reports/59: the live loss of 10 Nov 18:04 (second 244)
+    assert sig and sig["limit"] == 0.91                       # four tiers: the live loss of 10 Nov 18:04 (second 244)
     sig, ctx = run(c, 244.0, bp, 0.90)
     assert sig is None and ctx["why"] == "tier_early" and 0.90 <= ctx["p"] < 0.95
     late = next(b / 10 for b in range(10, 200) if 0.91 <= run(off, 262.0, b / 10, 0.90)[1].get("p", 0) < 0.95)
@@ -1145,7 +1157,7 @@ def test_bottom_tier_only_late_in_the_window(tables):
     assert sig and sig["limit"] >= 0.93                       # the upper tiers enter early as before
     with pytest.raises(ValueError):
         load_lock_config(overrides={"lock": {"late_tier_rel": 200.0}})
-    for name in ("lock_live.toml", "lock15_tier.toml", "lock_tier_pb.toml"):          # the live rule and its twins
-        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.late_tier_rel == 260.0
-    for name in ("lock_tier_wide.toml", "lock_maker_tier.toml", "lock_99_live.toml"):   # L4 stays the reference for the early entries
-        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.late_tier_rel == 0.0
+    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):      # not live, not on paper: an owner's decision
+        assert load_lock_config(path).lock.late_tier_rel == 0.0, path
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml")).lock
+    assert live.theta == 0.95 and min(t[0] for t in live.tiers) == 0.95    # reports/59: live has no tier below 0.95

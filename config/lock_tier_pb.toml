@@ -2,11 +2,14 @@
 # L3; a test keeps [lock] and [risk] equal) with one difference at the bottom: Chainlink prints come from PolyBolt, the new
 # price socket (the same prints 0.23-0.29 s earlier, no dropped seconds), with the legacy RTDS socket as the fallback.
 # Judge it against pmbot-lock-tier on the same hours: entries, misses of the paper fill, P&L, and stats.cl_lag_ms in `status`.
+# reports/59 (10 Nov 19:00 UTC): the p 0.90-0.95 tier (ask <= 0.91) is REMOVED from live and its twins. With the floor and the pause on,
+# every loss was in that tier: live 13 entries / 2 lost / -$3.58 (the other tiers 10 / 0 / +$3.25); replay 7-10 Nov 102 / 4 lost,
+# the other tiers 91 / 0 lost. A win there is ~+$0.45, a loss ~-$4.58. Only stricter: every entry is an entry of the old rule.
 journal_dir = "data/journal-lock-tier-pb"
 
 [lock]
 assets = ["btc", "eth", "sol", "xrp"]
-theta = 0.90          # lowest tier probability (L: 0.99); the tiers below set the price limit per probability
+theta = 0.95          # lowest tier probability (L: 0.99); the tiers below set the price limit per probability
 agree = 0.90          # ... and from received Chainlink prints only (glitch guard)
 dmin_bp = 0.5         # expected TWAP at least 0.5 bp past the strike in our favour
 adv1_bp = 1.0         # Binance against us <= 1 bp over 1 s ...
@@ -19,14 +22,13 @@ rel_lo = 240.0
 rel_hi = 299.5
 shares = 5            # the size the live version would use on a ~$15-20 wallet
 max_entries_per_window = 1
-tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93]]
 sigma_floor_bp = 0.5  # reports/52: sigma never below 0.5 bp -> no entry on a 1-2 bp lead in a calm market. Only stricter than plain L3
                       # (every entry is also an L3 entry): ~40 % of the entries, ~1/4 of the losses in the replay of 7-10 Nov
 floor_free_p = 0.99   # reports/55: when the unfloored model gives >= 0.99 it decides (the original L rule: 57 entries, 0 lost)
 shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move > 2.5 bp either way (stale sigma, snap-backs)
 shock_s = 10.0
 shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
-late_tier_rel = 260.0 # reports/59: the bottom tier (p < 0.95 at an ask <= 0.91) only from second 260: earlier it lost 7 % on the tapes and was 4 of the 5 live losses
 
 [risk]
 max_usd_per_entry = 5.0
