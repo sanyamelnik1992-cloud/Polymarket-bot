@@ -184,6 +184,7 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-tier", "config/lock_tier.toml", False),
                             ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
                             ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
+                            ("pmbot-lock-tier-pb", "config/lock_tier_pb.toml", False),
                             ("pmbot-lock-99", "config/lock_99.toml", False),
                             ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
@@ -1040,3 +1041,41 @@ def test_l99_live_is_the_paper_rule_with_small_real_money_limits():
     # separate books: the two live bots must never share a state file or a journal
     assert live.risk.state_file not in ("", l3.risk.state_file, paper.risk.state_file)
     assert len({live.journal_dir, l3.journal_dir, paper.journal_dir}) == 3
+
+
+def test_polybolt_paper_bot_differs_from_the_twin_only_by_the_feed():
+    """reports/57: pmbot-lock-tier-pb is the A/B of the new price socket: the same rule and limits as the live twin."""
+    tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    pb = load_lock_config(os.path.join(ROOT, "config", "lock_tier_pb.toml"))
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
+    assert pb.execution.mode == "paper" and pb.lock == tier.lock
+    for k in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit", "resume_next_day"):
+        assert getattr(pb.risk, k) == getattr(tier.risk, k), k
+    assert pb.execution.cl_feed == "both" and tier.execution.cl_feed == "rtds" and live.execution.cl_feed == "rtds"
+    assert pb.execution.paper_exec_ms == tier.execution.paper_exec_ms
+    assert pb.risk.state_file not in ("", tier.risk.state_file) and pb.journal_dir != tier.journal_dir
+    with pytest.raises(ValueError):
+        load_lock_config(overrides={"execution": {"cl_feed": "fast"}})
+
+
+def test_polybolt_events_and_first_arrival_wins():
+    import datetime as dt
+    import types
+    from pmbot.bot.feeds import pb_event_print
+    from pmbot.bot.state import AssetPrices
+    ts = dt.datetime(2026, 11, 10, 12, 0, 5, tzinfo=dt.timezone.utc)
+    ev = types.SimpleNamespace(type="update", topic="prices.crypto", payload=types.SimpleNamespace(symbol="btcusd", value="74000.5", timestamp=ts))
+    assert pb_event_print(ev, ["btc", "eth"]) == ("btc", 74000.5, int(ts.timestamp() * 1000))
+    assert pb_event_print(types.SimpleNamespace(type="subscribe", topic="prices.crypto", payload=ev.payload), ["btc"]) is None
+    assert pb_event_print(types.SimpleNamespace(type="update", topic="prices.crypto.twap", payload=ev.payload), ["btc"]) is None
+    assert pb_event_print(ev, ["eth"]) is None                                       # not our asset
+    assert pb_event_print(types.SimpleNamespace(type="update", topic="prices.crypto", payload=None), ["btc"]) is None
+    # the same print from the second (slower) feed must not move the arrival time of the first
+    px = AssetPrices()
+    px.on_chainlink(100.0, 5000, 6070)
+    px.on_chainlink(100.0, 5000, 6340)
+    assert px.cl_last == (100.0, 5000, 6070)
+    px.on_chainlink(100.2, 6000, 7400)
+    assert px.cl_last == (100.2, 6000, 7400) and px.cl_by_sec == {5: 100.0, 6: 100.2}
+    px.on_chainlink(99.9, 4000, 7500)                                                # a late older print fills its second only
+    assert px.cl_last[1] == 6000 and px.cl_by_sec[4] == 99.9

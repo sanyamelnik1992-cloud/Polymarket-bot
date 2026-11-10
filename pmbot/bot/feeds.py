@@ -135,6 +135,56 @@ async def rtds_feed(st: State, alive=lambda: True):
             await asyncio.sleep(1)
 
 
+def _pb_asset(symbol):
+    """'btcusd' / 'btc/usd' / 'BTCUSD' -> 'btc'."""
+    x = "".join(ch for ch in str(symbol).lower() if ch.isalnum())
+    return x[:-3] if x.endswith("usd") else x
+
+
+def pb_event_print(ev, assets):
+    """(asset, value, ts_ms) of a PolyBolt Chainlink price update, None for anything else (history snapshots of the
+    subscription, TWAP updates, other symbols)."""
+    if getattr(ev, "type", None) != "update" or getattr(ev, "topic", "prices.crypto") != "prices.crypto":
+        return None
+    pl = getattr(ev, "payload", None)
+    try:
+        a = _pb_asset(pl.symbol)
+        if a not in assets:
+            return None
+        return a, float(pl.value), int(round(pl.timestamp.timestamp() * 1000))
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+async def polybolt_feed(st: State, alive=lambda: True, client=None, env=None):
+    """Chainlink prints from Polymarket's new price socket (PolyBolt) through the exchange SDK; reports/54: the same prints as
+    the legacy RTDS socket 0.23-0.29 s earlier and without dropped seconds. Needs the CLOB credentials (only to log in to
+    the socket: nothing is signed or sent). Feeds the same AssetPrices.on_chainlink as rtds_feed, so both may run together:
+    the first arrival of a print wins and RTDS stays as the fallback when this socket is down."""
+    import os
+    env = os.environ if env is None else env
+    while alive():
+        try:
+            if client is None:
+                from polymarket import AsyncSecureClient
+                client = await AsyncSecureClient.create(private_key=env["PMBOT_PRIVATE_KEY"],
+                                                        wallet=env.get("PMBOT_WALLET") or None)
+            from polymarket.streams import CryptoPriceSpec
+            async with await client.subscribe([CryptoPriceSpec(symbols=[a + "usd" for a in st.assets])]) as stream:
+                async for ev in stream:
+                    rx = now_ms()
+                    if not alive():
+                        return
+                    pr = pb_event_print(ev, st.assets)
+                    if pr:
+                        st.feed_alive["polybolt"] = rx
+                        st.feed_alive["rtds"] = rx          # "a Chainlink feed is alive" for code that only knows RTDS
+                        st.prices[pr[0]].on_chainlink(pr[1], pr[2], rx)
+        except Exception as e:  # noqa: BLE001
+            log.warning("polybolt error %s %s", type(e).__name__, str(e)[:120])
+            await asyncio.sleep(2)
+
+
 async def binance_feed(st: State, alive=lambda: True):
     streams = "/".join(f"{BINANCE_SYMBOL[a].lower()}@bookTicker" for a in st.assets)
     rev = {BINANCE_SYMBOL[a]: a for a in st.assets}

@@ -1,0 +1,23 @@
+[Unit]
+Description=pmbot TWAP-lock L3 on PolyBolt prices (config/lock_tier_pb.toml: the live L3 rule with the faster Chainlink feed; paper)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. reports/57. A/B against pmbot-lock-tier: the only difference is execution.cl_feed = "both".
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_tier_pb.toml
+# CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
+Nice=10
+CPUWeight=20
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

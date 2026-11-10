@@ -76,7 +76,10 @@ class AssetPrices:
 
     # ---- Chainlink
     def on_chainlink(self, value, ts_ms, rx_ms):
-        self.cl_by_sec[ts_ms // 1000] = value
+        sec = ts_ms // 1000
+        if self.cl_last is not None and ts_ms == self.cl_last[1] and sec in self.cl_by_sec:
+            return                    # the same print from a second feed (PolyBolt + RTDS): the first arrival stands
+        self.cl_by_sec[sec] = value
         if self.cl_last is None or ts_ms >= self.cl_last[1]:
             self.cl_last = (value, ts_ms, rx_ms)
         if len(self.cl_by_sec) > 4000:

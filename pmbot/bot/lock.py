@@ -25,7 +25,7 @@ from dataclasses import asdict, dataclass, field, fields
 from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
 from ..lockmodel import (ClSigma, Tables, close_from_prints, expected_dist_bp, lock_state, prob_up, strike_from_prints)
-from .feeds import ClobFeed, binance_feed, rtds_feed
+from .feeds import ClobFeed, binance_feed, polybolt_feed, rtds_feed
 from .paper import PaperBroker
 from .state import State, Window, now_ms
 
@@ -93,6 +93,8 @@ class LockExec:
     paper_exec_ms: int = 300             # our ~60-90 ms to the exchange + its 150 ms taker delay, rounded up
     paper_place_ms: int = 60             # maker: bid goes live (live 8 Nov: place median 52-62 ms)
     paper_cancel_ms: int = 50            # maker: cancel takes effect (cancel median 40-49 ms)
+    cl_feed: str = "rtds"                # Chainlink prints: "rtds" (legacy socket), "polybolt" (new, ~0.25 s earlier, needs the
+                                         # CLOB credentials) or "both" (first arrival wins, RTDS is the fallback; reports/57)
 
 
 @dataclass
@@ -133,6 +135,8 @@ def load_lock_config(path=None, overrides=None):
     c, r, e = cfg.lock, cfg.risk, cfg.execution
     if e.mode not in ("paper", "live"):
         raise ValueError("execution.mode must be 'paper' or 'live'")
+    if e.cl_feed not in ("rtds", "polybolt", "both"):
+        raise ValueError("execution.cl_feed must be 'rtds', 'polybolt' or 'both'")
     if not 0.5 < c.agree <= c.theta < 1:
         raise ValueError("lock: 0.5 < agree <= theta < 1")
     if not 0 < c.a_min < c.a_max < 1:
@@ -426,6 +430,7 @@ class LockBot:
         self._bg = set()           # background tasks (prewarm): keep a reference until they finish
         self.next_try = {}         # window key -> ms
         self._shock_cache = {}     # asset -> (ms, bp)
+        self._cl_seen, self._cl_lags = {}, []      # print delay samples of the status interval (stats.cl_lag_ms = median)
         self.last_why = {}
         self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0,
                       "lag_max_ms": 0, "lag_over_100ms": 0, "decide_max_ms": 0}   # lag/decide: per 30 s status
@@ -642,6 +647,9 @@ class LockBot:
             px = self.st.prices[a]
             if not px.cl_last:
                 continue
+            if px.cl_last[1] != self._cl_seen.get(a):          # a new print: how late it arrived (arrival - print time)
+                self._cl_seen[a] = px.cl_last[1]
+                self._cl_lags.append(px.cl_last[2] - px.cl_last[1])
             last = px.cl_last[1] // 1000
             o = self.sig[a]
             if o.last_sec is None:
@@ -976,6 +984,10 @@ class LockBot:
         while self.alive():
             await asyncio.sleep(30)
             sg = {a: round((o.sigma() or 0) * 1e4, 3) for a, o in self.sig.items()}
+            if self._cl_lags:
+                xs = sorted(self._cl_lags)
+                self.stats["cl_lag_ms"] = xs[len(xs) // 2]
+                self._cl_lags = []
             msg = (f"day={self.day_pnl():+.2f} open=${self.open_cost():.2f} stats={self.stats} sigma_bp={sg} "
                    f"windows={sorted(self.st.windows)} killed={self.risk.get('killed_day') == self.today()}")
             log.info(msg)
@@ -983,13 +995,17 @@ class LockBot:
                        stats=dict(self.stats), sigma_bp=sg)
             self.stats["lag_max_ms"] = self.stats["decide_max_ms"] = 0      # maxima per 30 s interval
             self.stats.pop("ping_ms", None)
+            self.stats.pop("cl_lag_ms", None)
             self._save_state()
 
     async def run(self):
         await self.broker.start()
         self.j.log("start", mode=self.broker.mode, config=asdict(self.cfg))
+        feed = self.cfg.execution.cl_feed
+        cl_feeds = ([rtds_feed(self.st, self.alive)] if feed in ("rtds", "both") else []) + (
+            [polybolt_feed(self.st, self.alive)] if feed in ("polybolt", "both") else [])
         tasks = [asyncio.create_task(x) for x in (
-            self.discover_loop(), rtds_feed(self.st, self.alive), binance_feed(self.st, self.alive),
+            self.discover_loop(), *cl_feeds, binance_feed(self.st, self.alive),
             self.decide_loop(), self.status_loop(), self.strike_check_loop(), self.lag_loop(),
             self.warm_loop())]
         tasks += [asyncio.create_task(f.run()) for f in self.feeds.values()]
