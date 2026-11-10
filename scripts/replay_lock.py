@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from pmbot.bot.lock import decide, load_lock_config  # noqa: E402
+from pmbot.bot.lock import bn_shock_bp, decide, load_lock_config  # noqa: E402
 from pmbot.config import BINANCE_SYMBOL, CHAINLINK_SYMBOL  # noqa: E402
 from pmbot.fees import fee_per_share  # noqa: E402
 from pmbot.lockmodel import ClSigma, Tables, strike_from_prints  # noqa: E402
@@ -93,7 +93,8 @@ def main(prefix, markets, cfg_path="config/lock.toml", shares=10.0, exec_ms=300,
                 s_, ctx = decide(c, tables, asset, T, K, t, cl_by_sec, last,
                                  sig.sigma() if sig.n >= c.min_sigma_prints else None,
                                  bn_at(t), bn_at(last[1] + 999) if last else None, bn_at(t - 1000), bn_at(t - 3000),
-                                 (au[0], au[1]) if au is not None else None, (ad[0], ad[1]) if ad is not None else None)
+                                 (au[0], au[1]) if au is not None else None, (ad[0], ad[1]) if ad is not None else None,
+                                 shock=lambda: bn_shock_bp(bn_at, t, c.shock_s))
                 if s_:
                     tok = f"{asset}-{T}-{s_['side']}"
                     v = ask_at(tok, t + exec_ms)

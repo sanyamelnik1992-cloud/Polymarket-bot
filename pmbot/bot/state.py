@@ -63,7 +63,7 @@ class AssetPrices:
     def __init__(self, halflife_s=900.0):
         self.cl_by_sec = {}           # oracle second -> price
         self.cl_last = None           # (value, oracle_ts_ms, rx_ms)
-        self.bn_hist = deque(maxlen=3000)  # (rx_ms, mid) recent ticks for nowcast lookups
+        self.bn_hist = deque(maxlen=20000)  # (rx_ms, mid) recent ticks for nowcast lookups and the 13 s shock window
         self.bn_last_rx = 0
         self.bn_sec_mid = {}          # second -> last mid of that second
         self._last_sec = None

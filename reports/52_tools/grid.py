@@ -131,6 +131,17 @@ def main(data, period, markets, out):
                             r["y1_cl"] = ((M * K1 - s1["A"]) / (c1 * s1["S_cl"]) - 1.0) / math.sqrt(vfac(c1)) if c1 > 0 else float("nan")
                             r["dist1"] = (1.0 if side == "U" else -1.0) * ((s1["A_nc"] + m1 * s1["S_nc"]) / M / K1 - 1) * 1e4
                             r["k1_bp"] = (K1 / K - 1) * 1e4
+                        # Binance shock: the largest |1 s| and |3 s| move that ENDED in the last 5 / 10 s (bp), sampled every 0.5 s
+                        for look in (5, 10):
+                            m1 = m3 = 0.0
+                            for k in range(0, look * 2 + 1):
+                                u = t - k * 500
+                                a0, a1, a3 = bn_at(u), bn_at(u - 1000), bn_at(u - 3000)
+                                if a0 and a1:
+                                    m1 = max(m1, abs(math.log(a0 / a1)) * 1e4)
+                                if a0 and a3:
+                                    m3 = max(m3, abs(math.log(a0 / a3)) * 1e4)
+                            r[f"sh1_{look}"], r[f"sh3_{look}"] = m1, m3
                         if b1 is not None:
                             r.update(x_ask=b1[2], x_sz=b1[3], x_ask2=b1[4], x_sz2=b1[5])
                         rows.append(r)

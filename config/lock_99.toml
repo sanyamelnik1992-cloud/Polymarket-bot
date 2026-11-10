@@ -1,0 +1,36 @@
+# TWAP-lock L99 — PAPER. The "sure side at 0.96-0.99" rule (reports/55): what the competitor's sniper does on 5m/15m markets
+# (his trades of 6 Nov: +1 % of the stake each = buys at ~0.99, one lost stake wipes ~100 wins).
+# Rule: the plain L rule on the unfloored model (p >= 0.99), asks 0.96-0.99: ask <= p - 0.004 - fee, so 0.99 needs p >= 0.9947.
+# Replay 7-10 Nov: p >= 0.99 at asks 0.96-0.99 = 227 entries, 0 lost, +1.3c a share. Break-even is 1 loss in ~107 entries, and
+# 0 of 227 does not prove a rate below that: paper until >= 1000 entries. The book at 0.99 is deep (hundreds of shares),
+# so this is the rule that could carry size if it holds.
+journal_dir = "data/journal-lock-99"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+theta = 0.99
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.96
+a_max = 0.99
+min_edge = 0.004
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+shock_bp = 2.5        # as live (reports/55)
+shock_s = 10.0
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 10.0
+daily_loss_limit = 5.0
+state_file = "data/state/lock_99_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300

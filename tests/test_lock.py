@@ -184,6 +184,7 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-tier", "config/lock_tier.toml", False),
                             ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
                             ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
+                            ("pmbot-lock-99", "config/lock_99.toml", False),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
@@ -718,7 +719,7 @@ def test_open_risk_counts_orders_in_flight(tmp_path, monkeypatch):
         bot.st.add_window(Window(asset=a, start=start, slug=a, condition_id=a, token_up=a + "u", token_down=a + "d"))
     bot.st.feed_alive["binance"] = now
 
-    def fake_decide(c, tables, asset, *args):
+    def fake_decide(c, tables, asset, *args, **kw):
         return {"side": "U", "limit": 0.91, "ask": 0.91, "p": 0.91 + margin[asset]}, {"rel": 250.0, "side": "U"}
     monkeypatch.setattr(lockmod, "decide", fake_decide)
 
@@ -818,7 +819,9 @@ def test_sigma_floor_is_in_live_and_its_twin():
     """reports/52: live L3 and its paper twins (5m and 15m) run with sigma never below 0.5 bp. It only makes the rule
     stricter (a floored sigma can only lower the model probability), so it is not a risk increase."""
     for name in ("lock_live.toml", "lock_tier.toml", "lock15_tier.toml"):
-        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.sigma_floor_bp == 0.5, name
+        c = load_lock_config(os.path.join(ROOT, "config", name)).lock
+        assert c.sigma_floor_bp == 0.5, name
+        assert c.floor_free_p == 0.99 and c.shock_bp == 2.5 and c.shock_s == 10.0, name      # reports/55
     for name in ("lock.toml", "lock_wide.toml", "lock_tier_wide.toml"):
         assert load_lock_config(os.path.join(ROOT, "config", name)).lock.sigma_floor_bp == 0.0, name
     with pytest.raises(ValueError):
@@ -925,3 +928,98 @@ def test_warm_loop_pings_only_in_the_closing_minute_of_a_live_bot(tmp_path):
     assert calls == []                                   # mid-window: no requests
     bot2, j2, w2 = _bot(tmp_path / "b", PaperTaker(State(["btc"])))
     asyncio.run(bot2.warm_loop(period_s=0.01))           # paper: returns at once
+
+
+def test_top_tier_is_judged_by_the_unfloored_model(tables):
+    """reports/55: the sigma floor must not take the original L rule away. Calm market (sigma 0.12 bp), 1.6 bp lead late in
+    the window: the unfloored model is >= 0.99 sure (L buys up to 0.98); the floored one alone would ask for a cheaper tier."""
+    import dataclasses
+    from pmbot.bot.lock import decide_state
+    on = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    off = dataclasses.replace(on, floor_free_p=0.0)
+    bn = 75000.0
+    found = False
+    for bp in (1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.4):
+        K, now_s, cl, last = scenario(bp=bp, rel=285.0)
+        args = (tables, "btc", T, K, int(now_s * 1000), cl, last, 0.12e-4, bn, bn, bn, bn)
+        s1, p1, c1 = decide_state(on, *args)
+        s0, p0, c0 = decide_state(off, *args)
+        if s1 == "U" and p1 >= 0.99 and (s0 is None or p0 < 0.99):
+            found = True
+            assert c1["sigma_bp"] == 0.12                      # judged with the raw sigma
+            sig, _ = decide(on, *args, (0.98, 50.0), (0.03, 50.0))
+            assert sig and sig["limit"] == 0.98
+            sig, _ = decide(off, *args, (0.98, 50.0), (0.03, 50.0))
+            assert sig is None
+            break
+    assert found, "no scenario where the raw model is >= 0.99 and the floored one is not"
+    # a weak state is not rescued: below 0.99 raw the floor rules as before
+    K, now_s, cl, last = scenario(bp=1.5, rel=252.0)
+    args = (tables, "btc", T, K, int(now_s * 1000), cl, last, 0.15e-4, bn, bn, bn, bn)
+    a, b = decide_state(on, *args), decide_state(off, *args)
+    if a[2]["p"] < 0.99:
+        assert a[0] == b[0] and a[2]["p"] == b[2]["p"]
+
+
+def test_shock_blocks_an_entry_after_a_binance_jump(tables):
+    """reports/55 (live loss 10 Nov 10:25): a 3 s Binance move > 2.5 bp within the last 10 s = no entry, either direction."""
+    from pmbot.bot.lock import bn_shock_bp, hist_samples, shock_from_samples
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    K, now_s, cl, last = scenario(bp=6.0, rel=262.0)
+    now = int(now_s * 1000)
+    bn = 75000.0
+    args = (c, tables, "btc", T, K, now, cl, last, 0.6e-4, bn, bn, bn, bn, (0.91, 100.0), (0.10, 100.0))
+    sig, ctx = decide(*args)                                   # no shock information (old callers): unchanged
+    assert sig and "shock_bp" not in ctx
+    sig, ctx = decide(*args, shock=1.0)
+    assert sig and ctx["shock_bp"] == 1.0
+    calls = []
+    sig, ctx = decide(*args, shock=lambda: calls.append(1) or 2.96)
+    assert sig is None and ctx["why"] == "shock" and calls == [1]
+    # lazy: a state that fails earlier never asks for the shock
+    K2, now2, cl2, last2 = scenario(bp=0.2, rel=262.0)
+    decide(c, tables, "btc", T, K2, int(now2 * 1000), cl2, last2, 0.6e-4, bn, bn, bn, bn, (0.91, 100.0), (0.10, 100.0),
+           shock=lambda: calls.append(2) or 9.0)
+    assert calls == [1]
+    # the measure: ticks (rx, mid); a -3 bp move over 3 s that ended 6 s ago, flat since
+    hist = [(now - 20000 + i * 100, 100.0) for i in range(110)]                      # flat until now - 9 s
+    hist += [(now - 9000 + i * 100, 100.0 * (1 - 3e-4 * (i + 1) / 30)) for i in range(30)]   # falls 3 bp until now - 6 s
+    hist += [(now - 6000 + i * 100, 100.0 * (1 - 3e-4)) for i in range(61)]
+    v = shock_from_samples(hist_samples(hist, now, 27), 10.0)
+    assert 2.9 < v < 3.05
+    assert shock_from_samples(hist_samples(hist, now, 11), 2.0) == 0.0               # every 3 s window of the last 2 s is flat
+
+    def bn_at(t):
+        best = None
+        for rx, mid in hist:
+            if rx <= t:
+                best = mid
+        return best if best is not None else hist[0][1]
+    assert bn_shock_bp(bn_at, now, 10.0) == pytest.approx(v)                         # replay and bot measure the same
+    assert shock_from_samples(hist_samples([], now, 27), 10.0) == 0.0
+
+
+def test_lock_bot_passes_the_cached_shock(tmp_path):
+    bot, _, w = _bot(tmp_path, PaperTaker(State(["btc"])))
+    px = bot.st.prices["btc"]
+    now = 1_000_000_000
+    for i in range(200):
+        px.bn_hist.append((now - 20000 + i * 100, 100.0 if i < 150 else 100.04))     # +4 bp jump 5 s ago
+    assert bot._shock("btc", now) == pytest.approx(4.0, abs=0.05)
+    px.bn_hist.clear()
+    assert bot._shock("btc", now + 100) == pytest.approx(4.0, abs=0.05)             # cached for 200 ms
+    assert bot._shock("btc", now + 300) == 0.0
+
+
+def test_l99_is_paper_and_buys_the_sure_side_up_to_099(tables):
+    """reports/55: the competitor zone. Paper only; 0.99 needs p >= 0.9947, and the unfloored model decides."""
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_99.toml"))
+    assert c.execution.mode == "paper" and c.lock.sigma_floor_bp == 0.0 and not c.lock.tiers
+    assert c.lock.a_min == 0.96 and c.lock.a_max == 0.99 and c.lock.theta == 0.99 and c.lock.shock_bp == 2.5
+    K, now_s, cl, last = scenario(bp=3.0, rel=292.0)
+    bn = 75000.0
+    args = (c.lock, tables, "btc", T, K, int(now_s * 1000), cl, last, 0.15e-4, bn, bn, bn, bn)
+    sig, ctx = decide(*args, (0.99, 500.0), (0.02, 500.0))
+    assert sig and sig["side"] == "U" and ctx["p"] >= 0.9947 and round(tick_floor(sig["limit"], 0.01), 2) == 0.99, ctx
+    sig, ctx = decide(*args, (0.95, 500.0), (0.06, 500.0))
+    assert sig is None and ctx["why"] == "ask_too_low"

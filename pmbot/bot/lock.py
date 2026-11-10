@@ -69,6 +69,12 @@ class LockCfg:
                                          # (0.1-0.3 bp) makes a 1-2 bp lead look decided. Replay 7-10 Nov with the live limits and
                                          # Gamma outcomes: 0.5 bp -> 110 entries, 3 lost, +$32 (plain L3: 262, 13 lost, +$46); with
                                          # fills 0.5 s late +$27 vs +$23 (reports/52). 0 = off
+    floor_free_p: float = 0.0            # with a sigma floor: a side the UNFLOORED model gives >= this (0.99) is judged by the
+                                         # unfloored model, i.e. the original L rule. The floor moved those states into the
+                                         # cheaper tiers and lost them: 57 entries, 0 lost on 7-10 Nov (reports/55). 0 = off
+    shock_bp: float = 0.0                # no entry while a 3 s Binance move larger than this (bp, either way) ended within the
+    shock_s: float = 10.0                # last shock_s seconds: after a jump the 15-minute sigma is stale and the price often
+                                         # snaps back (live loss 10 Nov 10:25: -2.9 bp in 3 s, entry 3 s later). 0 = off
 
 
 @dataclass
@@ -139,6 +145,10 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError(f"lock.duration must be one of {sorted(DURATIONS)}")
     if not 0 <= c.sigma_floor_bp <= 5:
         raise ValueError("lock.sigma_floor_bp must be in [0, 5] (bp of a 1 s return)")
+    if c.floor_free_p and not 0.9 <= c.floor_free_p < 1:
+        raise ValueError("lock.floor_free_p must be 0 (off) or in [0.9, 1)")
+    if c.shock_bp < 0 or not 1 <= c.shock_s <= 60:
+        raise ValueError("lock: shock_bp >= 0 and 1 <= shock_s <= 60")
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
     if c.tiers:
@@ -169,8 +179,38 @@ def tick_floor(x, tick):
     return math.floor(x / tick + 1e-9) * tick
 
 
+def shock_from_samples(mids, look_s):
+    """Largest |3 s move| (bp) that ended in the last look_s seconds. mids[j] = Binance mid 0.5 * j seconds ago
+    (None = unknown); needs 2 * look_s + 7 samples."""
+    worst = 0.0
+    for k in range(0, int(look_s * 2) + 1):
+        a0, a3 = mids[k] if k < len(mids) else None, mids[k + 6] if k + 6 < len(mids) else None
+        if a0 and a3:
+            worst = max(worst, abs(math.log(a0 / a3)) * 1e4)
+    return worst
+
+
+def bn_shock_bp(bn_at, now_ms_, look_s):
+    """shock_from_samples for a lookup function bn_at(ms) -> mid (replay, tests)."""
+    return shock_from_samples([bn_at(now_ms_ - k * 500) for k in range(0, int(look_s * 2) + 7)], look_s)
+
+
+def hist_samples(hist, now_ms_, n, step_ms=500):
+    """Mids as of now - j * step for j = 0..n-1 from (rx_ms, mid) ticks in time order, in one backward pass.
+    Like AssetPrices.bn_mid_at: the last tick at or before the time; older than the history = its oldest tick."""
+    out, j, oldest = [None] * n, 0, None
+    for rx, mid in reversed(hist):
+        oldest = mid
+        while j < n and rx <= now_ms_ - j * step_ms:
+            out[j] = mid
+            j += 1
+        if j >= n:
+            break
+    return [oldest if x is None else x for x in out]
+
+
 def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s,
-                 bn_3s):
+                 bn_3s, shock=None):
     """The book-independent part of the rule (time, strike, model, agreement, distance, spot, Binance guards).
     Returns (side "U"/"D" or None, p, context dict); None = no trade, the reason is ctx["why"]."""
     now_s = now_ms_ / 1000.0
@@ -195,6 +235,13 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
     sgn = 1.0 if up else -1.0
     p = p_nc if up else 1 - p_nc
     pc = p_cl if up else 1 - p_cl
+    if c.floor_free_p and sigma > sigma_raw:
+        # the top tier is the original L rule: when the unfloored model is that sure, it decides (reports/55)
+        q = prob_up(tables, asset, st["A_nc"], st["m_nc"], st["S_nc"], K, sigma_raw)
+        q = q if up else 1 - q
+        if q >= c.floor_free_p:
+            qc = prob_up(tables, asset, st["A"], st["m_cl"], st["S_cl"], K, sigma_raw)
+            p, pc, sigma = q, (qc if up else 1 - qc), sigma_raw
     dist = sgn * expected_dist_bp(st["A_nc"], st["m_nc"], st["S_nc"], K)
     spot = sgn * (st["S_nc"] / K - 1) * 1e4
     mv1 = math.log(bn_now / bn_1s) * 1e4
@@ -214,6 +261,11 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
         return None, 0.0, {**ctx, "why": "binance_against"}
     if abs(mv1) > c.jump_bp:
         return None, 0.0, {**ctx, "why": "binance_jump"}
+    if c.shock_bp > 0 and shock is not None:           # last and lazy: computed only when everything else passes
+        sh = shock() if callable(shock) else shock
+        ctx["shock_bp"] = round(sh, 3)
+        if sh > c.shock_bp:
+            return None, 0.0, {**ctx, "why": "shock"}
     return ("U" if up else "D"), p, ctx
 
 
@@ -227,11 +279,11 @@ def tier_limit(c: LockCfg, p):
 
 
 def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s, bn_3s,
-           ask_up, ask_dn):
+           ask_up, ask_dn, shock=None):
     """Pure taker decision. cl_last = (value, ts_ms, rx_ms); ask_* = (price, size) or None.
     Returns (signal or None, context dict). signal = dict(side, limit, ask, p, ...)."""
     side, p, ctx = decide_state(c, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s,
-                                bn_3s)
+                                bn_3s, shock)
     if side is None:
         return None, ctx
     ask = ask_up if side == "U" else ask_dn
@@ -373,6 +425,7 @@ class LockBot:
         self.warmed = set()        # window keys whose market metadata the live client already has (prewarm)
         self._bg = set()           # background tasks (prewarm): keep a reference until they finish
         self.next_try = {}         # window key -> ms
+        self._shock_cache = {}     # asset -> (ms, bp)
         self.last_why = {}
         self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0,
                       "lag_max_ms": 0, "lag_over_100ms": 0, "decide_max_ms": 0}   # lag/decide: per 30 s status
@@ -598,6 +651,16 @@ class LockBot:
                 v = px.cl_by_sec.get(s, o.last_v)
                 o.on_print(s, v)
 
+    def _shock(self, asset, now):
+        """Largest 3 s Binance move of the last shock_s seconds (bp), cached for 200 ms per asset."""
+        c = self._shock_cache.get(asset)
+        if c and now - c[0] < 200:
+            return c[1]
+        look = self.cfg.lock.shock_s
+        v = shock_from_samples(hist_samples(self.st.prices[asset].bn_hist, now, int(look * 2) + 7), look)
+        self._shock_cache[asset] = (now, v)
+        return v
+
     def _book_ask(self, token):
         b = self.st.books.get(token)
         if not b or not b.asks:
@@ -664,7 +727,8 @@ class LockBot:
             sig, ctx = decide(c, self.tables, w.asset, Tc, K, now, px.cl_by_sec, cl, self.sig[w.asset].sigma()
                               if self.sig[w.asset].n >= c.min_sigma_prints else None, bn_now, bn_at_last,
                               px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
-                              self._book_ask(w.token_up), self._book_ask(w.token_down))
+                              self._book_ask(w.token_up), self._book_ask(w.token_down),
+                              shock=lambda a=w.asset: self._shock(a, now))
             if not sig:
                 self._why(key, ctx.get("why"), ctx)
                 continue
@@ -741,7 +805,8 @@ class LockBot:
             side, p, ctx = decide_state(c, self.tables, w.asset, Tc, K, now, px.cl_by_sec, cl,
                                         self.sig[w.asset].sigma() if self.sig[w.asset].n >= c.min_sigma_prints
                                         else None, px.bn_mid(), px.bn_mid_at(cl[1] + 999) if cl else None,
-                                        px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000))
+                                        px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
+                                        shock=lambda a=w.asset: self._shock(a, now))
             if side is None or not ok:
                 why = ctx.get("why") if side is None else "risk:" + why_risk
                 await self._cancel_bid(key, now, why)

@@ -167,8 +167,8 @@ def test_unit_cpu_priority_live_lock_above_paper_bots():
         m = re.search(r"(?m)^CPUWeight=(\d+)", open(path).read())
         return int(m.group(1)) if m else 100
     live = weight("deploy/pmbot-lock-live.service")
-    paper = [f for f in glob.glob("deploy/pmbot-*.service") if re.search(r"pmbot-(5m-g2?|lock|lock-wide|lock-15|lock-15-tier|lock-maker[23]?|lock-tier|lock-tier-wide|recorder)\.service$", f)]
-    assert len(paper) == 12, paper
+    paper = [f for f in glob.glob("deploy/pmbot-*.service") if re.search(r"pmbot-(5m-g2?|lock|lock-wide|lock-15|lock-15-tier|lock-99|lock-maker[23]?|lock-tier|lock-tier-wide|recorder)\.service$", f)]
+    assert len(paper) == 13, paper
     assert live > 100 and all(weight(f) < 100 for f in paper)
 
 
