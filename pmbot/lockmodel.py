@@ -116,26 +116,38 @@ class ClSigma:
         return math.sqrt(self.num / self.den)
 
 
-def strike_from_prints(cl_by_sec, T, max_missing=3):
-    """Price to beat from received prints: mean over [T-62, T-3]. RTDS drops ~1% of seconds (a third of the windows
-    miss one): a missing second takes the previous print (checked against priceToBeat on 2 days: with 1-3 missing
-    seconds the median error is 0.001-0.004 bp, max 0.24 bp). None if more than `max_missing` are missing."""
+def mean_prints(cl_by_sec, first_sec, max_missing=3):
+    """Mean of the 60 prints of [first_sec, first_sec + 59] and the number of missing seconds. RTDS drops ~1% of the
+    seconds (a third of the windows miss one): a missing second takes the previous print (checked against priceToBeat
+    on 2 days: with 1-3 missing seconds the median error is 0.001-0.004 bp, max 0.24 bp). (None, missing) if more
+    than `max_missing` are missing or there is no earlier print to fill from."""
     last = None
-    for s in range(T + OPEN_LO - 10, T + OPEN_LO):
+    for s in range(first_sec - 10, first_sec):
         last = cl_by_sec.get(s, last)
     xs, miss = [], 0
-    for s in range(T + OPEN_LO, T + OPEN_HI + 1):
+    for s in range(first_sec, first_sec + M):
         v = cl_by_sec.get(s)
         if v is None:
             miss += 1
             v = last
         if v is None:
-            return None
+            return None, miss
         xs.append(v)
         last = v
     if miss > max_missing:
-        return None
-    return sum(xs) / len(xs)
+        return None, miss
+    return sum(xs) / len(xs), miss
+
+
+def strike_from_prints(cl_by_sec, T, max_missing=3):
+    """Price to beat from received prints: mean over [T-62, T-3], gaps forward-filled (see mean_prints).
+    None if more than `max_missing` are missing."""
+    return mean_prints(cl_by_sec, T + OPEN_LO, max_missing)[0]
+
+
+def close_from_prints(cl_by_sec, T, max_missing=3):
+    """Closing TWAP from received prints: (mean over [T+238, T+297] with gaps forward-filled, missing seconds)."""
+    return mean_prints(cl_by_sec, T + TW_LO, max_missing)
 
 
 def lock_state(cl_by_sec, last_ts_sec, cl_last_v, T, K, now_s, bn_now=None, bn_at_last=None):

@@ -15,11 +15,14 @@ import time
 import requests
 
 ALERT_TYPES = {"start", "kill", "pause", "order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error",
-               "broker_fatal", "api_error", "reset_failed", "settle_timeout", "existing_position", "final", "settle", "geoblock_ok", "balance"}
+               "broker_fatal", "api_error", "reset_failed", "settle_timeout", "existing_position", "final", "settle", "geoblock_ok", "balance",
+               "order_failed", "order_pending"}
 LIVE_ONLY = {"start", "pause", "final", "settle", "existing_position", "geoblock_ok", "balance"}
 RATE_LIMITED = {"order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error", "settle_timeout",
-                "api_error", "reset_failed"}
-NORMAL_REJECTS = {"post_only_would_cross"}   # the book moved during our latency: routine for a maker, not an alert
+                "api_error", "reset_failed", "order_failed", "order_pending"}
+# the book moved during our latency: routine, not an alert (a maker's post-only bid would cross; a taker's FAK found
+# its ask already gone). The hourly report counts them ("продажи уже не было")
+NORMAL_REJECTS = {"post_only_would_cross", "fak_not_filled", "fok_not_filled"}
 ERROR_EVERY_S = 600
 
 

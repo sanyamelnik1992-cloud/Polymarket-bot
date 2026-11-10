@@ -72,6 +72,15 @@ def test_errors_are_rate_limited_with_a_skipped_count():
     assert "ещё таких же" in a.render("order_rejected", {"error": "x"})
 
 
+def test_fak_miss_is_routine_but_an_unknown_order_outcome_alerts():
+    a = alerts(mode="live")
+    assert a.render("order_rejected", {"key": "btc-1793988600", "code": "fak_not_filled", "message": "no orders"}) is None
+    msg = a.render("order_failed", {"key": "btc-1793988600", "err": "TransportError", "error": "timed out"})
+    assert msg and "исход неизвестен" in msg and balanced(msg)
+    msg = a.render("order_pending", {"key": "btc-1793988600", "status": "delayed"})
+    assert msg and "ещё не исполнена" in msg and balanced(msg)
+
+
 def test_digest_daily_and_status_from_journals(tmp_path, monkeypatch):
     root = make_repo(tmp_path, monkeypatch)
     # a second, paired bot C next to A

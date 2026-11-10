@@ -24,7 +24,7 @@ from dataclasses import asdict, dataclass, field, fields
 
 from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
-from ..lockmodel import (ClSigma, Tables, expected_dist_bp, lock_state, prob_up, strike_from_prints, TW_HI)
+from ..lockmodel import (ClSigma, Tables, close_from_prints, expected_dist_bp, lock_state, prob_up, strike_from_prints)
 from .feeds import ClobFeed, binance_feed, rtds_feed
 from .paper import PaperBroker
 from .state import State, Window, now_ms
@@ -34,6 +34,7 @@ log = logging.getLogger("pmbot.lock")
 
 # ------------------------------------------------------------------------------------------------ config
 DURATIONS = {300: "5m", 900: "15m"}     # window length -> slug tag (btc-updown-15m-<start>)
+PROV_MIN_BP = 0.5        # provisional result with forward-filled prints: |TWAP / strike - 1| must be at least this (bp)
 
 
 @dataclass
@@ -296,10 +297,19 @@ class LiveTaker:
     async def stop(self):
         return None
 
+    async def prewarm(self, token):
+        return await self.b.prewarm(token)
+
     async def buy(self, token, key, side, limit, shares):
+        from .live import NO_MATCH_CODES
         r = await self.b.place_fak(token, key, "BUY", limit, round(shares * limit, 2))
         if not r:
-            return 0.0, 0.0, 0.0
+            why = self.b.last_reject
+            if why not in NO_MATCH_CODES:
+                # refused for another reason (balance, market state) or accepted and still pending: a second order
+                # could double the position or repeat the same error every second -> the caller blocks the window
+                raise RuntimeError(f"order not filled, not safe to repeat: {why or 'no reason given'}")
+            return 0.0, 0.0, 0.0      # clean miss: the ask was gone when the order matched, nothing was bought
         # counted on top of the spend like pmbot/arb_live.py (conservative if the exchange already included it);
         # the wallet balance (pmbot-wallet.timer) is the final check of live PnL
         return r["price"], r["size"], r["size"] * fee_per_share(r["price"])
@@ -331,6 +341,9 @@ class LockBot:
         self.strikes = {}          # window key -> K
         self.entries = {}          # window key -> list of entry dicts (open until settled)
         self.busy = set()          # window keys with an order in flight
+        self.pending = {}          # window key -> $ of an order in flight (counted in the open-risk limit)
+        self.warmed = set()        # window keys whose market metadata the live client already has (prewarm)
+        self._bg = set()           # background tasks (prewarm): keep a reference until they finish
         self.next_try = {}         # window key -> ms
         self.last_why = {}
         self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0,
@@ -456,14 +469,38 @@ class LockBot:
                     self.st.add_window(Window(asset=a, start=start, slug=m["slug"], condition_id=m["condition_id"],
                                               token_up=m["token_up"], token_down=m["token_down"], tick=m["tick"],
                                               end=start + self.dur))
+                    self._prewarm(key, m["token_up"])
                 if rel >= self.dur + 5 and key in self.st.windows:
                     self.st.drop_window(key)
                 if rel > self.dur + 600 and key not in self.entries:
                     self.meta.pop(key, None)
                     self.strikes.pop(key, None)
+                    self.warmed.discard(key)
+                    self.next_try.pop(key, None)
+                    self.last_why.pop(key, None)
             for f in self.feeds.values():
                 await f.sync()
             await asyncio.sleep(2)
+
+    def _prewarm(self, key, token):
+        """Live: ~40 s before the closing minute let the exchange client look up the market (tick size, fees) so the
+        first order of the window does not wait for two extra HTTP round trips. One token warms both sides."""
+        fn = getattr(self.broker, "prewarm", None)
+        if fn is None or key in self.warmed:
+            return
+        self.warmed.add(key)
+
+        async def run():
+            for _ in range(3):
+                ms = await fn(token)
+                if ms is not None:
+                    self.j.log("prewarm", key=key, ms=ms)
+                    return
+                await asyncio.sleep(2)
+
+        t = asyncio.get_running_loop().create_task(run())
+        self._bg.add(t)
+        t.add_done_callback(self._bg.discard)
 
     def strike(self, key, asset, T):
         K = self.strikes.get(key)
@@ -558,6 +595,7 @@ class LockBot:
             return await self.maker_once(now)
         c = self.cfg.lock
         ok, why_risk = self.can_enter()
+        cands = []                 # signals of this tick: (margin p - ask, window, signal, shares, ctx)
         for key, w in list(self.st.windows.items()):
             Tc = self.anchor(w.start)
             rel = now / 1000 - Tc
@@ -587,11 +625,18 @@ class LockBot:
                 self._why(key, "risk:" + why_risk, ctx)
                 continue
             shares = min(c.shares, math.floor(self.cfg.risk.max_usd_per_entry / sig["limit"] * 100) / 100)
-            if self.open_cost() + shares * sig["limit"] > self.cfg.risk.max_open_usd + 1e-9 or shares < 1:
+            cands.append((sig["p"] - sig["ask"], w, sig, shares, ctx))
+        # Open risk counts the orders still in flight: all coins become eligible in the same tick at rel_lo, and an
+        # order takes ~0.3 s to come back, so without the reservation two or three coins went out together past
+        # max_open_usd (the limit that makes live "one entry at a time"). The widest margin goes first.
+        for _, w, sig, shares, ctx in sorted(cands, key=lambda x: -x[0]):
+            need = shares * sig["limit"]
+            if self.open_cost() + sum(self.pending.values()) + need > self.cfg.risk.max_open_usd + 1e-9 or shares < 1:
                 self.stats["skipped_risk"] += 1
-                self._why(key, "risk:max_open", ctx)
+                self._why(w.key, "risk:max_open", ctx)
                 continue
-            self.busy.add(key)
+            self.busy.add(w.key)
+            self.pending[w.key] = need
             asyncio.get_running_loop().create_task(self._execute(w, sig, shares, ctx))
 
     # ---------------------------------------------------------------- maker entry (LM, paper)
@@ -715,6 +760,11 @@ class LockBot:
             px, got, fee, err = 0.0, 0.0, 0.0, True
         finally:
             self.busy.discard(key)
+            self.pending.pop(key, None)
+        # the decision context plus what was sent. One dict: ctx already has "side" and "limit" (the cap before the
+        # 0.01 grid), and passing them again as keywords raised TypeError inside this task, so until 9 Nov no
+        # lock_entry / lock_miss line was ever written (paper and live) and the miss rate was invisible
+        rec = {**ctx, "key": key, "side": sig["side"], "limit": limit, "ms": now_ms() - t_sent}
         if got <= 1e-9:
             self.stats["missed"] += 1
             if err and self.broker.mode == "live":
@@ -724,7 +774,7 @@ class LockBot:
                 self.j.log("window_blocked", key=key, reason="order_error")
             else:
                 self.next_try[key] = now_ms() + self.cfg.lock.retry_ms
-            self.j.log("lock_miss", key=key, side=sig["side"], limit=limit, ms=now_ms() - t_sent, **ctx)
+            self.j.log("lock_miss", **{**rec, "error": err})
             return
         self.stats["filled"] += 1
         e = {"side": sig["side"], "shares": round(got, 4), "price": round(px, 4), "cost": round(px * got, 6),
@@ -733,30 +783,34 @@ class LockBot:
         self._save_state()
         self.j.log("fill", key=key, side=sig["side"], price=round(px, 4), size=round(got, 4), ts=now_ms(),
                    fee=round(fee, 6), order_id="fak", mode=self.broker.mode)
-        self.j.log("lock_entry", key=key, limit=limit, ms=now_ms() - t_sent, **{**ctx, "price": round(px, 4),
-                                                                                   "shares": round(got, 4)})
+        self.j.log("lock_entry", **{**rec, "price": round(px, 4), "shares": round(got, 4)})
         log.info("ENTRY %s %s %.2f sh @ %.3f (p=%.4f ask=%.3f limit=%.3f rel=%.1f)", key, sig["side"], got, px,
                  sig["p"], sig["ask"], limit, ctx.get("rel", 0))
 
     # ---------------------------------------------------------------- settlement
     def _provisional(self, key):
-        """Our own outcome once all 60 closing prints are in (minutes before Gamma): count a loss at once."""
+        """Our own outcome once the closing prints are in (minutes before Gamma): count a loss at once and free the
+        open-risk slot. Up to 3 dropped prints are forward-filled like the strike (RTDS drops ~1% of the seconds, so a
+        third of the windows miss one: without the fill those windows had no provisional result and, with
+        max_open_usd = 5, kept the next window blocked until Gamma settled). A filled TWAP closer than
+        PROV_MIN_BP to the strike is too close to call: wait for Gamma."""
         if key in self.risk["provisional"] or key in self.risk["settled"]:
             return
         a, T = key.rsplit("-", 1)
         Tc = self.anchor(T)
         K = self.strikes.get(key)
-        cl = self.st.prices[a].cl_by_sec
-        xs = [cl.get(s) for s in range(Tc + 238, Tc + TW_HI + 1)]
-        if K is None or any(x is None for x in xs):
+        if K is None:
             return
-        up = sum(xs) / 60 >= K
+        C, miss = close_from_prints(self.st.prices[a].cl_by_sec, Tc)
+        if C is None or (miss and abs(C / K - 1) * 1e4 < PROV_MIN_BP):
+            return
+        up = C >= K
         pnl = 0.0
         for e in self.entries.get(key, []):
             won = (e["side"] == "U") == up
             pnl += (e["shares"] if won else 0.0) - e["cost"] - e["fee"]
         self.risk["provisional"][key] = round(pnl, 6)
-        self.j.log("provisional", key=key, winner="Up" if up else "Down", pnl=round(pnl, 4))
+        self.j.log("provisional", key=key, winner="Up" if up else "Down", pnl=round(pnl, 4), missing=miss)
         self._save_state()
 
     async def settle_loop(self):

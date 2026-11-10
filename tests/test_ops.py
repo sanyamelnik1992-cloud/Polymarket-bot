@@ -132,6 +132,32 @@ def test_quality_markout_pairs_latency_and_wallet(tmp_path, monkeypatch):
     assert "нет данных (TimeoutError" in ops.wallet_line()
 
 
+def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
+    """The hourly report must show how many taker orders of a lock bot found their ask (reports/52: live 9-10 Nov,
+    26 of 42 orders did not, and nothing in the report said so)."""
+    root = make_repo(tmp_path, monkeypatch)
+    run = root / "data" / "j" / "20261108-170000"
+    run.mkdir(parents=True)
+    now = time.time()
+    t0 = now - 900
+    ev = [{"t": t0, "type": "status", "stats": {"lag_max_ms": 40, "lag_over_100ms": 2}},
+          {"t": t0 + 1, "type": "prewarm", "key": "btc-9", "ms": 95.0},
+          {"t": t0 + 2, "type": "lock_miss", "key": "btc-9", "ms": 240, "error": False},
+          {"t": t0 + 3, "type": "lock_miss", "key": "eth-9", "ms": 260, "error": False},
+          {"t": t0 + 4, "type": "lock_miss", "key": "sol-9", "ms": 10000, "error": True},
+          {"t": t0 + 5, "type": "fill", "key": "btc-9", "side": "U", "price": 0.91, "size": 5, "ts": (t0 + 5) * 1000},
+          {"t": t0 + 5, "type": "lock_entry", "key": "btc-9", "ms": 250, "price": 0.91, "shares": 5},
+          {"t": t0 + 6, "type": "lock_entry", "key": "xrp-9", "maker": True, "price": 0.96, "shares": 5},
+          {"t": t0 + 500, "type": "status", "stats": {"lag_max_ms": 120, "lag_over_100ms": 9}}]
+    (run / "events.jsonl").write_text("\n".join(json.dumps(e, separators=(",", ":")) for e in ev) + "\n")
+    lk = ops.quality("data/j", now - 3600)["lock"]
+    assert (lk["entries"], lk["misses"], lk["errors"]) == (1, 2, 1)          # the maker entry is not a taker order
+    assert lk["ms"] == (250, 260) and lk["prewarm_ms"] == 95.0 and lk["lag_late"] == 7
+    text = ops.format_quality(24)
+    assert "заявок 4: исполнено 1, продажи уже не было 2, ошибок 1" in text
+    assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
+
+
 def test_unit_cpu_priority_live_lock_above_paper_bots():
     """Under CPU contention the live lock bot (real money, ~100 ms decisions) must outrank every paper bot and the recorder."""
     import glob
