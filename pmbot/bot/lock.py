@@ -136,8 +136,6 @@ def load_lock_config(path=None, overrides=None):
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
     if c.tiers:
-        if c.entry != "taker":
-            raise ValueError("lock.tiers only with entry = 'taker'")
         ts = sorted((float(t[0]), float(t[1])) for t in c.tiers)
         if any(len(t) != 2 for t in c.tiers) or any(not (0.5 < pm < 1 and c.a_min <= am <= c.a_max) for pm, am in ts):
             raise ValueError("lock.tiers: [[p_min in (0.5,1), ask_max in [a_min, a_max]], ...]")
@@ -246,8 +244,14 @@ def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, 
 
 def maker_bid(c: LockCfg, p, best_ask):
     """Maker price for the decided side: p - min_edge (a maker pays no taker fee), capped at a_max and one cent under
-    the best ask (post-only), on the 0.01 grid (valid at tick 0.01 and 0.001). None below a_min."""
-    b = tick_floor(min(c.a_max, p - c.min_edge), 0.01)
+    the best ask (post-only), on the 0.01 grid (valid at tick 0.01 and 0.001). None below a_min.
+    With lock.tiers (LM3, reports/52) the price is the tier limit of p instead: the bid a taker of L3 would pay."""
+    top = p - c.min_edge
+    if c.tiers:
+        top = tier_limit(c, p)
+        if top is None:
+            return None
+    b = tick_floor(min(c.a_max, top), 0.01)
     if best_ask is not None:
         b = min(b, tick_floor(best_ask - 0.01, 0.01))
     b = round(b, 2)

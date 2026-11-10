@@ -182,6 +182,8 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-15", "config/lock15.toml", False),
                             ("pmbot-lock-maker", "config/lock_maker.toml", False),
                             ("pmbot-lock-tier", "config/lock_tier.toml", False),
+                            ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
+                            ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
@@ -456,8 +458,7 @@ def test_lock_tiers_validation():
     assert load_lock_config(overrides=base).lock.tiers
     for bad in ({"tiers": [[0.99, 0.98], [0.95, 0.99]]},           # ask above a_max
                 {"tiers": [[0.99, 0.93], [0.95, 0.98]]},           # a higher p must not be cheaper
-                {"tiers": [[0.80, 0.93]]},                          # below theta
-                {"tiers": [[0.95, 0.93]], "entry": "maker"}):       # maker + tiers
+                {"tiers": [[0.80, 0.93]]}):                         # below theta
         with pytest.raises(ValueError):
             load_lock_config(overrides={"lock": {"theta": 0.90, "agree": 0.90, **bad}})
 
@@ -776,3 +777,35 @@ def test_provisional_result_forward_fills_dropped_prints(tmp_path):
     bot, j, w = bot_with(many, tmp_path / "d")
     bot._provisional(w.key)
     assert w.key not in bot.risk["provisional"]
+
+
+def test_l3_on_15m_is_the_live_rule_with_another_duration():
+    """pmbot-lock-15-tier (reports/52): exactly the live L3 rule and its one-entry-at-a-time limit on 15m windows."""
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    l15 = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
+    assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
+    a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
+    a.pop("duration"), b.pop("duration")
+    assert a == b, "L3-15 must keep the L3 rule"
+    assert l15.risk.max_open_usd == l3.risk.max_open_usd == 5.0
+    assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
+
+
+def test_lm3_bids_the_tier_price_of_the_model_probability():
+    """LM3 (reports/52): the L3 tiers as a resting bid. Paper only, like every maker entry of the lock bot."""
+    from pmbot.bot.lock import maker_bid
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    lm2 = load_lock_config(os.path.join(ROOT, "config", "lock_maker2.toml"))
+    lm3 = load_lock_config(os.path.join(ROOT, "config", "lock_maker_tier.toml"))
+    c = lm3.lock
+    assert lm3.execution.mode == "paper" and c.entry == "maker" and c.tiers == l3.lock.tiers and c.theta == l3.lock.theta
+    assert c.adv3_bp == lm2.lock.adv3_bp == 1.0                     # the maker's tighter Binance guard
+    for k in ("agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "a_max", "rel_lo", "rel_hi", "shares", "assets"):
+        assert getattr(c, k) == getattr(l3.lock, k), k
+    assert lm3.risk.state_file not in ("", l3.risk.state_file, lm2.risk.state_file)
+    assert len({lm3.journal_dir, l3.journal_dir, lm2.journal_dir}) == 3
+    # the bid is the tier limit of p, one cent under the ask at most, nothing below the lowest tier
+    assert maker_bid(c, 0.995, None) == 0.98 and maker_bid(c, 0.98, None) == 0.95
+    assert maker_bid(c, 0.96, None) == 0.93 and maker_bid(c, 0.92, None) == 0.91
+    assert maker_bid(c, 0.89, None) is None
+    assert maker_bid(c, 0.92, 0.91) == 0.90 and maker_bid(c, 0.92, 0.905) is None    # post-only: one cent under the ask

@@ -1,0 +1,35 @@
+# L3 on the 15-minute markets, PAPER (unit pmbot-lock-15-tier): the live rule L3 (config/lock_tier.toml, identical [lock]
+# except duration; a test checks it) on the 15m Up/Down markets, which resolve by the same 60 s Chainlink TWAP.
+# Why (reports/52): L15 with the plain rule p >= 0.99 made 0 entries in two days, like L on 5m; the 15m markets trade
+# 3-6x more per window than 5m on ETH / SOL / XRP (9 Nov, 24 h: ETH 15m $385k vs 5m $405k with a third of the windows).
+# Risk as the live twin: one entry at a time. Verdict: entries, share of losses and cents per share against pmbot-lock-tier.
+journal_dir = "data/journal-lock-15-tier"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+duration = 900        # 15m windows; times below are seconds of the closing 5 minutes (end - 300 + rel)
+theta = 0.90          # lowest tier probability; the tiers below set the price limit per probability
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.90
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 5.0    # as live L3: one entry at a time
+daily_loss_limit = 5.0
+state_file = "data/state/lock15_tier_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300

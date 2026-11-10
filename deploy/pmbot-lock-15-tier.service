@@ -1,0 +1,23 @@
+[Unit]
+Description=pmbot TWAP-lock L3 on 15m (config/lock15_tier.toml: the live L3 price tiers on the 15-minute markets; paper)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. reports/52. 15m twin of pmbot-lock-tier (the live L3 rule, duration 900).
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock15_tier.toml
+# CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
+Nice=10
+CPUWeight=20
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target
