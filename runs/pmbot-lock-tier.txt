@@ -1,21 +1,21 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier/20261109-165004
-mode: paper  duration: 731.1 min  events: {'start': 1, 'status': 1462, 'lock_state': 4611, 'strike': 572, 'fill': 30, 'provisional': 22, 'settle': 30}
+mode: paper  duration: 791.1 min  events: {'start': 1, 'status': 1582, 'lock_state': 4869, 'strike': 620, 'fill': 34, 'provisional': 23, 'settle': 33}
 
-fills: 30  shares: 145  notional: $132.08
+fills: 34  shares: 161  notional: $146.52
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        8   40.00    36.100      0.902  253.113
-eth        8   40.00    36.500      0.912  252.241
-sol        9   40.03    36.577      0.913  242.341
+eth       10   50.00    45.600      0.912  250.680
+sol       11   46.02    41.918      0.910  243.769
 xrp        5   25.00    22.900      0.916  248.409
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
 btc          8  36.344 -1.343         -1.343     0.0     0.875 -4.199  0.468 -0.037
-eth          8  36.723  3.277          3.277     0.0     1.000  0.233  0.563  0.089
-sol          9  36.798  3.232          3.232     0.0     1.000  0.002  0.468  0.088
+eth         10  45.880  4.120          4.120     0.0     1.000  0.233  0.563  0.090
+sol         10  41.282 -1.252         -1.252     0.0     0.900 -4.484  0.468 -0.030
 xrp          5  23.034  1.966          1.966     0.0     1.000  0.233  0.468  0.085
 
-TOTAL pnl $+7.13 (ex-rebate $+7.13) on cost $132.90 -> ROI +5.37%; windows 30, t-stat +1.54
-max drawdown $-4.20; hedged windows (both sides filled): 0
+TOTAL pnl $+3.49 (ex-rebate $+3.49) on cost $146.54 -> ROI +2.38%; windows 33, t-stat +0.53
+max drawdown $-4.48; hedged windows (both sides filled): 0
