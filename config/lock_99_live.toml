@@ -1,0 +1,38 @@
+# TWAP-lock L99 — LIVE (REAL MONEY). Same rule as config/lock_99.toml (its paper twin pmbot-lock-99, a test checks it).
+# Owner, 10 Nov: "запусти его еще на реальную тоже ... будет 2 на реальные параллельно" (5 shares, the small-stake option).
+# Runs next to pmbot-lock-live on the same wallet with its OWN limits: 5 shares, one entry at a time, -$5/day (= one loss) and
+# then it stays stopped until a human starts it. Both live bots may buy in the same window: at most ~$10 at risk together.
+# Rule: the plain L rule on the unfloored model (p >= 0.99), asks 0.96-0.99: ask <= p - 0.004 - fee, so 0.99 needs p >= 0.9947;
+# no entry within 10 s of a Binance jump. Replay 7-10 Nov with this code: 91 entries, 0 lost, +$9 (88 of them on the weekend).
+# What is NOT known: the loss rate. A win is ~+5c, a loss ~-$4.95, break-even is 1 loss in ~107 entries, and 0 of 91 does not
+# prove a rate below that. This live run at the smallest stake is the measurement; do not raise the stake before ~300 live
+# entries (reports/56). The daily limit is below one loss on purpose: one loss stops the bot for the day.
+journal_dir = "data/journal-lock-99-live"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+theta = 0.99
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.96
+a_max = 0.99
+min_edge = 0.004
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+shock_bp = 2.5        # as live (reports/55)
+shock_s = 10.0
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 5.0           # one entry at a time (5 x 0.99 = $4.95)
+daily_loss_limit = 4.5          # a loss (~-$4.95) stops it until a human restarts it (unless the day already earned > $0.45)
+state_file = "data/state/lock_99_live.json"
+resume_next_day = false
+
+[execution]
+mode = "live"

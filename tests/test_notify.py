@@ -95,5 +95,13 @@ def test_digest_daily_and_status_from_journals(tmp_path, monkeypatch):
     assert "сделок не было" in d                           # C had no closed windows this hour
     assert "C</b> vs" in d and "+2.00$" in d and "строгий лучше" in d   # 7.5 - 5.5
     st = notify.format_status()
-    assert "+5.50$" in st and "kill switch" in st and balanced(st)
+    assert "+5.50$" in st and "остановлен до ручного запуска" in st and balanced(st)
+    # real money and paper are separate blocks with separate totals (reports/56): everything here is paper
+    assert "БУМАГА · эксперименты" in st and "Σ бумага сегодня" in st and "РЕАЛЬНЫЕ ДЕНЬГИ" not in st
+    assert "Σ бумага" in d
+    assert notify.group_of("pmbot-lock-live", "live") == "live" and notify.group_of("pmbot-lock-99-live", "live") == "live"
+    assert notify.group_of("pmbot-lock-tier", "paper") == "twin" and notify.group_of("pmbot-lock-99", "paper") == "twin"
+    assert notify.group_of("pmbot-lock-tier-wide", "paper") == "lab"
+    for u in ("pmbot-lock-live", "pmbot-lock-99-live", "pmbot-lock-tier", "pmbot-lock-99"):
+        assert u in notify.BOTS and "·" in notify.BOTS[u][1]          # plain name first, the letter code second
     assert balanced(notify.format_trades())

@@ -26,19 +26,30 @@ BOTS = {
     "pmbot-lock-wide": ("🎲", "L2", "TWAP-lock + спорные окна 0.50–0.98 (paper, эксперимент)"),
     "pmbot-lock-15": ("⏳", "L15", "TWAP-lock на 15-минутных рынках, те же фильтры (paper)"),
     "pmbot-lock-maker": ("🪤", "LM", "TWAP-lock мейкером: заявка на решённую сторону ≤0.98 (paper)"),
-    "pmbot-lock-tier-wide": ("🪜", "L4", "старый L3 (без пола волатильности) + цены от 0.50 (paper, рискованнее)"),
-    "pmbot-lock-tier": ("🪜", "L3", "ступени цены + пол волатильности + пауза 10 с после рывка Binance (paper-близнец live)"),
+    "pmbot-lock-tier-wide": ("🧪", "Ступени без фильтров · L4", "старое правило без защит + цены от 0.50: для сравнения (paper)"),
+    "pmbot-lock-tier": ("🪜", "Ступени · L3", "то же правило, что на реальных деньгах, без денег (paper-близнец)"),
     "pmbot-lock-maker2": ("🧲", "LM2", "LM с заявкой ≤0.96 и строгим фильтром Binance (paper)"),
-    "pmbot-lock-maker3": ("🧲", "LM3", "ступени L3 заявкой мейкера: ждём продавца решённой стороны (paper)"),
-    "pmbot-lock-15-tier": ("⏳", "L3-15", "ступени L3 на 15-минутных рынках (paper)"),
-    "pmbot-lock-99": ("🔒", "L99", "решённая сторона по 0.96–0.99, как у конкурента: +1¢ на акцию, один минус = 100 плюсов (paper)"),
-    "pmbot-lock-live": ("💎", "L3-LIVE", "L3: ступени цены, пол волатильности, пауза после рывка — реальные деньги (5 акций, стоп −$5/день)"),
+    "pmbot-lock-maker3": ("🧲", "Мейкер · LM3", "та же сторона, но заявкой в стакан и без комиссии (paper)"),
+    "pmbot-lock-15-tier": ("⏳", "Ступени 15 мин · L3-15", "правило «Ступени» на 15-минутных рынках (paper)"),
+    "pmbot-lock-99": ("🎯", "Снайпер · L99", "то же правило, что на реальных деньгах, без денег (paper-близнец)"),
+    "pmbot-lock-99-live": ("🎯", "Снайпер · L99", "почти решённая сторона по 0.96–0.99, зона конкурента: +5¢ со сделки, минус −$4.95 (5 акций, один минус = стоп на день)"),
+    "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона по 0.90–0.98: чем меньше уверенность, тем дешевле вход (5 акций, стоп −$5/день)"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
     "pmbot-recorder": ("📼", "REC", "рекордер"),
     "pmbot-tg": ("🤖", "TG", "телеграм-бот"),
 }
 PAIRS = [("pmbot-5m-c", "pmbot-5m"), ("pmbot-5m-d", "pmbot-5m-b")]   # (variant, its control)
+# Paper bots that run exactly the rule of a live bot (shown right under "real money" so the two can be compared at a glance)
+TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-5m-e": "pmbot-5m-live"}
+GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
+          ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
+
+
+def group_of(unit, mode):
+    if mode == "live":
+        return "live"
+    return "twin" if unit in TWINS else "lab"
 LINE = "━━━━━━━━━━━━━━━"
 
 
@@ -231,59 +242,87 @@ def format_digest(since, hours=6):
         return None
     now = time.time()
     lines = [f"🕐 <b>Сводка за {hours:g} ч</b> · {hhmm(since)}–{hhmm(now)} UTC", ""]
-    tot = 0.0
+    groups = {g: [] for g, _ in GROUPS}
     for u in units:
-        settles, fills = _settles(u, since)
-        s = _stats(settles)
-        today = _by_day(u).get(ops.today_utc())
-        state = ops.unit_state(u)[0]
-        head = f"{label(u)}"
-        if state != "active":
-            head += f"  {ops.STATE_RU.get(state, esc(state))}"
-        if s["n"]:
-            lines.append(f"{head}\n   {dot(s['pnl'])} за период {money(s['pnl'], True)} · окон {s['n']} "
-                         f"(✅{s['wins']} ❌{s['losses']}) · исп. {len(fills)}\n"
-                         f"   сегодня {money(today)}")
-        else:
-            lines.append(f"{head}\n   ⚪ сделок не было · сегодня {money(today)}")
-        tot += s["pnl"]
-    lines += [LINE, f"Σ за период: {money(tot, True)} · сегодня: "
-                    f"{money(sum(_by_day(u).get(ops.today_utc(), 0) for u in units), True)}"]
+        groups[group_of(u, ops.bot_paths(u)[2])].append(u)
+    for g, title in GROUPS:
+        if not groups[g]:
+            continue
+        lines.append(title)
+        tot = 0.0
+        for u in groups[g]:
+            settles, fills = _settles(u, since)
+            s = _stats(settles)
+            today = _by_day(u).get(ops.today_utc())
+            state = ops.unit_state(u)[0]
+            head = f"{label(u, False)}"
+            if state != "active":
+                head += f"  {ops.STATE_RU.get(state, esc(state))}"
+            if s["n"]:
+                lines.append(f"{head}: {dot(s['pnl'])} {money(s['pnl'], True)} · окон {s['n']} (✅{s['wins']} ❌{s['losses']})"
+                             f" · сегодня {money(today)}")
+            else:
+                lines.append(f"{head}: ⚪ сделок не было · сегодня {money(today)}")
+            tot += s["pnl"]
+        what = "реальные деньги" if g == "live" else "бумага"
+        day = sum(_by_day(u).get(ops.today_utc(), 0) for u in groups[g])
+        lines += [f"   Σ {what}: за период {money(tot, True)} · сегодня {money(day, True)}", ""]
     pb = pairs_block(ops.today_utc())
     if pb:
-        lines += ["", pb]
-    lines += ["", paper_note(units)]
+        lines += [pb, ""]
+    lines += [paper_note(units)]
     return "\n".join(lines)
 
 
 # ---------------------------------------------------------------- commands
+def _status_block(s):
+    """One bot of /status: name, what it does, state, today, total."""
+    unit = s["unit"]
+    out = [label(unit)]
+    line = f"   {ops.STATE_RU.get(s['state'], esc(s['state']))} {ops.fmt_age(s['since'])}".rstrip()
+    out.append(line)
+    if s["settles"]:
+        out.append(f"   {dot(s['pnl_today'])} сегодня {money(s['pnl_today'], True)} · сделок {len(s['settles'])} "
+                   f"(✅{s['wins']} ❌{s['losses']})")
+    else:
+        out.append(f"   {dot(s['pnl_today'])} сегодня {money(s['pnl_today'], True)} · сделок пока нет")
+    extra = []
+    if s["pnl_all"] is not None:
+        extra.append(f"всего {money(s['pnl_all'])} за {len(s['pnl_by_day'])} дн.")
+    if s["open_worst"]:
+        extra.append(f"сейчас в сделке {s['open_worst']:.2f}$")
+    if extra:
+        out.append("   " + " · ".join(extra))
+    if s["killed"]:
+        out.append(f"   ⛔ остановлен до ручного запуска: {esc(s['kill_reason'])}")
+    return out
+
+
 def format_status():
-    lines = ["📊 <b>Статус ботов</b>", ""]
-    total = 0.0
-    shown = 0
+    """/status: real money first, then the paper twins of the live bots, then paper experiments. The totals of real
+    money and paper are never added together (the owner read a paper +$20 as his own on 10 Nov)."""
+    lines = ["📊 <b>Боты · 5-минутные рынки</b>"]
+    w = ops.wallet_line()
+    if w:
+        lines.append(w)
+    lines.append("")
+    groups = {g: [] for g, _ in GROUPS}
     for unit in ops.BOT_UNITS:
         s = ops.bot_summary(unit)
         if s["state"] in ("inactive", "unknown", "n/a") and not s["settles"] and s["pnl_today"] in (None, 0):
             continue
-        shown += 1
-        mode = "<b>LIVE 💰</b>" if s["mode"] == "live" else "paper"
-        lines.append(f"{label(unit)}\n   {ops.STATE_RU.get(s['state'], esc(s['state']))} {ops.fmt_age(s['since'])} · {mode}")
-        if s["settles"]:
-            lines.append(f"   {dot(s['pnl_today'])} сегодня {money(s['pnl_today'], True)} · окон {len(s['settles'])} "
-                         f"(✅{s['wins']} ❌{s['losses']}) · исп. {len(s['fills'])}")
-        else:
-            lines.append(f"   {dot(s['pnl_today'])} сегодня {money(s['pnl_today'], True)} · закрытых окон пока нет")
-        extra = []
-        if s["pnl_all"] is not None:
-            extra.append(f"всего {money(s['pnl_all'])} за {len(s['pnl_by_day'])} дн.")
-        if s["open_worst"]:
-            extra.append(f"открытый риск {s['open_worst']:.2f}$")
-        if extra:
-            lines.append("   " + " · ".join(extra))
-        if s["killed"]:
-            lines.append(f"   ⛔ kill switch: {esc(s['kill_reason'])}")
-        lines.append("")
-        total += s["pnl_today"] or 0
+        groups[group_of(unit, s["mode"])].append(s)
+    shown = 0
+    for g, title in GROUPS:
+        if not groups[g]:
+            continue
+        lines.append(title)
+        for s in groups[g]:
+            shown += 1
+            lines += _status_block(s)
+        tot = sum(s["pnl_today"] or 0 for s in groups[g])
+        what = "реальные деньги" if g == "live" else "бумага"
+        lines += [f"   Σ {what} сегодня: {money(tot, True)}", ""]
     if not shown:
         lines.append("ни один бот не запущен\n")
     st, since = ops.unit_state("pmbot-recorder")
@@ -292,7 +331,7 @@ def format_status():
     if os.path.exists(ops.KILL_FILE):
         lines.append("⛔ <b>файл STOP есть</b>: торговля остановлена (/resume — снять)")
     g = ops.git_info()
-    lines += [LINE, f"Σ сегодня: {money(total, True)}", f"код: <code>{esc(g['branch'])} {esc(g['commit'])}</code>"]
+    lines += [LINE, f"код: <code>{esc(g['branch'])} {esc(g['commit'])}</code>"]
     return "\n".join(lines)
 
 

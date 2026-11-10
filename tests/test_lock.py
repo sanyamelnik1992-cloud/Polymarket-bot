@@ -185,6 +185,7 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
                             ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
                             ("pmbot-lock-99", "config/lock_99.toml", False),
+                            ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
@@ -1023,3 +1024,19 @@ def test_l99_is_paper_and_buys_the_sure_side_up_to_099(tables):
     assert sig and sig["side"] == "U" and ctx["p"] >= 0.9947 and round(tick_floor(sig["limit"], 0.01), 2) == 0.99, ctx
     sig, ctx = decide(*args, (0.95, 500.0), (0.06, 500.0))
     assert sig is None and ctx["why"] == "ask_too_low"
+
+
+def test_l99_live_is_the_paper_rule_with_small_real_money_limits():
+    """reports/56: the competitor zone on real money at the smallest stake, next to live L3. One loss stops it for the day."""
+    paper = load_lock_config(os.path.join(ROOT, "config", "lock_99.toml"))
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml"))
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
+    assert live.execution.mode == "live" and paper.execution.mode == "paper"
+    assert live.lock == paper.lock, "L99 live must stay identical to its paper twin pmbot-lock-99"
+    assert live.lock.shares <= 5 and live.risk.max_usd_per_entry <= 5.0 and live.risk.max_open_usd <= 5.0
+    assert live.risk.resume_next_day is False
+    assert live.risk.daily_loss_limit < 5 * live.lock.a_min       # below the smallest possible loss: one loss = stop
+    assert paper.risk.max_open_usd == live.risk.max_open_usd and paper.risk.daily_loss_limit == live.risk.daily_loss_limit
+    # separate books: the two live bots must never share a state file or a journal
+    assert live.risk.state_file not in ("", l3.risk.state_file, paper.risk.state_file)
+    assert len({live.journal_dir, l3.journal_dir, paper.journal_dir}) == 3

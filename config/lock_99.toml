@@ -1,4 +1,4 @@
-# TWAP-lock L99 — PAPER. The "sure side at 0.96-0.99" rule (reports/55): what the competitor's sniper does on 5m/15m markets
+# TWAP-lock L99 — PAPER twin of config/lock_99_live.toml (REAL MONEY since 10 Nov, reports/56; a test keeps them equal). The "sure side at 0.96-0.99" rule (reports/55): what the competitor's sniper does on 5m/15m markets
 # (his trades of 6 Nov: +1 % of the stake each = buys at ~0.99, one lost stake wipes ~100 wins).
 # Rule: the plain L rule on the unfloored model (p >= 0.99), asks 0.96-0.99: ask <= p - 0.004 - fee, so 0.99 needs p >= 0.9947.
 # Replay 7-10 Nov: p >= 0.99 at asks 0.96-0.99 = 227 entries, 0 lost, +1.3c a share. Break-even is 1 loss in ~107 entries, and
@@ -26,8 +26,8 @@ shock_s = 10.0
 
 [risk]
 max_usd_per_entry = 5.0
-max_open_usd = 10.0
-daily_loss_limit = 5.0
+max_open_usd = 5.0    # = live twin pmbot-lock-99-live: one entry at a time
+daily_loss_limit = 4.5
 state_file = "data/state/lock_99_paper.json"
 resume_next_day = true
 
