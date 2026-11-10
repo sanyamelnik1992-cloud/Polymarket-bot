@@ -1,20 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-pb/20261110-192048
-mode: paper  duration: 161.1 min  events: {'start': 1, 'status': 322, 'lock_state': 1159, 'strike': 124, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1, 'lock_miss': 1}
+mode: paper  duration: 220.6 min  events: {'start': 1, 'status': 441, 'lock_state': 1420, 'strike': 172, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3, 'lock_miss': 1}
 
-lock orders: sent 2  filled 1  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 302  p90 302  max 302
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+lock orders: sent 4  filled 3  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 301  p90 302  max 302
+  fill price minus the ask we saw, cents: mean +0.33  worst +1.0
   misses came 58-58 s before the end; model p 0.995-0.995
 
-fills: 1  shares: 5  notional: $4.65
+fills: 3  shares: 11  notional: $10.22
        fills  shares  notional  avg_price  med_rel
 asset                                             
-xrp        1     5.0      4.65       0.93  260.522
+sol        1    0.86     0.817       0.95  243.431
+xrp        2   10.00     9.400       0.94  257.511
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best   roi
-asset                                                                            
-xrp          1  4.673  0.327          0.327     0.0       1.0  0.327  0.327  0.07
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+sol          1  0.820  0.040          0.040     0.0       1.0  0.040  0.040  0.049
+xrp          2  9.439  0.561          0.561     0.0       1.0  0.233  0.327  0.059
 
-TOTAL pnl $+0.33 (ex-rebate $+0.33) on cost $4.67 -> ROI +7.00%; windows 1, t-stat +nan
+TOTAL pnl $+0.60 (ex-rebate $+0.60) on cost $10.26 -> ROI +5.86%; windows 3, t-stat +2.37
 max drawdown $0.00; hedged windows (both sides filled): 0
