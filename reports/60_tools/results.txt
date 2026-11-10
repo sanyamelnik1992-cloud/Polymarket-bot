@@ -1,59 +1,49 @@
-=== L3 as in reports/59 (bottom tier from second 260), 5 shares, 1-9 Nov: by entry price
-  price [0.9,0.915):   185 entries  lost  9 ( 4.9%)  avg price 0.906  zero at  8.8% lost  1 loss =  10.3 wins  +3.96c/sh    +4.17$/day  worst day    -5.6$
-  price [0.915,0.935):    94 entries  lost  1 ( 1.1%)  avg price 0.926  zero at  6.9% lost  1 loss =  13.4 wins  +5.87c/sh    +3.14$/day  worst day    +1.3$
-  price [0.935,0.955):    64 entries  lost  1 ( 1.6%)  avg price 0.947  zero at  5.0% lost  1 loss =  19.0 wins  +3.43c/sh    +1.25$/day  worst day    -4.0$
-  price [0.955,0.985):    75 entries  lost  0 ( 0.0%)  avg price 0.976  zero at  2.2% lost  1 loss =  43.8 wins  +2.23c/sh    +0.95$/day  worst day    +0.1$
-  all:                   418 entries  lost 11 ( 2.6%)  avg price 0.929  zero at  6.6% lost  1 loss =  14.1 wins  +4.00c/sh    +9.50$/day  worst day    +0.0$
+=== L3 with the live pause max(2.5 bp, 3 sigma sqrt3), signal >= 1 s old, 5 shares, 1-9 Nov
+  as live now:                        566 entries ( 64.3/day)  lost 23 ( 4.1%)  +3.23c/sh  +10.39$/day  halves   +6.7 /  +84.7
+  no bottom tier:                     333 entries ( 37.8/day)  lost  8 ( 2.4%)  +3.57c/sh   +6.75$/day  halves   +6.2 /  +53.2
+  bottom tier from second 250:        470 entries ( 53.4/day)  lost 17 ( 3.6%)  +3.31c/sh   +8.83$/day  halves   +5.0 /  +72.7
+  bottom tier from second 255:        446 entries ( 50.7/day)  lost 15 ( 3.4%)  +3.42c/sh   +8.67$/day  halves  +11.7 /  +64.6
+  bottom tier from second 260:        418 entries ( 47.5/day)  lost 11 ( 2.6%)  +4.00c/sh   +9.50$/day  halves  +12.7 /  +70.9
+  bottom tier from second 263:        400 entries ( 45.5/day)  lost 10 ( 2.5%)  +4.01c/sh   +9.12$/day  halves  +14.1 /  +66.2
+  bottom tier from second 266:        391 entries ( 44.4/day)  lost  9 ( 2.3%)  +4.14c/sh   +9.20$/day  halves  +11.9 /  +69.1
+  bottom tier from second 270:        367 entries ( 41.7/day)  lost  8 ( 2.2%)  +4.10c/sh   +8.54$/day  halves  +14.1 /  +61.1
+  bottom tier from second 275:        354 entries ( 40.2/day)  lost  8 ( 2.3%)  +3.92c/sh   +7.88$/day  halves  +10.6 /  +58.8
+  bottom tier needs p >= 0.92:        457 entries ( 51.9/day)  lost 14 ( 3.1%)  +3.83c/sh   +9.93$/day  halves   +7.6 /  +79.8
+  bottom tier needs p >= 0.93:        406 entries ( 46.1/day)  lost 13 ( 3.2%)  +3.39c/sh   +7.82$/day  halves   +2.7 /  +66.1
+  no bottom tier on btc:              431 entries ( 49.0/day)  lost 11 ( 2.6%)  +4.15c/sh  +10.17$/day  halves   +7.2 /  +82.3
+  bottom tier from 263, not on btc:   366 entries ( 41.6/day)  lost  8 ( 2.2%)  +4.08c/sh   +8.48$/day  halves  +12.4 /  +62.3
 
-=== by the model's probability at entry (calibration of the entries)
-  p [0.9,0.95):    95 entries  lost  3 ( 3.2%)  avg price 0.906  zero at  8.8% lost  1 loss =  10.4 wins  +5.64c/sh    +3.04$/day  worst day    -1.5$
-  p [0.95,0.97):   104 entries  lost  3 ( 2.9%)  avg price 0.916  zero at  7.8% lost  1 loss =  11.8 wins  +4.94c/sh    +2.92$/day  worst day    -2.6$
-  p [0.97,0.99):   122 entries  lost  5 ( 4.1%)  avg price 0.929  zero at  6.6% lost  1 loss =  14.1 wins  +2.51c/sh    +1.74$/day  worst day    -3.6$
-  p [0.99,0.999):    90 entries  lost  0 ( 0.0%)  avg price 0.966  zero at  3.2% lost  1 loss =  30.2 wins  +3.21c/sh    +1.64$/day  worst day    +0.1$
-  p [0.999,1.01):     7 entries  lost  0 ( 0.0%)  avg price 0.958  zero at  3.9% lost  1 loss =  24.4 wins  +3.94c/sh    +0.16$/day  worst day    +0.1$
+=== entries of the bottom tier (p < 0.95) of the rule as live now, by entry second
+  second [240,250):   120 entries ( 13.6/day)  lost 11 ( 9.2%)  -0.35c/sh   -0.24$/day  halves  -12.7 /  +10.6
+  second [250,263):    83 entries (  9.4/day)  lost  5 ( 6.0%)  +2.89c/sh   +1.36$/day  halves   -2.9 /  +14.9
+  second [263,275):    40 entries (  4.5/day)  lost  0 ( 0.0%)  +8.82c/sh   +2.00$/day  halves   +6.7 /  +11.0
+  second [275,300):    21 entries (  2.4/day)  lost  0 ( 0.0%)  +8.65c/sh   +1.03$/day  halves   +4.7 /   +4.3
+  by coin:
+  btc:                156 entries ( 17.7/day)  lost 13 ( 8.3%)  +0.52c/sh   +0.46$/day  halves   -6.7 /  +10.8
+  eth:                 86 entries (  9.8/day)  lost  3 ( 3.5%)  +5.33c/sh   +2.60$/day  halves   -2.8 /  +25.7
+  sol:                 10 entries (  1.1/day)  lost  0 ( 0.0%)  +8.67c/sh   +0.49$/day  halves   +1.7 /   +2.6
+  xrp:                 12 entries (  1.4/day)  lost  0 ( 0.0%)  +8.82c/sh   +0.60$/day  halves   +3.6 /   +1.7
+  the other tiers (p >= 0.95):        302 entries ( 34.3/day)  lost  7 ( 2.3%)  +3.63c/sh   +6.23$/day  halves  +11.0 /  +43.9
 
-=== by window second of the entry
-  second [240,250):   108 entries  lost  1 ( 0.9%)  avg price 0.942  zero at  5.5% lost  1 loss =  17.3 wins  +4.54c/sh    +2.79$/day  worst day    -2.7$
-  second [250,260):    61 entries  lost  2 ( 3.3%)  avg price 0.930  zero at  6.5% lost  1 loss =  14.4 wins  +3.23c/sh    +1.12$/day  worst day    -4.5$
-  second [260,270):   110 entries  lost  3 ( 2.7%)  avg price 0.915  zero at  8.0% lost  1 loss =  11.5 wins  +5.26c/sh    +3.29$/day  worst day    +0.1$
-  second [270,280):    71 entries  lost  2 ( 2.8%)  avg price 0.923  zero at  7.2% lost  1 loss =  12.9 wins  +4.36c/sh    +1.76$/day  worst day    -3.3$
-  second [280,300):    68 entries  lost  3 ( 4.4%)  avg price 0.938  zero at  5.8% lost  1 loss =  16.1 wins  +1.43c/sh    +0.55$/day  worst day    -3.1$
+=== by day: as live now | bottom tier from second 263
+  day 1:  59 entries, lost  3,  +5.17$  |   47 entries, lost  2,  +4.80$
+  day 2:  43 entries, lost  5,  -7.76$  |   26 entries, lost  2,  -0.96$
+  day 3:  51 entries, lost  1, +15.27$  |   35 entries, lost  1,  +8.02$
+  day 4:  31 entries, lost  2,  +2.63$  |   12 entries, lost  1,  -0.69$
+  day 5:  60 entries, lost  5,  -0.51$  |   40 entries, lost  1, +10.46$
+  day 6:  69 entries, lost  4,  +7.29$  |   38 entries, lost  1,  +8.07$
+  day 7: 118 entries, lost  3, +21.96$  |  101 entries, lost  2, +18.89$
+  day 8:  99 entries, lost  0, +33.18$  |   76 entries, lost  0, +22.39$
+  day 9:  36 entries, lost  0, +14.18$  |   25 entries, lost  0,  +9.30$
 
-=== the same rule by order size (upper bound: the volume other takers got in the next 2 s)
-    5 shares:   418 entries  lost 11 ( 2.6%)  avg price 0.929  zero at  6.6% lost  1 loss =  14.1 wins  +4.00c/sh    +9.50$/day  worst day    +0.0$  at risk per entry $5
-   10 shares:   387 entries  lost 10 ( 2.6%)  avg price 0.930  zero at  6.6% lost  1 loss =  14.2 wins  +3.99c/sh   +17.57$/day  worst day    -1.8$  at risk per entry $9
-   20 shares:   346 entries  lost 10 ( 2.9%)  avg price 0.930  zero at  6.6% lost  1 loss =  14.2 wins  +3.70c/sh   +29.07$/day  worst day    -7.3$  at risk per entry $19
-   50 shares:   269 entries  lost  7 ( 2.6%)  avg price 0.931  zero at  6.4% lost  1 loss =  14.6 wins  +3.81c/sh   +58.29$/day  worst day   -31.7$  at risk per entry $47
-       btc:   174 entries  lost  6 ( 3.4%)  avg price 0.927  zero at  6.8% lost  1 loss =  13.7 wins  +3.35c/sh   +33.15$/day  worst day   -40.7$
-       eth:    76 entries  lost  0 ( 0.0%)  avg price 0.936  zero at  6.0% lost  1 loss =  15.8 wins  +5.96c/sh   +25.76$/day  worst day    +2.5$
-       sol:    12 entries  lost  1 ( 8.3%)  avg price 0.949  zero at  4.8% lost  1 loss =  20.0 wins  -3.58c/sh    -2.44$/day  worst day   -47.3$
-       xrp:     7 entries  lost  0 ( 0.0%)  avg price 0.951  zero at  4.6% lost  1 loss =  20.8 wins  +4.59c/sh    +1.83$/day  worst day    +0.9$
-  100 shares:   221 entries  lost  7 ( 3.2%)  avg price 0.927  zero at  6.8% lost  1 loss =  13.7 wins  +3.65c/sh   +91.65$/day  worst day   -69.3$  at risk per entry $93
-  200 shares:   161 entries  lost  6 ( 3.7%)  avg price 0.929  zero at  6.6% lost  1 loss =  14.1 wins  +2.90c/sh  +106.28$/day  worst day  -196.2$  at risk per entry $186
-       btc:   143 entries  lost  6 ( 4.2%)  avg price 0.928  zero at  6.8% lost  1 loss =  13.8 wins  +2.59c/sh   +84.04$/day  worst day  -196.2$
-       eth:    16 entries  lost  0 ( 0.0%)  avg price 0.943  zero at  5.3% lost  1 loss =  17.7 wins  +5.35c/sh   +19.47$/day  worst day    +4.9$
-       sol:     2 entries  lost  0 ( 0.0%)  avg price 0.935  zero at  6.1% lost  1 loss =  15.4 wins  +6.12c/sh    +2.78$/day  worst day    +5.7$
-       xrp:     0
-
-=== stricter variants, 5 shares
-  p >= 0.99 only (rule L):            172 entries  lost  1 ( 0.6%)  avg price 0.960  zero at  3.7% lost  1 loss =  26.1 wins  +3.11c/sh    +3.04$/day  worst day    +0.3$
-  p >= 0.97 tiers only:               271 entries  lost  8 ( 3.0%)  avg price 0.943  zero at  5.3% lost  1 loss =  17.8 wins  +2.38c/sh    +3.67$/day  worst day    -6.5$
-  every tier from second 260:         299 entries  lost  9 ( 3.0%)  avg price 0.927  zero at  6.9% lost  1 loss =  13.6 wins  +3.86c/sh    +6.55$/day  worst day    -2.6$
-  every tier from second 270:         184 entries  lost  5 ( 2.7%)  avg price 0.933  zero at  6.2% lost  1 loss =  15.0 wins  +3.53c/sh    +3.69$/day  worst day    -3.0$
-  price floor 0.80 (L4 zone), from 260 below p 0.95:  541 entries  lost 28 ( 5.2%)  avg price 0.898  zero at  9.6% lost  1 loss =   9.4 wins  +4.43c/sh   +13.61$/day  worst day    -3.3$
-  price floor 0.50, from 260 below p 0.95:  567 entries  lost 36 ( 6.3%)  avg price 0.866  zero at 12.5% lost  1 loss =   7.0 wins  +6.26c/sh   +20.17$/day  worst day   -10.5$
-
-=== 5 shares, 418 entries, 1-9 Nov. Hold to the end: lost 11, total +83.6$, worst entry -4.7$
-    hold: worst day +0.0$
-  sell at p <= 0.80: stopped  18 (losers cut  7 of 11, winners sold 11), no bid on the tape  0, avg exit price 0.66 | total   +86.8$ (  +3.2 vs hold), worst entry   -4.7$, worst day   -0.7$
-  sell at p <= 0.70: stopped  13 (losers cut  7 of 11, winners sold  6), no bid on the tape  0, avg exit price 0.54 | total   +88.2$ (  +4.6 vs hold), worst entry   -4.7$, worst day   +0.7$
-  sell at p <= 0.60: stopped  12 (losers cut  6 of 11, winners sold  6), no bid on the tape  1, avg exit price 0.54 | total   +85.6$ (  +1.9 vs hold), worst entry   -4.7$, worst day   +0.7$
-  sell at p <= 0.50: stopped  10 (losers cut  5 of 11, winners sold  5), no bid on the tape  1, avg exit price 0.58 | total   +86.9$ (  +3.3 vs hold), worst entry   -4.7$, worst day   +0.7$
-  sell at p <= 0.40: stopped  10 (losers cut  5 of 11, winners sold  5), no bid on the tape  1, avg exit price 0.58 | total   +86.9$ (  +3.3 vs hold), worst entry   -4.7$, worst day   +0.7$
-=== 50 shares, 269 entries, 1-9 Nov. Hold to the end: lost 7, total +513.0$, worst entry -47.3$
-    hold: worst day -31.7$
-  sell at p <= 0.80: stopped  11 (losers cut  5 of 7, winners sold  6), no bid on the tape  0, avg exit price 0.73 | total  +612.0$ ( +99.0 vs hold), worst entry  -47.3$, worst day   -2.0$
-  sell at p <= 0.70: stopped   8 (losers cut  5 of 7, winners sold  3), no bid on the tape  0, avg exit price 0.61 | total  +603.3$ ( +90.3 vs hold), worst entry  -47.3$, worst day   -2.0$
-  sell at p <= 0.60: stopped   7 (losers cut  4 of 7, winners sold  3), no bid on the tape  1, avg exit price 0.62 | total  +577.6$ ( +64.6 vs hold), worst entry  -47.3$, worst day   -2.0$
-  sell at p <= 0.50: stopped   7 (losers cut  4 of 7, winners sold  3), no bid on the tape  1, avg exit price 0.62 | total  +577.6$ ( +64.6 vs hold), worst entry  -47.3$, worst day   -2.0$
-  sell at p <= 0.40: stopped   7 (losers cut  4 of 7, winners sold  3), no bid on the tape  1, avg exit price 0.62 | total  +577.6$ ( +64.6 vs hold), worst entry  -47.3$, worst day   -2.0$
+=== live_entries.py: real entries of pmbot-lock-live, 9 Nov 16:27 - 10 Nov 18:30 UTC
+all                                entries  56  lost  5   -1.43$
+price <= 0.91, before second 260   entries  34  lost  4   -4.25$
+price <= 0.91, from second 260     entries   7  lost  0   +3.21$
+price > 0.91                       entries  15  lost  1   -0.39$
+all but the early cheap ones       entries  22  lost  1   +2.82$
+LOSS 09 Nov 23:09:43 btc second 283 price 0.92
+LOSS 09 Nov 23:59:09 xrp second 249 price 0.91
+LOSS 10 Nov 05:44:10 sol second 250 price 0.89
+LOSS 10 Nov 10:29:16 btc second 256 price 0.89
+LOSS 10 Nov 18:04:04 btc second 244 price 0.9
