@@ -1,21 +1,21 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261109-165030
-mode: paper  duration: 610.7 min  events: {'start': 1, 'status': 1221, 'lock_state': 3659, 'strike': 472, 'fill': 35, 'settle': 35, 'provisional': 24}
+mode: paper  duration: 669.7 min  events: {'start': 1, 'status': 1339, 'lock_state': 3999, 'strike': 520, 'fill': 41, 'settle': 41, 'provisional': 28}
 
-fills: 35  shares: 174  notional: $150.80
+fills: 41  shares: 204  notional: $176.55
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       11   55.00    46.758      0.850  257.159
-eth        7   35.00    29.205      0.834  243.924
-sol       11   54.29    48.290      0.890  243.964
-xrp        6   30.00    26.550      0.885  243.824
+btc       12   60.00    50.158      0.836  252.558
+eth       10   50.00    42.455      0.849  245.169
+sol       12   59.29    52.690      0.889  243.887
+xrp        7   35.00    31.250      0.893  246.434
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc         11  47.224  2.776          2.776     0.0     0.909 -4.199  1.768  0.059
-eth          7  29.529  5.471          5.471     0.0     1.000  0.421  1.524  0.185
-sol         11  48.647  5.643          5.643     0.0     1.000  0.233  1.426  0.116
-xrp          6  26.759 -1.759         -1.759     0.0     0.833 -4.532  1.040 -0.066
+btc         12  50.701  4.299          4.299     0.0     0.917 -4.199  1.768  0.085
+eth         10  42.885  7.115          7.115     0.0     1.000  0.327  1.524  0.166
+sol         12  53.084  6.206          6.206     0.0     1.000  0.233  1.426  0.117
+xrp          7  31.479 -1.479         -1.479     0.0     0.857 -4.532  1.040 -0.047
 
-TOTAL pnl $+12.13 (ex-rebate $+12.13) on cost $152.16 -> ROI +7.97%; windows 35, t-stat +1.67
+TOTAL pnl $+16.14 (ex-rebate $+16.14) on cost $178.15 -> ROI +9.06%; windows 41, t-stat +2.19
 max drawdown $-6.67; hedged windows (both sides filled): 0
