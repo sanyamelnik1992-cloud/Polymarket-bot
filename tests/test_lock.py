@@ -182,6 +182,8 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-15", "config/lock15.toml", False),
                             ("pmbot-lock-maker", "config/lock_maker.toml", False),
                             ("pmbot-lock-tier", "config/lock_tier.toml", False),
+                            ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
+                            ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
                             ("pmbot-lock-live", "config/lock_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
@@ -456,8 +458,7 @@ def test_lock_tiers_validation():
     assert load_lock_config(overrides=base).lock.tiers
     for bad in ({"tiers": [[0.99, 0.98], [0.95, 0.99]]},           # ask above a_max
                 {"tiers": [[0.99, 0.93], [0.95, 0.98]]},           # a higher p must not be cheaper
-                {"tiers": [[0.80, 0.93]]},                          # below theta
-                {"tiers": [[0.95, 0.93]], "entry": "maker"}):       # maker + tiers
+                {"tiers": [[0.80, 0.93]]}):                         # below theta
         with pytest.raises(ValueError):
             load_lock_config(overrides={"lock": {"theta": 0.90, "agree": 0.90, **bad}})
 
@@ -529,3 +530,282 @@ def test_lock_bot_reports_event_loop_lag(tmp_path):
         await task
     asyncio.run(go())
     assert bot.stats["lag_max_ms"] >= 100 and bot.stats["lag_over_100ms"] >= 1
+
+
+# ------------------------------------------------------------------------------------------------ live execution path
+def _full_ctx():
+    """The context decide() hands to _execute(): it carries "side" and "limit" itself."""
+    return {"rel": 250.0, "side": "U", "p": 0.96, "p_cl": 0.95, "dist_bp": 2.0, "spot_bp": 2.0, "mv1": 0.0, "mv3": 0.0,
+            "n": 10, "m": 48, "sigma_bp": 0.3, "ask": 0.92, "ask_sz": 50.0, "limit": 0.9349}
+
+
+def _bot(tmp_path, broker, config="lock_tier.toml", **risk):
+    from pmbot.bot.state import Window
+    cfg = load_lock_config(os.path.join(ROOT, "config", config),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": "", **risk}})
+    j = _J()
+    bot = LockBot(cfg, j, broker=broker, tables=_Tab())
+    w = Window(asset="btc", start=T, slug="s", condition_id="c", token_up="u", token_down="d")
+    bot.st.add_window(w)
+    return bot, j, w
+
+
+def test_execute_journals_the_entry_and_the_miss_with_the_decision_context(tmp_path):
+    """lock_entry / lock_miss were never written: ctx already holds "side" and "limit" and passing them again as
+    keywords raised TypeError inside the order task (9 Nov: no latency and no miss rate in any journal)."""
+    sig = {"side": "U", "limit": 0.9349, "ask": 0.92, "p": 0.96}
+    st = State(["btc"])
+    bot, j, w = _bot(tmp_path, PaperTaker(st, exec_ms=0))
+    st.books["u"] = Book(bids={0.9: 10}, asks={0.92: 50.0})
+    asyncio.run(bot._execute(w, sig, 5, _full_ctx()))
+    kinds = [k for k, _ in j.ev]
+    assert kinds == ["fill", "lock_entry"]
+    e = dict(j.ev)["lock_entry"]
+    assert e["key"] == w.key and e["side"] == "U" and e["price"] == 0.92 and e["shares"] == 5.0
+    assert e["limit"] == 0.93                      # the cap that was sent (0.01 grid), not the raw 0.9349
+    assert e["p"] == 0.96 and e["ask"] == 0.92 and e["ms"] >= 0
+    # a miss: the ask is gone when the order arrives
+    st2 = State(["btc"])
+    bot, j, w = _bot(tmp_path / "b", PaperTaker(st2, exec_ms=0))
+    st2.books["u"] = Book(bids={0.9: 10}, asks={0.97: 50.0})
+    asyncio.run(bot._execute(w, sig, 5, _full_ctx()))
+    assert [k for k, _ in j.ev] == ["lock_miss"]
+    m = dict(j.ev)["lock_miss"]
+    assert m["limit"] == 0.93 and m["error"] is False and not bot.entries.get(w.key)
+    assert bot.next_try[w.key] < float("inf")       # a miss may be retried
+
+
+class _Rej(Exception):
+    def __init__(self, msg, status):
+        super().__init__(msg)
+        self.status = status
+
+
+class _FakClient:
+    """polymarket AsyncSecureClient stand-in: `script` is a list of responses / exceptions for place_market_order."""
+    def __init__(self, script):
+        self.script, self.placed, self.created = list(script), [], []
+
+    async def place_market_order(self, **kw):
+        self.placed.append(kw)
+        r = self.script.pop(0)
+        if isinstance(r, Exception):
+            raise r
+        return r
+
+    async def create_market_order(self, **kw):
+        self.created.append(kw)
+        return object()
+
+
+NO_MATCH = "no orders found to match with FAK order. FAK orders are partially filled or killed if no match is found."
+
+
+def _ok(spent, shares, status="matched"):
+    import types
+    return types.SimpleNamespace(ok=True, making_amount=spent, taking_amount=shares, order_id="0xabc", status=status)
+
+
+def test_taker_live_broker_tells_a_clean_miss_from_an_unknown_outcome():
+    """The CLOB answers a FAK that matched nothing with HTTP 400 and the SDK raises: that is a miss, not an error
+    (live 9-10 Nov: 26 of 42 orders ended as order_error and each one blocked its window)."""
+    import types
+    from pmbot.bot.live import TakerLiveBroker
+    j = _J()
+    c = _FakClient([_Rej(NO_MATCH, 400), _ok("4.52", "4.967"), _Rej("invalid order payload", 400), TimeoutError("no reply"),
+                    types.SimpleNamespace(ok=False, code="not_enough_balance", message="not enough balance / allowance"),
+                    _ok("0", "0", status="delayed")])
+    b = TakerLiveBroker(5.0, journal=j, client=c)
+    assert asyncio.run(b.place_fak("tok", "btc-1", "U", 0.91, 4.55)) is None
+    assert b.last_reject == "fak_not_filled"
+    k, rec = j.ev[-1]
+    assert k == "order_rejected" and rec["code"] == "fak_not_filled" and rec["latency_ms"] >= 0
+    r = asyncio.run(b.place_fak("tok", "btc-1", "U", 0.91, 4.55))
+    assert r["size"] == pytest.approx(4.967) and r["price"] == pytest.approx(4.52 / 4.967) and b.last_reject == ""
+    assert j.ev[-1][0] == "order_filled" and j.ev[-1][1]["latency_ms"] >= 0
+    assert c.placed[0]["max_price"] == "0.91" and c.placed[0]["order_type"] == "FAK"
+    for exc in (_Rej, TimeoutError):                       # another 400, a timeout: outcome unknown -> raise
+        with pytest.raises(exc):
+            asyncio.run(b.place_fak("tok", "btc-1", "U", 0.91, 4.55))
+        assert j.ev[-1][0] == "order_failed"
+    assert asyncio.run(b.place_fak("tok", "btc-1", "U", 0.91, 4.55)) is None and b.last_reject == "not_enough_balance"
+    assert asyncio.run(b.place_fak("tok", "btc-1", "U", 0.91, 4.55)) is None and b.last_reject == "pending:delayed"
+    assert j.ev[-1][0] == "order_pending"                  # accepted, not matched yet: not a fill and not a miss
+    # the private key / signed order never reach the journal
+    assert "0x1" not in str(j.ev)
+
+
+def _live_bot(tmp_path, script):
+    from pmbot.bot.lock import LiveTaker
+    from pmbot.bot.live import TakerLiveBroker
+    lt = LiveTaker.__new__(LiveTaker)
+    j = _J()
+    lt.b = TakerLiveBroker(5.0, journal=j, client=_FakClient(script))
+    bot, _, w = _bot(tmp_path, lt)
+    bot.j = j
+    return bot, j, w, lt
+
+
+def test_live_retries_after_a_clean_miss_and_blocks_the_window_otherwise(tmp_path):
+    import types
+    sig = {"side": "U", "limit": 0.91, "ask": 0.91, "p": 0.93}
+    # 1. nothing matched: no order_error, the window stays open for the next signal (like the paper twin)
+    bot, j, w, lt = _live_bot(tmp_path / "a", [_Rej(NO_MATCH, 400), _ok("4.52", "4.967")])
+    asyncio.run(bot._execute(w, sig, 5, _full_ctx()))
+    kinds = [k for k, _ in j.ev]
+    assert "order_error" not in kinds and "window_blocked" not in kinds and "lock_miss" in kinds
+    assert bot.next_try[w.key] < float("inf") and not bot.entries.get(w.key)
+    asyncio.run(bot._execute(w, sig, 5, _full_ctx()))                       # the retry fills
+    assert bot.entries[w.key][0]["shares"] == pytest.approx(4.967) and len(lt.b.client.placed) == 2
+    # 2. refused for another reason, still pending, or no answer: never a second order in this window
+    for i, script in enumerate(([types.SimpleNamespace(ok=False, code="not_enough_balance", message="x")],
+                                [_ok("0", "0", status="delayed")], [TimeoutError("no reply")])):
+        bot, j, w, lt = _live_bot(tmp_path / f"c{i}", script)
+        asyncio.run(bot._execute(w, sig, 5, _full_ctx()))
+        kinds = [k for k, _ in j.ev]
+        assert "order_error" in kinds and "window_blocked" in kinds, kinds
+        assert bot.next_try[w.key] == float("inf")
+
+
+def test_prewarm_once_per_window_and_only_with_a_live_broker(tmp_path):
+    """The SDK looks up a market (2 HTTP round trips) before the first order for a token: do it ~40 s ahead."""
+    bot, j, w, lt = _live_bot(tmp_path / "a", [])
+
+    async def go(b):
+        b._prewarm(w.key, w.token_up)
+        b._prewarm(w.key, w.token_up)                    # the discover loop comes back every 2 s
+        await asyncio.sleep(0.01)
+    asyncio.run(go(bot))
+    c = lt.b.client
+    assert len(c.created) == 1 and c.created[0]["asset_id"] == "u" and not c.placed     # signed, never posted
+    assert [k for k, _ in j.ev] == ["prewarm"] and j.ev[0][1]["ms"] >= 0
+    bot2, j2, w2 = _bot(tmp_path / "b", PaperTaker(State(["btc"])))
+    asyncio.run(go(bot2))
+    assert not j2.ev and not bot2.warmed                 # paper: nothing to warm
+
+
+def test_open_risk_counts_orders_in_flight(tmp_path, monkeypatch):
+    """All coins become eligible in the same tick at rel_lo and an order takes ~0.3 s: with max_open_usd = 5 (one
+    entry at a time) only one order may be out, the one with the widest margin."""
+    import time as _t
+    from pmbot.bot import lock as lockmod
+    from pmbot.bot.state import Window
+
+    class Slow:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls, self.gate = [], None
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append(key)
+            await self.gate.wait()
+            return 0.91, 5.0, 0.03
+
+    br = Slow()
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    assert cfg.risk.max_open_usd == 5.0
+    j = _J()
+    bot = LockBot(cfg, j, broker=br, tables=_Tab())
+    now = int(_t.time() * 1000)
+    start = now // 1000 - 250                           # every window is at rel = 250 s
+    margin = {"btc": 0.02, "eth": 0.05, "sol": 0.03}
+    for a in margin:
+        bot.st.add_window(Window(asset=a, start=start, slug=a, condition_id=a, token_up=a + "u", token_down=a + "d"))
+    bot.st.feed_alive["binance"] = now
+
+    def fake_decide(c, tables, asset, *args):
+        return {"side": "U", "limit": 0.91, "ask": 0.91, "p": 0.91 + margin[asset]}, {"rel": 250.0, "side": "U"}
+    monkeypatch.setattr(lockmod, "decide", fake_decide)
+
+    async def go():
+        br.gate = asyncio.Event()
+        await bot.decide_once(now)
+        await asyncio.sleep(0)                           # the order task starts and waits for the exchange
+        assert br.calls == [f"eth-{start}"]              # one order out, the widest margin first
+        assert bot.pending == {f"eth-{start}": pytest.approx(4.55)}
+        await bot.decide_once(now + 50)                  # next tick, the order is still in flight
+        await asyncio.sleep(0)
+        assert len(br.calls) == 1
+        br.gate.set()
+        await asyncio.sleep(0.01)
+        assert not bot.pending and bot.open_cost() == pytest.approx(4.58)
+        await bot.decide_once(now + 100)                 # filled: the entry itself now holds the limit
+        await asyncio.sleep(0.01)
+        assert len(br.calls) == 1
+    asyncio.run(go())
+    assert bot.stats["skipped_risk"] >= 2
+    assert any(k == "lock_state" and kw.get("why") == "risk:max_open" for k, kw in j.ev)
+
+
+def test_provisional_result_forward_fills_dropped_prints(tmp_path):
+    """RTDS drops ~1% of the seconds: a third of the windows miss a closing print. The provisional result (day stop,
+    open-risk slot) must not wait for Gamma because of one missing second, unless the result is too close to call."""
+    from pmbot.lockmodel import close_from_prints
+    K = 100.0
+
+    def bot_with(cl, tmp):
+        bot, j, w = _bot(tmp, PaperTaker(State(["btc"])))
+        bot.strikes[w.key] = K
+        bot.st.prices["btc"].cl_by_sec.update(cl)
+        bot.entries[w.key] = [{"side": "U", "shares": 5.0, "price": 0.91, "cost": 4.55, "fee": 0.03, "t": 0,
+                               "limit": 0.91, "p": 0.92}]
+        return bot, j, w
+
+    full = {T + s: K * (1 + 3e-4) for s in range(228, 298)}            # +3 bp: Up wins clearly
+    c, miss = close_from_prints(full, T)
+    assert miss == 0 and c == pytest.approx(K * (1 + 3e-4))
+    gap = dict(full)
+    gap.pop(T + 260)
+    bot, j, w = bot_with(gap, tmp_path / "a")
+    bot._provisional(w.key)
+    assert bot.risk["provisional"][w.key] == pytest.approx(5 - 4.58) and bot.open_cost() == 0.0
+    assert dict(j.ev)["provisional"]["missing"] == 1
+    # too close to call with a filled print: wait for Gamma
+    close = {T + s: K * (1 + 2e-5) for s in range(228, 298)}           # +0.2 bp
+    close.pop(T + 260)
+    bot, j, w = bot_with(close, tmp_path / "b")
+    bot._provisional(w.key)
+    assert w.key not in bot.risk["provisional"] and bot.open_cost() == pytest.approx(4.58)
+    # the same margin with every print present is a result
+    bot, j, w = bot_with({T + s: K * (1 + 2e-5) for s in range(228, 298)}, tmp_path / "c")
+    bot._provisional(w.key)
+    assert bot.risk["provisional"][w.key] > 0
+    # more than 3 missing: no result
+    many = {s: v for s, v in full.items() if s not in (T + 250, T + 251, T + 252, T + 253)}
+    bot, j, w = bot_with(many, tmp_path / "d")
+    bot._provisional(w.key)
+    assert w.key not in bot.risk["provisional"]
+
+
+def test_l3_on_15m_is_the_live_rule_with_another_duration():
+    """pmbot-lock-15-tier (reports/52): exactly the live L3 rule and its one-entry-at-a-time limit on 15m windows."""
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    l15 = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
+    assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
+    a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
+    a.pop("duration"), b.pop("duration")
+    assert a == b, "L3-15 must keep the L3 rule"
+    assert l15.risk.max_open_usd == l3.risk.max_open_usd == 5.0
+    assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
+
+
+def test_lm3_bids_the_tier_price_of_the_model_probability():
+    """LM3 (reports/52): the L3 tiers as a resting bid. Paper only, like every maker entry of the lock bot."""
+    from pmbot.bot.lock import maker_bid
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
+    lm2 = load_lock_config(os.path.join(ROOT, "config", "lock_maker2.toml"))
+    lm3 = load_lock_config(os.path.join(ROOT, "config", "lock_maker_tier.toml"))
+    c = lm3.lock
+    assert lm3.execution.mode == "paper" and c.entry == "maker" and c.tiers == l3.lock.tiers and c.theta == l3.lock.theta
+    assert c.adv3_bp == lm2.lock.adv3_bp == 1.0                     # the maker's tighter Binance guard
+    for k in ("agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "a_max", "rel_lo", "rel_hi", "shares", "assets"):
+        assert getattr(c, k) == getattr(l3.lock, k), k
+    assert lm3.risk.state_file not in ("", l3.risk.state_file, lm2.risk.state_file)
+    assert len({lm3.journal_dir, l3.journal_dir, lm2.journal_dir}) == 3
+    # the bid is the tier limit of p, one cent under the ask at most, nothing below the lowest tier
+    assert maker_bid(c, 0.995, None) == 0.98 and maker_bid(c, 0.98, None) == 0.95
+    assert maker_bid(c, 0.96, None) == 0.93 and maker_bid(c, 0.92, None) == 0.91
+    assert maker_bid(c, 0.89, None) is None
+    assert maker_bid(c, 0.92, 0.91) == 0.90 and maker_bid(c, 0.92, 0.905) is None    # post-only: one cent under the ask

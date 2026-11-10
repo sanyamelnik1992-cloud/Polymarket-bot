@@ -13,6 +13,42 @@ import pandas as pd
 pd.set_option("display.width", 200)
 
 
+def lock_orders(ev):
+    """Taker orders of a lock bot: how many found their ask, how long the exchange took, why the others failed.
+    (Until 9 Nov a rejected FAK was an `order_error` without details: 26 of 42 live orders, reports/52.)"""
+    ent = [e for e in ev if e["type"] == "lock_entry" and not e.get("maker")]
+    miss = [e for e in ev if e["type"] == "lock_miss"]
+    err = [e for e in ev if e["type"] in ("order_error", "order_failed", "order_pending")]
+    rej = [e for e in ev if e["type"] == "order_rejected"]
+    if not (ent or miss or err or rej):
+        return
+    clean = [e for e in miss if not e.get("error")]
+    print(f"\nlock orders: sent {len(ent) + len(miss)}  filled {len(ent)}  ask gone {len(clean)}  "
+          f"errors {len(miss) - len(clean)}")
+    ms = sorted(e["ms"] for e in ent + clean if e.get("ms") is not None)
+    if ms:
+        print(f"  signal -> exchange answer, ms: median {ms[len(ms) // 2]:.0f}  p90 {ms[min(len(ms) - 1, int(0.9 * len(ms)))]:.0f}  "
+              f"max {ms[-1]:.0f}")
+    warm = sorted(e["ms"] for e in ev if e["type"] == "prewarm" and e.get("ms") is not None)
+    if warm:
+        print(f"  market prewarm (2 lookups + signing), ms: median {warm[len(warm) // 2]:.0f}  max {warm[-1]:.0f}  n {len(warm)}")
+    if ent:
+        slip = [100 * (e["price"] - e["ask"]) for e in ent if e.get("ask") is not None and e.get("price") is not None]
+        if slip:
+            print(f"  fill price minus the ask we saw, cents: mean {sum(slip) / len(slip):+.2f}  worst {max(slip):+.1f}")
+    if clean:
+        left = [300 - e["rel"] for e in clean if e.get("rel") is not None]
+        if left:
+            print(f"  misses came {min(left):.0f}-{max(left):.0f} s before the end; model p {min(e.get('p', 0) for e in clean):.3f}-"
+                  f"{max(e.get('p', 0) for e in clean):.3f}")
+    codes = Counter(e.get("code", "?") for e in rej)
+    if codes:
+        print(f"  exchange rejections by code: {dict(codes)}")
+    for e in err[-5:]:
+        txt = e.get("error") or e.get("status") or ""
+        print(f"  {e['type']} {e.get('key', '')}: {e.get('err', '')} {str(txt)[:160]}")
+
+
 def main(d):
     ev = [json.loads(line) for line in open(os.path.join(d, "events.jsonl")) if line.strip()]
     kinds = Counter(e["type"] for e in ev)
@@ -29,6 +65,7 @@ def main(d):
         print("\nfilter reasons (state changes):", dict(r.most_common()))
     if not quotes.empty:
         print(f"quotes placed: {len(quotes)}")
+    lock_orders(ev)
     if fills.empty:
         print("no fills")
         return

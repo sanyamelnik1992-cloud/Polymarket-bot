@@ -1,0 +1,39 @@
+# LM3 PAPER (unit pmbot-lock-maker3): the L3 price tiers as a MAKER. Instead of buying the ask it keeps a bid for the
+# decided side at the tier limit of the model probability (p>=.99 -> 0.98, p>=.97 -> 0.95, p>=.95 -> 0.93, p>=.90 -> 0.91,
+# never above ask - 1c), pulled the moment the rule fails. Guards as LM2 (Binance >= 1 bp against in 3 s pulls the bid).
+# Why (reports/52, tapes 1-9 Nov, 4 coins): makers who bought the model's side within these tiers in the closing minute
+# lost 2.2% of 731 windows (+5.5c a share, no fee); takers at the same tiers lost 4.2% (+3.0c after the fee). The
+# sellers there are mostly buyers of the cheap side by market order. LM / LM2 (p >= 0.99 only) got 1 fill a day.
+# Paper fills: queue model (behind the size shown at our price; a trade-through fills us): a LOWER bound on fills.
+# The truth about the queue needs a live test at the minimum size; a live maker for the lock bot does not exist yet.
+journal_dir = "data/journal-lock-maker3"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+entry = "maker"
+theta = 0.90          # lowest tier probability
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 1.0         # as LM2 (reports/46: >= 1 bp against in 3 s -> the maker's fills win only 67-88%)
+jump_bp = 5.0
+a_min = 0.90
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 20.0   # paper: resting bids of the four coins count (as LM / LM2)
+daily_loss_limit = 5.0
+state_file = "data/state/lock_maker3_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_place_ms = 60
+paper_cancel_ms = 50

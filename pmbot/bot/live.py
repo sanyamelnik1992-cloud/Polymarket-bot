@@ -334,8 +334,14 @@ def price_str(p):
     return s[:-1] if s.endswith("0") else s
 
 
+# The CLOB answers HTTP 400 with one of these texts when a FAK / FOK order matched nothing: the ask was pulled or taken
+# during our latency plus the taker delay (150 ms on crypto markets). Nothing was created, so a new order is safe.
+NO_MATCH_TEXTS = ("no orders found to match", "couldn't be fully filled")
+NO_MATCH_CODES = frozenset({"fak_not_filled", "fok_not_filled"})
+
+
 class TakerLiveBroker:
-    """Minimal live taker (FAK) broker for the hourly strategy; same start gates as LiveBroker."""
+    """Minimal live taker (FAK) broker for the lock, hourly and arb bots; same start gates as LiveBroker."""
     mode = "live"
 
     def __init__(self, max_exposure_usd, journal=None, client=None, geoblock_get=requests.get, env=os.environ):
@@ -344,6 +350,7 @@ class TakerLiveBroker:
         self.client = client
         self._geoblock_get = geoblock_get
         self._env = env
+        self.last_reject = ""         # why the last place_fak returned None ("" after a fill)
 
     def log(self, kind, **kw):
         if self.journal:
@@ -362,16 +369,59 @@ class TakerLiveBroker:
             raise LiveGateError(f"collateral {bal.balance / 1e6:.2f} < max exposure {self.max_exposure:.2f}")
         return True
 
+    async def prewarm(self, token):
+        """Let the SDK resolve and cache the market metadata of `token` before the first order needs it.
+
+        place_market_order() looks up tick size and fees first: GET /markets-by-token/<token>, then
+        GET /clob-markets/<condition>, one after the other, cached for 10 minutes for both tokens of the market. Every
+        5m window has new tokens, so without this each first order of a window waits for two extra round trips while
+        the ask it aims at can be pulled. create_market_order() does the same lookup and signs an order that is never
+        posted (and never logged). Returns the time it took in ms, None on an error (the order path then looks it up)."""
+        t0 = time.perf_counter()
+        try:
+            await self.client.create_market_order(asset_id=token, side="BUY", amount="4.55", max_spend="4.55",
+                                                  max_price="0.91", order_type="FAK")
+        except Exception as e:  # noqa: BLE001
+            self.log("prewarm_error", err=type(e).__name__, error=str(e)[:200])
+            return None
+        return round((time.perf_counter() - t0) * 1000, 1)
+
     async def place_fak(self, token, key, side, limit, usd):
-        resp = await self.client.place_market_order(asset_id=token, side="BUY", amount=f"{usd:.2f}",
-                                                    max_spend=f"{usd:.2f}", max_price=price_str(limit),
-                                                    order_type="FAK")
+        """One FAK market BUY of `usd` capped at `limit`. Returns {"price", "size"} for a fill, else None with the
+        reason in self.last_reject. "fak_not_filled" = the exchange matched nothing and created nothing (a new order
+        is safe); any other reason means the order was refused or is still pending: do not repeat it blindly.
+        Raises when the outcome is unknown (timeout, 5xx, an unexpected 400)."""
+        self.last_reject = ""
+        t0 = time.perf_counter()
+        try:
+            resp = await self.client.place_market_order(asset_id=token, side="BUY", amount=f"{usd:.2f}",
+                                                        max_spend=f"{usd:.2f}", max_price=price_str(limit),
+                                                        order_type="FAK")
+        except Exception as e:  # noqa: BLE001
+            lat = round((time.perf_counter() - t0) * 1000, 1)
+            msg = str(e)
+            if getattr(e, "status", None) == 400 and any(t in msg for t in NO_MATCH_TEXTS):
+                self.last_reject = "fak_not_filled"
+                self.log("order_rejected", key=key, side=side, limit=limit, code="fak_not_filled", message=msg[:200],
+                         latency_ms=lat)
+                return None
+            self.log("order_failed", key=key, side=side, limit=limit, err=type(e).__name__,
+                     status=getattr(e, "status", None), error=msg[:300], latency_ms=lat)
+            raise
+        lat = round((time.perf_counter() - t0) * 1000, 1)
         if not getattr(resp, "ok", False):
-            self.log("order_rejected", key=key, side=side, limit=limit, code=getattr(resp, "code", "?"),
-                     message=getattr(resp, "message", "")[:200])
+            self.last_reject = str(getattr(resp, "code", "") or "rejected")
+            self.log("order_rejected", key=key, side=side, limit=limit, code=self.last_reject,
+                     message=getattr(resp, "message", "")[:200], latency_ms=lat)
             return None
         spent, shares = float(resp.making_amount), float(resp.taking_amount)
-        self.log("order_filled", key=key, side=side, order_id=resp.order_id, spent=spent, shares=shares)
+        status = getattr(resp, "status", None)
         if shares <= 0:
+            # accepted but not matched yet ("delayed": the market holds takers back). The order is still alive on the
+            # exchange and may fill after this answer: it is NOT a miss
+            self.last_reject = f"pending:{status or 'no_fill'}"
+            self.log("order_pending", key=key, side=side, order_id=resp.order_id, status=status, latency_ms=lat)
             return None
+        self.log("order_filled", key=key, side=side, order_id=resp.order_id, spent=spent, shares=shares, status=status,
+                 latency_ms=lat)
         return {"price": spent / shares, "size": shares}

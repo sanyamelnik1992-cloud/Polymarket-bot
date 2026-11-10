@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-live", "pmbot-hourly"]
+BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-maker3", "pmbot-lock-live", "pmbot-hourly"]
 ALL_UNITS = BOT_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
@@ -310,7 +310,7 @@ def wallet_line():
 
 
 _Q_WANTED = ('"type":"fv"', '"type":"fill"', '"type":"settle"', '"type":"order_placed"', '"type":"order_cancelled"',
-             '"type":"status"')
+             '"type":"status"', '"type":"lock_entry"', '"type":"lock_miss"', '"type":"prewarm"')
 
 
 def _pct(xs, q):
@@ -323,8 +323,11 @@ def quality(journal_dir, since_ts):
     share: the main metric of reports/40), windows with a pair / one side only, order latency, event-loop lag."""
     fv, fills, settles, lat_p, lat_c = {}, [], [], [], []
     lag_max, lag_blocks = 0, 0
+    # lock bots: taker orders sent, how they ended, how long the exchange took to answer
+    lock = {"entries": 0, "misses": 0, "errors": 0, "ms": [], "prewarm_ms": [], "lag_late": 0}
     for d in run_dirs(journal_dir, max_age_s=time.time() - since_ts + 3600):
         first_blocks = last_blocks = None
+        first_late = last_late = None
         try:
             f = open(os.path.join(d, "events.jsonl"))
         except OSError:
@@ -357,8 +360,23 @@ def quality(journal_dir, since_ts):
                     if st.get("lag_blocks") is not None:
                         first_blocks = st["lag_blocks"] if first_blocks is None else first_blocks
                         last_blocks = st["lag_blocks"]
+                    if st.get("lag_over_100ms") is not None:
+                        first_late = st["lag_over_100ms"] if first_late is None else first_late
+                        last_late = st["lag_over_100ms"]
+                elif t == "lock_entry" and not e.get("maker"):
+                    lock["entries"] += 1
+                    if e.get("ms") is not None:
+                        lock["ms"].append(e["ms"])
+                elif t == "lock_miss":
+                    lock["errors" if e.get("error") else "misses"] += 1
+                    if e.get("ms") is not None and not e.get("error"):
+                        lock["ms"].append(e["ms"])
+                elif t == "prewarm" and e.get("ms") is not None:
+                    lock["prewarm_ms"].append(e["ms"])
         if first_blocks is not None:
             lag_blocks += last_blocks - first_blocks
+        if first_late is not None:
+            lock["lag_late"] += max(last_late - first_late, 0)
     num = den = 0.0
     for e in fills:
         tr = fv.get(e["key"], [])
@@ -374,7 +392,10 @@ def quality(journal_dir, since_ts):
     return {"fills": len(fills), "markout60": num / den if den else None, "windows": len(settles), "paired": paired,
             "one_sided": one, "pnl": sum(e.get("pnl", 0) for e in settles),
             "place_ms": (_pct(lat_p, .5), _pct(lat_p, .95)), "cancel_ms": (_pct(lat_c, .5), _pct(lat_c, .95)),
-            "lag_max_ms": lag_max, "lag_blocks": lag_blocks}
+            "lag_max_ms": lag_max, "lag_blocks": lag_blocks,
+            "lock": {"entries": lock["entries"], "misses": lock["misses"], "errors": lock["errors"],
+                     "ms": (_pct(lock["ms"], .5), _pct(lock["ms"], .95)),
+                     "prewarm_ms": _pct(lock["prewarm_ms"], .5), "lag_late": lock["lag_late"]}}
 
 
 def format_quality(hours=24):
@@ -396,6 +417,18 @@ def format_quality(hours=24):
         if q["cancel_ms"][0] is not None:
             line += f", отмена {q['cancel_ms'][0]:.0f}/{q['cancel_ms'][1]:.0f} мс"
         line += f"; лаг цикла до {q['lag_max_ms']} мс, блокировок {q['lag_blocks']}"
+        lk = q["lock"]
+        sent = lk["entries"] + lk["misses"] + lk["errors"]
+        if sent:
+            # the number that tells whether we are fast enough: how many taker orders found their ask still there
+            line += (f"\n    заявок {sent}: исполнено {lk['entries']}, продажи уже не было {lk['misses']}, "
+                     f"ошибок {lk['errors']}")
+            if lk["ms"][0] is not None:
+                line += f"; от сигнала до ответа биржи {lk['ms'][0]:.0f}/{lk['ms'][1]:.0f} мс (медиана/p95)"
+            if lk["prewarm_ms"] is not None:
+                line += f", прогрев рынка {lk['prewarm_ms']:.0f} мс"
+        if lk["lag_late"]:
+            line += f"; цикл опоздал > 100 мс {lk['lag_late']} раз"
         out.append(line)
     w = wallet_line()
     if w:
