@@ -1,0 +1,44 @@
+# "Ступени + поздняя нижняя" — PAPER experiment (unit pmbot-lock-tier-late, reports/60). The rule of config/lock_tier.toml (the paper
+# twin of live L3: floor, top-tier override, pause) PLUS the fourth tier live had until reports/59 (p 0.90-0.95 at an ask <= 0.91),
+# allowed only from window second 260. Question it answers: does the bottom tier pay once the early entries are gone? Evidence
+# so far: tapes 1-9 Nov, bottom tier before second 260: 189 entries, 14 lost, +1.5c a share; from 260 on: 75, 2 lost, +6c;
+# live 9-10 Nov: 34 entries / 4 lost before second 260, 7 / 0 after. Judge by its entries with p < 0.95 (lock_entry in the
+# journal): bring the tier back to live only on the owner's word, after >= 100 such entries with <= 4 lost (zero is ~9 % lost:
+# a tier without edge passes that in ~5 % of the cases, one as on the tapes in ~87 %).
+# The daily limit is wide on purpose: a paper stop after one loss would hide the entries of the rest of the day.
+journal_dir = "data/journal-lock-tier-late"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+theta = 0.90          # the bottom tier is back (late seconds only, see late_tier_rel)
+agree = 0.90          # ... and from received Chainlink prints only (glitch guard)
+dmin_bp = 0.5         # expected TWAP at least 0.5 bp past the strike in our favour
+adv1_bp = 1.0         # Binance against us <= 1 bp over 1 s ...
+adv3_bp = 2.0         # ... and <= 2 bp over 3 s
+jump_bp = 5.0         # |Binance 1 s move| > 5 bp = glitch / crash: no entry
+a_min = 0.90          # '99% mode': only asks 0.90-0.98 (history: 346 entries, 2 lost = 99.4%; recorder 26/26)
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5            # the size the live version would use on a ~$15-20 wallet
+max_entries_per_window = 1
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+sigma_floor_bp = 0.5  # reports/52: sigma never below 0.5 bp -> no entry on a 1-2 bp lead in a calm market. Only stricter than plain L3
+                      # (every entry is also an L3 entry): ~40 % of the entries, ~1/4 of the losses in the replay of 7-10 Nov
+floor_free_p = 0.99   # reports/55: when the unfloored model gives >= 0.99 it decides (the original L rule: 57 entries, 0 lost)
+shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move > 2.5 bp either way (stale sigma, snap-backs)
+shock_s = 10.0
+shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
+late_tier_rel = 260.0 # reports/60: tiers below p 0.95 count only from window second 260 (the ONLY rule difference from lock_tier.toml)
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 5.0    # = live (twin): one entry at a time (reports/51; replay 7-9 Nov: same P&L as $10, fewer losses)
+daily_loss_limit = 50.0   # paper experiment: never stop for the day, the loss rate is what is measured
+state_file = "data/state/lock_tier_late_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300
