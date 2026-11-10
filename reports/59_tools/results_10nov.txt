@@ -1,0 +1,82 @@
+live rule now (4 tiers)                        n=193 lost= 4 ( 2.1%) pnl= +52.52 c/sh=+5.49
+    with one entry at a time ($5 open)         n=161 lost= 3 ( 1.9%) pnl= +43.57 c/sh=+5.45
+    tier 1 p>=.99                              n= 47 lost= 0 ( 0.0%) pnl=  +8.70 c/sh=+3.78
+    tier 2 .97-.99                             n= 14 lost= 0 ( 0.0%) pnl=  +4.21 c/sh=+6.01
+    tier 3 .95-.97                             n= 30 lost= 0 ( 0.0%) pnl= +10.89 c/sh=+7.29
+    tier 4 .90-.95                             n=102 lost= 4 ( 3.9%) pnl= +28.73 c/sh=+5.67
+-- drop tiers
+3 tiers: p>=.95 (no .90 tier)                  n= 99 lost= 0 ( 0.0%) pnl= +26.57 c/sh=+5.44
+    with one entry at a time ($5 open)         n= 91 lost= 0 ( 0.0%) pnl= +23.60 c/sh=+5.22
+2 tiers: p>=.97                                n= 70 lost= 0 ( 0.0%) pnl= +15.55 c/sh=+4.52
+    with one entry at a time ($5 open)         n= 63 lost= 0 ( 0.0%) pnl= +13.00 c/sh=+4.15
+-- stricter bottom tier
+bottom tier from p>=0.91                       n=174 lost= 4 ( 2.3%) pnl= +43.27 c/sh=+5.01
+    with one entry at a time ($5 open)         n=149 lost= 3 ( 2.0%) pnl= +37.39 c/sh=+5.03
+bottom tier from p>=0.92                       n=138 lost= 3 ( 2.2%) pnl= +30.65 c/sh=+4.48
+    with one entry at a time ($5 open)         n=125 lost= 3 ( 2.4%) pnl= +26.03 c/sh=+4.18
+bottom tier from p>=0.93                       n=126 lost= 1 ( 0.8%) pnl= +34.82 c/sh=+5.59
+    with one entry at a time ($5 open)         n=114 lost= 0 ( 0.0%) pnl= +35.49 c/sh=+6.26
+bottom tier from p>=0.94                       n=112 lost= 1 ( 0.9%) pnl= +27.99 c/sh=+5.06
+    with one entry at a time ($5 open)         n=102 lost= 0 ( 0.0%) pnl= +29.17 c/sh=+5.75
+bottom tier ask<=0.9                           n=189 lost= 6 ( 3.2%) pnl= +48.90 c/sh=+5.21
+    with one entry at a time ($5 open)         n=159 lost= 6 ( 3.8%) pnl= +34.75 c/sh=+4.38
+bottom tier ask<=0.89                          n=159 lost= 4 ( 2.5%) pnl= +42.71 c/sh=+5.41
+    with one entry at a time ($5 open)         n=138 lost= 3 ( 2.2%) pnl= +38.17 c/sh=+5.55
+-- trend filter on the bottom tier only (20 s move against the side, Binance)
+p<.95 needs tr_bn20 <= 1.0 bp                  n=150 lost= 1 ( 0.7%) pnl= +47.13 c/sh=+6.37
+    with one entry at a time ($5 open)         n=133 lost= 1 ( 0.8%) pnl= +39.51 c/sh=+6.00
+p<.95 needs tr_bn20 <= 1.5 bp                  n=154 lost= 1 ( 0.6%) pnl= +49.06 c/sh=+6.45
+    with one entry at a time ($5 open)         n=136 lost= 1 ( 0.7%) pnl= +40.97 c/sh=+6.08
+p<.95 needs tr_bn20 <= 2.0 bp                  n=163 lost= 1 ( 0.6%) pnl= +53.37 c/sh=+6.63
+    with one entry at a time ($5 open)         n=143 lost= 1 ( 0.7%) pnl= +44.34 c/sh=+6.25
+p<.95 needs tr_bn20 <= 3.0 bp                  n=173 lost= 4 ( 2.3%) pnl= +43.21 c/sh=+5.05
+    with one entry at a time ($5 open)         n=149 lost= 3 ( 2.0%) pnl= +37.59 c/sh=+5.08
+-- the same without the floor and the pause (more entries, more losses): is p>=.95 safer there too?
+plain L3, 4 tiers                              n=385 lost=21 ( 5.5%) pnl= +61.90 c/sh=+3.26
+    tier 1 p>=.99                              n= 45 lost= 0 ( 0.0%) pnl=  +7.31 c/sh=+3.34
+    tier 2 .97-.99                             n= 60 lost= 3 ( 5.0%) pnl=  +7.56 c/sh=+2.60
+    tier 3 .95-.97                             n= 71 lost= 3 ( 4.2%) pnl= +14.60 c/sh=+4.12
+    tier 4 .90-.95                             n=209 lost=15 ( 7.2%) pnl= +32.42 c/sh=+3.13
+plain L3, 3 tiers                              n=212 lost= 8 ( 3.8%) pnl= +33.67 c/sh=+3.23
+    tier 1 p>=.99                              n= 45 lost= 0 ( 0.0%) pnl=  +7.31 c/sh=+3.34
+    tier 2 .97-.99                             n= 63 lost= 4 ( 6.3%) pnl=  +3.54 c/sh=+1.16
+    tier 3 .95-.97                             n=104 lost= 4 ( 3.8%) pnl= +22.81 c/sh=+4.39
+plain L3, 2 tiers                              n=129 lost= 4 ( 3.1%) pnl= +17.05 c/sh=+2.71
+    tier 1 p>=.99                              n= 47 lost= 0 ( 0.0%) pnl=  +7.53 c/sh=+3.30
+    tier 2 .97-.99                             n= 82 lost= 4 ( 4.9%) pnl=  +9.53 c/sh=+2.38
+-- by period, 3 tiers vs 4 tiers ($5 open)
+4 r1107: 43/0 +11.7 r1108: 16/0 +3.8 r1109: 23/0 +10.0 d1109: 26/1 +7.0 d1110: 25/1 +5.1 d1110b: 13/0 +5.2 d1110c: 15/1 +0.7
+3 r1107: 36/0 +7.5 r1108: 11/0 +1.4 r1109: 6/0 +1.9 d1109: 9/0 +3.5 d1110: 10/0 +2.9 d1110b: 8/0 +3.0 d1110c: 11/0 +3.4
+
+== A. does 'moved against us' separate losers? entries of each rule bucketed by the feature (bp over the last N s, + = toward the strike)
+live rule                                      n=193 lost= 4 ( 2.1%) pnl= +52.52 c/sh=+5.49
+   tr_bn10: [-99,0) 62/1 +19.5 | [0,1) 65/1 +17.5 | [1,2) 34/2 +2.8 | [2,3) 20/0 +8.3 | [3,99) 12/0 +4.5 | 
+   tr_bn20: [-99,0) 77/1 +25.1 | [0,1) 35/0 +11.3 | [1,2) 26/0 +9.2 | [2,3) 16/2 -3.4 | [3,99) 39/1 +10.3 | 
+   tr_bn30: [-99,0) 82/1 +27.0 | [0,1) 29/1 +4.0 | [1,2) 21/0 +7.1 | [2,3) 17/0 +7.0 | [3,99) 44/2 +7.4 | 
+   tr_cl20: [-99,0) 96/1 +31.5 | [0,1) 30/0 +9.8 | [1,2) 19/1 +2.2 | [2,3) 14/1 +0.6 | [3,99) 34/1 +8.5 | 
+   tr_cl30: [-99,0) 110/2 +31.6 | [0,1) 16/0 +4.2 | [1,2) 18/0 +7.4 | [2,3) 12/0 +4.1 | [3,99) 37/2 +5.2 | 
+   tr_bn20/sigma: [-99,0) 77/1 +25.1 | [0,2) 39/1 +8.0 | [2,4) 31/1 +6.2 | [4,6) 20/0 +7.9 | [6,99) 26/1 +5.2 | 
+   tr_cl20/sigma: [-99,0) 96/1 +31.5 | [0,2) 35/1 +6.9 | [2,4) 26/1 +5.2 | [4,6) 14/0 +5.2 | [6,99) 22/1 +3.8 | 
+   tr_cl30/sigma: [-99,0) 110/2 +31.6 | [0,2) 22/0 +6.9 | [2,4) 17/0 +6.8 | [4,6) 15/1 +0.2 | [6,99) 29/1 +7.0 | 
+plain L3 (no floor, no pause)                  n=385 lost=21 ( 5.5%) pnl= +61.90 c/sh=+3.26
+   tr_bn10: [-99,0) 105/6 +17.1 | [0,1) 177/10 +29.7 | [1,2) 47/3 +3.7 | [2,3) 28/0 +10.7 | [3,99) 28/2 +0.7 | 
+   tr_bn20: [-99,0) 138/9 +18.3 | [0,1) 120/5 +27.1 | [1,2) 43/2 +8.1 | [2,3) 25/2 -0.2 | [3,99) 59/3 +8.5 | 
+   tr_bn30: [-99,0) 156/11 +19.3 | [0,1) 101/4 +20.7 | [1,2) 41/2 +6.0 | [2,3) 23/0 +9.8 | [3,99) 64/4 +6.1 | 
+   tr_cl20: [-99,0) 191/12 +25.2 | [0,1) 86/2 +27.8 | [1,2) 32/3 -2.0 | [2,3) 28/1 +6.9 | [3,99) 48/3 +4.0 | 
+   tr_cl30: [-99,0) 218/13 +33.4 | [0,1) 59/2 +13.1 | [1,2) 32/2 +3.6 | [2,3) 22/0 +9.3 | [3,99) 54/4 +2.5 | 
+   tr_bn20/sigma: [-99,0) 138/9 +18.3 | [0,2) 125/6 +24.7 | [2,4) 47/3 +4.3 | [4,6) 29/1 +6.2 | [6,99) 46/2 +8.3 | 
+   tr_cl20/sigma: [-99,0) 191/12 +25.2 | [0,2) 91/3 +25.0 | [2,4) 39/4 -3.7 | [4,6) 27/0 +10.7 | [6,99) 37/2 +4.6 | 
+   tr_cl30/sigma: [-99,0) 218/13 +33.4 | [0,2) 65/2 +15.9 | [2,4) 31/2 +3.0 | [4,6) 25/1 +5.4 | [6,99) 46/3 +4.2 | 
+L4 (asks from 0.50)                            n=467 lost=35 ( 7.5%) pnl=+101.13 c/sh=+4.36
+   tr_bn10: [-99,0) 119/11 +12.3 | [0,1) 205/11 +70.2 | [1,2) 62/5 +13.4 | [2,3) 32/1 +13.2 | [3,99) 49/7 -8.0 | 
+   tr_bn20: [-99,0) 163/13 +28.8 | [0,1) 144/7 +53.8 | [1,2) 50/4 +9.7 | [2,3) 27/1 +11.7 | [3,99) 83/10 -3.0 | 
+   tr_bn30: [-99,0) 185/16 +25.9 | [0,1) 120/5 +44.8 | [1,2) 50/3 +17.0 | [2,3) 35/2 +14.2 | [3,99) 77/9 -0.8 | 
+   tr_cl20: [-99,0) 245/19 +53.5 | [0,1) 96/3 +40.8 | [1,2) 38/4 +2.9 | [2,3) 25/3 +3.0 | [3,99) 63/6 +0.9 | 
+   tr_cl30: [-99,0) 264/20 +51.1 | [0,1) 73/3 +29.0 | [1,2) 40/3 +13.7 | [2,3) 24/2 +7.1 | [3,99) 66/7 +0.3 | 
+   tr_bn20/sigma: [-99,0) 163/13 +28.8 | [0,2) 150/9 +47.1 | [2,4) 54/3 +16.3 | [4,6) 33/1 +14.4 | [6,99) 67/9 -5.6 | 
+   tr_cl20/sigma: [-99,0) 245/19 +53.5 | [0,2) 103/4 +39.6 | [2,4) 41/4 +3.4 | [4,6) 29/3 +5.3 | [6,99) 49/5 -0.7 | 
+   tr_cl30/sigma: [-99,0) 264/20 +51.1 | [0,2) 81/3 +32.7 | [2,4) 38/3 +13.5 | [4,6) 28/3 +3.1 | [6,99) 56/6 +0.6 | 
+== B. the filter inside the rule (later steps of the window may still enter)
+live rule as is                                n=193 lost= 4 ( 2.1%) pnl= +52.52 c/sh=+5.49
+  live rule: tr_bn20 <= 1.5 bp                 n=125 lost= 1 ( 0.8%) pnl= +40.60 c/sh=+6.60
+  live rule: tr_bn20 <= 2.0 bp                 n=141 lost= 1 ( 0.7%) pnl= +46.69 c/sh=+6.72
