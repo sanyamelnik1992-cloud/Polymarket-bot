@@ -79,6 +79,10 @@ class LockCfg:
                                          # with the model's 1 s sigma. A fixed 2.5 bp is a shock at sigma 0.5 bp but an ordinary 3 s
                                          # move at sigma 2 bp: on 10 Nov from 13:00 UTC the pause was on 50-95 % of the time and
                                          # live made no entry for hours (reports/58). 0 = the fixed threshold
+    late_tier_rel: float = 0.0           # > 0: tiers with a probability below late_tier_p count only from this window second on.
+    late_tier_p: float = 0.95            # With 40-57 closing prints still unknown a 0.90-0.95 model is wrong too often: tapes 1-9 Nov,
+                                         # the bottom tier entered before second 260: 189 entries, 14 lost, +1.5 c a share; from 260 on:
+                                         # 75 entries, 2 lost, +6 c; live 9-10 Nov: 4 of the 5 losses were such early entries (reports/59). 0 = off
 
 
 @dataclass
@@ -159,6 +163,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock: shock_bp >= 0 and 1 <= shock_s <= 60")
     if c.shock_sigmas and not 2 <= c.shock_sigmas <= 10:
         raise ValueError("lock.shock_sigmas must be 0 (off) or in [2, 10]")
+    if c.late_tier_rel and not (c.rel_lo <= c.late_tier_rel <= c.rel_hi and 0.5 < c.late_tier_p <= 1):
+        raise ValueError("lock.late_tier_rel must be 0 (off) or in [rel_lo, rel_hi], late_tier_p in (0.5, 1]")
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
     if c.tiers:
@@ -283,10 +289,14 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
     return ("U" if up else "D"), p, ctx
 
 
-def tier_limit(c: LockCfg, p):
-    """Highest ask accepted at model probability p: the cheapest-tier rule of c.tiers that p reaches, None if p reaches none."""
+def tier_limit(c: LockCfg, p, rel=None):
+    """Highest ask accepted at model probability p: the cheapest-tier rule of c.tiers that p reaches, None if p reaches none.
+    With lock.late_tier_rel and a window second rel before it, the tiers below late_tier_p do not count (reports/59)."""
     best = None
+    early = bool(c.late_tier_rel) and rel is not None and rel < c.late_tier_rel
     for pm, am in c.tiers:
+        if early and pm < c.late_tier_p - 1e-12:
+            continue
         if p >= pm - 1e-12 and (best is None or am > best):
             best = am
     return best
@@ -306,8 +316,10 @@ def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, 
     a = ask[0]
     limit = min(c.a_max, p - c.min_edge - fee_per_share(a))
     if c.tiers:                                 # L3: the margin is in the tier (a lower p must come cheaper), not in p - edge - fee
-        tl = tier_limit(c, p)
+        tl = tier_limit(c, p, ctx["rel"])
         limit = min(c.a_max, tl) if tl is not None else 0.0
+        if tl is None and tier_limit(c, p) is not None:
+            return None, {**ctx, "ask": a, "ask_sz": ask[1], "limit": 0.0, "why": "tier_early"}
     ctx.update(ask=a, ask_sz=ask[1], limit=round(limit, 4))
     if a < c.a_min:
         return None, {**ctx, "why": "ask_too_low"}

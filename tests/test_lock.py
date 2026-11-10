@@ -1114,3 +1114,38 @@ def test_shock_threshold_grows_with_volatility(tables):
         load_lock_config(overrides={"lock": {"shock_sigmas": 1.0}})
     # the sniper (L99, a loss there costs 107 wins) keeps the fixed threshold
     assert load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml")).lock.shock_sigmas == 0.0
+
+
+def test_bottom_tier_only_late_in_the_window(tables):
+    """reports/59: with 40-57 closing prints still unknown the bottom tier (p 0.90-0.95 at an ask <= 0.91) lost 7 % on the tapes of
+    1-9 Nov and 4 of the 5 live losses of 9-10 Nov; from second 260 on it lost 2 of 75. The other tiers are not touched."""
+    import dataclasses
+    from pmbot.bot.lock import tier_limit
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock
+    assert c.late_tier_rel == 260.0 and c.late_tier_p == 0.95
+    assert tier_limit(c, 0.92) == 0.91 and tier_limit(c, 0.92, 262.0) == 0.91 and tier_limit(c, 0.92, 244.0) is None
+    assert tier_limit(c, 0.96, 244.0) == 0.93 and tier_limit(c, 0.98, 244.0) == 0.95 and tier_limit(c, 0.995, 244.0) == 0.98
+    bn = 75000.0
+
+    def run(cfg, rel, bp, ask):
+        K, now_s, cl, last = scenario(bp=bp, rel=rel)
+        return decide(cfg, tables, "btc", T, K, int(now_s * 1000), cl, last, 0.6e-4, bn, bn, bn, bn, (ask, 100.0), (0.10, 100.0),
+                      shock=0.0)
+    off = dataclasses.replace(c, late_tier_rel=0.0)
+    bp = next(b / 10 for b in range(10, 200) if 0.91 <= run(off, 244.0, b / 10, 0.90)[1].get("p", 0) < 0.95)   # a bottom-tier state
+    sig, ctx = run(off, 244.0, bp, 0.90)
+    assert sig and sig["limit"] == 0.91                       # the rule before reports/59: the live loss of 10 Nov 18:04 (second 244)
+    sig, ctx = run(c, 244.0, bp, 0.90)
+    assert sig is None and ctx["why"] == "tier_early" and 0.90 <= ctx["p"] < 0.95
+    late = next(b / 10 for b in range(10, 200) if 0.91 <= run(off, 262.0, b / 10, 0.90)[1].get("p", 0) < 0.95)
+    sig, ctx = run(c, 262.0, late, 0.90)
+    assert sig and sig["limit"] == 0.91                       # the same tier later in the window
+    big = next(b / 10 for b in range(10, 400) if run(off, 244.0, b / 10, 0.93)[1].get("p", 0) >= 0.955)
+    sig, ctx = run(c, 244.0, big, 0.93)
+    assert sig and sig["limit"] >= 0.93                       # the upper tiers enter early as before
+    with pytest.raises(ValueError):
+        load_lock_config(overrides={"lock": {"late_tier_rel": 200.0}})
+    for name in ("lock_live.toml", "lock15_tier.toml", "lock_tier_pb.toml"):          # the live rule and its twins
+        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.late_tier_rel == 260.0
+    for name in ("lock_tier_wide.toml", "lock_maker_tier.toml", "lock_99_live.toml"):   # L4 stays the reference for the early entries
+        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.late_tier_rel == 0.0

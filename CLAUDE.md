@@ -76,6 +76,10 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   **`reports/58`**: `lock.shock_sigmas` (3.0 in the L3 family, 0 = off in L99): the shock pause threshold is
   max(shock_bp, shock_sigmas x sigma x sqrt(3)). The fixed 2.5 bp was on 50-95 % of the time once sigma reached ~2 bp
   (10 Nov from 13:00 UTC: live and its twin made 1 entry in 2.8 h); on the tapes the entries at sigma >= 1 bp are the best ones.
+  **`reports/59`** (prepared in `claude/keen-tesla-ns5ptk`, live only on the owner's word): `lock.late_tier_rel = 260` in the L3
+  family (tiers below `late_tier_p` 0.95 count only from window second 260; `why = tier_early`). The live loss of 10 Nov 18:04 was
+  a bottom-tier entry at second 244; 4 of the 5 live losses of 9-10 Nov were entries at <= 0.91 before second 260 (34 entries,
+  -$4.25; the other 22: 1 lost, +$2.82); tapes 1-9 Nov: 23 -> 11 losses, +$10.4 -> +$9.5 a day. L4 stays without it.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
