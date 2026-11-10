@@ -860,3 +860,23 @@ def test_sigma_floor_changes_nothing_above_the_floor(tables):
         a = decide_state(off, tables, "btc", T, K, int(now_s * 1000), cl, last, sg, bn, bn, bn, bn)
         b = decide_state(on, tables, "btc", T, K, int(now_s * 1000), cl, last, sg, bn, bn, bn, bn)
         assert a[0] == b[0] and a[1] == b[1] and a[2]["p_cl"] == b[2]["p_cl"]
+
+
+def test_live_fak_asks_for_whole_shares(tmp_path):
+    """The budget handed to the SDK must cover the notional plus the taker fee, or the SDK cuts the notional and the order is
+    for 4.97 shares (5 decimals on a 0.001-tick market -> "invalid amounts", live 9-10 Nov). Per-entry cost stays under $5."""
+    from pmbot.bot.lock import fak_budget
+    from pmbot.fees import fee_per_share
+    for cap in (0.91, 0.93, 0.95, 0.98):
+        usd = round(5 * cap, 2)
+        b = fak_budget(5, cap)
+        assert b > usd + 5 * fee_per_share(cap), cap             # strictly above notional + fee: the SDK keeps the notional
+        assert b <= usd + 5 * fee_per_share(cap) + 0.02 and b <= 5.0, cap
+        assert round(b * 100) == pytest.approx(b * 100)          # whole cents
+        assert (usd / cap) == pytest.approx(5.0)                  # notional / cap = exactly the configured shares
+    sig = {"side": "U", "limit": 0.95, "ask": 0.95, "p": 0.98}
+    bot, j, w, lt = _live_bot(tmp_path, [_ok("4.75", "5")])
+    asyncio.run(bot._execute(w, sig, 5, _full_ctx()))
+    sent = lt.b.client.placed[0]
+    assert sent["amount"] == "4.75" and sent["max_spend"] == f"{fak_budget(5, 0.95):.2f}" == "4.78" and sent["max_price"] == "0.95"
+    assert bot.entries[w.key][0]["shares"] == 5.0
