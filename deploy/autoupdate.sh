@@ -67,7 +67,7 @@ fi
 RESTARTED=()
 RUNTIME="$(echo "$CHANGED" | grep -vE '\.md$|^reports/|^tests/' || true)"
 if [ -n "$RUNTIME" ]; then
-  for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-arb pmbot-hourly pmbot-tg; do
+  for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-arb pmbot-hourly pmbot-tg; do
     # 3 s apart: ten Python processes starting at once (imports, tables, feeds) saturate the 2 vCPU for a minute
     if systemctl is-active -q "$u"; then systemctl restart --no-block "$u"; RESTARTED+=("$u"); sleep 3; fi
   done

@@ -36,6 +36,7 @@ BOTS = {
     "pmbot-lock-99": ("🎯", "Снайпер · L99", "то же правило, что на реальных деньгах, без денег (paper-близнец)"),
     "pmbot-lock-99-live": ("🎯", "Снайпер · L99", "почти решённая сторона по 0.96–0.99, зона конкурента: +5¢ со сделки, минус −$4.95 (5 акций, один минус = стоп на день)"),
     "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона по 0.90–0.98, уверенность от 95%: чем она меньше, тем дешевле вход (5 акций, стоп −$5/день)"),
+    "pmbot-lock-15-live": ("⏳", "Ступени 15 мин · L3-15", "правило «Ступени» на 15-минутных рынках: 4 ступени, уверенность от 90% (5 акций, стоп −$5/день)"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
     "pmbot-recorder": ("📼", "REC", "рекордер"),
@@ -43,7 +44,8 @@ BOTS = {
 }
 PAIRS = [("pmbot-5m-c", "pmbot-5m"), ("pmbot-5m-d", "pmbot-5m-b")]   # (variant, its control)
 # Paper bots that run exactly the rule of a live bot (shown right under "real money" so the two can be compared at a glance)
-TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-5m-e": "pmbot-5m-live"}
+TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-lock-15-tier": "pmbot-lock-15-live",
+         "pmbot-5m-e": "pmbot-5m-live"}
 GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
           ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
 

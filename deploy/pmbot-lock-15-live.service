@@ -1,0 +1,24 @@
+[Unit]
+Description=pmbot TWAP-lock L3 on 15m LIVE (config/lock15_live.toml: price tiers + insurance, REAL MONEY, 5 shares, one entry at a time, -$5/day stop)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY (reports/65). Installed but NOT enabled/started: the owner starts it (Telegram /restart pmbot-lock-15-live).
+# A daily-loss stop exits the process; it stays stopped until a human starts it again.
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock15_live.toml --live
+# CPU priority: this unit trades REAL MONEY and must decide within ~100 ms. Under CPU contention (2 vCPU, load 3.0 on 9 Nov)
+# it gets 5x the default share, paper bots 0.2x (the default weight is 100). Without contention the weights change nothing.
+CPUWeight=500
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

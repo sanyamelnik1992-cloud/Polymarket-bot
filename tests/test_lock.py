@@ -192,7 +192,8 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-tier-late", "config/lock_tier_late.toml", False),
                             ("pmbot-lock-99", "config/lock_99.toml", False),
                             ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
-                            ("pmbot-lock-live", "config/lock_live.toml", True)):
+                            ("pmbot-lock-live", "config/lock_live.toml", True),
+                            ("pmbot-lock-15-live", "config/lock15_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
         assert ("--live" in text) == live
@@ -801,7 +802,8 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     l15 = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
     assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
     a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
-    a.pop("duration"), b.pop("duration")
+    for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip"):   # the insurance (reports/64) is 5m-only: measured on 5m books
+        a.pop(k), b.pop(k)
     assert a == b, "L3-15 must keep the L3 rule"
     assert l15.risk.max_open_usd == l3.risk.max_open_usd == 5.0
     assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
@@ -1176,7 +1178,7 @@ def test_bottom_tier_only_late_in_the_window(tables):
 def test_insurance_configs_and_validation():
     """reports/64: the insurance on a reversal runs in live L3 and every paper twin of its rule; the references stay without it."""
     import glob
-    on = {"lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml", "lock15_tier.toml"}
+    on = {"lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml"}   # 15m: measured without it (reports/65)
     for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
         c = load_lock_config(path).lock
         if os.path.basename(path) in on:
@@ -1256,3 +1258,25 @@ def test_insurance_buys_the_other_side_once_on_a_reversal(tmp_path, monkeypatch)
     assert len(br.calls) == 1                                          # once per window
     bot._settle(w.key, "Down")
     assert dict(j.ev)["settle"]["pnl"] == pytest.approx(5 - cost, abs=1e-3)
+
+
+def test_l3_15_live_is_its_paper_twin_with_live_limits():
+    """reports/65: the 15-minute rule on real money is exactly its paper twin pmbot-lock-15-tier (the rule measured in the replay
+    and on paper), with the live limits of the other live bots and its own books."""
+    import dataclasses as dc
+    paper = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
+    live = load_lock_config(os.path.join(ROOT, "config", "lock15_live.toml"))
+    l3 = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
+    l99 = load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml"))
+    assert live.execution.mode == "live" and paper.execution.mode == "paper"
+    assert live.lock == paper.lock, "the 15m live rule must stay identical to its paper twin pmbot-lock-15-tier"
+    assert live.lock.duration == 900 and live.lock.hedge_p == 0.0
+    assert live.lock.shares <= 5 and live.risk.max_usd_per_entry <= 5.0 and live.risk.max_open_usd <= 5.0
+    assert live.risk.daily_loss_limit <= 5.0 and live.risk.resume_next_day is False
+    assert dc.replace(paper.risk, state_file=live.risk.state_file, resume_next_day=False) == live.risk
+    assert len({live.risk.state_file, paper.risk.state_file, l3.risk.state_file, l99.risk.state_file}) == 4
+    assert len({live.journal_dir, paper.journal_dir, l3.journal_dir, l99.journal_dir}) == 4
+    from pmbot import notify, ops
+    assert "pmbot-lock-15-live" in ops.BOT_UNITS and notify.TWINS["pmbot-lock-15-tier"] == "pmbot-lock-15-live"
+    for f in ("autoupdate.sh", "install_units.sh"):
+        assert " pmbot-lock-15-live " in open(os.path.join(ROOT, "deploy", f)).read(), f
