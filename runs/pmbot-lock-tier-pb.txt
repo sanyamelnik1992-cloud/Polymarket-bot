@@ -1,8 +1,8 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-pb/20261110-192048
-mode: paper  duration: 760.4 min  events: {'start': 1, 'status': 1520, 'lock_state': 5665, 'strike': 604, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'settle': 19, 'lock_miss': 11}
+mode: paper  duration: 821.0 min  events: {'start': 1, 'status': 1641, 'lock_state': 6207, 'strike': 652, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'settle': 19, 'lock_miss': 12}
 
-lock orders: sent 30  filled 19  ask gone 11  errors 0
-  signal -> exchange answer, ms: median 302  p90 365  max 843
+lock orders: sent 31  filled 19  ask gone 12  errors 0
+  signal -> exchange answer, ms: median 302  p90 353  max 843
   fill price minus the ask we saw, cents: mean -1.53  worst +2.0
   misses came 10-60 s before the end; model p 0.952-0.995
 
