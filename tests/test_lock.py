@@ -167,9 +167,11 @@ def test_configs_load_and_live_is_the_twin():
     assert tier.lock.tiers and live.lock.theta < paper.lock.theta
     assert tier.risk.max_usd_per_entry == live.risk.max_usd_per_entry
     assert tier.risk.max_open_usd == live.risk.max_open_usd
-    # L -> L3 changed the rule, not the money: the live limits stay those of live L (raising them is the owner's call)
-    assert live.lock.shares <= 5 and live.risk.max_usd_per_entry <= 5.0
-    assert live.risk.max_open_usd <= 10.0 and live.risk.daily_loss_limit <= 5.0
+    # L -> L3 changed the rule, not the money. reports/67, the owner's word on 11 Nov ("давай 10"): 10 shares from model p 0.97, so the
+    # per-entry / open limits are $10 and one entry at a time is kept by max_open_entries; any further raise is the owner's call
+    assert live.lock.shares <= 5 and live.lock.big_shares <= 10 and live.risk.max_usd_per_entry <= 10.0
+    assert live.risk.max_open_usd <= 10.0 and live.risk.max_open_entries == 1 and live.risk.daily_loss_limit <= 10.0
+    assert tier.risk.max_open_entries == live.risk.max_open_entries
     assert wide.lock.a_min < paper.lock.a_min
     raw = tomllib.load(open(os.path.join(ROOT, "config", "lock_live.toml"), "rb"))
     assert raw["execution"]["mode"] == "live"
@@ -271,7 +273,7 @@ def test_open_cost_frees_an_entry_once_its_result_is_known(tmp_path):
     the window has ended and its provisional result is in day_pnl, not only when Gamma settles it minutes later."""
     cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
                            overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": str(tmp_path / "STOP")}})
-    assert cfg.risk.max_open_usd == 5.0
+    assert cfg.risk.max_open_entries == 1                               # one entry at a time (reports/51; by count since reports/67)
     bot = LockBot(cfg, _J(), broker=PaperTaker(State(["btc"])), tables=_Tab())
     import time as _t
     T0 = int(_t.time()) // 300 * 300 - 300
@@ -279,9 +281,9 @@ def test_open_cost_frees_an_entry_once_its_result_is_known(tmp_path):
     bot.entries[key] = [{"side": "U", "shares": 5.0, "price": 0.91, "cost": 4.55, "fee": 0.02, "t": 0, "limit": 0.91,
                          "p": 0.92}]
     assert bot.open_cost() == pytest.approx(4.57)
-    assert bot.open_cost() + 5 * 0.91 > cfg.risk.max_open_usd          # a second entry is refused while the result is open
+    assert bot.open_windows() >= cfg.risk.max_open_entries              # a second entry is refused while the result is open
     bot.risk["provisional"][key] = -4.57                                 # what _provisional writes at the window end
-    assert bot.open_cost() == 0.0 and bot.day_pnl() == pytest.approx(-4.57)
+    assert bot.open_cost() == 0.0 and bot.open_windows() == 0 and bot.day_pnl() == pytest.approx(-4.57)
     bot._settle(key, "Down")
     assert bot.open_cost() == 0.0 and bot.day_pnl() == pytest.approx(-4.57)
 
@@ -450,8 +452,9 @@ def test_lock_tiers_lower_probability_needs_cheaper_ask():
     for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
               "assets", "max_entries_per_window"):
         assert getattr(tier.lock, k) == getattr(paper.lock, k), k
-    for k in ("max_usd_per_entry", "daily_loss_limit"):
-        assert getattr(tier.risk, k) == getattr(paper.risk, k), k
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
+    for k in ("max_usd_per_entry", "daily_loss_limit", "max_open_usd", "max_open_entries"):   # the twin has live's money limits (reports/67)
+        assert getattr(tier.risk, k) == getattr(live.risk, k), k
     assert tier.risk.max_open_usd <= paper.risk.max_open_usd      # L3 = live twin: one entry at a time since reports/51
     c = tier.lock
     assert tier_limit(c, 0.995) == 0.98 and tier_limit(c, 0.98) == 0.95 and tier_limit(c, 0.96) == 0.93
@@ -721,7 +724,7 @@ def test_open_risk_counts_orders_in_flight(tmp_path, monkeypatch):
     br = Slow()
     cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
                            overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
-    assert cfg.risk.max_open_usd == 5.0
+    assert cfg.risk.max_open_entries == 1                 # one entry at a time (by count since reports/67, $10 fits a 10-share entry)
     j = _J()
     bot = LockBot(cfg, j, broker=br, tables=_Tab())
     now = int(_t.time() * 1000)
@@ -802,10 +805,11 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     l15 = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
     assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
     a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
-    for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip"):   # the insurance (reports/64) is 5m-only: measured on 5m books
+    for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip",   # the insurance (reports/64) is 5m-only: measured on 5m books
+              "big_shares", "big_shares_p"):                        # 10 shares (reports/67) too: 15m keeps 5
         a.pop(k), b.pop(k)
     assert a == b, "L3-15 must keep the L3 rule"
-    assert l15.risk.max_open_usd == l3.risk.max_open_usd == 5.0
+    assert l15.risk.max_open_usd == 5.0 and l15.lock.big_shares == 0 and l3.risk.max_open_entries == 1   # one entry at a time
     assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
 
 
@@ -1187,7 +1191,8 @@ def test_insurance_configs_and_validation():
         else:
             assert c.hedge_p == 0.0, path                           # L, L2, L4, L99, makers: no insurance
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
-    assert live.risk.max_usd_per_entry <= 5.0 and live.risk.max_open_usd <= 5.0 and live.risk.daily_loss_limit <= 5.0
+    assert live.risk.max_usd_per_entry <= 10.0 and live.risk.max_open_usd <= 10.0 and live.risk.daily_loss_limit <= 10.0   # reports/67
+    assert live.risk.max_open_entries == 1
     for bad in ({"hedge_p": 0.4}, {"hedge_p": 1.0}, {"hedge_p": 0.65, "hedge_margin": 0.6}, {"hedge_p": 0.65, "hedge_slip": 0.2},
                 {"hedge_p": 0.65, "max_entries_per_window": 2}):
         with pytest.raises(ValueError):
@@ -1281,3 +1286,55 @@ def test_l3_15_live_is_its_paper_twin_with_live_limits():
     assert "pmbot-lock-15-live" in ops.BOT_UNITS and notify.TWINS["pmbot-lock-15-tier"] == "pmbot-lock-15-live"
     for f in ("autoupdate.sh", "install_units.sh"):
         assert " pmbot-lock-15-live " in open(os.path.join(ROOT, "deploy", f)).read(), f
+
+
+def test_ten_shares_on_the_upper_tiers_one_entry_at_a_time(tmp_path, monkeypatch):
+    """reports/67 (owner 11 Nov: "давай 10"): live 5m buys 10 shares when the model is >= 0.97 and 5 below, still one window at a
+    time (max_open_entries = 1 even though $10 would fit two 5-share entries). Off in the 15m bot and the sniper."""
+    import time as _t
+    import pmbot.bot.lock as lockmod
+    from pmbot.bot.state import Window
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
+    assert (live.lock.shares, live.lock.big_shares, live.lock.big_shares_p) == (5.0, 10.0, 0.97)
+    assert live.risk.max_usd_per_entry >= 10 * live.lock.a_max and live.risk.max_open_entries == 1
+    for name in ("lock15_live.toml", "lock15_tier.toml", "lock_99_live.toml", "lock_99.toml", "lock_tier_wide.toml"):
+        assert load_lock_config(os.path.join(ROOT, "config", name)).lock.big_shares == 0, name
+    for bad in ({"lock": {"big_shares": 4.0}}, {"lock": {"big_shares": 10.5}}, {"lock": {"big_shares_p": 1.0}},
+                {"risk": {"max_usd_per_entry": 9.0}}, {"risk": {"max_open_entries": -1}}):
+        with pytest.raises(ValueError):
+            load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"), overrides=bad)
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((key, shares, limit))
+            return limit, shares, 0.0
+
+    for p_model, ask, want in ((0.985, 0.98, 10), (0.975, 0.95, 10), (0.96, 0.93, 5)):
+        br = Br()
+        cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                               overrides={"risk": {"state_file": str(tmp_path / f"s{want}{ask}.json"), "kill_file": ""}})
+        bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+        now = int(_t.time() * 1000)
+        start = now // 1000 - 250
+        for a in ("btc", "eth"):
+            bot.st.add_window(Window(asset=a, start=start, slug=a, condition_id=a, token_up=a + "u", token_down=a + "d"))
+        bot.st.feed_alive["binance"] = now
+
+        def fake_decide(c, tables, asset, *args, p_model=p_model, ask=ask, **kw):
+            lim = lockmod.tier_limit(c, p_model)
+            return {"side": "U", "limit": lim, "ask": ask, "p": p_model}, {"rel": 250.0, "side": "U"}
+        monkeypatch.setattr(lockmod, "decide", fake_decide)
+
+        async def go():
+            await bot.decide_once(now)
+            await asyncio.sleep(0.01)
+            await bot.decide_once(now + 50)
+            await asyncio.sleep(0.01)
+        asyncio.run(go())
+        assert len(br.calls) == 1, br.calls                        # two coins qualify, one entry at a time
+        assert br.calls[0][1] == want, (p_model, br.calls)

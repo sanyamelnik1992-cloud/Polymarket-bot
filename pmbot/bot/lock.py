@@ -91,6 +91,10 @@ class LockCfg:
                                          # purchases on 7-11 Nov): insure only at a fair price
     hedge_slip: float = 0.02             # the order's cap is at most the seen ask + this: a live FAK is a dollar budget, so a cap far above
                                          # the ask would buy more shares than the position holds (a bet, not insurance)
+    big_shares: float = 0.0              # > 0: an entry whose model p >= big_shares_p buys this many shares instead of `shares` (reports/67:
+                                         # where the bot buys, the 0.97 / 0.99 tiers earned +3.7 / +2.9 c a share in both halves of 7-11 Nov
+                                         # and lost ~1 in 60; with the insurance their rare loss is the one most often cut). 0 = off
+    big_shares_p: float = 0.97
 
 
 @dataclass
@@ -98,6 +102,8 @@ class LockRisk:
     max_usd_per_entry: float = 5.0
     max_open_usd: float = 10.0           # cost of entries in windows not resolved yet (all assets end together)
     daily_loss_limit: float = 5.0        # realized + provisional losses of the UTC day
+    max_open_entries: int = 0            # > 0: at most this many windows with an open position or an order in flight (reports/67: live stays
+                                         # "one entry at a time" now that max_open_usd fits a 10-share entry). 0 = the $ limit only
     kill_file: str = "STOP"
     state_file: str = ""
     resume_next_day: bool = True         # paper: idle after the stop and resume at 00:00 UTC; live must be False
@@ -179,6 +185,12 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.hedge_p must be 0 (off) or in (0.5, 1), hedge_margin in [0, 0.5), hedge_slip in [0, 0.1]")
     if c.hedge_p and (c.entry != "taker" or c.max_entries_per_window != 1):
         raise ValueError("lock.hedge_p: the insurance is for the taker entry with one entry per window")
+    if c.big_shares and not (c.big_shares >= c.shares and 0.5 < c.big_shares_p < 1 and float(c.big_shares).is_integer()):
+        raise ValueError("lock.big_shares must be 0 (off) or a whole number >= lock.shares, big_shares_p in (0.5, 1)")
+    if c.big_shares and r.max_usd_per_entry < c.big_shares * c.a_max:
+        raise ValueError("risk.max_usd_per_entry must fit lock.big_shares at lock.a_max (whole shares on every live FAK)")
+    if r.max_open_entries < 0:
+        raise ValueError("risk.max_open_entries must be >= 0")
     if c.tiers:
         ts = sorted((float(t[0]), float(t[1])) for t in c.tiers)
         if any(len(t) != 2 for t in c.tiers) or any(not (0.5 < pm < 1 and c.a_min <= am <= c.a_max) for pm, am in ts):
@@ -536,6 +548,11 @@ class LockBot:
         prov = self.risk["provisional"]
         return sum(e["cost"] + e["fee"] for k, es in self.entries.items() if k not in prov for e in es)
 
+    def open_windows(self):
+        """Windows with a position whose outcome is not known yet (the count behind risk.max_open_entries)."""
+        prov = self.risk["provisional"]
+        return sum(1 for k, es in self.entries.items() if k not in prov and es)
+
     def filled(self, key):
         return sum(e["shares"] for e in self.entries.get(key, []))
 
@@ -785,14 +802,17 @@ class LockBot:
             if not ok:
                 self._why(key, "risk:" + why_risk, ctx)
                 continue
-            shares = min(c.shares, math.floor(self.cfg.risk.max_usd_per_entry / sig["limit"] * 100) / 100)
+            want = c.big_shares if c.big_shares and sig["p"] >= c.big_shares_p - 1e-12 else c.shares   # reports/67
+            shares = min(want, math.floor(self.cfg.risk.max_usd_per_entry / sig["limit"] * 100) / 100)
             cands.append((sig["p"] - sig["ask"], w, sig, shares, ctx))
         # Open risk counts the orders still in flight: all coins become eligible in the same tick at rel_lo, and an
         # order takes ~0.3 s to come back, so without the reservation two or three coins went out together past
         # max_open_usd (the limit that makes live "one entry at a time"). The widest margin goes first.
         for _, w, sig, shares, ctx in sorted(cands, key=lambda x: -x[0]):
             need = shares * sig["limit"]
-            if self.open_cost() + sum(self.pending.values()) + need > self.cfg.risk.max_open_usd + 1e-9 or shares < 1:
+            n_max = self.cfg.risk.max_open_entries
+            if (n_max and self.open_windows() + len(self.pending) >= n_max) or shares < 1 or \
+                    self.open_cost() + sum(self.pending.values()) + need > self.cfg.risk.max_open_usd + 1e-9:
                 self.stats["skipped_risk"] += 1
                 self._why(w.key, "risk:max_open", ctx)
                 continue
