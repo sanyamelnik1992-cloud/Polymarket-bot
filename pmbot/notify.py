@@ -36,6 +36,7 @@ BOTS = {
     "pmbot-lock-99": ("🎯", "Снайпер · L99", "то же правило, что на реальных деньгах, без денег (paper-близнец)"),
     "pmbot-lock-99-live": ("🎯", "Снайпер · L99", "почти решённая сторона по 0.96–0.99, зона конкурента: +5¢ со сделки, минус −$4.95 (5 акций, один минус = стоп на день)"),
     "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона по 0.90–0.98, уверенность от 95%: чем она меньше, тем дешевле вход (5 акций, стоп −$5/день)"),
+    "pmbot-rewards": ("🎁", "Награды · R", "заявки рядом с ценой на рынках с пулами наград, после исполнения сразу хедж (paper)"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
     "pmbot-recorder": ("📼", "REC", "рекордер"),
@@ -101,7 +102,7 @@ def window_name(key, length_s=300):
 def unit_for_config(config_path):
     """Which deploy/<unit>.service runs this config (to label a trading bot's own alerts)."""
     want = os.path.normpath(str(config_path or ""))
-    for unit in ops.BOT_UNITS:
+    for unit in ops.BOT_UNITS + ops.REWARD_UNITS:
         cfg = ops.unit_config(unit)
         if cfg and os.path.normpath(cfg) == want:
             return unit
@@ -165,6 +166,8 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
         ru = next((r for k, r in KILL_RU if k in reason), reason)
         if "kill file" in reason:
             how = "Вернуть: /resume"
+        elif "награды" in reason:
+            how = "Котировки включатся сами в 00:00 UTC, /resume не нужен."
         elif "daily loss" in reason:
             how = "Сегодня бот больше не торгует. Новый день начнётся в 00:00 UTC (тогда /resume)."
         else:
@@ -300,6 +303,27 @@ def _status_block(s):
     return out
 
 
+def _rewards_block(unit):
+    """The liquidity-rewards farmer in /status. Its income is an ESTIMATE of Polymarket's payout, so it is shown apart
+    from the bots' totals: the estimate by the book, the cautious figure, and what the fills cost."""
+    r = ops.rewards_summary(unit)
+    if not r:
+        return []
+    out = [f"{label(unit)}", f"   {ops.STATE_RU.get(r['state'], esc(r['state']))} {ops.fmt_age(r['since'])} · бумага"]
+    st = r["status"]
+    if not st:
+        return out + ["   статуса ещё нет"]
+    out.append(f"   🎁 награды, оценка: сегодня {money(st['rewards_today'], True)} · всего {money(st['rewards_total'])}")
+    out.append(f"   из них на рынках, где мы одни: {money(st.get('alone_total'))} (самая ненадёжная часть)")
+    out.append(f"   {dot(st['trading_pnl'])} потери на исполнениях: {money(st['trading_pnl'])} · исполнений сегодня "
+               f"{st['fills_today']} · хеджей {st.get('hedges_today', 0)}")
+    out.append(f"   итог осторожно: {money(st.get('cautious_pnl'), True)} · рынков {st['markets']} "
+               f"(котирует {st['quoting']})")
+    if st.get("halted"):
+        out.append("   ⛔ котировки выключены до 00:00 UTC (дневной убыток)")
+    return out
+
+
 def format_status():
     """/status: real money first, then the paper twins of the live bots, then paper experiments. The totals of real
     money and paper are never added together (the owner read a paper +$20 as his own on 10 Nov)."""
@@ -325,6 +349,11 @@ def format_status():
         tot = sum(s["pnl_today"] or 0 for s in groups[g])
         what = "реальные деньги" if g == "live" else "бумага"
         lines += [f"   Σ {what} сегодня: {money(tot, True)}", ""]
+    for unit in ops.REWARD_UNITS:
+        block = _rewards_block(unit)
+        if block:
+            shown += 1
+            lines += block + [""]
     if not shown:
         lines.append("ни один бот не запущен\n")
     st, since = ops.unit_state("pmbot-recorder")

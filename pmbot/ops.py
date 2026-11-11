@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-maker3", "pmbot-lock-99", "pmbot-lock-99-live", "pmbot-lock-tier-pb", "pmbot-lock-tier-late", "pmbot-lock-live", "pmbot-hourly"]
-ALL_UNITS = BOT_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
+REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/63), its own journal format
+ALL_UNITS = BOT_UNITS + REWARD_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
 
@@ -85,8 +86,10 @@ def bot_paths(unit):
     journal = c.get("journal_dir") or (c.get("hourly") or {}).get("journal_dir")
     if not journal:
         journal = "data/journal-hourly" if "hourly" in unit else "data/journal"
-    state = (c.get("risk") or {}).get("state_file") or (c.get("hourly") or {}).get("state_file")
-    mode = (c.get("execution") or {}).get("mode") or (c.get("hourly") or {}).get("mode") or "paper"
+    state = ((c.get("risk") or {}).get("state_file") or (c.get("hourly") or {}).get("state_file")
+             or (c.get("rewards") or {}).get("state_file"))
+    mode = ((c.get("execution") or {}).get("mode") or (c.get("hourly") or {}).get("mode")
+            or (c.get("rewards") or {}).get("mode") or "paper")
     return journal, state, mode
 
 
@@ -106,7 +109,7 @@ def run_dirs(journal_dir, max_age_s=None):
 
 
 _WANTED = ('"type":"settle"', '"type":"fill"', '"type":"kill"', '"type":"start"', '"type":"status"',
-           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"')
+           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"')
 
 
 def read_events(run_dir, since_ts=0.0):
@@ -259,6 +262,47 @@ def fmt_age(ts):
 
 STATE_RU = {"active": "🟢 работает", "inactive": "⚪ выключен", "failed": "🔴 упал", "activating": "🟡 запускается",
             "deactivating": "🟡 останавливается", "n/a": "n/a"}
+
+
+def rewards_summary(unit="pmbot-rewards"):
+    """Latest status of the liquidity-rewards farmer (an `rstatus` journal event every 5 minutes), or None."""
+    journal, _, mode = bot_paths(unit)
+    state, since = unit_state(unit)
+    if not journal:
+        return None
+    ev = [e for e in events_since(journal, time.time() - 2 * 86400) if e["type"] == "rstatus"]
+    if not ev and state in ("inactive", "unknown", "n/a"):
+        return None
+    return {"unit": unit, "state": state, "since": since, "mode": mode or "paper", "status": ev[-1] if ev else None}
+
+
+def format_rewards():
+    """Plain-text block for the server report; empty string when the farmer never ran."""
+    out = []
+    for unit in REWARD_UNITS:
+        r = rewards_summary(unit)
+        if not r:
+            continue
+        out.append(f"{unit} [{r['mode']}] {STATE_RU.get(r['state'], r['state'])} {fmt_age(r['since'])}")
+        st = r["status"]
+        if not st:
+            out.append("  статуса ещё нет")
+            continue
+        out.append(f"  рынков {st['markets']}, котирует {st['quoting']} (из них без конкурентов {st.get('alone_now', '?')}), "
+                   f"заявок на {st['bids_usd']}$; доля пулов сейчас ≈ {st['rate_now']}$/день")
+        out.append(f"  награды (оценка по стакану): сегодня {fmt_money(st['rewards_today'])}, всего {fmt_money(st['rewards_total'])}; "
+                   f"по показателю биржи: всего {fmt_money(st.get('official_total'))}; "
+                   f"из них там, где мы одни в зоне: {fmt_money(st.get('alone_total'))}")
+        out.append(f"  исполнений сегодня {st['fills_today']}, всего {st['fills_total']}; хеджей всего {st.get('hedges_total', 0)}, "
+                   f"потеряно на них {fmt_money(-(st.get('hedge_loss_total') or 0))}; без хеджа остаётся на {st.get('unhedged_usd', 0)}$")
+        out.append(f"  позиции: стоимость {st['inv_value']}$ при затратах {st['inv_cost']}$, открыто "
+                   f"{fmt_money(st['open_pnl'])}; реализовано {fmt_money(st['realized'])}; "
+                   f"торговля сегодня {fmt_money(st['trading_pnl_today'])}")
+        out.append(f"  итого (награды по стакану + торговля): {fmt_money(st['total_pnl'])}; "
+                   f"осторожно (меньшая оценка, без рынков, где мы одни): {fmt_money(st.get('cautious_pnl'))}"
+                   + ("  ⛔ котировки выключены до 00:00 UTC" if st.get("halted") else "")
+                   + ("  ⚠️ фид молчит, котировок нет" if st.get("feed") is False else ""))
+    return "\n".join(out)
 
 
 def format_status():

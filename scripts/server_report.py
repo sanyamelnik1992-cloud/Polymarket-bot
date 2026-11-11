@@ -5,6 +5,7 @@ usage: python scripts/server_report.py OUT_DIR
   OUT_DIR/days/<date>.md     the same snapshot, one file per UTC day (overwritten during the day)
   OUT_DIR/settles.csv        every settled window of the last 14 days (all bots) for analysis
   OUT_DIR/runs/<unit>.txt    scripts/report_journal.py of the current run of every running bot
+                             (scripts/report_rewards.py for the liquidity-rewards farmer)
   OUT_DIR/reviews/<day>.md   nightly reviews with experiment verdicts (scripts/nightly_review.py)
 No secrets: only journals, risk state files, system stats and data/state/wallet.json (numbers written by
 scripts/wallet_balance.py, which alone runs with the secrets env) are read.
@@ -30,6 +31,7 @@ def main(out):
           "## Bots", "```", ops.format_status(), "```", "",
           "## PnL by day", "```", ops.format_pnl(days=30), "```", "",
           "## Quality, last 24 h (markout, pairs, latency, wallet)", "```", ops.format_quality(24), "```", "",
+          "## Liquidity rewards (paper, estimates)", "```", ops.format_rewards() or "не запускался", "```", "",
           "## Last 30 settled windows", "```", ops.format_trades(30), "```", "",
           "## Server", "```", ops.format_server(), "```"]
     text = "\n".join(md) + "\n"
@@ -69,6 +71,14 @@ def main(out):
         if not dirs:
             continue
         r = subprocess.run([sys.executable, os.path.join(ops.REPO, "scripts", "report_journal.py"), dirs[-1]],
+                           capture_output=True, text=True, timeout=300, cwd=ops.REPO)
+        open(os.path.join(out, "runs", f"{unit}.txt"), "w").write(r.stdout[-20000:] + r.stderr[-2000:])
+
+    for unit in ops.REWARD_UNITS:                         # the rewards farmer has its own journal format and report
+        journal, _, _ = ops.bot_paths(unit)
+        if not journal or not os.path.isdir(os.path.join(ops.REPO, journal)):
+            continue
+        r = subprocess.run([sys.executable, os.path.join(ops.REPO, "scripts", "report_rewards.py"), journal],
                            capture_output=True, text=True, timeout=300, cwd=ops.REPO)
         open(os.path.join(out, "runs", f"{unit}.txt"), "w").write(r.stdout[-20000:] + r.stderr[-2000:])
 
