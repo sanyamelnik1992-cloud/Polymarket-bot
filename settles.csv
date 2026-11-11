@@ -1340,3 +1340,6 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-11 09:45:11,pmbot-lock-tier-pb,paper,sol-1794389700,Up,5.0,0,4.6258,5.0,0.0,0.3742
 2026-11-11 09:45:12,pmbot-lock-tier,paper,sol-1794389700,Up,5.0,0,4.6258,5.0,0.0,0.3742
 2026-11-11 09:45:14,pmbot-lock-live,live,sol-1794389700,Up,5.1099,0,4.6793,5.1099,0.0,0.4306
+2026-11-11 10:40:14,pmbot-lock-tier,paper,eth-1794393000,Up,5.0,0,4.6728,5.0,0.0,0.3272
+2026-11-11 10:40:14,pmbot-lock-tier-pb,paper,eth-1794393000,Up,5.0,0,4.6728,5.0,0.0,0.3272
+2026-11-11 10:40:16,pmbot-lock-live,live,eth-1794393000,Up,5.0,0,4.6728,5.0,0.0,0.3272
