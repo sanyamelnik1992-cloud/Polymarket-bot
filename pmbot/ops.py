@@ -263,7 +263,7 @@ STATE_RU = {"active": "🟢 работает", "inactive": "⚪ выключен
 
 def format_status():
     lines = []
-    total = 0.0
+    total = total_live = 0.0
     for unit in BOT_UNITS:
         s = bot_summary(unit)
         if s["state"] in ("inactive", "unknown", "n/a") and not s["settles"] and s["pnl_today"] in (None, 0):
@@ -279,6 +279,8 @@ def format_status():
         if s["killed"]:
             lines.append(f"  ⛔ kill switch: {s['kill_reason']}")
         total += s["pnl_today"] or 0
+        if s["mode"] == "live":
+            total_live += s["pnl_today"] or 0
     if not lines:
         lines.append("ни один бот не запущен")
     for unit in ("pmbot-recorder",):
@@ -291,7 +293,8 @@ def format_status():
     w = wallet_line()
     if w:
         lines.append(w)
-    lines.append(f"\nсегодня всего: {fmt_money(total)}")
+    # real money and paper apart: one sum of both read as a real loss on 11 Nov (paper -16.9$, real +0.4$)
+    lines.append(f"\nсегодня реальные деньги: {fmt_money(total_live)} · бумага: {fmt_money(total - total_live)}")
     lines.append(f"код: {g['branch']} {g['commit']}")
     return "\n".join(lines)
 

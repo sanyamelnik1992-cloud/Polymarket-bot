@@ -45,6 +45,7 @@ def test_bot_summary_reads_journal_and_state(tmp_path, monkeypatch):
     assert s["killed"]
     text = ops.format_status()
     assert "pmbot-5m" in text and "+5.50$" in text and "kill switch" in text
+    assert "реальные деньги: +0.00$ · бумага: +5.50$" in text      # paper never counts as real money
     assert "2026-11-05: -1.00$" in ops.format_pnl()
     assert "btc-1 → Up" in ops.format_trades()
 
