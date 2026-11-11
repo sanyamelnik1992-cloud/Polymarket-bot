@@ -69,7 +69,7 @@ def test_plan_quotes_stays_inside_the_reward_zone():
 
 
 def test_official_share_from_competitiveness():
-    """market_competitiveness = total score of all makers per $1 of the daily pool (reports/63)."""
+    """market_competitiveness = total score of all makers per $1 of the daily pool (reports/68)."""
     q = order_score(4.5, 2.0, 20)                                           # our 20 shares 2c from the mid
     assert official_share(100, 0.0, q) == 1.0                               # nobody scores: the whole pool
     assert official_share(100, 0.33, q) == pytest.approx(q / (33 + q))      # 33 points compete for $100 a day
@@ -371,7 +371,7 @@ def test_print_at_our_price_uses_the_queue_ahead_first(tmp_path):
 
 # ---------------------------------------------------------------- hedge
 def test_fill_is_hedged_and_merged(tmp_path):
-    """reports/63: the largest reward earners exit 97 % of their fills within 5 s by buying the other outcome and
+    """reports/68: the largest reward earners exit 97 % of their fills within 5 s by buying the other outcome and
     merging the pair. Here: YES bought at 0.48, NO bought at 0.53 + fee -> the pair cost 1.0225 and pays 1."""
     f = farmer_with_market(tmp_path)
     contested(f)
@@ -464,7 +464,7 @@ def test_sample_credits_share_of_pool(tmp_path):
 
 
 def test_young_orders_do_not_score(tmp_path):
-    """reports/63: market field r.moas = 30 s on 96 of 100 markets: an order counts only after resting that long."""
+    """reports/68: market field r.moas = 30 s on 96 of 100 markets: an order counts only after resting that long."""
     f = farmer_with_market(tmp_path)
     asyncio.run(f.quote_once())
     f.clock.t += 10

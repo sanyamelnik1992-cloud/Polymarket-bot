@@ -35,7 +35,8 @@ BOTS = {
     "pmbot-lock-15-tier": ("⏳", "Ступени 15 мин · L3-15", "правило «Ступени» на 15-минутных рынках (paper)"),
     "pmbot-lock-99": ("🎯", "Снайпер · L99", "то же правило, что на реальных деньгах, без денег (paper-близнец)"),
     "pmbot-lock-99-live": ("🎯", "Снайпер · L99", "почти решённая сторона по 0.96–0.99, зона конкурента: +5¢ со сделки, минус −$4.95 (5 акций, один минус = стоп на день)"),
-    "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона по 0.90–0.98, уверенность от 95%: чем она меньше, тем дешевле вход (5 акций, стоп −$5/день)"),
+    "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона по 0.90–0.98, уверенность от 95%: чем она меньше, тем дешевле вход (10 акций от 97%, иначе 5; страховка при развороте; стоп −$10/день)"),
+    "pmbot-lock-15-live": ("⏳", "Ступени 15 мин · L3-15", "правило «Ступени» на 15-минутных рынках: 4 ступени, уверенность от 90% (5 акций, стоп −$5/день)"),
     "pmbot-rewards": ("🎁", "Награды · R", "заявки рядом с ценой на рынках с пулами наград, после исполнения сразу хедж (paper)"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
@@ -44,7 +45,8 @@ BOTS = {
 }
 PAIRS = [("pmbot-5m-c", "pmbot-5m"), ("pmbot-5m-d", "pmbot-5m-b")]   # (variant, its control)
 # Paper bots that run exactly the rule of a live bot (shown right under "real money" so the two can be compared at a glance)
-TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-5m-e": "pmbot-5m-live"}
+TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-lock-15-tier": "pmbot-lock-15-live",
+         "pmbot-5m-e": "pmbot-5m-live"}
 GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
           ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
 
@@ -188,6 +190,13 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
         where = window_name(details.pop("key")) if "key" in details else ""
         body = ", ".join(f"{k}={v}" for k, v in details.items())[:400]
         return f"⚠️ {who}: {ERROR_RU[kind]}" + (f" ({where})" if where else "") + (f"\n<code>{esc(body)}</code>" if body else "")
+    if kind == "lock_hedge":                  # reports/64: the insurance on a reversal of the lock bot
+        side = {"U": "Up", "D": "Down"}.get(rec.get("side"), rec.get("side"))
+        return (f"🛡 {label(unit, False) if unit else who} · {window_name(rec.get('key'), length)}: страховка — модель развернулась "
+                f"({100 * (rec.get('p') or 0):.0f}% за {esc(side)}), куплено {esc(side)} {rec.get('shares', 0):.0f} по "
+                f"{rec.get('price', 0):.2f}\nИтог окна теперь {money(rec.get('worst'), True)}"
+                + (f" … {money(rec.get('best'), True)}" if abs((rec.get("best") or 0) - (rec.get("worst") or 0)) > 0.05 else "")
+                + (" 💰" if live else " (paper)"))
     if kind == "geoblock_ok":
         return f"🌍 {who}: гео-проверка пройдена ({esc(rec.get('country'))} {esc(rec.get('region') or '')})".rstrip()
     if kind == "balance":

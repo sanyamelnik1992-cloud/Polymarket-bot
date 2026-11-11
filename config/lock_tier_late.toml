@@ -31,10 +31,18 @@ shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move >
 shock_s = 10.0
 shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
 late_tier_rel = 260.0 # reports/60: tiers below p 0.95 count only from window second 260 (the ONLY rule difference from lock_tier.toml)
+hedge_p = 0.65        # reports/64: insurance on a reversal. After an entry, when the model favours the OTHER side with p >= 0.65
+                      # and that side sells at <= p - 0.20, buy as many shares of it (once per window): the window then ends at
+                      # about -$1..-3 whatever happens, instead of -$4.7. Replay 7-11 Nov: +$16.81 -> +$18.22, losses < -$3: 3 -> 2
+hedge_margin = 0.20   # right after a reversal the model is over-sure (0.80 on average, the other side won 63 %): a fair price only
+hedge_slip = 0.02     # the order cap is at most the seen ask + 2 c (a live FAK is a dollar budget: no over-buying)
+big_shares = 10       # reports/67 (owner 11 Nov: "давай 10"): 10 shares when the model is >= 0.97 (the 0.97 / 0.99 tiers), 5 below.
+big_shares_p = 0.97   # Replay 7-11 Nov with the insurance and live limits: +$18.22 -> +$28.12, every day positive, worst trade -$4.44
 
 [risk]
-max_usd_per_entry = 5.0
-max_open_usd = 5.0    # = live (twin): one entry at a time (reports/51; replay 7-9 Nov: same P&L as $10, fewer losses)
+max_usd_per_entry = 10.0     # = live (reports/67): 10 shares from p 0.97
+max_open_usd = 10.0
+max_open_entries = 1         # = live: one entry at a time (reports/51)
 daily_loss_limit = 50.0   # paper experiment: never stop for the day, the loss rate is what is measured
 state_file = "data/state/lock_tier_late_paper.json"
 resume_next_day = true

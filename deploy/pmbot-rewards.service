@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot liquidity-rewards farmer R (config/rewards.toml, paper; reports/63)
+Description=pmbot liquidity-rewards farmer R (config/rewards.toml, paper; reports/68)
 After=network-online.target
 Wants=network-online.target
 # a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes

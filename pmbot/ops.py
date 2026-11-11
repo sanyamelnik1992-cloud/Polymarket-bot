@@ -13,8 +13,8 @@ import time
 from datetime import datetime, timezone
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-maker3", "pmbot-lock-99", "pmbot-lock-99-live", "pmbot-lock-tier-pb", "pmbot-lock-tier-late", "pmbot-lock-live", "pmbot-hourly"]
-REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/63), its own journal format
+BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-maker3", "pmbot-lock-99", "pmbot-lock-99-live", "pmbot-lock-tier-pb", "pmbot-lock-tier-late", "pmbot-lock-live", "pmbot-lock-15-live", "pmbot-hourly"]
+REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/68), its own journal format
 ALL_UNITS = BOT_UNITS + REWARD_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
@@ -307,7 +307,7 @@ def format_rewards():
 
 def format_status():
     lines = []
-    total = 0.0
+    total = total_live = 0.0
     for unit in BOT_UNITS:
         s = bot_summary(unit)
         if s["state"] in ("inactive", "unknown", "n/a") and not s["settles"] and s["pnl_today"] in (None, 0):
@@ -323,6 +323,8 @@ def format_status():
         if s["killed"]:
             lines.append(f"  ⛔ kill switch: {s['kill_reason']}")
         total += s["pnl_today"] or 0
+        if s["mode"] == "live":
+            total_live += s["pnl_today"] or 0
     if not lines:
         lines.append("ни один бот не запущен")
     for unit in ("pmbot-recorder",):
@@ -335,7 +337,8 @@ def format_status():
     w = wallet_line()
     if w:
         lines.append(w)
-    lines.append(f"\nсегодня всего: {fmt_money(total)}")
+    # real money and paper apart: one sum of both read as a real loss on 11 Nov (paper -16.9$, real +0.4$)
+    lines.append(f"\nсегодня реальные деньги: {fmt_money(total_live)} · бумага: {fmt_money(total - total_live)}")
     lines.append(f"код: {g['branch']} {g['commit']}")
     return "\n".join(lines)
 

@@ -1,6 +1,6 @@
 """Find rewarded markets and pick the ones worth quoting (REST: CLOB rewards collection + order books + market details).
 
-Selection (reports/63): every pool is ranked by what a minimum-size two-sided quote would earn per $ of capital.
+Selection (reports/68): every pool is ranked by what a minimum-size two-sided quote would earn per $ of capital.
 The share of a pool comes from two sources and the lower one counts:
   * Polymarket's own `market_competitiveness` (total qualifying score of all makers per $1 of the daily pool), and
   * the live book (other makers' levels inside the reward zone, scored with the documented formula).

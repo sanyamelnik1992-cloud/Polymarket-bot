@@ -1,0 +1,43 @@
+# "Ступени 15 мин" — LIVE (REAL MONEY), unit pmbot-lock-15-live (reports/65). The rule of its paper twin pmbot-lock-15-tier =
+# config/lock15_tier.toml (a test keeps the [lock] sections equal): the four L3 price tiers on the 15-minute
+# Up/Down markets (same 60 s Chainlink TWAP rule as 5m). Why: the 15m paper bot made 15 entries, 15 won, +$6.00 in 28 h (10-11 Nov);
+# replay of 7-11 Nov on the recorder's Chainlink/Binance with fills from the exchange's own trades: 54 entries, 1 lost, +$10.76
+# (one at a time), 8 of 9 periods positive; together with live 5m every UTC day of 7-11 Nov was positive (reports/65).
+# No insurance on a reversal (reports/64) here yet: it was measured on recorded 5m books only, the 15m record above is without it.
+# Risk: 5 shares, one entry at a time, -$5/day stop that stays stopped (no auto-resume). Same wallet as the other live bots.
+# Not enabled at boot: started on the owner's word (Telegram /restart pmbot-lock-15-live).
+journal_dir = "data/journal-lock-15-live"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+duration = 900        # 15m windows; times below are seconds of the closing 5 minutes (end - 300 + rel)
+theta = 0.90          # lowest tier probability; the tiers below set the price limit per probability
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.90
+a_max = 0.98
+min_edge = 0.005
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 5
+max_entries_per_window = 1
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+sigma_floor_bp = 0.5  # reports/52: sigma never below 0.5 bp -> no entry on a 1-2 bp lead in a calm market. Only stricter than plain L3
+                      # (every entry is also an L3 entry): ~40 % of the entries, ~1/4 of the losses in the replay of 7-10 Nov
+floor_free_p = 0.99   # reports/55: when the unfloored model gives >= 0.99 it decides (the original L rule: 57 entries, 0 lost)
+shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move > 2.5 bp either way (stale sigma, snap-backs)
+shock_s = 10.0
+shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 5.0    # one entry at a time, as the twin
+daily_loss_limit = 5.0  # one loss is ~-$4.6: a second one before ~10 wins stops it until a human restarts it
+state_file = "data/state/lock15_live.json"
+resume_next_day = false
+
+[execution]
+mode = "live"

@@ -2,7 +2,7 @@
 
 Per market we rest a YES bid at ref - d and a NO bid at 1 - (ref + d) (= a YES ask at ref + d), size = the market's
 rewards min size. ref = the size-cutoff-adjusted book mid when others quote near the price, else the last trade.
-The rule follows what the largest reward earners do (reports/63: public wallet data of 498 "pure farmers"):
+The rule follows what the largest reward earners do (reports/68: public wallet data of 498 "pure farmers"):
 
   * distance d: `dist_cents` when other makers score in the reward zone, `alone_frac` of the max spread when nobody
     does (a lone maker takes the whole pool at any score, so it stays as far out as still counts);

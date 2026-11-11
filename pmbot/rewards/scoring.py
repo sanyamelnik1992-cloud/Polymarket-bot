@@ -114,7 +114,7 @@ def zone_scores(bids, asks, mid, v_cents):
 
 def official_share(rate, competitiveness, q_ours):
     """Our share of a pool from Polymarket's own number: market_competitiveness is the total qualifying score of all
-    makers per $1 of the daily pool (reports/63: competitiveness x rate = the score summed from the book, median
+    makers per $1 of the daily pool (reports/68: competitiveness x rate = the score summed from the book, median
     ratio 1.09 on 1771 markets). 0 = nobody scores now, and any qualifying quote would take the whole pool."""
     if q_ours <= 0:
         return 0.0

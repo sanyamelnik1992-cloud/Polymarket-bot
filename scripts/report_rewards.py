@@ -3,7 +3,7 @@
 usage: python scripts/report_rewards.py [JOURNAL_ROOT_OR_RUN_DIR=data/journal-rewards]
 Rewards are an ESTIMATE (our share of each pool against the live books); "official" is the same accrual with the share
 from Polymarket's competitiveness number; "alone" is the part earned while nobody else scored in the zone (the least
-certain part: reports/63); "stress" is the estimate if one more identical maker joins. Fills are simulated on real
+certain part: reports/68); "stress" is the estimate if one more identical maker joins. Fills are simulated on real
 trades, hedges on the live book; settlements pay positions out at Polymarket's resolution.
 """
 import glob
@@ -114,7 +114,7 @@ def main(path):
         n = sum(h.get("size", 0) for h in hedges)
         cost = sum(h.get("cost_per_share", 0) * h.get("size", 0) for h in hedges)
         print(f"\nhedges: {len(hedges)}, {n:g} shares, cost ${cost:.2f} = {100 * cost / max(n, 1e-9):.2f}c a share "
-              f"(the largest reward earners pay 1.3c + fee: reports/63)")
+              f"(the largest reward earners pay 1.3c + fee: reports/68)")
         for h in hedges[-10:]:
             print(f"  {fmt(h['t'])} {h['key'][:55]:55s} bought {'NO ' if h['buy'] == 'N' else 'YES'} "
                   f"{h['size']:g}@{h['price']:.3f} held@{h['held']:.3f} cost/share {h['cost_per_share']:+.4f}")

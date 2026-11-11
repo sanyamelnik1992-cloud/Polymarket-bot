@@ -23,7 +23,7 @@ class RewardsCfg:
     max_empty_frac: float = 0.5          # share of picks allowed where nobody else quotes in the reward zone
     quote_budget_usd: float = 1000.0     # pUSD all resting bids may tie up
     max_per_market_usd: float = 60.0     # pUSD both bids of one market may tie up
-    reselect_min: float = 10.0           # empty pools are found by other makers within hours (reports/63): look often
+    reselect_min: float = 10.0           # empty pools are found by other makers within hours (reports/68): look often
     # quoting
     dist_cents: float = 2.0              # our bid/ask distance from the reference price when others score in the zone
     alone_frac: float = 0.85             # ... and when nobody else scores: this share of the max spread (a lone maker

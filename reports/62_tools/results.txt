@@ -1,0 +1,48 @@
+== 1. the live rule with other sigma floors (entries/lost pnl, 5 shares, no limits)
+period               floor 0.5           floor 0.6          floor 0.65           floor 0.7
+r1107             40/0   +8.96        36/0   +7.56        36/0   +7.56        36/0   +7.56
+r1108             12/0   +1.63        11/0   +1.40        11/0   +1.40        11/0   +1.40
+r1109              6/0   +1.92         5/0   +1.68         5/0   +1.68         4/0   +1.22
+d1109              9/0   +3.50         7/0   +2.71         5/0   +1.97         5/0   +1.97
+d1110             10/0   +2.89         6/0   +1.58         4/0   +0.89         3/0   +0.65
+d1110b             9/0   +3.37         7/0   +2.62         6/0   +2.20         6/0   +2.20
+d1110c            13/0   +4.30         9/0   +3.04         9/0   +3.32         8/0   +2.81
+d1111             18/2   -4.02        16/0   +5.71        11/0   +4.16         9/0   +3.04
+ALL              117/2  +22.56        97/0  +26.30        87/0  +23.18        82/0  +20.84
+windows floor 0.6 drops                        n= 20 lost= 2 (10.0%) pnl=  -3.46 c/sh=-3.49
+windows floor 0.6 adds                         n=0
+-- live rule entries, tiers 2-3, by raw 15-min sigma (bp)
+   sigma [0,0.4)                               n=  2 lost= 0 ( 0.0%) pnl=  +0.56 c/sh=+5.61  model expects lost: 0.05
+   sigma [0.4,0.5)                             n= 11 lost= 2 (18.2%) pnl=  -6.03 c/sh=-10.97  model expects lost: 0.46
+   sigma [0.5,0.6)                             n= 16 lost= 0 ( 0.0%) pnl=  +5.04 c/sh=+6.36  model expects lost: 0.61
+   sigma [0.6,0.8)                             n= 22 lost= 0 ( 0.0%) pnl=  +7.48 c/sh=+6.80  model expects lost: 0.91
+   sigma [0.8,99)                              n= 16 lost= 0 ( 0.0%) pnl=  +6.08 c/sh=+7.60  model expects lost: 0.63
+== 2. calibration on all windows (first state in the band, any ask)
+floor 0.5, p in [0.95,0.97): n=983 lost=18 (1.8%) model 4.4%
+   raw sigma [0,0.4): n= 161 lost=  2 ( 1.2%)  model 4.5%
+   raw sigma [0.4,0.5): n= 179 lost=  6 ( 3.4%)  model 4.4%
+   raw sigma [0.5,0.6): n= 154 lost=  0 ( 0.0%)  model 4.3%
+   raw sigma [0.6,0.8): n= 223 lost=  7 ( 3.1%)  model 4.4%
+   raw sigma [0.8,1.2): n= 170 lost=  1 ( 0.6%)  model 4.3%
+   raw sigma [1.2,99): n=  96 lost=  2 ( 2.1%)  model 4.4%
+floor 0.5, p in [0.97,0.99): n=661 lost=7 (1.1%) model 2.5%
+   raw sigma [0,0.4): n=  33 lost=  1 ( 3.0%)  model 2.8%
+   raw sigma [0.4,0.5): n= 114 lost=  1 ( 0.9%)  model 2.6%
+   raw sigma [0.5,0.6): n= 136 lost=  0 ( 0.0%)  model 2.4%
+   raw sigma [0.6,0.8): n= 171 lost=  5 ( 2.9%)  model 2.5%
+   raw sigma [0.8,1.2): n= 144 lost=  0 ( 0.0%)  model 2.5%
+   raw sigma [1.2,99): n=  63 lost=  0 ( 0.0%)  model 2.5%
+floor 0.6, p in [0.95,0.97): n=806 lost=13 (1.6%) model 4.4%
+   raw sigma [0,0.4): n=  48 lost=  1 ( 2.1%)  model 4.6%
+   raw sigma [0.4,0.5): n= 128 lost=  2 ( 1.6%)  model 4.5%
+   raw sigma [0.5,0.6): n= 141 lost=  0 ( 0.0%)  model 4.4%
+   raw sigma [0.6,0.8): n= 223 lost=  7 ( 3.1%)  model 4.4%
+   raw sigma [0.8,1.2): n= 170 lost=  1 ( 0.6%)  model 4.3%
+   raw sigma [1.2,99): n=  96 lost=  2 ( 2.1%)  model 4.4%
+floor 0.6, p in [0.97,0.99): n=512 lost=5 (1.0%) model 2.5%
+   raw sigma [0,0.4): n=   2 lost=  0 ( 0.0%)  model 2.8%
+   raw sigma [0.4,0.5): n=  40 lost=  0 ( 0.0%)  model 2.8%
+   raw sigma [0.5,0.6): n=  92 lost=  0 ( 0.0%)  model 2.5%
+   raw sigma [0.6,0.8): n= 171 lost=  5 ( 2.9%)  model 2.5%
+   raw sigma [0.8,1.2): n= 144 lost=  0 ( 0.0%)  model 2.5%
+   raw sigma [1.2,99): n=  63 lost=  0 ( 0.0%)  model 2.5%
