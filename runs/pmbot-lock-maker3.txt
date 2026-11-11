@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-maker3/20261110-192038
-mode: paper  duration: 520.6 min  events: {'start': 1, 'status': 1041, 'lock_state': 2618, 'strike': 372, 'maker_bid': 277, 'maker_cancel': 275, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4, 'kill': 1}
+mode: paper  duration: 580.6 min  events: {'start': 1, 'status': 1161, 'lock_state': 2935, 'strike': 420, 'maker_bid': 277, 'maker_cancel': 275, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4, 'kill': 1}
 
 fills: 4  shares: 20  notional: $18.60
        fills  shares  notional  avg_price  med_rel
