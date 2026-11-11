@@ -185,6 +185,13 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
         where = window_name(details.pop("key")) if "key" in details else ""
         body = ", ".join(f"{k}={v}" for k, v in details.items())[:400]
         return f"⚠️ {who}: {ERROR_RU[kind]}" + (f" ({where})" if where else "") + (f"\n<code>{esc(body)}</code>" if body else "")
+    if kind == "lock_hedge":                  # reports/64: the insurance on a reversal of the lock bot
+        side = {"U": "Up", "D": "Down"}.get(rec.get("side"), rec.get("side"))
+        return (f"🛡 {label(unit, False) if unit else who} · {window_name(rec.get('key'), length)}: страховка — модель развернулась "
+                f"({100 * (rec.get('p') or 0):.0f}% за {esc(side)}), куплено {esc(side)} {rec.get('shares', 0):.0f} по "
+                f"{rec.get('price', 0):.2f}\nИтог окна теперь {money(rec.get('worst'), True)}"
+                + (f" … {money(rec.get('best'), True)}" if abs((rec.get("best") or 0) - (rec.get("worst") or 0)) > 0.05 else "")
+                + (" 💰" if live else " (paper)"))
     if kind == "geoblock_ok":
         return f"🌍 {who}: гео-проверка пройдена ({esc(rec.get('country'))} {esc(rec.get('region') or '')})".rstrip()
     if kind == "balance":

@@ -97,6 +97,19 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   removes that night's two losers (costs ~$1.7/day in the other 7 periods); on all ~1000 windows the floored model is not
   overconfident in a calm market (p 0.95-0.97: 1.8 % lost vs 4.4 % promised). Floor 0.6 = first candidate, re-check by replay
   on new recordings (`reports/62_tools/floor_calib.py`). The hourly report now shows real money and paper totals apart.
+  **`reports/63_two_losses_market_doubt.md` (11 Nov)**: two live losses in the p 0.95-0.97 tier. Key fact: judge a tier by the windows
+  where the bot BUYS (market-conditioned calibration, `reports/63_tools/market_calib.py`): p 0.95-0.97 with the market selling at
+  0.90-0.93 lost 5.9 % (8 % on 10-11 Nov, +1.4 c a share), while the same p with the ask >= 0.97 lost 1.6 %. Removing the tier was
+  proposed and REJECTED by the owner ("мы не должны их убирать, мы должны как-то по-другому страховаться"): the tiers stay.
+  **`reports/64_reversal_insurance.md` (11 Nov)**: insurance on a reversal, `lock.hedge_p` / `hedge_margin` / `hedge_slip` +
+  `LockBot._hedge_once` (on in `lock_live.toml` and the twins `lock_tier`, `lock_tier_pb`, `lock_tier_late`, `lock15_tier`; off in
+  L4, L, L2, L99, makers). After an entry, when the model (no entry filters) favours the other side with p >= 0.65 and it sells at
+  <= p - 0.20, buy as many whole shares of it once (cap: seen ask + 2 c, the live FAK is a dollar budget): both sides pay `shares`,
+  the window ends at a known -$1..-3 instead of -$4.7. Not held back by max_open / the day stop (it only shrinks the worst case),
+  journal `lock_hedge` (worst / best) and `lock_hedge_miss`, Telegram "🛡 страховка" in live. Evidence: real entries 10-11 Nov live
+  -$1.55 -> +$0.67, three paper bots +$22.5; live-rule replay 7-11 Nov +$16.81 -> +$18.22 (no trigger at all on 7-9 Nov); the
+  unfiltered rules lose ~$10 on it in the calm 7-9 Nov. Right after a reversal the model is over-sure (0.80 vs 63 % won), hence
+  the 20 c margin. Full-path grids: `reports/64_tools/grid_pmin.py` with `GRID_P_MIN=0.5`. Review after 10 live insurances.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,

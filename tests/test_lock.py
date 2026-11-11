@@ -1171,3 +1171,88 @@ def test_bottom_tier_only_late_in_the_window(tables):
     assert exp.journal_dir != twin.journal_dir and exp.risk.state_file != twin.risk.state_file
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml")).lock
     assert live.theta == 0.95 and min(t[0] for t in live.tiers) == 0.95    # reports/59: live has no tier below 0.95
+
+
+def test_insurance_configs_and_validation():
+    """reports/64: the insurance on a reversal runs in live L3 and every paper twin of its rule; the references stay without it."""
+    import glob
+    on = {"lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml", "lock15_tier.toml"}
+    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
+        c = load_lock_config(path).lock
+        if os.path.basename(path) in on:
+            assert (c.hedge_p, c.hedge_margin, c.hedge_slip) == (0.65, 0.20, 0.02), path
+        else:
+            assert c.hedge_p == 0.0, path                           # L, L2, L4, L99, makers: no insurance
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
+    assert live.risk.max_usd_per_entry <= 5.0 and live.risk.max_open_usd <= 5.0 and live.risk.daily_loss_limit <= 5.0
+    for bad in ({"hedge_p": 0.4}, {"hedge_p": 1.0}, {"hedge_p": 0.65, "hedge_margin": 0.6}, {"hedge_p": 0.65, "hedge_slip": 0.2},
+                {"hedge_p": 0.65, "max_entries_per_window": 2}):
+        with pytest.raises(ValueError):
+            load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides={"lock": bad})
+    with pytest.raises(ValueError):
+        load_lock_config(os.path.join(ROOT, "config", "lock_maker_tier.toml"), overrides={"lock": {"hedge_p": 0.65}})
+
+
+def test_insurance_buys_the_other_side_once_on_a_reversal(tmp_path, monkeypatch):
+    """reports/64: holding Up, the model turns to Down at 0.80 and Down sells at 0.55 <= 0.80 - 0.20: buy 5 Down capped at the seen
+    ask + 2 c (0.57). Both sides held pay 5 at the end, so the window's result is known. Only once per window; not while the model is
+    below hedge_p, our side is still favoured or the ask is above model - margin."""
+    import time as _t
+    import pmbot.bot.lock as lockmod
+    from pmbot.bot.state import Window
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((token, side, limit, shares))
+            return limit - 0.02, shares, shares * 0.017
+
+    br = Br()
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    j = _J()
+    bot = LockBot(cfg, j, broker=br, tables=_Tab())
+    now = int(_t.time() * 1000)
+    start = now // 1000 - 270
+    w = bot.st.add_window(Window(asset="btc", start=start, slug="s", condition_id="c", token_up="u", token_down="d"))
+    bot.entries[w.key] = [{"side": "U", "shares": 5.0, "price": 0.93, "cost": 4.65, "fee": 0.0228, "t": now / 1000, "limit": 0.93,
+                           "p": 0.955}]
+    bot.st.feed_alive["binance"] = now
+    bot.st.feed_alive["clob"]["btc"] = int(_t.time() * 1000) + 60_000
+    model = {"side": "D", "p": 0.80}
+
+    def fake_state(c, tables, asset, T, K, now_ms_, *a, **kw):
+        if model["p"] < c.theta:
+            return None, 0.0, {"rel": 270.0, "why": "p"}
+        return model["side"], model["p"], {"rel": 270.0, "side": model["side"], "p": model["p"]}
+    monkeypatch.setattr(lockmod, "decide_state", fake_state)
+
+    async def tick():
+        await bot.decide_once(now)
+        await asyncio.sleep(0.01)
+    bot.st.books["d"] = Book(bids={0.50: 10}, asks={0.65: 50.0})       # 0.65 > 0.80 - 0.20: too dear, wait
+    asyncio.run(tick())
+    assert br.calls == [] and any(k == "lock_state" and kw.get("why") == "hedge_wait" for k, kw in j.ev)
+    model.update(side="U", p=0.97)                                     # our side still favoured: nothing
+    bot.st.books["d"] = Book(bids={0.50: 10}, asks={0.55: 50.0})
+    asyncio.run(tick())
+    model.update(side="D", p=0.62)                                     # below hedge_p 0.65: nothing
+    asyncio.run(tick())
+    assert br.calls == []
+    model.update(side="D", p=0.80)
+    asyncio.run(tick())
+    assert br.calls == [("d", "D", 0.57, 5)]                           # min(0.80 - 0.20, 0.55 + 0.02), whole shares
+    es = bot.entries[w.key]
+    assert len(es) == 2 and es[1]["hedge"] is True and es[1]["side"] == "D"
+    h = dict(j.ev)["lock_hedge"]
+    cost = 4.65 + 0.0228 + 5 * 0.55 + 5 * 0.017
+    assert h["worst"] == pytest.approx(5 - cost, abs=1e-3) and h["best"] == pytest.approx(5 - cost, abs=1e-3)
+    assert "lock_entry" not in [k for k, _ in j.ev]                    # not counted as a new entry in the reports
+    asyncio.run(tick())
+    assert len(br.calls) == 1                                          # once per window
+    bot._settle(w.key, "Down")
+    assert dict(j.ev)["settle"]["pnl"] == pytest.approx(5 - cost, abs=1e-3)

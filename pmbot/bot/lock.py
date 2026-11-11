@@ -20,7 +20,7 @@ import math
 import os
 import time
 import tomllib
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields, replace
 
 from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
@@ -83,6 +83,14 @@ class LockCfg:
     late_tier_p: float = 0.95            # With 40-57 closing prints still unknown a 0.90-0.95 model is wrong too often: tapes 1-9 Nov,
                                          # the bottom tier entered before second 260: 189 entries, 14 lost, +1.5 c a share; from 260 on:
                                          # 75 entries, 2 lost, +6 c; live 9-10 Nov: 4 of the 5 losses were such early entries (reports/60). 0 = off, and it is off in every config
+    hedge_p: float = 0.0                 # > 0: insurance on a reversal (reports/64). After an entry, when the same model (without the entry
+                                         # filters) favours the OTHER side with p >= hedge_p and that side sells at <= p - hedge_margin, buy as
+                                         # many whole shares of it as the position holds (FAK, once per window). Both sides held pay `shares` at
+                                         # the end: the window ends at about shares * (1 - entry - insurance) instead of -$4.7. 0 = off
+    hedge_margin: float = 0.20           # right after a reversal the model is over-sure (p 0.80 on average, the other side won 63 % of 70
+                                         # purchases on 7-11 Nov): insure only at a fair price
+    hedge_slip: float = 0.02             # the order's cap is at most the seen ask + this: a live FAK is a dollar budget, so a cap far above
+                                         # the ask would buy more shares than the position holds (a bet, not insurance)
 
 
 @dataclass
@@ -167,6 +175,10 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.late_tier_rel must be 0 (off) or in [rel_lo, rel_hi], late_tier_p in (0.5, 1]")
     if c.entry not in ("taker", "maker"):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
+    if c.hedge_p and not (0.5 < c.hedge_p < 1 and 0 <= c.hedge_margin < 0.5 and 0 <= c.hedge_slip <= 0.1):
+        raise ValueError("lock.hedge_p must be 0 (off) or in (0.5, 1), hedge_margin in [0, 0.5), hedge_slip in [0, 0.1]")
+    if c.hedge_p and (c.entry != "taker" or c.max_entries_per_window != 1):
+        raise ValueError("lock.hedge_p: the insurance is for the taker entry with one entry per window")
     if c.tiers:
         ts = sorted((float(t[0]), float(t[1])) for t in c.tiers)
         if any(len(t) != 2 for t in c.tiers) or any(not (0.5 < pm < 1 and c.a_min <= am <= c.a_max) for pm, am in ts):
@@ -431,6 +443,9 @@ class LockBot:
         self.tables = tables or Tables(c.tables)
         self.sig = {a: ClSigma() for a in c.assets}
         self.maker = c.entry == "maker"
+        # reports/64: the insurance reads the same model as the entries, without the entry filters (any p from hedge_p)
+        self.hedge_cfg = replace(c, theta=c.hedge_p, agree=0.0, dmin_bp=-1e9, adv1_bp=1e9, adv3_bp=1e9, jump_bp=1e9,
+                                 shock_bp=0.0) if c.hedge_p else None
         self.bids = {}             # maker: window key -> {"oid", "side", "price", "size", "token", "p"}
         if broker is not None:
             self.broker = broker
@@ -742,6 +757,10 @@ class LockBot:
             rel = now / 1000 - Tc
             if not (c.rel_lo <= rel <= c.rel_hi):
                 continue
+            if self.hedge_cfg and self.entries.get(key):
+                if key not in self.busy and now >= self.next_try.get(key, 0):
+                    self._hedge_once(key, w, Tc, now)
+                continue
             if key in self.busy or len(self.entries.get(key, [])) >= c.max_entries_per_window:
                 continue
             if now < self.next_try.get(key, 0):
@@ -780,6 +799,42 @@ class LockBot:
             self.busy.add(w.key)
             self.pending[w.key] = need
             asyncio.get_running_loop().create_task(self._execute(w, sig, shares, ctx))
+
+    def _hedge_once(self, key, w, Tc, now):
+        """reports/64: insurance on a reversal (LockCfg.hedge_p). Once per window, sent through _execute like an entry; it is not
+        held back by max_open_usd or the day stop: it can only make the window's worst case smaller."""
+        c = self.cfg.lock
+        es = self.entries.get(key, [])
+        if not es or any(e.get("hedge") for e in es) or (self.cfg.risk.kill_file and os.path.exists(self.cfg.risk.kill_file)):
+            return
+        held = {"U": 0.0, "D": 0.0}
+        for e in es:
+            held[e["side"]] += e["shares"]
+        mine = "U" if held["U"] >= held["D"] else "D"
+        other = "D" if mine == "U" else "U"
+        need = math.floor(held[mine] - held[other] + 1e-6)       # whole shares, like every live FAK of this bot
+        if need < 1:
+            return
+        if now - self.st.feed_alive.get("binance", 0) > c.bn_max_age_ms:
+            return
+        px = self.st.prices[w.asset]
+        cl = px.cl_last
+        side, p, ctx = decide_state(self.hedge_cfg, self.tables, w.asset, Tc, self.strike(key, w.asset, w.start), now,
+                                    px.cl_by_sec, cl, self.sig[w.asset].sigma() if self.sig[w.asset].n >= c.min_sigma_prints
+                                    else None, px.bn_mid(), px.bn_mid_at(cl[1] + 999) if cl else None,
+                                    px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000))
+        if side != other:
+            return
+        ask = self._book_ask(w.token_up if other == "U" else w.token_down)
+        cap = p - c.hedge_margin
+        if not ask or ask[0] > cap + 1e-9:
+            self._why(key, "hedge_wait", {**ctx, "ask": ask[0] if ask else None, "cap": round(cap, 4)})
+            return
+        limit = min(cap, ask[0] + c.hedge_slip)
+        self.busy.add(key)
+        asyncio.get_running_loop().create_task(self._execute(
+            w, {"side": other, "limit": limit, "ask": ask[0], "p": p}, need,
+            {**ctx, "hedge": True, "ask": ask[0], "ask_sz": ask[1], "cap": round(cap, 4)}))
 
     # ---------------------------------------------------------------- maker entry (LM, paper)
     def _on_public_trade(self, token, side, price, size, ts_ms, rx):
@@ -908,6 +963,7 @@ class LockBot:
         # 0.01 grid), and passing them again as keywords raised TypeError inside this task, so until 9 Nov no
         # lock_entry / lock_miss line was ever written (paper and live) and the miss rate was invisible
         rec = {**ctx, "key": key, "side": sig["side"], "limit": limit, "ms": now_ms() - t_sent}
+        hedge = bool(ctx.get("hedge"))
         if got <= 1e-9:
             self.stats["missed"] += 1
             if err and self.broker.mode == "live":
@@ -917,15 +973,26 @@ class LockBot:
                 self.j.log("window_blocked", key=key, reason="order_error")
             else:
                 self.next_try[key] = now_ms() + self.cfg.lock.retry_ms
-            self.j.log("lock_miss", **{**rec, "error": err})
+            self.j.log("lock_hedge_miss" if hedge else "lock_miss", **{**rec, "error": err})
             return
         self.stats["filled"] += 1
         e = {"side": sig["side"], "shares": round(got, 4), "price": round(px, 4), "cost": round(px * got, 6),
              "fee": round(fee, 6), "t": time.time(), "limit": limit, "p": sig["p"]}
+        if hedge:
+            e["hedge"] = True
         self.entries.setdefault(key, []).append(e)
         self._save_state()
         self.j.log("fill", key=key, side=sig["side"], price=round(px, 4), size=round(got, 4), ts=now_ms(),
                    fee=round(fee, 6), order_id="fak", mode=self.broker.mode)
+        if hedge:
+            es = self.entries[key]
+            cost = sum(x["cost"] + x["fee"] for x in es)
+            pay = [sum(x["shares"] for x in es if x["side"] == s_) for s_ in ("U", "D")]
+            self.j.log("lock_hedge", **{**rec, "price": round(px, 4), "shares": round(got, 4),
+                                        "worst": round(min(pay) - cost, 4), "best": round(max(pay) - cost, 4)})
+            log.info("HEDGE %s %s %.2f sh @ %.3f (p=%.4f) window worst %+.2f", key, sig["side"], got, px, sig["p"],
+                     min(pay) - cost)
+            return
         self.j.log("lock_entry", **{**rec, "price": round(px, 4), "shares": round(got, 4)})
         log.info("ENTRY %s %s %.2f sh @ %.3f (p=%.4f ask=%.3f limit=%.3f rel=%.1f)", key, sig["side"], got, px,
                  sig["p"], sig["ask"], limit, ctx.get("rel", 0))
