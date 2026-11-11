@@ -1,3 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99/20261111-204637
-mode: paper  duration: 15.0 min  events: {'start': 1, 'status': 30, 'lock_state': 140, 'strike': 8}
-no fills
+mode: paper  duration: 74.5 min  events: {'start': 1, 'status': 149, 'lock_state': 511, 'strike': 56, 'fill': 1, 'lock_entry': 1, 'provisional': 1}
+
+lock orders: sent 1  filled 1  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 301  p90 301  max 301
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+
+fills: 1  shares: 5  notional: $4.85
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        1     5.0      4.85       0.97  246.344
+no settled windows yet
