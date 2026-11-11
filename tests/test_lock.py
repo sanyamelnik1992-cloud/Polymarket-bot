@@ -1064,7 +1064,8 @@ def test_polybolt_paper_bot_differs_from_the_twin_only_by_the_feed():
     assert pb.execution.mode == "paper" and pb.lock == tier.lock
     for k in ("max_usd_per_entry", "max_open_usd", "daily_loss_limit", "resume_next_day"):
         assert getattr(pb.risk, k) == getattr(tier.risk, k), k
-    assert pb.execution.cl_feed == "both" and tier.execution.cl_feed == "rtds" and live.execution.cl_feed == "rtds"
+    # reports/66: live moved to PolyBolt after the A/B (more entries, fewer misses); pmbot-lock-tier stays the RTDS reference
+    assert pb.execution.cl_feed == "both" and tier.execution.cl_feed == "rtds" and live.execution.cl_feed == "both"
     assert pb.execution.paper_exec_ms == tier.execution.paper_exec_ms
     assert pb.risk.state_file not in ("", tier.risk.state_file) and pb.journal_dir != tier.journal_dir
     with pytest.raises(ValueError):

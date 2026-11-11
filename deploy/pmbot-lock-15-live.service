@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot TWAP-lock L3 on 15m LIVE (config/lock15_live.toml: price tiers + insurance, REAL MONEY, 5 shares, one entry at a time, -$5/day stop)
+Description=pmbot TWAP-lock L3 on 15m LIVE (config/lock15_live.toml: four price tiers, REAL MONEY, 5 shares, one entry at a time, -$5/day stop)
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=600

@@ -116,6 +116,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   the recorder's Chainlink + Binance with fills from the exchange's own 15m trades (`reports/65_tools/dl_15m.py`, `cands15.py`):
   54 entries, 1 lost, +$10.76 one at a time; with live 5m (+ insurance) every UTC day of 7-11 Nov positive, +$28.98 vs +$16.81.
   The 15m bottom tier (p 0.90-0.95 at <= 0.91) did NOT lose there (22 / 0) unlike on 5m. The recorder does not write 15m books yet.
+  **`reports/66_5m_faster_prices.md` (11 Nov 21:00)**: live 5m (`lock_live.toml`) runs `execution.cl_feed = "both"` (PolyBolt first,
+  RTDS fallback) after the paper A/B since 10 Nov 16:10: PolyBolt twin 33 windows / -$0.49 / 0.09 FAK misses per entry vs RTDS twin
+  27 / -$4.98 / 0.26. Its rule twin is still `pmbot-lock-tier` (RTDS), its feed twin `pmbot-lock-tier-pb`. 15m live and L99 stay on
+  RTDS. Not taken: min of the two windows' p (fewer trades, less money); 10 shares on the 0.97 / 0.99 tiers is the owner's call
+  (replay +$16.81 -> +$25.14 over 4.4 days, a loss there -$9.5).
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
