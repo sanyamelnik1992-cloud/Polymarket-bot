@@ -1,20 +1,20 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261111-205016
-mode: live  duration: 491.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 982, 'prewarm': 392, 'lock_state': 4318, 'strike': 388, 'order_filled': 12, 'fill': 12, 'lock_entry': 12, 'provisional': 12, 'settle': 12, 'order_rejected': 4, 'lock_miss': 4}
+mode: live  duration: 550.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1100, 'prewarm': 440, 'lock_state': 4722, 'strike': 436, 'order_filled': 13, 'fill': 13, 'lock_entry': 13, 'provisional': 13, 'settle': 12, 'order_rejected': 5, 'lock_miss': 5}
 
-lock orders: sent 16  filled 12  ask gone 4  errors 0
-  signal -> exchange answer, ms: median 311  p90 784  max 999
-  market prewarm (2 lookups + signing), ms: median 148  max 521  n 392
-  fill price minus the ask we saw, cents: mean -0.16  worst +1.0
-  misses came 18-60 s before the end; model p 0.962-0.991
-  exchange rejections by code: {'fak_not_filled': 4}
+lock orders: sent 18  filled 13  ask gone 5  errors 0
+  signal -> exchange answer, ms: median 302  p90 784  max 999
+  market prewarm (2 lookups + signing), ms: median 150  max 521  n 440
+  fill price minus the ask we saw, cents: mean -0.15  worst +1.0
+  misses came 18-60 s before the end; model p 0.962-0.993
+  exchange rejections by code: {'fak_not_filled': 5}
 
-fills: 12  shares: 81  notional: $75.20
+fills: 13  shares: 86  notional: $79.85
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        2  10.225       9.3      0.910  250.503
-eth        3  20.324      18.8      0.923  257.428
-sol        3  20.109      18.8      0.930  253.666
-xrp        4  30.214      28.3      0.933  247.569
+btc        2  10.225      9.30      0.910  250.503
+eth        3  20.324     18.80      0.923  257.428
+sol        4  25.109     23.45      0.930  253.744
+xrp        4  30.214     28.30      0.933  247.569
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
