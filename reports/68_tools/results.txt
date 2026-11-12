@@ -1,0 +1,389 @@
+### reports/68: raw tables. Snapshot of the rewards collection 11 Nov 2026 11:30 UTC unless said otherwise.
+### Wallets are public addresses of other makers; they are not listed here (the tools print 10-character prefixes).
+
+=================== scale.py RAW.json
+rows 100000 unique 98523 dups 1477 today 2026-11-11
+configs per market: {0: 87419, 1: 11104}
+markets with an active config and rate > 0: 11104
+  asset 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 configs 10855 rate/day 119034.5
+  asset 0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb configs 183 rate/day 0.2
+  asset 0x2791bca1f2de4661ed88a30c99a7a9449aa84174 configs 66 rate/day 0.1
+total rate/day: 119035.0  quantiles 10/25/50/75/90/99: [  1.     1.     3.     6.    23.   111.97]
+  rate [0,1): markets    434  pool         76
+  rate [1,5): markets   6003  pool      10144
+  rate [5,20): markets   3230  pool      23927
+  rate [20,50): markets    942  pool      26635
+  rate [50,100): markets    322  pool      18719
+  rate [100,300): markets    137  pool      19920
+  rate [300,1000): markets     29  pool      12614
+  rate [1000,1000000000.0): markets      7  pool       7000
+rewards_min_size {20.0: 8056, 50.0: 1691, 30.0: 599, 100.0: 272, 200.0: 163, 40.0: 107, 60.0: 70, 0.0: 55, 55.0: 46, 500.0: 15, 1000.0: 15, 80.0: 10}
+rewards_max_spread {4.5: 6535, 6.5: 3238, 5.5: 726, 3.5: 235, 8.5: 158, 7.5: 82, 0.0: 55, 2.5: 54, 6.0: 16, 0.2: 4, 3.0: 1}
+competitiveness quantiles 0/10/25/50/75/90/99/100: [0.00000000e+00 0.00000000e+00 0.00000000e+00 1.92800000e+01
+ 1.15810000e+02 3.56480000e+02 5.18779000e+03 9.19438941e+06]  zero: 3377
+volume_24hr quantiles 10/25/50/75/90/99: [    0.     0.     0.   114.   789. 21640.]  zero: 5811
+spread quantiles 10/25/50/75/90: [0.01 0.02 0.04 0.16 0.48]
+
+=================== competitiveness.py active.json books.json
+markets 2845  competitiveness 0: 1005  no score in the book: 926  both: 857
+Q_min of the whole book  vs competitiveness x rate n= 1771 corr(log)=0.907  ratio quantiles 10/25/50/75/90: [0.69 0.88 1.09 1.42 2.21]
+Q_min of the whole book  vs competitiveness        n= 1771 corr(log)=0.793  ratio quantiles 10/25/50/75/90: [  6.37  10.75  21.62  49.47 123.35]
+sum of both sides        vs competitiveness x rate n= 1771 corr(log)=0.902  ratio quantiles 10/25/50/75/90: [1.98 2.41 2.89 3.87 7.75]
+sum of both sides        vs competitiveness        n= 1771 corr(log)=0.791  ratio quantiles 10/25/50/75/90: [ 17.09  29.35  55.81 138.32 418.12]
+
+=================== gross.py SNAPSHOT_TS
+markets 11049 pool 119035
+
+By competitiveness bucket (min-size two-sided quote, reward in $/day):
+        comp   mkts    pool$     cap$   rew@1c   rew@2c   rew@3c yield@2c/day med vol24 med spread med |chg1d|
+   [0,1e-09)   3322    27782    97195    27782    27782    27477        28.6%         0      0.300       0.025
+   [1e-09,1)    304     6111     7980     3316     2716     1951        34.0%       108      0.074       0.035
+       [1,5)    644    14019    19125     2251     1528      855         8.0%       117      0.050       0.030
+      [5,20)   1276    23177    39570     1802     1155      610         2.9%        77      0.040       0.020
+     [20,50)   1317    13980    41930      685      415      211         1.0%        22      0.030       0.010
+    [50,150)   1844    15773    63110      418      239      119         0.4%         0      0.020       0.005
+   [150,500)   1542    10463    54990      132       73       36         0.1%         0      0.020       0.001
+ [500,1e+12)    800     7729    34270       19       10        5         0.0%         0      0.010       0.001
+
+price outside [0.10, 0.90]: 3318  days to end quantiles 10/50/90: [  1.   50.7 262.7]  ending < 2 days: 1201
+
+Every market, min size, 2c from mid: capital $358170, reward $33919/day
+price 0.10-0.90 and > 2 days left: markets 6920, capital $219235, reward@2c $25894/day
+candidate universe (cands.pkl): 6885  with reward@2c >= $1/day: 3058
+
+=================== empty_pools.py
+zero-comp markets 3322 pool 27782
+pool size quantiles 10/50/90/99: [ 1.  3. 24. 62.]
+days to end quantiles 10/25/50/75/90: [ -7.3   4.7  50.7 109.7 231.7]
+price in [0.10,0.90]: 2965  price <0.03 or >0.97: 18
+spread quantiles: [0.1   0.16  0.3   0.552 0.824]  vol24==0: 2148
+created (date) top: [('2026-08-10', 327), ('2026-11-10', 230), ('2026-11-11', 210), ('2026-11-03', 179), ('2026-10-25', 167), ('2026-11-06', 158), ('2026-08-11', 145), ('2026-11-02', 107)]
+
+ ZERO comp
+                        n     pool  med_rate  med_days  med_spread  med_vol  inrange
+cat                                                                                 
+other                1268  9163.30       5.0     76.72        0.30     0.00     0.89
+election/politics     701  4069.00       2.0     -7.28        0.45     0.00     0.94
+temperature/weather   220  3859.01      10.0      2.01        0.20    18.00     0.85
+culture               182  2996.00      14.0      6.72        0.42     0.00     0.82
+price target          553  2611.03       1.0     19.72        0.21     0.00     0.87
+tech/ai               220  2167.01       3.0    231.51        0.31     0.00     0.96
+econ data              63  1347.00      18.0     50.72        0.20   163.29     0.87
+geopolitics            85  1254.01       5.0     50.72        0.22    10.00     0.85
+sports game            25   307.01       5.0     13.97        0.36     0.00     0.92
+crypto up/down          5     9.00       1.0      0.39        0.31     0.00     0.80
+
+ comp > 0
+                        n      pool  med_rate  med_days  med_spread  med_vol  inrange
+cat                                                                                  
+other                3571  24490.87       2.0     81.72        0.02     0.00     0.60
+election/politics    1284  15902.00       2.0    123.68        0.02     0.00     0.57
+temperature/weather   632  12560.41      10.0      2.01        0.04    85.83     0.75
+tech/ai               510   9282.00       3.0     81.72        0.02    22.50     0.68
+geopolitics           373   9246.06       3.0     50.72        0.02   126.91     0.67
+price target          750   7518.02       2.0     50.72        0.03    12.63     0.56
+culture               262   5272.00       6.0     19.22        0.03    92.89     0.59
+econ data             290   4711.01       4.0     49.85        0.03   159.02     0.69
+sports game            40   2255.00      50.0      3.56        0.01   102.50     0.70
+crypto up/down         15     15.00       1.0      0.39        0.03    35.73     0.87
+
+zero-comp, price 0.10-0.90, > 2 days left: 2471 pool 22104
+
+=================== an_pop.py pnl.jsonl 10   (2698 maker wallets seen in >= 2 of 600 sampled rewarded markets; the month to 11 Nov)
+wallets with >= 10 days of history: 2593; with rewards in the window: 1915; reward >= $1/day: 1400
+ALL reward earners in the sample: reward $122314/day, maker rebates $25083/day, position PnL $117920/day, net $274464/day
+
+== by reward per day
+reward $1-5/day                    n= 502  reward/day med      2.3 sum     1285 | pos PnL/day med     -2.2 sum    -43221 | net>0:   52%  pos>0:   41%  lost more on positions than rewards:   50% | net/day q25     -5.7 med     0.2 q75     41.9 | value med     1124
+reward $5-20/day                   n= 389  reward/day med      9.0 sum     4077 | pos PnL/day med     -6.6 sum      8116 | net>0:   59%  pos>0:   43%  lost more on positions than rewards:   43% | net/day q25     -8.4 med     3.5 q75    142.7 | value med     2894
+reward $20-100/day                 n= 304  reward/day med     39.1 sum    13805 | pos PnL/day med    -24.3 sum    140972 | net>0:   69%  pos>0:   32%  lost more on positions than rewards:   33% | net/day q25     -6.1 med    19.3 q75    156.4 | value med     2033
+reward $100-500/day                n= 157  reward/day med    203.6 sum    35631 | pos PnL/day med   -127.7 sum     27115 | net>0:   73%  pos>0:   24%  lost more on positions than rewards:   29% | net/day q25     -9.6 med    68.2 q75    205.0 | value med     2736
+reward $500-1e+09/day              n=  48  reward/day med    937.7 sum    67327 | pos PnL/day med   -672.3 sum     -9022 | net>0:   85%  pos>0:   12%  lost more on positions than rewards:   17% | net/day q25    141.8 med   363.7 q75    794.4 | value med    18196
+
+== reward earners (>= $5/day) by reward per $ of FILLED volume (high = rarely filled, 'pure farmer')
+reward/volume 0-2 bp               n=  14  reward/day med     19.5 sum      759 | pos PnL/day med    126.6 sum     52945 | net>0:   57%  pos>0:   50%  lost more on positions than rewards:   50% | net/day q25   -988.6 med   899.4 q75   4976.8 | value med    64548
+reward/volume 2-10 bp              n= 104  reward/day med     10.3 sum     2567 | pos PnL/day med    197.1 sum     68519 | net>0:   68%  pos>0:   64%  lost more on positions than rewards:   35% | net/day q25   -186.4 med   230.1 q75    831.3 | value med    56790
+reward/volume 10-50 bp             n= 210  reward/day med     16.9 sum    16672 | pos PnL/day med     96.7 sum    102624 | net>0:   70%  pos>0:   65%  lost more on positions than rewards:   30% | net/day q25    -28.3 med   133.0 q75    561.6 | value med    36230
+reward/volume 50-200 bp            n= 198  reward/day med     22.5 sum    28143 | pos PnL/day med    -10.5 sum     -2709 | net>0:   63%  pos>0:   42%  lost more on positions than rewards:   37% | net/day q25    -13.1 med    19.0 q75    155.3 | value med     2823
+reward/volume 200-1e+09 bp         n= 372  reward/day med     51.0 sum    72700 | pos PnL/day med    -37.4 sum    -54198 | net>0:   65%  pos>0:    3%  lost more on positions than rewards:   38% | net/day q25     -3.9 med     8.7 q75     42.6 | value med      264
+
+== reward earners (>= $5/day) by reward share of income (reward / (reward + maker rebates))
+reward share 0-0.2                 n=  14  reward/day med     37.1 sum     1311 | pos PnL/day med    206.4 sum     61623 | net>0:   79%  pos>0:   57%  lost more on positions than rewards:   36% | net/day q25    110.6 med  1236.8 q75   4250.9 | value med    56959
+reward share 0.2-0.5               n=  41  reward/day med     11.8 sum     1253 | pos PnL/day med     58.8 sum     11156 | net>0:   63%  pos>0:   59%  lost more on positions than rewards:   41% | net/day q25   -325.2 med    94.0 q75    821.2 | value med    59565
+reward share 0.5-0.9               n= 345  reward/day med     15.7 sum    23364 | pos PnL/day med     17.1 sum    141455 | net>0:   63%  pos>0:   54%  lost more on positions than rewards:   37% | net/day q25    -38.6 med    51.7 q75    418.8 | value med    22570
+reward share 0.9-1.01              n= 498  reward/day med     42.0 sum    94913 | pos PnL/day med    -27.7 sum    -47055 | net>0:   68%  pos>0:   17%  lost more on positions than rewards:   34% | net/day q25     -3.3 med    12.4 q75     83.5 | value med      457
+
+== reward earners (>= $5/day) by portfolio value
+value $0-500                       n= 289  reward/day med     23.0 sum    21571 | pos PnL/day med    -24.0 sum    -20140 | net>0:   57%  pos>0:    8%  lost more on positions than rewards:   46% | net/day q25     -6.5 med     1.2 q75     22.4 | value med       51
+                                   reward per $ of position value per day: median 61.64%  net per $ per day median 1.70%
+value $500-2000                    n= 123  reward/day med     23.7 sum    16790 | pos PnL/day med    -25.0 sum    -17669 | net>0:   64%  pos>0:   20%  lost more on positions than rewards:   40% | net/day q25     -7.8 med    12.5 q75     41.2 | value med     1113
+                                   reward per $ of position value per day: median 2.40%  net per $ per day median 1.04%
+value $2000-10000                  n= 139  reward/day med     24.5 sum    19601 | pos PnL/day med    -28.6 sum    -22044 | net>0:   65%  pos>0:   35%  lost more on positions than rewards:   36% | net/day q25    -17.1 med    28.1 q75    101.6 | value med     3935
+                                   reward per $ of position value per day: median 0.66%  net per $ per day median 0.73%
+value $10000-50000                 n= 155  reward/day med     18.1 sum    28250 | pos PnL/day med     20.3 sum      5787 | net>0:   76%  pos>0:   56%  lost more on positions than rewards:   25% | net/day q25     10.9 med   148.3 q75    415.2 | value med    24131
+                                   reward per $ of position value per day: median 0.08%  net per $ per day median 0.67%
+value $50000-1e+12                 n= 192  reward/day med     30.8 sum    34628 | pos PnL/day med    229.7 sum    221245 | net>0:   74%  pos>0:   65%  lost more on positions than rewards:   27% | net/day q25    -48.6 med   376.9 q75   1239.9 | value med   120407
+                                   reward per $ of position value per day: median 0.02%  net per $ per day median 0.31%
+
+=================== an_pop2.py   (pure farmers: reward >= $5 a day and >= 90 % of the wallet's reward + maker-rebate income)
+pure farmers (reward >= $5/day, reward share >= 0.9): 498  total reward/day 94913  total net/day 52484
+ share of reward kept (net/reward) quantiles 10/25/50/75/90: [-0.739 -0.127  0.28   0.706  4.633]
+ aggregate share kept: 0.55
+ loss per filled $ (quantiles): [-0.027  0.012  0.03   0.054  0.095]  reward per filled $: [0.007 0.019 0.033 0.054 0.116]
+ maker fills per day: [ 10.998  24.361  57.214 163.882 528.69 ]  $ per fill: [  7.306   9.537  18.265  50.021 148.217]
+
+ by breadth (sampled markets where seen as maker, of 600):
+  markets   2-   5: n=102 reward/day med    18.7  kept med  0.61  agg kept  1.76  net>0  74%  $/fill med   41.3  fills/day med   20.9  loss per filled $ med 0.017
+  markets   5-  15: n=166 reward/day med    22.8  kept med  0.31  agg kept  1.52  net>0  67%  $/fill med   24.2  fills/day med   33.9  loss per filled $ med 0.033
+  markets  15-  50: n=143 reward/day med    59.3  kept med  0.18  agg kept  0.57  net>0  59%  $/fill med   14.6  fills/day med   78.0  loss per filled $ med 0.034
+  markets  50-1000: n= 87 reward/day med   330.6  kept med  0.19  agg kept  0.20  net>0  77%  $/fill med   13.8  fills/day med  555.2  loss per filled $ med 0.030
+
+ by average fill size ($ per maker fill):
+  $0-5: n= 15 reward/day med    40.8  kept med  0.16  agg kept -0.26  net>0  67%  loss per filled $ med 0.127  rew per filled $ med 0.114
+  $5-15: n=205 reward/day med    34.8  kept med  0.17  agg kept  0.31  net>0  63%  loss per filled $ med 0.043  rew per filled $ med 0.043
+  $15-50: n=153 reward/day med    49.5  kept med  0.29  agg kept  0.32  net>0  66%  loss per filled $ med 0.027  rew per filled $ med 0.029
+  $50-200: n= 92 reward/day med    40.9  kept med  0.52  agg kept  0.87  net>0  74%  loss per filled $ med 0.009  rew per filled $ med 0.013
+  $200-1e+09: n= 33 reward/day med    70.9  kept med  1.01  agg kept  1.14  net>0  88%  loss per filled $ med 0.000  rew per filled $ med 0.006
+
+ by reward per filled $ (how rarely they are filled):
+  0-0.02: n=138 reward/day med    25.0  kept med  1.52  agg kept  1.32  net>0  73%  loss per filled $ med -0.002
+  0.02-0.05: n=218 reward/day med    51.0  kept med  0.09  agg kept  0.24  net>0  57%  loss per filled $ med 0.030
+  0.05-0.15: n=103 reward/day med    46.8  kept med  0.23  agg kept  0.36  net>0  71%  loss per filled $ med 0.058
+  0.15-0.5: n= 34 reward/day med    77.8  kept med  0.51  agg kept  0.62  net>0  97%  loss per filled $ med 0.128
+  0.5-1e+09: n=  5 reward/day med    34.7  kept med  0.84  agg kept  0.88  net>0 100%  loss per filled $ med 0.085
+
+ small pure farmers (reward $5-50/day):
+  n=263  net>0 60%  kept med 0.21  net/day quantiles [-16.333  -4.584   2.189  21.772 146.417]  worst day quantiles [-1304.702  -344.779   -99.925   -37.55    -20.175]
+
+=================== profile.py F1 2 / hedge.py   (F1, F2 = the two largest pure farmers; last 2 days)
+--- farmer
+maker fills 1529  taker trades 2529  maker BUY share 1.00, taker BUY share 0.51
+fills followed by an exit trade within 1 h: 79% (1206 of 1529)
+ exit via: {'complement': 977, 'same': 229}
+ delay s quantiles 10/25/50/75/90: [0. 0. 0. 0. 2.]
+ loss per share (price units) quantiles: [-0.     0.     0.007  0.015  0.03 ]  mean 0.0133; size-weighted mean 0.0188
+ loss as % of fill notional: mean 4.6%
+ exits within 5 s: 1169 (97%), loss per share mean 0.0108 median 0.0060
+   delay    0-   2s: n=1049 loss/share mean +0.0099 median +0.0060
+   delay    2-  10s: n= 121 loss/share mean +0.0186 median +0.0080
+   delay   10-  60s: n=   7 loss/share mean +0.0620 median +0.0750
+   delay   60- 600s: n=   8 loss/share mean +0.0281 median +0.0300
+   delay  600-3601s: n=  21 loss/share mean +0.1311 median +0.1000
+--- farmer
+maker fills 3635  taker trades 1464  maker BUY share 0.77, taker BUY share 0.52
+fills followed by an exit trade within 1 h: 28% (1016 of 3635)
+ exit via: {'complement': 623, 'same': 393}
+ delay s quantiles 10/25/50/75/90: [  0.     0.     0.    15.25 632.5 ]
+ loss per share (price units) quantiles: [0.    0.001 0.01  0.02  0.04 ]  mean 0.0148; size-weighted mean 0.0198
+ loss as % of fill notional: mean 4.5%
+ exits within 5 s: 711 (70%), loss per share mean 0.0091 median 0.0100
+   delay    0-   2s: n= 612 loss/share mean +0.0081 median +0.0100
+   delay    2-  10s: n= 124 loss/share mean +0.0169 median +0.0103
+   delay   10-  60s: n=  66 loss/share mean +0.0306 median +0.0195
+   delay   60- 600s: n= 110 loss/share mean +0.0183 median +0.0100
+   delay  600-3601s: n= 104 loss/share mean +0.0376 median +0.0300
+
+=================== an_sim.py sim7.pkl   (sim_mk.py: 1440 markets, 7 days of minute prices and taker trades to 11 Nov 12:30 UTC)
+markets 1440  days per half median 3.50
+
+== ALL markets, both halves, per day totals (min size each): by distance and fill rule
+  d     rule  capital$  reward/d  fills/d filled$/d   loss/d    net/d  kept net %cap/d loss per filled $ markout 1m/sh  10m/sh
+  1  through     56490      4631     2539     37078     3287     1343  0.29      2.38%             0.088        0.0101  0.0215
+  1    touch     56490      4623     3714     52671     3822      800  0.17      1.42%             0.072        0.0044  0.0136
+  2  through     56490      3891     1644     21738     2188     1703  0.44      3.02%             0.100        0.0068  0.0203
+  2    touch     56490      3888     2227     28418     2406     1483  0.38      2.62%             0.084        0.0027  0.0148
+  3  through     56390      3164     1111     13513     1576     1588  0.50      2.82%             0.116        0.0026  0.0185
+  3    touch     56390      3163     1470     17204     1684     1478  0.47      2.62%             0.097       -0.0013  0.0131
+  4  through     53130      2532      805      8913     1155     1377  0.54      2.59%             0.128       -0.0031  0.0147
+  4    touch     53130      2531     1005     10810     1217     1314  0.52      2.47%             0.112       -0.0059  0.0110
+
+== d = 2c, 'touch' rule (pessimistic: more fills). Markets by net per day:
+ net > 0: 949 of 1440 markets; net/day quantiles 10/25/50/75/90: [-2.15 -0.37  0.45  1.36  4.08]
+
+ by spread now:
+   (0, 0.011]: n= 140 capital    9890 reward/d   210.4 loss/d   538.5 net/d  -328.1 kept -1.56 net %cap/d  -3.32% fills/d per market  2.66 net>0  44%
+   (0.011, 0.021]: n= 191 capital    9055 reward/d   311.4 loss/d   516.6 net/d  -205.1 kept -0.66 net %cap/d  -2.27% fills/d per market  2.35 net>0  35%
+   (0.021, 0.05]: n= 368 capital   14685 reward/d   667.3 loss/d   637.6 net/d    29.7 kept  0.04 net %cap/d   0.20% fills/d per market  1.82 net>0  56%
+   (0.05, 0.1]: n= 495 capital   16040 reward/d  1268.5 loss/d   550.8 net/d   717.7 kept  0.57 net %cap/d   4.47% fills/d per market  1.20 net>0  78%
+   (0.1, 9]: n= 246 capital    6820 reward/d  1430.6 loss/d   162.2 net/d  1268.4 kept  0.89 net %cap/d  18.60% fills/d per market  0.57 net>0  93%
+
+ by competitiveness:
+   (-1, 1e-09]: n= 390 capital   12190 reward/d  1918.9 loss/d   351.2 net/d  1567.7 kept  0.82 net %cap/d  12.86% fills/d per market  0.81 net>0  90%
+   (1e-09, 1]: n= 111 capital    3155 reward/d   632.5 loss/d   180.5 net/d   452.0 kept  0.71 net %cap/d  14.33% fills/d per market  1.76 net>0  92%
+   (1, 5]: n= 290 capital    9635 reward/d   659.8 loss/d   589.1 net/d    70.7 kept  0.11 net %cap/d   0.73% fills/d per market  1.92 net>0  74%
+   (5, 20]: n= 496 capital   18605 reward/d   558.2 loss/d   963.1 net/d  -404.9 kept -0.73 net %cap/d  -2.18% fills/d per market  1.90 net>0  44%
+   (20, 100]: n= 151 capital   12505 reward/d   117.8 loss/d   312.1 net/d  -194.3 kept -1.65 net %cap/d  -1.55% fills/d per market  1.41 net>0  42%
+   (100, 1e+09]: n=   2 capital     400 reward/d     1.1 loss/d     9.7 net/d    -8.6 kept -7.95 net %cap/d  -2.14% fills/d per market  1.79 net>0   0%
+
+ by trades in 7 days:
+   (-1, 0.5]: n=  96 capital    3160 reward/d   305.0 loss/d     0.0 net/d   305.0 kept  1.00 net %cap/d   9.65% fills/d per market  0.00 net>0 100%
+   (0.5, 10]: n= 416 capital   14810 reward/d  1012.3 loss/d   176.1 net/d   836.2 kept  0.83 net %cap/d   5.65% fills/d per market  0.37 net>0  91%
+   (10, 50]: n= 546 capital   19665 reward/d  1286.6 loss/d   644.8 net/d   641.8 kept  0.50 net %cap/d   3.26% fills/d per market  1.27 net>0  64%
+   (50, 200]: n= 309 capital   13205 reward/d   997.8 loss/d   881.5 net/d   116.3 kept  0.12 net %cap/d   0.88% fills/d per market  2.81 net>0  36%
+   (200, 1e+09]: n=  73 capital    5650 reward/d   286.5 loss/d   703.2 net/d  -416.7 kept -1.45 net %cap/d  -7.38% fills/d per market  7.02 net>0  14%
+
+ by price range in 7 days:
+   (-1, 0.02]: n=  12 capital    1020 reward/d    15.2 loss/d     0.0 net/d    15.2 kept  1.00 net %cap/d   1.49% fills/d per market  0.00 net>0 100%
+   (0.02, 0.05]: n=  20 capital    1090 reward/d    31.6 loss/d     0.7 net/d    31.0 kept  0.98 net %cap/d   2.84% fills/d per market  0.06 net>0 100%
+   (0.05, 0.1]: n=  95 capital    5165 reward/d   147.3 loss/d    33.1 net/d   114.2 kept  0.78 net %cap/d   2.21% fills/d per market  0.43 net>0  91%
+   (0.1, 0.25]: n= 481 capital   21685 reward/d  1097.6 loss/d   570.1 net/d   527.5 kept  0.48 net %cap/d   2.43% fills/d per market  1.14 net>0  69%
+   (0.25, 9]: n= 832 capital   27530 reward/d  2596.6 loss/d  1801.8 net/d   794.8 kept  0.31 net %cap/d   2.89% fills/d per market  1.96 net>0  60%
+
+ by pool $/day:
+   (0, 5]: n= 937 capital   31535 reward/d  1568.1 loss/d   803.3 net/d   764.8 kept  0.49 net %cap/d   2.43% fills/d per market  0.98 net>0  76%
+   (5, 20]: n= 242 capital   11105 reward/d   654.6 loss/d   459.2 net/d   195.4 kept  0.30 net %cap/d   1.76% fills/d per market  1.88 net>0  51%
+   (20, 50]: n= 187 capital    9210 reward/d  1105.8 loss/d   613.5 net/d   492.3 kept  0.45 net %cap/d   5.34% fills/d per market  2.63 net>0  44%
+   (50, 200]: n=  64 capital    2820 reward/d   524.9 loss/d   375.9 net/d   148.9 kept  0.28 net %cap/d   5.28% fills/d per market  4.66 net>0  52%
+   (200, 1e+09]: n=  10 capital    1820 reward/d    34.9 loss/d   153.7 net/d  -118.8 kept -3.41 net %cap/d  -6.53% fills/d per market  6.10 net>0   0%
+
+=================== oos2.py sim7.pkl
+
+A. formula as documented (a lone maker takes the whole pool): d = 2c, 904 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      15     589.4    27.2   562.3   187.4%    24.4   100%      3.68     40.0     0.00
+      500      23     790.6    44.9   745.8   152.2%    37.2   100%      3.68     34.0     0.00
+     1000      42    1138.4    76.7  1061.7   110.6%    72.2   100%      3.68     32.0     0.00
+     2000      88    1448.1   125.9  1322.2    66.1%   131.9   100%      0.10     19.0     0.00
+     5000     219    2023.1   348.0  1675.0    33.6%   338.2    94%    -24.44      5.0     0.00
+
+B. only markets where somebody already scores (competitiveness > 0): d = 2c, 524 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      12     271.4    35.5   236.0    78.7%    32.0   100%      8.21     47.0     0.25
+      500      20     322.5    48.8   273.7    55.9%    54.2   100%      1.45     42.0     0.38
+     1000      41     443.2   140.8   302.3    30.2%   138.8    90%    -24.44     22.0     0.45
+     2000      82     576.4   245.4   331.0    16.5%   236.0    88%    -24.44      5.0     0.67
+     5000     168     811.2   415.5   395.7     7.9%   414.2    81%    -24.44      5.0     1.46
+
+C. as A, but our share of any pool capped at 25 %: d = 2c, 564 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      15     190.1    37.7   152.4    50.8%    39.6   100%      4.71     52.0     0.00
+      500      23     247.2    52.4   194.8    39.8%    51.0   100%      0.62     44.0     0.00
+     1000      45     374.0   139.4   234.6    23.7%   131.7    93%    -24.44     35.0     0.00
+     2000      81     502.8   257.9   245.0    12.2%   221.1    88%    -24.44     30.0     0.10
+     5000     208     675.5   390.3   285.2     5.7%   375.2    81%    -24.44      7.0     0.00
+
+D. only clearly contested markets (competitiveness > 1): d = 2c, 440 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      13      61.1    70.7    -9.6    -3.3%    72.5    77%    -24.44     30.0     1.54
+      500      22      91.5   107.5   -16.0    -3.2%   105.9    73%    -24.44     17.0     1.66
+     1000      39     132.7   135.8    -3.1    -0.3%   128.8    82%    -24.44     12.0     1.78
+     2000      78     202.3   194.7     7.6     0.4%   196.1    74%    -24.44      5.0     2.56
+     5000     145     344.9   311.8    33.1     0.7%   314.5    75%    -24.44      5.0     3.07
+
+A. formula as documented (a lone maker takes the whole pool): d = 3c, 672 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      15     584.2    24.4   559.8   186.6%    21.2   100%      3.78     40.0     0.00
+      500      23     761.8    30.6   731.2   159.0%    26.7   100%      3.78     33.0     0.00
+     1000      41    1101.2    67.8  1033.3   103.3%    57.3   100%      3.78     28.0     0.00
+     2000      89    1368.6    96.2  1272.4    63.9%    87.2   100%      0.10     12.0     0.00
+     5000     220    1869.1   198.9  1670.2    33.4%   201.9    96%    -16.09      5.0     0.00
+
+B. only markets where somebody already scores (competitiveness > 0): d = 3c, 294 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      12     200.5    28.1   172.4    57.5%    23.4   100%      0.82     47.0     0.25
+      500      19     261.8    38.3   223.5    44.7%    37.6   100%      0.82     33.0     0.24
+     1000      41     325.8    73.8   252.0    25.2%    79.3    93%    -16.09     10.0     0.32
+     2000      80     449.9   159.9   290.0    14.8%   167.6    89%    -23.14      5.0     0.54
+     5000     150     598.4   292.3   306.0     6.2%   263.8    83%    -23.14      5.0     1.12
+
+C. as A, but our share of any pool capped at 25 %: d = 3c, 380 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      15     150.9    25.6   125.2    41.7%    22.4   100%      0.72     42.0     0.00
+      500      23     218.6    38.0   180.5    36.8%    31.8   100%      0.72     40.0     0.00
+     1000      44     314.8    68.6   246.3    25.4%    62.7    98%     -2.03     32.0     0.00
+     2000      89     400.6   138.4   262.2    13.2%   136.7    90%    -23.14     20.0     0.00
+     5000     199     567.4   301.0   266.4     5.3%   262.8    83%    -23.14      5.0     0.00
+
+D. only clearly contested markets (competitiveness > 1): d = 3c, 210 eligible markets (expected reward >= $1/day each)
+   budget markets  reward/d  loss/d   net/d  net %/d fills/d  net>0 worst mkt med pool med comp
+      300      15      35.7    26.7     9.0     3.0%    37.6    73%     -4.93     10.0     1.35
+      500      23      48.6    54.8    -6.2    -1.3%    68.2    78%    -23.14      5.0     1.66
+     1000      41      90.6   108.7   -18.1    -1.8%   105.5    76%    -23.14      5.0     1.69
+     2000      61     131.6   159.5   -27.8    -1.4%   138.6    72%    -23.14      5.0     1.94
+     5000     110     217.8   210.2     7.6     0.2%   179.2    74%    -23.14      5.0     2.50
+
+=================== filters.py sim7.pkl
+  all markets                                                n=1440 reward/d  3963.2 loss/d  2495.5 net/d  1467.8 kept  0.37 loss per market-day  1.73 fills/d 1.67
+deadline questions ("... by November 30?", "... before 2027?", "released by ..."): 345 of 1440
+  deadline question                                          n= 345 reward/d   974.6 loss/d   963.6 net/d    10.9 kept  0.01 loss per market-day  2.79 fills/d 2.17
+  not a deadline question                                    n=1095 reward/d  2988.7 loss/d  1531.8 net/d  1456.8 kept  0.49 loss per market-day  1.40 fills/d 1.51
+by 24 h volume ($, snapshot):
+  volume 0-1e-09                                             n= 435 reward/d  1093.6 loss/d   125.2 net/d   968.4 kept  0.89 loss per market-day  0.29 fills/d 0.30
+  volume 1e-09-100                                           n= 369 reward/d   857.6 loss/d   342.7 net/d   514.9 kept  0.60 loss per market-day  0.93 fills/d 1.11
+  volume 100-500                                             n= 306 reward/d   799.1 loss/d   412.3 net/d   386.8 kept  0.48 loss per market-day  1.35 fills/d 1.69
+  volume 500-2000                                            n= 184 reward/d   558.7 loss/d   504.6 net/d    54.1 kept  0.10 loss per market-day  2.74 fills/d 3.08
+  volume 2000-1e+12                                          n= 146 reward/d   654.2 loss/d  1110.7 net/d  -456.5 kept -0.70 loss per market-day  7.61 fills/d 5.35
+by fills per day in the first half:
+  fills/day 0-0.5                                            n= 595 reward/d  1479.4 loss/d   583.1 net/d   896.2 kept  0.61 loss per market-day  0.98 fills/d 0.97
+  fills/day 0.5-2                                            n= 530 reward/d  1421.1 loss/d   652.5 net/d   768.7 kept  0.54 loss per market-day  1.23 fills/d 1.42
+  fills/day 2-5                                              n= 233 reward/d   705.2 loss/d   707.1 net/d    -1.9 kept -0.00 loss per market-day  3.03 fills/d 2.73
+  fills/day 5-99                                             n=  82 reward/d   357.5 loss/d   552.7 net/d  -195.3 kept -0.55 loss per market-day  6.74 fills/d 5.36
+markets nobody or almost nobody scores in (competitiveness < 1):
+  all                                                        n= 501 reward/d  2618.3 loss/d   590.4 net/d  2027.9 kept  0.77 loss per market-day  1.18 fills/d 1.17
+  not a deadline question                                    n= 402 reward/d  2055.6 loss/d   405.6 net/d  1650.0 kept  0.80 loss per market-day  1.01 fills/d 1.09
+  deadline question                                          n=  99 reward/d   562.7 loss/d   184.8 net/d   377.9 kept  0.67 loss per market-day  1.87 fills/d 1.51
+contested (competitiveness >= 1):
+  all                                                        n= 939 reward/d  1345.0 loss/d  1905.1 net/d  -560.1 kept -0.42 loss per market-day  2.03 fills/d 1.94
+  not deadline, first-half fills < 0.5 a day, reward >= $1/day n=  85 reward/d   173.1 loss/d    83.7 net/d    89.4 kept  0.52 loss per market-day  0.98 fills/d 1.11
+
+=================== dyn.py snaps cands.pkl   (11 snapshots 11 Nov 16:26-18:04 UTC)
+snapshots: 11  span 97 min  markets in the first: 10786
+candidates with a pool >= $20 and min size <= 60: 809; empty (under one point of total score) in the first snapshot: 243, pools $9575/day
+
+Empty at the start; minutes later -> still listed / still empty / pool at least half of the start / our share at 2c (median, mean)
+  +  10 min: listed 243  empty 231 ( 95%)  pool kept 240 ( 99%)  share median 1.00 mean 0.97  pools now $9507
+  +  19 min: listed 243  empty 233 ( 96%)  pool kept 237 ( 98%)  share median 1.00 mean 0.97  pools now $9510
+  +  29 min: listed 242  empty 228 ( 94%)  pool kept 234 ( 96%)  share median 1.00 mean 0.96  pools now $9385
+  +  39 min: listed 242  empty 222 ( 91%)  pool kept 236 ( 97%)  share median 1.00 mean 0.94  pools now $9339
+  +  49 min: listed 241  empty 216 ( 89%)  pool kept 232 ( 95%)  share median 1.00 mean 0.91  pools now $9300
+  +  59 min: listed 241  empty 215 ( 88%)  pool kept 232 ( 95%)  share median 1.00 mean 0.90  pools now $9321
+  +  68 min: listed 242  empty 217 ( 89%)  pool kept 233 ( 96%)  share median 1.00 mean 0.91  pools now $9243
+  +  78 min: listed 242  empty 208 ( 86%)  pool kept 233 ( 96%)  share median 1.00 mean 0.88  pools now $9199
+  +  87 min: listed 242  empty 207 ( 85%)  pool kept 229 ( 94%)  share median 1.00 mean 0.88  pools now $9123
+  +  97 min: listed 242  empty 205 ( 84%)  pool kept 230 ( 95%)  share median 1.00 mean 0.88  pools now $9193
+
+hold the best 20 markets of the first snapshot for the whole span: static estimate $1594/day, with pools and competition changing $1282/day (80%)
+
+hold the best 45 markets of the first snapshot for the whole span: static estimate $2904/day, with pools and competition changing $2487/day (86%)
+
+hold the best 100 markets of the first snapshot for the whole span: static estimate $5632/day, with pools and competition changing $4952/day (88%)
+re-select the best 20 every snapshot: $1630/day by the numbers of each moment; markets replaced per 10 min: 19%
+re-select the best 45 every snapshot: $2922/day by the numbers of each moment; markets replaced per 10 min: 11%
+re-select the best 100 every snapshot: $5630/day by the numbers of each moment; markets replaced per 10 min: 10%
+
+after the whole span, of 243 pools empty at the start: pool cut by more than half 13 (5%), raised by more than half 3; got competition 37 (15%), total score that came: median 67 points (our min-size quote at 2c scores 6)
+
+=================== pool_after.py active.json cands.pkl snap_1623.json snaps/s_1111_1804.json   (start = 11:30 UTC)
+empty at the start with a pool >= $20 (candidates): 336 pools $13298/day
+
+snap_1623.json: no longer rewarded 11; somebody scores 119 (35%); still empty 206 (61%)
+   somebody came : pool now / pool at the start, quantiles 10/25/50/75/90 [0.08 0.46 0.84 1.   1.24]; cut below a quarter 19%; pools $4905 -> $3763
+   still empty   : pool now / pool at the start, quantiles 10/25/50/75/90 [0.55 0.93 1.   1.02 1.18]; cut below a quarter 7%; pools $7805 -> $7199
+   where somebody came: total score median 95 points (ours would be 6); a min-size quote would now earn median $1.15/day, all of them $323/day (the pools were $4905/day while empty)
+
+snaps/s_1111_1804.json: no longer rewarded 14; somebody scores 127 (38%); still empty 195 (58%)
+   somebody came : pool now / pool at the start, quantiles 10/25/50/75/90 [0.08 0.28 0.79 1.   1.18]; cut below a quarter 25%; pools $5300 -> $3548
+   still empty   : pool now / pool at the start, quantiles 10/25/50/75/90 [0.45 0.93 1.   1.01 1.21]; cut below a quarter 9%; pools $7330 -> $6795
+   where somebody came: total score median 60 points (ours would be 6); a min-size quote would now earn median $1.55/day, all of them $486/day (the pools were $5300/day while empty)
+
+=================== poll_an.py poll.jsonl   (200 pools empty at 18:04, books every 20 s, 11 Nov 21:30-22:32 UTC)
+polls 186  span 62 min, step median 20 s
+markets 200  never a scoring quote: 132 (66%);  always: 28;  part of the time: 40
+pools: never $5257/day, part of the time $1840/day, always $1277/day
+visits that began and ended inside the span: 77 in 29 markets; duration quantiles 10/25/50/75/90 (s): [ 20.  40. 100. 380. 848.]; shorter than 3 min: 57%
+markets empty at the first poll where a scoring quote appeared later: 21 of 153 (14%) in 62 min
+
+=================== paper run 1: 11 Nov 21:33-23:25 UTC, the rule BEFORE the deadline / volume filters and the sticky selection
+run 1.9 h; markets selected over the run: 163; material fills 35 (450 a day); hedges 19
+fills by kind of question:
+  all                                  fills  35  shares    811  $   324  crossing book 12  alone in the zone 12
+  deadline question (now filtered out) fills  10  shares    293  $   130  crossing book  3  alone in the zone  3
+  other                                fills  25  shares    518  $   195  crossing book  9  alone in the zone  9
+fills by how they came:
+  a print through or at our price      fills  23  shares    527  $   218  crossing book  0  alone in the zone  5
+  a real order moved through our price fills  12  shares    284  $   107  crossing book 12  alone in the zone  7
+cost of the fills: hedges $-18.81 (19 exits, 478 shares, 3.9c a share); positions still open $-34.23 at the last mid (12 markets)
+  deadline questions  : markets with fills  9  hedges $ -10.20  open $ -17.80  total $ -28.00
+  other questions     : markets with fills 17  hedges $  -8.61  open $ -16.43  total $ -25.04
+rewards by the book $116.25 (official $126.74, alone $88.16); trading $-53.04; per day: rewards $1494, trading $-682
+selected markets that are deadline questions: 29 of 163

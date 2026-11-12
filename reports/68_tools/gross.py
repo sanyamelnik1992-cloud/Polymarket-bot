@@ -1,8 +1,10 @@
-"""Gross reward a min-size two-sided quote would earn, from the official competitiveness (total score per $ of daily pool)."""
+"""Gross reward a min-size two-sided quote would earn, from the official competitiveness (total score per $ of daily pool).
+usage: gross.py [SNAPSHOT_UNIX_TS]   (reads active.json of scale.py, writes gross.pkl and cands.pkl)"""
 import json, re, time
 import numpy as np
+import sys
 act = json.load(open("active.json"))
-now = time.time()
+now = float(sys.argv[1]) if len(sys.argv) > 1 else time.time()     # the time of the snapshot (days to the end)
 from datetime import datetime
 def end_ts(m):
     s = m.get("end_date")
@@ -43,3 +45,8 @@ d.to_pickle("gross.pkl")
 print("\nEvery market, min size, 2c from mid: capital $%.0f, reward $%.0f/day" % (d.cap.sum(), d.r2.sum()))
 k = d[(d.p >= .1) & (d.p <= .9) & (d.days > 2)]
 print("price 0.10-0.90 and > 2 days left: markets %d, capital $%.0f, reward@2c $%.0f/day" % (len(k), k.cap.sum(), k.r2.sum()))
+# the candidate universe of the later tools: price in range, more than 2 days left, no live sports / crypto up-down
+LIVE = re.compile(r"\bvs\.?\b|o/u|spread:|handicap|game \d|map \d|\bset \d|winner|match|up or down|kills|total (?:goals|points|rounds)", re.I)
+c = d[(d.p >= .1) & (d.p <= .9) & (d.days > 2) & ~d.q.str.contains(LIVE)].copy()
+c.to_pickle("cands.pkl")
+print("candidate universe (cands.pkl):", len(c), " with reward@2c >= $1/day:", int((c.r2 >= 1).sum()))
