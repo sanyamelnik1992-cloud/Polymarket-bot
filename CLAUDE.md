@@ -150,24 +150,30 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
 - **Liquidity-rewards farmer R, "Награды"** (`reports/68_liquidity_rewards.md`, `pmbot/rewards/`, `scripts/run_rewards.py`,
   `scripts/report_rewards.py`; unit `pmbot-rewards` = `config/rewards.toml`): PAPER ONLY (the config loader refuses anything else),
   not enabled at boot (`/restart pmbot-rewards`), listed in `ops.REWARD_UNITS` (its own journal: `rquote`, `rfill`, `rhedge`,
-  `rsample`, `rstatus`), shown in `/status` and in the hourly report apart from the bots' totals. Polymarket pays ~$115k a day
-  in USDC to makers resting two-sided quotes near the price in ~11 000 markets. Facts (11 Nov): `market_competitiveness` x
-  `rate_per_day` = the total qualifying score of all makers (so our share = our score / (competitiveness x rate + ours)); an order
-  scores only after resting `r.moas` = 30 s (GET `/clob-markets/{cid}`: also fee rate `fd.r`, tick, neg-risk); what any wallet
-  is paid is public (Data API `/v2/user-pnl`: `reward_income`, `maker_rebate`, `position_pnl`; `/v2/activity?type=REWARD`).
+  `rsample`, `rstatus`, `rmarkets`), shown in `/status` and in the hourly report apart from the bots' totals. Polymarket pays
+  ~$115k a day in USDC to makers resting two-sided quotes near the price in ~11 000 markets. Facts (11 Nov):
+  `market_competitiveness` x `rate_per_day` = the total qualifying score of all makers (our share = our score / (that + ours));
+  an order scores only after resting `r.moas` = 30 s (GET `/clob-markets/{cid}`: also the fee rate `fd.r`, tick, neg-risk); what
+  any wallet is paid is public (Data API `/v2/user-pnl`: `reward_income`, `maker_rebate`, `position_pnl`; `/v2/activity?type=REWARD`).
   1400 wallets get >= $1 a day; the 498 "pure farmers" lose 45 % of their rewards on positions, the median one keeps 28 %, a
   third lose money. The two largest (each ~$7k a day of rewards, ~$2.8k net) rest the minimum size on both outcomes in 1000+
   markets and exit 97 % of their fills within 5 s by buying the other outcome and merging (1.3 c a share + fee). The bot copies
-  that: minimum size, `dist_cents` 2 when others score in the zone, `alone_frac` 0.85 of the max spread when nobody does,
-  orders kept 30 s, hedge from the live book if the pair costs <= $1.06, 10 min cooldown, 3 fills a market a day, budget =
-  bids + positions. Paper fills: trade-through, the queue at our price, and a REAL ORDER AT OR THROUGH OUR PRICE IS A FILL
-  (without it an empty market looks free: the informed trader moves the book, there is no print). Replay on 1440 markets x 7
-  days: contested markets (competitiveness > 1) pay nothing to a minimum-size quote; the money is in pools nobody scores in
-  yet, and those are temporary (35 % get makers within 5 h, who bring ~15x our score; Polymarket moves the pools within hours).
-  NOT known and not measurable on paper: whether a lone maker is paid the whole pool, how often informed traders hit a lone
-  quote, how fast others follow us in. Read `cautious_pnl` (the lower reward estimate without the part earned alone, plus
-  trading), not `total_pnl`. Paper exam and the live micro-test (3-5 markets, real `/rewards/user/percentages`): report 68
-  sections 7-8; live needs the owner's word and a separately reviewed live broker (hedge = FAK, merge, shared wallet).
+  that: minimum size, `dist_cents` 2 when others score in the zone, `alone_frac` 0.85 of the max spread when nobody does, orders
+  kept 30 s, hedge from the live book if the pair costs <= $1.06, 10 min cooldown, 2 fills per market per 24 h, budget = bids +
+  positions; not quoted: deadline questions (`deadline_regex`: "... by November 30?", "before 2027": kept 1 % of their rewards
+  in the replay), markets with > $500 of 24 h volume, expected reward < $2 a day; held markets rank `hold_bonus` 1.5x (the first
+  paper run went through 163 markets in 1.9 h). Paper fills: trade-through, the queue at our price, and A REAL ORDER AT OR
+  THROUGH OUR PRICE IS A FILL (without it an empty market looks free: the informed trader moves the book, there is no print).
+  Replay on 1440 markets x 7 days: contested markets (competitiveness > 1) pay nothing to a minimum-size quote; the money is in
+  pools nobody scores in yet, and those are temporary (35 % get makers within 5 h, who bring 10-15x our score; Polymarket moves
+  the pools within hours). First paper run on live data (1.9 h, before the filters): 35 fills, trading -$53 against $116 of
+  estimated rewards of which $88 in empty pools. NOT known and not measurable on paper: whether a lone maker is paid the whole
+  pool, whether a pool is split by the minute or over the day (the docs' formula says the day: then two minutes of presence
+  take an empty pool, and 77 visits with a median of 100 s were seen in 29 of 200 empty pools in one hour), how often informed
+  traders hit a lone quote. Read `cautious_pnl` (the lower reward estimate without the part earned alone, plus trading), not
+  `total_pnl`. Next steps (report 68 section 8): paper on the server, then a live "10 minutes in one empty pool" test ($20 in
+  orders) that answers the open questions; live needs the owner's word and a separately reviewed live broker (maker orders,
+  FAK hedge, merge, the wallet is shared with the lock bots).
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

@@ -28,7 +28,7 @@ class RewardsCfg:
     max_candidates: int = 400            # how many of the best candidates (by the official estimate) get a book lookup
     max_markets: int = 45
     max_empty_frac: float = 0.5          # share of picks allowed where nobody else quotes in the reward zone
-    quote_budget_usd: float = 1000.0     # pUSD all resting bids may tie up
+    quote_budget_usd: float = 1000.0     # pUSD the resting bids and the open positions may tie up together
     max_per_market_usd: float = 60.0     # pUSD both bids of one market may tie up
     reselect_min: float = 10.0           # empty pools are found by other makers within hours (reports/68): look often
     hold_bonus: float = 1.5              # a market we already quote ranks as if it paid this much more: without it the
