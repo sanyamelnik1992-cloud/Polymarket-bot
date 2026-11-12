@@ -1,28 +1,28 @@
-journal data/journal-rewards: 8.4 h of events, 11-12 08:36 -> 11-12 17:00 UTC
-now: markets 45, quoting 0, bids $0, feed ok, pool rate at current shares $0.0/day
+journal data/journal-rewards: 9.4 h of events, 11-12 08:36 -> 11-12 18:01 UTC
+now: markets 42, quoting 0, bids $0, feed ok, pool rate at current shares $0.0/day
 rewards (estimate by the book): today $362.302, total $362.302; by Polymarket's competitiveness: total $404.81; earned alone in a zone: total $282.625; stress (one more identical maker): total $189.946
-hedges: 53 for 930.3 shares, lost $37.42; inventory not hedged yet: $152.72
-positions: value $142.35 cost $199.52 -> open $-57.16; realised $-37.42; trading $-94.58 (today -49.82)
-TOTAL (rewards estimate + trading): $267.72; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-14.91; fills total 88
+hedges: 54 for 950.3 shares, lost $38.61; inventory not hedged yet: $143.72
+positions: value $138.98 cost $190.52 -> open $-51.54; realised $-38.61; trading $-90.15 (today -45.39)
+TOTAL (rewards estimate + trading): $272.15; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-10.48; fills total 88
 
 top markets by estimated reward:
   $   8.34  share 0.00  pool $61/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
   $   8.14  share 0.00  pool $61/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
-  $   8.13  share 0.00  pool $68/d  will-openrouter-process-between-220t-and-230t-tokens-the-wee
-  $   7.13  share 0.00  pool $55/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $   6.73  share 0.00  pool $50/d  empty will-eric-trump-join-trump-at-apec-in-china
+  $   8.13  share 0.00  pool $66/d  will-openrouter-process-between-220t-and-230t-tokens-the-wee
+  $   7.13  share 0.00  pool $54/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
   $   6.69  share 0.00  pool $50/d  empty will-jared-kushner-join-trump-at-apec-in-china
   $   6.68  share 0.00  pool $50/d  empty will-the-white-house-call-a-full-lid-by-630-pm-on-november-1
-  $   5.99  share 0.00  pool $56/d  will-the-democrats-win-vermont-in-the-2028-presidential-elec
+  $   5.99  share 0.00  pool $55/d  will-the-democrats-win-vermont-in-the-2028-presidential-elec
   $   5.91  share 0.00  pool $49/d  will-rothko-untitled-sell-for-between-5pt5m-and-6pt5m-at-auc
   $   5.30  share 0.00  pool $50/d  empty will-donald-trump-publicly-insult-someone-on-november-6-2026
-  $   4.59  share 0.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
   $   2.87  share 0.00  pool $18/d  empty will-the-republicans-win-utah-in-the-2028-presidential-elect
+  $   2.07  share 0.00  pool $100/d  will-gas-hit-3pt70-low-by-november-30-2026
+  $   1.20  share 0.00  pool $55/d  empty will-the-next-meta-muse-spark-model-be-released-on-november-
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
-  2026-11-12: book $362.30, official $404.81, alone $282.63 | hedges 53 ($37.43) | trading: day not closed | samples 500, avg markets scoring 25.9
+  2026-11-12: book $362.30, official $404.81, alone $282.63 | hedges 54 ($38.62) | trading: day not closed | samples 563, avg markets scoring 23.0
 
-last selection: 45 markets of 395 priced, capital $835.96, est $1557.77/day, empty books 22
+last selection: 42 markets of 397 priced, capital $775.8, est $1608.31/day, empty books 22
 
 fills: 88 (material 88)
   11-12 13:44 will-the-30-year-treasury-yield-hit-5pt42-in-november   YES 20@0.700 last_trade=0.6699999999999999
@@ -42,23 +42,22 @@ fills: 88 (material 88)
   11-12 14:56 will-gas-hit-3pt70-low-by-november-30-2026              NO  20@0.290 last_trade=0.73
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                     67 markets  rewards $  198.37  trading $  -83.40  net $ +114.96  fills  35  quoted   91.1 market-hours
-  mostly alone in the zone                45 markets  rewards $  179.86  trading $  -39.13  net $ +140.73  fills  16  quoted   77.8 market-hours
-  with other makers in the zone           22 markets  rewards $   18.50  trading $  -44.27  net $  -25.77  fills  19  quoted   13.2 market-hours
-  never filled                            36 markets  rewards $  154.06  trading $   -6.78  net $ +147.28  fills   0  quoted   68.8 market-hours
-  filled                                  31 markets  rewards $   44.31  trading $  -76.62  net $  -32.32  fills  35  quoted   22.3 market-hours
+  all                                     62 markets  rewards $  183.46  trading $  -78.19  net $ +105.26  fills  34  quoted   81.4 market-hours
+  mostly alone in the zone                42 markets  rewards $  165.89  trading $  -38.08  net $ +127.81  fills  16  quoted   71.1 market-hours
+  with other makers in the zone           20 markets  rewards $   17.57  trading $  -40.12  net $  -22.55  fills  18  quoted   10.3 market-hours
+  never filled                            32 markets  rewards $  139.18  trading $   -6.83  net $ +132.35  fills   0  quoted   59.2 market-hours
+  filled                                  30 markets  rewards $   44.28  trading $  -71.36  net $  -27.09  fills  34  quoted   22.2 market-hours
   worst by trading:
     $ -12.20  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
+    $  -6.83  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
-    $  -6.78  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
-    $  -6.66  rewards $  0.61  fills 1  pool $30/d  Will Russia target Kyiv on November 8, 2026?
     $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
     $  -5.80  rewards $  2.26  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
     $  -5.24  rewards $  0.00  fills 1  pool $42/d  Will primmie play for Paper Rex in 2027?
     $  -4.54  rewards $  0.78  fills 1  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
+    $  -4.20  rewards $  1.31  fills 1  pool $41/d  Will primmie play for Paper Rex in 2027?
 
-hedges: 53, 930.298 shares, cost $37.43 = 4.02c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-12 14:21 will-the-republicans-win-tennessee-in-the-2028-presiden bought YES 20@0.590 held@0.460 cost/share +0.0597
+hedges: 54, 950.298 shares, cost $38.62 = 4.06c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-12 14:27 will-the-baddest-speechwriter-of-all-win-best-documenta bought NO  20@0.611 held@0.374 cost/share -0.0031
   11-12 14:30 will-gas-hit-3pt65-low-by-november-30-2026              bought YES 40@0.485 held@0.545 cost/share +0.0400
   11-12 14:32 donald-trump-of-truth-social-posts-november-13-november bought NO  16@0.800 held@0.210 cost/share +0.0180
@@ -68,5 +67,6 @@ hedges: 53, 930.298 shares, cost $37.43 = 4.02c a share (the largest reward earn
   11-12 14:49 will-170-189-ships-transit-the-bab-el-mandeb-strait-bet bought YES 20@0.480 held@0.580 cost/share +0.0600
   11-12 14:49 nba-2026-27-3pm-leader-luka-doncic                      bought NO  20@0.734 held@0.315 cost/share +0.0588
   11-12 14:56 will-the-5-year-treasury-yield-hit-5pt03-in-november    bought NO  20@0.620 held@0.390 cost/share +0.0218
+  11-12 17:45 will-camilo-santana-be-the-next-brazilian-chief-of-staf bought YES 20@0.600 held@0.450 cost/share +0.0596
 
 settlements: 0, realised $0.00
