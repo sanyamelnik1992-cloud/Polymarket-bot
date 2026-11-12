@@ -9,7 +9,7 @@ A market must be expected to pay at least `min_expected_reward` a day (payouts u
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timezone
 
 import requests
 
@@ -33,7 +33,8 @@ class RMarket:
     end_ts: float            # market end (unix s), nan if unknown
     tick: float = 0.01
     min_order: float = 5.0
-    price: float = 0.5       # displayed price at selection (mid, or last trade when the book is wide)
+    price: float = 0.5       # displayed price at selection: the MIDDLE of the book when it is wide (not a price!)
+    last_trade: float | None = None  # YES price of the last trade at selection (CLOB /last-trades-prices)
     comp: float = 0.0        # official competitiveness at selection (total score per $1 of the daily pool)
     est_share: float = 0.0
     est_reward: float = 0.0  # $ per day at selection (the lower of the book and the official estimate)
@@ -84,6 +85,51 @@ def fetch_reward_markets(max_pages=10, page_size=500, min_rate=0.0):
         if not d or cur in (None, "LTE=") or rate_of(d[-1]) < min_rate:
             break
     return rows
+
+
+def fetch_last_trades(token_ids, session=None):
+    """token -> price of its last trade (None-free: tokens that never traded are left out)."""
+    s = session or requests.Session()
+    out = {}
+    for i in range(0, len(token_ids), 500):
+        chunk = token_ids[i:i + 500]
+        for k in range(4):
+            try:
+                r = s.post(f"{CLOB}/last-trades-prices", json=[{"token_id": t} for t in chunk], timeout=60)
+                if r.status_code == 200:
+                    for x in r.json():
+                        if x.get("side") and x.get("price") not in (None, ""):      # side "" = no trade yet
+                            out[x["token_id"]] = float(x["price"])
+                    break
+            except (requests.RequestException, ValueError):
+                pass
+            time.sleep(1 + k)
+    return out
+
+
+MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october",
+          "november", "december"]
+_DATE = re.compile(r"(week of\s+)?\b(" + "|".join(MONTHS) + r")\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(20\d\d))?\b", re.I)
+
+
+def date_passed(question, now=None):
+    """The question is about a day that is already over ("Will Russia target Kyiv on November 8?" on 12 Nov): the
+    outcome is known to somebody, the market just is not resolved yet. True when every date in the question is
+    before today (UTC); "the week of <date>" lasts 7 days; a date without a year more than half a year back is read
+    as next year's."""
+    today = datetime.fromtimestamp(now if now is not None else time.time(), timezone.utc).date()
+    last = None
+    for week, mon, day, year in _DATE.findall(question or ""):
+        try:
+            d = date(int(year) if year else today.year, MONTHS.index(mon.lower()) + 1, int(day))
+        except ValueError:
+            continue
+        if not year and (today - d).days > 180:
+            d = date(d.year + 1, d.month, d.day)
+        if week:
+            d = date.fromordinal(d.toordinal() + 6)
+        last = d if last is None or d > last else last
+    return last is not None and last < today
 
 
 def fetch_books(token_ids, session=None):
@@ -169,7 +215,7 @@ def candidates(raw_markets, rc, now=None):
         if rate < rc.min_rate:
             continue
         q = m.get("question") or ""
-        if (excl and excl.search(q)) or (deadline and deadline.search(q)):
+        if (excl and excl.search(q)) or (deadline and deadline.search(q)) or date_passed(q, now):
             continue
         if rc.max_volume_24h and float(m.get("volume_24hr") or 0) > rc.max_volume_24h:
             continue
@@ -198,6 +244,22 @@ def candidates(raw_markets, rc, now=None):
     return out
 
 
+def reference_price(bids, asks, rc, v, min_size, last_trade):
+    """The price our quotes are centred on, or None when there is no price we can trust.
+    * the book is tight (spread <= competitive_spread_mult x the max spread): its size-adjusted mid;
+    * the book is wide: the last trade, if it lies inside the book. NOT the middle of the book: in a book of
+      0.21 / 0.89 Polymarket shows 0.54 while the market trades at 0.88, and a quote around 0.54 sells YES 34 c
+      too cheap (12 Nov: 5 such fills, -$31 of the day's -$93);
+    * a wide book and no usable last trade: None (do not quote)."""
+    if bids and asks and asks[0][0] - bids[0][0] <= rc.competitive_spread_mult * v / 100:
+        return adjusted_mid(bids, asks, min_size) or (bids[0][0] + asks[0][0]) / 2
+    if last_trade is None:
+        return None
+    lo = bids[0][0] if bids else 0.0
+    hi = asks[0][0] if asks else 1.0
+    return last_trade if lo < last_trade < hi else None
+
+
 def price_market(rm, raw_book, rc):
     """Fill in tick, size, capital and the estimated reward of quoting rm now. False if it cannot be quoted."""
     if not raw_book:
@@ -206,11 +268,8 @@ def price_market(rm, raw_book, rc):
     rm.min_order = float(raw_book.get("min_order_size") or 5)
     bids, asks = book_levels(raw_book)
     size = order_size(rc, rm.min_size, rm.min_order)
-    # the reference: the book's size-adjusted mid when others quote near the price, else the displayed price
-    ref = rm.price
-    if bids and asks and asks[0][0] - bids[0][0] <= rc.competitive_spread_mult * rm.v / 100:
-        ref = adjusted_mid(bids, asks, rm.min_size) or (bids[0][0] + asks[0][0]) / 2
-    if not rc.price_lo <= ref <= rc.price_hi:
+    ref = reference_price(bids, asks, rc, rm.v, rm.min_size, rm.last_trade)
+    if ref is None or not rc.price_lo <= ref <= rc.price_hi:
         return False
     q1 = sum(order_score(rm.v, abs(p - ref) * 100, s) for p, s in bids)
     q2 = sum(order_score(rm.v, abs(p - ref) * 100, s) for p, s in asks)
@@ -243,7 +302,7 @@ def apply_details(rm, details):
     return d.get("rewards_on", True) and d.get("accepting", True)
 
 
-def select(rc, journal=None, raw_markets=None, books=None, now=None, details=None, held=()):
+def select(rc, journal=None, raw_markets=None, books=None, now=None, details=None, held=(), lasts=None):
     """Pick markets by estimated reward per $ of capital until the budget or max_markets is reached.
     Empty-book markets (we would be the only quote) are capped at rc.max_empty_frac of the picks.
     `held` = condition ids we quote now: they rank rc.hold_bonus higher, so a small change of the numbers does not
@@ -254,6 +313,9 @@ def select(rc, journal=None, raw_markets=None, books=None, now=None, details=Non
     cands = candidates(raw_markets, rc, now)
     cands = sorted(cands, key=lambda x: -(x.est_reward / x.size))[: rc.max_candidates]
     books = books if books is not None else fetch_books([c.yes for c in cands])
+    lasts = lasts if lasts is not None else fetch_last_trades([c.yes for c in cands])
+    for c in cands:
+        c.last_trade = lasts.get(c.yes)
     priced = [c for c in cands if price_market(c, books.get(c.yes), rc) and c.est_reward >= rc.min_expected_reward]
     held = set(held)
     priced.sort(key=lambda c: -(c.est_reward / c.capital) * (rc.hold_bonus if c.condition_id in held else 1.0))

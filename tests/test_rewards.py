@@ -100,6 +100,9 @@ def raw_market(slug, rate=50, price=0.5, days=10, q="Will X happen?", v=4.5, min
             "tokens": [{"token_id": slug + "-Y", "price": price}, {"token_id": slug + "-N", "price": 1 - price}]}
 
 
+LASTS = {t + "-Y": 0.50 for t in "abcd"}                               # every test market last traded at 0.50
+
+
 def test_candidates_filters():
     rc = RewardsCfg()
     raw = [raw_market("ok"), raw_market("small", rate=2), raw_market("soon", days=1),
@@ -164,7 +167,7 @@ def test_select_prices_and_caps_empty_books():
              "c-Y": {"bids": [{"price": "0.49", "size": "40"}], "asks": [{"price": "0.51", "size": "40"}],
                      "tick_size": "0.01"}}
     j = J()
-    picks = mk.select(rc, j, raw_markets=raw, books=books, details={})
+    picks = mk.select(rc, j, raw_markets=raw, books=books, details={}, lasts=LASTS)
     assert len(picks) == 2 and sum(p.empty for p in picks) == 1     # only one empty-book market allowed
     assert any(p.slug == "c" for p in picks)
     assert j.ev[0]["type"] == "select" and j.ev[0]["picked"] == 2
@@ -177,15 +180,15 @@ def test_select_takes_the_lower_of_the_book_and_the_official_share():
     and quote at the contested distance (far out we would score next to nothing against them)."""
     rc = RewardsCfg()
     books = {"a-Y": {"bids": [], "asks": [], "tick_size": "0.01"}}
-    (p,) = mk.select(rc, J(), raw_markets=[raw_market("a", rate=50, comp=2.0)], books=books, details={})
+    (p,) = mk.select(rc, J(), raw_markets=[raw_market("a", rate=50, comp=2.0)], books=books, details={}, lasts=LASTS)
     q = order_score(4.5, 2.0, 20)
     assert p.empty and p.extra["q_ours"] == pytest.approx(q, abs=0.01)
     assert p.est_share == pytest.approx(q / (100 + q)) and p.est_reward == pytest.approx(50 * q / (100 + q))
-    (lone,) = mk.select(rc, J(), raw_markets=[raw_market("a", rate=50)], books=books, details={})
+    (lone,) = mk.select(rc, J(), raw_markets=[raw_market("a", rate=50)], books=books, details={}, lasts=LASTS)
     assert lone.est_share == 1.0 and lone.extra["q_ours"] == pytest.approx(order_score(4.5, 4.0, 20), abs=0.01)
     # 2000 points compete for $50: 15 cents a day for our quote -> not worth a market
     assert mk.select(rc, J(), raw_markets=[raw_market("b", rate=50, comp=40.0)], books={"b-Y": books["a-Y"]},
-                     details={}) == []
+                     details={}, lasts=LASTS) == []
 
 
 def test_select_keeps_the_markets_we_already_quote():
@@ -193,12 +196,12 @@ def test_select_keeps_the_markets_we_already_quote():
     rc = RewardsCfg(max_markets=1, max_empty_frac=1.0)
     raw = [raw_market("a", rate=50), raw_market("b", rate=60)]
     books = {t: {"bids": [], "asks": [], "tick_size": "0.01"} for t in ("a-Y", "b-Y")}
-    assert [p.slug for p in mk.select(rc, J(), raw_markets=raw, books=books, details={})] == ["b"]
+    assert [p.slug for p in mk.select(rc, J(), raw_markets=raw, books=books, details={}, lasts=LASTS)] == ["b"]
     j = J()
-    assert [p.slug for p in mk.select(rc, j, raw_markets=raw, books=books, details={}, held={"c-a"})] == ["a"]
+    assert [p.slug for p in mk.select(rc, j, raw_markets=raw, books=books, details={}, lasts=LASTS, held={"c-a"})] == ["a"]
     assert j.ev[0]["kept"] == 1
     raw[1] = raw_market("b", rate=80)                                 # 60 % more is more than the 1.5x bonus
-    assert [p.slug for p in mk.select(rc, J(), raw_markets=raw, books=books, details={}, held={"c-a"})] == ["b"]
+    assert [p.slug for p in mk.select(rc, J(), raw_markets=raw, books=books, details={}, lasts=LASTS, held={"c-a"})] == ["b"]
 
 
 def test_select_refuses_an_empty_collection():
@@ -218,7 +221,7 @@ def farmer(tmp_path, clock=None, **cfg):
 def farmer_with_market(tmp_path, clock=None, **cfg):
     f = farmer(tmp_path, clock, **cfg)
     rm = mk.RMarket(slug="m", question="q", condition_id="c", yes="Y", no="N", rate=144.0, v=4.5, min_size=20,
-                    end_ts=f.clock() + 10 * 86400, price=0.50, size=20)
+                    end_ts=f.clock() + 10 * 86400, price=0.50, size=20, last_trade=0.50)
     f.apply_selection([rm])
     b = f.feed.books["Y"]
     b.bids, b.asks, b.last_rx = {0.30: 100.0}, {0.70: 100.0}, 1      # wide book: nobody inside the reward zone
@@ -290,7 +293,51 @@ def test_crossing_before_our_order_is_live_just_moves_it(tmp_path):
     b = f.feed.books["Y"]
     b.asks = {0.46: 50.0, 0.70: 100.0}                                # the ask moved onto our bid in the same instant
     asyncio.run(f.quote_once())
-    assert "m" not in f.pos and f.markets["m"].orders["Y"]["price"] < 0.46
+    # no fill; and the last trade (0.50) is now outside the book (0.30 / 0.46): no price to trust, no quotes at all
+    assert "m" not in f.pos and not f.markets["m"].orders
+    f.on_trade("Y", "SELL", 0.44, 3, int(f.clock() * 1000) + 5000)    # a trade inside the book gives a price again
+    asyncio.run(f.quote_once())
+    assert "m" not in f.pos and f.markets["m"].orders["Y"]["price"] < 0.44
+
+
+def test_wide_book_is_priced_by_the_last_trade_not_by_its_middle(tmp_path):
+    """12 Nov, Tennessee 2028: book 0.21 / 0.89, Polymarket shows 0.54 (the middle), the market trades at 0.88. The
+    bot quoted around 0.54 and sold YES 34 c too cheap. The reference of a wide book is the last trade."""
+    f = farmer_with_market(tmp_path)
+    ms = f.markets["m"]
+    ms.rm.price, ms.rm.last_trade = 0.54, 0.88
+    b = f.feed.books["Y"]
+    b.bids, b.asks = {0.21: 6.0}, {0.89: 30.0}
+    tg = f.targets(ms, f.clock())
+    assert ms.ref == 0.88 and tg["Y"][0] < 0.88 and 1 - tg["N"][0] > 0.85        # quotes around 0.88, not 0.54
+    ms.rm.last_trade = None                                                      # no trade known: no quotes
+    assert f.targets(ms, f.clock()) == {}
+    assert mk.reference_price([(0.48, 50)], [(0.50, 50)], RewardsCfg(), 4.5, 20, 0.88) == pytest.approx(0.49)   # tight book: its mid
+
+
+def test_select_skips_wide_books_without_a_trade_inside():
+    rc = RewardsCfg(max_empty_frac=1.0)
+    books = {t: {"bids": [{"price": "0.21", "size": "6"}], "asks": [{"price": "0.89", "size": "30"}], "tick_size": "0.01"}
+             for t in ("a-Y", "b-Y")}
+    raw = [raw_market("a", price=0.54), raw_market("b", price=0.54)]
+    picks = mk.select(rc, J(), raw_markets=raw, books=books, details={}, lasts={"a-Y": 0.88})
+    assert [p.slug for p in picks] == ["a"] and picks[0].last_trade == 0.88 and picks[0].extra["mid"] > 0.8
+
+
+def test_questions_about_a_day_that_is_over_are_skipped():
+    """12 Nov: "Will Russia target Kyiv on November 8?" is decided, just not resolved: somebody knows the answer."""
+    import calendar
+    now = calendar.timegm((2026, 11, 12, 15, 0, 0))
+    assert mk.date_passed("Will Russia target Kyiv on November 8, 2026?", now)
+    assert mk.date_passed("US x Iran Effective Ceasefire by November 8?", now)
+    assert not mk.date_passed("Will OpenAI have the most market share the week of November 9?", now)   # Nov 9-15
+    assert not mk.date_passed("Will the White House call a full lid by 6:30 PM on November 14?", now)
+    assert not mk.date_passed("Will X happen by January 5?", now)                                       # next year
+    assert not mk.date_passed("Will GPT-6 be released in 2027?", now)                                   # no day: no rule
+    assert not mk.date_passed("Will it happen between November 6 and November 13?", now)                # last day ahead
+    rc = RewardsCfg(deadline_regex="")
+    assert [c.slug for c in mk.candidates([raw_market("k", q="Will Russia target Kyiv on November 8, 2026?")], rc,
+                                          now=now)] == []
 
 
 def test_a_bid_through_our_ask_fills_the_no_side(tmp_path):
@@ -571,6 +618,29 @@ def test_position_value_counts_pairs_at_one_dollar():
 
 
 # ---------------------------------------------------------------- risk
+def test_stop_survives_a_restart_and_a_lost_base_is_strict(tmp_path):
+    """12 Nov: the stop of 11:14 did not survive the update restart at 11:46; the bot quoted again from a fresh base
+    and stopped a second time. The stop and the base are kept per date, a missing base counts every open mark."""
+    import json
+    f = farmer_with_market(tmp_path, daily_loss_limit=5)
+    f.pos["m"] = Position(yes=100, no=0, cost=60)                    # marked at 0.50: -10
+    f.check_risk(f.status())
+    assert f.halted_until > f.clock()
+    f._save()
+    st = json.load(open(f.rc.state_file))
+    assert st["halts"] == {f.day: f.halted_until} and st["day_bases"] == {f.day: 0.0}
+    st["day"] = "1999-01-01"                                         # whatever broke the old "day" check
+    json.dump(st, open(f.rc.state_file, "w"))
+    g = Farmer(f.rc, J(), clock=f.clock)
+    assert g.halted_until == f.halted_until and g.day_base == 0.0 and g._loaded["file_day"] == "1999-01-01"
+    del st["day_bases"]                                              # the base itself lost: the strict fallback
+    st["realized"], st["realized_by_day"] = -7.0, {f.day: -3.0}
+    json.dump(st, open(f.rc.state_file, "w"))
+    h = Farmer(f.rc, J(), clock=f.clock)
+    h.markets, h.meta["m"]["mid"] = f.markets, 0.5
+    assert h.status()["trading_pnl_today"] == pytest.approx(-3.0 - 10.0)    # today's realised + every open mark
+
+
 def test_daily_loss_halts_quotes(tmp_path):
     f = farmer_with_market(tmp_path, daily_loss_limit=5)
     f.pos["m"] = Position(yes=100, no=0, cost=50)                    # marks at the 0.50 reference (wide book)
@@ -580,6 +650,25 @@ def test_daily_loss_halts_quotes(tmp_path):
     assert f.halted_until > f.clock()
     assert f.targets(f.markets["m"], f.clock()) == {}
     assert any(e["type"] == "kill" for e in f.journal.ev)
+
+
+def test_stop_counts_only_the_rewards_earned_next_to_others(tmp_path):
+    f = farmer_with_market(tmp_path, daily_loss_limit=5)
+    f.pos["m"] = Position(yes=100, no=0, cost=60)                    # -10 at the 0.50 mark
+    day = f.day
+    f.rewards_by_day[day], f.official_by_day[day], f.alone_by_day[day] = 12.0, 11.0, 4.0
+    st = f.status()
+    assert st["trading_pnl_today"] == -10 and st["cautious_today"] == pytest.approx(-10 + 11 - 4)
+    f.check_risk(st)
+    assert f.halted_until == 0                                       # -3: under the $5 limit
+    f.alone_by_day[day] = 9.0                                         # most of it earned alone: does not count
+    f.check_risk(f.status())
+    assert f.halted_until > f.clock() and "осторожно" in f.journal.of("kill")[0]["reason"]
+    g = farmer_with_market(tmp_path / "b", daily_loss_limit=5, stop_counts_rewards=False)
+    g.pos["m"] = Position(yes=100, no=0, cost=60)
+    g.rewards_by_day[g.day] = g.official_by_day[g.day] = 50.0
+    g.check_risk(g.status())
+    assert g.halted_until > g.clock()                                # trading only: rewards ignored
 
 
 def test_inventory_cap_removes_the_side_that_adds_to_it(tmp_path):

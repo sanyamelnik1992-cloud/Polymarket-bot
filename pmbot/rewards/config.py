@@ -58,7 +58,11 @@ class RewardsCfg:
     feed_stale_s: float = 45.0           # no websocket message for this long -> quote nothing
     max_ref_disagree: float = 0.03       # no quotes while the last trade (<= trade_fresh_s old) is this far off the book
     trade_fresh_s: float = 600.0
-    daily_loss_limit: float = 50.0       # trading loss of today (realised + marks) -> stop quoting until 00:00 UTC
+    daily_loss_limit: float = 50.0       # loss of today -> stop quoting until 00:00 UTC (what counts: stop_counts_rewards)
+    stop_counts_rewards: bool = True     # the stop compares the cautious result of the day (trading + rewards from markets
+                                         # where others score too) with the limit, not the trading alone: on 12 Nov the
+                                         # fills cost $93 against $79 of such rewards (+$280 more where we were alone), and a
+                                         # trading-only stop cut the paper day twice. Rewards earned alone never count
     # bookkeeping
     sample_s: float = 60.0               # reward scoring sample period (Polymarket samples once a minute)
     settle_s: float = 300.0              # how often to look for resolved markets (Gamma)

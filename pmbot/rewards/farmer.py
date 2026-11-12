@@ -150,6 +150,7 @@ class Farmer:
         self.day = utc_day(clock())
         self.day_base = None             # trading PnL at the start of the UTC day
         self.halted_until = 0.0
+        self._loaded = None              # what _load found (journalled at start: a lost stop must be visible)
         self._last_sample = None
         self._load()
 
@@ -176,10 +177,20 @@ class Farmer:
             self.meta[slug] = {"yes": d.get("yes_token"), "no": d.get("no_token"), "mid": d.get("mid"),
                                "end": d.get("end"), "fee": d.get("fee")}
         self.fill_ts = {k: [float(t) for t in v] for k, v in (s.get("fill_ts") or {}).items()}
-        if s.get("day") == self.day:
-            self.day_base = s.get("day_base")
-            self.halted_until = s.get("halted_until", 0.0)
+        # the day's base and stop are kept per date: on 12 Nov a stop at 11:14 did not survive the update restart at
+        # 11:46 (the bot quoted again from a fresh base and stopped a second time). Whatever the cause, today's entry
+        # of a date-keyed map is found again, and a missing base falls back to the stricter one (see status())
+        bases = dict(s.get("day_bases") or {})
+        halts = dict(s.get("halts") or {})
+        if s.get("day") == self.day:                       # state files written before the maps existed
+            bases.setdefault(self.day, s.get("day_base"))
+            halts.setdefault(self.day, s.get("halted_until", 0.0))
             self.mfills = s.get("mfills", {})
+        if bases.get(self.day) is not None:
+            self.day_base = float(bases[self.day])
+        self.halted_until = float(halts.get(self.day) or 0.0)
+        self._loaded = {"day": self.day, "file_day": s.get("day"), "day_base": self.day_base,
+                        "halted_until": self.halted_until, "realized_today": self.realized_by_day.get(self.day, 0.0)}
 
     def _save(self):
         p = self.rc.state_file
@@ -196,6 +207,7 @@ class Farmer:
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
             json.dump({"day": self.day, "day_base": self.day_base, "halted_until": self.halted_until,
+                       "day_bases": {self.day: self.day_base}, "halts": {self.day: self.halted_until},
                        "mfills": self.mfills, "fill_ts": self.fill_ts, "rewards_by_day": self.rewards_by_day,
                        "official_by_day": self.official_by_day, "alone_by_day": self.alone_by_day,
                        "stress_by_day": self.stress_by_day, "fills_by_day": self.fills_by_day,
@@ -216,17 +228,11 @@ class Farmer:
         return sorted(b.bids.items(), reverse=True), sorted(b.asks.items())
 
     def reference(self, ms):
-        """Price our quotes are centred on: the size-adjusted book mid when others quote near the price; in a wide
-        book the last trade if it lies between the best bid and ask, else the middle of the book."""
+        """Price our quotes are centred on (mk.reference_price): the size-adjusted mid of a tight book, the last trade
+        in a wide one, None (no quotes) when a wide book has no trade inside it. Never the middle of a wide book."""
         bids, asks = self.levels(ms.rm.yes)
-        last = ms.last_trade if ms.last_trade is not None else ms.rm.price
-        if not (bids and asks):
-            return last
-        lo, hi = bids[0][0], asks[0][0]
-        if hi - lo <= self.rc.competitive_spread_mult * ms.rm.v / 100:
-            m = adjusted_mid(bids, asks, ms.rm.min_size)
-            return m if m is not None else (lo + hi) / 2
-        return last if lo < last < hi else (lo + hi) / 2
+        last = ms.last_trade if ms.last_trade is not None else ms.rm.last_trade
+        return mk.reference_price(bids, asks, self.rc, ms.rm.v, ms.rm.min_size, last)
 
     def mid_of(self, slug):
         """Mark price of a market's YES token: book mid if the book is tight, else last trade, else the last known."""
@@ -238,6 +244,8 @@ class Farmer:
             m = (bids[0][0] + asks[0][0]) / 2
         elif ms and ms.last_trade is not None:
             m = ms.last_trade
+        elif ms and ms.rm.last_trade is not None:
+            m = ms.rm.last_trade
         elif ms:
             m = ms.rm.price
         else:
@@ -482,7 +490,7 @@ class Farmer:
             return {}                                  # no book yet
         bids, asks = self.levels(ms.rm.yes)
         ref = self.reference(ms)
-        if not rc.price_lo <= ref <= rc.price_hi:
+        if ref is None or not rc.price_lo <= ref <= rc.price_hi:
             return {}
         if (ms.last_trade is not None and ms.last_trade_t is not None and now - ms.last_trade_t < rc.trade_fresh_s
                 and abs(ref - ms.last_trade) > rc.max_ref_disagree):
@@ -719,7 +727,9 @@ class Farmer:
         val, cost, open_pnl = self.open_marks()
         trading = self.realized + open_pnl
         if self.day_base is None:
-            self.day_base = trading
+            # no base for today (first start of the day, or a lost state): count today's realised PnL and the WHOLE
+            # mark of the open positions as today's -- never less strict than the true base
+            self.day_base = self.realized - self.realized_by_day.get(day, 0.0)
         h = self.hedges_by_day.get(day, [0, 0.0, 0.0])
         ht = [sum(x[i] for x in self.hedges_by_day.values()) for i in range(3)]
         st = {"day": day,
@@ -747,6 +757,8 @@ class Farmer:
         # the cautious figure: the lower reward estimate, without the part earned alone in a zone
         low = min(st["rewards_total"], st["official_total"]) - st["alone_total"]
         st["cautious_pnl"] = round(max(low, 0.0) + trading, 2)
+        low_today = min(st["rewards_today"], st["official_today"]) - st["alone_today"]
+        st["cautious_today"] = round(max(low_today, 0.0) + st["trading_pnl_today"], 2)
         top = sorted(self.markets.values(), key=lambda m: -m.reward_total)[:12]
         st["top"] = [{"slug": m.rm.slug[:60], "reward": round(m.reward_total, 3), "share": round(m.last_share, 3),
                       "rate": m.rm.rate, "empty": m.alone} for m in top if m.reward_total > 0]
@@ -770,13 +782,22 @@ class Farmer:
                         "hedge_pnl": round(ms.hedge_pnl, 3), "open_pnl": round(open_pnl, 3), "active": ms.active})
         return out
 
+    def day_loss(self, st):
+        """What the daily stop compares with the limit. stop_counts_rewards: the cautious result of the day (trading +
+        the lower reward estimate from markets where others score too; nothing from markets where we are alone).
+        Off: trading only -- then the stop measures the cost of the fills and ignores what they bought."""
+        return st["cautious_today"] if self.rc.stop_counts_rewards else st["trading_pnl_today"]
+
     def check_risk(self, st):
         now = self.clock()
-        if st["trading_pnl_today"] <= -self.rc.daily_loss_limit and now >= self.halted_until:
+        loss = self.day_loss(st)
+        if loss <= -self.rc.daily_loss_limit and now >= self.halted_until:
             self.halted_until = next_midnight(now)
-            self.journal.log("kill", reason=f"награды: дневной убыток по позициям {st['trading_pnl_today']:.2f}$ "
-                                            f"(лимит {self.rc.daily_loss_limit}$); котировки выключены до 00:00 UTC, "
-                                            f"потом включатся сами")
+            what = "итог дня осторожно (торговля + награды там, где мы не одни)" if self.rc.stop_counts_rewards \
+                else "дневной убыток по позициям"
+            self.journal.log("kill", reason=f"награды: {what} {loss:.2f}$ (лимит {self.rc.daily_loss_limit}$); "
+                                            f"котировки выключены до 00:00 UTC, потом включатся сами",
+                             trading_today=st["trading_pnl_today"], cautious_today=st["cautious_today"])
             # halted_until makes targets() empty: the next quote pass cancels everything
 
     def roll_day(self):
@@ -840,7 +861,7 @@ class Farmer:
             await asyncio.sleep(min(1.0, end - time.time()))
 
     async def run(self, duration_s=None):
-        self.journal.log("start", mode="paper", bot="rewards", budget=self.rc.quote_budget_usd,
+        self.journal.log("start", mode="paper", bot="rewards", loaded=self._loaded, budget=self.rc.quote_budget_usd,
                          max_markets=self.rc.max_markets, dist_cents=self.rc.dist_cents,
                          alone_frac=self.rc.alone_frac, hedge=self.rc.hedge, max_hedge_cost=self.rc.max_hedge_cost)
         tasks = [asyncio.create_task(x) for x in (self.feed.run(), self.selector(), self.quoter(), self.sampler(),

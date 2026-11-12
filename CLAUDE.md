@@ -180,6 +180,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `total_pnl`. Next steps (report 68 section 8): paper on the server, then a live "10 minutes in one empty pool" test ($20 in
   orders) that answers the open questions; live needs the owner's word and a separately reviewed live broker (maker orders,
   FAK hedge, merge, the wallet is shared with the lock bots).
+  First server day 12 Nov (report 68 section 9): rewards estimate +$359 ($280 alone), trading -$93; the trading-only
+  stop fired at ~11:14 and was LOST by the 11:46 update restart (cause not found; the stop and the day base are now
+  kept per date, a missing base counts every open mark, `start` journals what was loaded), so it fired again later.
+  Fixes: a wide book is priced by its LAST TRADE (`mk.reference_price`, CLOB `/last-trades-prices`), never by its middle
+  (Tennessee 2028: book 0.21/0.89 shown at 0.54, trades at 0.88: 5 such fills cost ~$31); questions whose dates are all
+  past are skipped (`mk.date_passed`); the stop compares `cautious_today` (trading + rewards from markets with other
+  makers; `stop_counts_rewards`).
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
