@@ -1,66 +1,63 @@
-journal data/journal-rewards: 11.4 h of events, 11-12 08:36 -> 11-12 20:02 UTC
-now: markets 45, quoting 44, bids $812.74, feed ok, pool rate at current shares $2210.51/day
-rewards (estimate by the book): today $369.113, total $369.113; by Polymarket's competitiveness: total $412.089; earned alone in a zone: total $288.482; stress (one more identical maker): total $193.478
-hedges: 55 for 970.3 shares, lost $39.76; inventory not hedged yet: $137.92
-positions: value $128.99 cost $184.72 -> open $-55.73; realised $-39.76; trading $-95.49 (today -3.6)
-TOTAL (rewards estimate + trading): $273.62; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-14.86; fills total 88
+journal data/journal-rewards: 12.4 h of events, 11-12 08:36 -> 11-12 21:01 UTC
+now: markets 31, quoting 27, bids $493.56, feed ok, pool rate at current shares $1945.55/day
+rewards (estimate by the book): today $449.176, total $449.176; by Polymarket's competitiveness: total $495.885; earned alone in a zone: total $362.992; stress (one more identical maker): total $234.505
+hedges: 58 for 1015.3 shares, lost $41.3; inventory not hedged yet: $159.04
+positions: value $143.33 cost $205.84 -> open $-62.51; realised $-41.3; trading $-103.81 (today -11.92)
+TOTAL (rewards estimate + trading): $345.37; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-17.63; fills total 94
 
 top markets by estimated reward:
-  $   0.54  share 1.00  pool $178/d  empty will-japans-core-cpi-increase-by-less-than-or-equal-to-1pt9-
-  $   0.30  share 1.00  pool $100/d  empty will-victorian-psycho-score-at-least-73-on-the-rotten-tomato
-  $   0.30  share 1.00  pool $100/d  empty will-ghost-soldier-score-at-least-25-on-the-rotten-tomatoes-
-  $   0.30  share 1.00  pool $100/d  empty will-ebenezer-score-at-least-45-on-the-rotten-tomatoes-tomat
-  $   0.30  share 1.00  pool $100/d  empty will-the-hunger-games-sunrise-on-the-reaping-score-at-least-
-  $   0.30  share 1.00  pool $100/d  empty will-the-hunger-games-sunrise-on-the-reaping-score-at-least-
-  $   0.30  share 1.00  pool $100/d  empty will-dune-part-three-score-at-least-88-on-the-rotten-tomatoe
-  $   0.30  share 1.00  pool $100/d  empty will-gas-hit-3pt95-high-by-november-30-2026
-  $   0.30  share 1.00  pool $100/d  empty will-i-play-rocky-score-at-least-83-on-the-rotten-tomatoes-t
-  $   0.30  share 1.00  pool $100/d  empty will-ebenezer-score-at-least-55-on-the-rotten-tomatoes-tomat
-  $   0.30  share 1.00  pool $98/d  empty will-anthropic-be-the-3-ai-lab-at-the-end-of-january-2027-st
-  $   0.28  share 1.00  pool $93/d  empty will-the-republicans-win-tennessee-in-the-2028-presidential-
+  $   7.02  share 1.00  pool $178/d  empty will-japans-core-cpi-increase-by-less-than-or-equal-to-1pt9-
+  $   4.10  share 1.00  pool $100/d  empty will-victorian-psycho-score-at-least-73-on-the-rotten-tomato
+  $   4.10  share 1.00  pool $100/d  empty will-ghost-soldier-score-at-least-25-on-the-rotten-tomatoes-
+  $   4.10  share 1.00  pool $100/d  empty will-ebenezer-score-at-least-45-on-the-rotten-tomatoes-tomat
+  $   4.10  share 1.00  pool $100/d  empty will-the-hunger-games-sunrise-on-the-reaping-score-at-least-
+  $   4.10  share 1.00  pool $100/d  empty will-dune-part-three-score-at-least-88-on-the-rotten-tomatoe
+  $   4.10  share 1.00  pool $100/d  empty will-gas-hit-3pt95-high-by-november-30-2026
+  $   4.10  share 1.00  pool $100/d  empty will-i-play-rocky-score-at-least-83-on-the-rotten-tomatoes-t
+  $   4.10  share 1.00  pool $100/d  empty will-ebenezer-score-at-least-55-on-the-rotten-tomatoes-tomat
+  $   3.94  share 1.00  pool $100/d  empty will-the-hunger-games-sunrise-on-the-reaping-score-at-least-
+  $   3.88  share 1.00  pool $93/d  empty will-anthropic-be-the-3-ai-lab-at-the-end-of-january-2027-st
+  $   3.67  share 1.00  pool $91/d  empty will-the-republicans-win-north-dakota-in-the-2028-presidenti
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
-  2026-11-12: book $369.11, official $412.09, alone $288.48 | hedges 55 ($39.76) | trading: day not closed | samples 684, avg markets scoring 19.2
+  2026-11-12: book $454.55, official $501.46, alone $368.26 | hedges 58 ($41.31) | trading: day not closed | samples 742, avg markets scoring 20.3
 
-last selection: 45 markets of 397 priced, capital $861.86, est $2350.41/day, empty books 22
+last selection: 33 markets of 399 priced, capital $632.2, est $2288.23/day, empty books 22
 
-fills: 88 (material 88)
-  11-12 13:44 will-the-30-year-treasury-yield-hit-5pt42-in-november   YES 20@0.700 last_trade=0.6699999999999999
-  11-12 13:48 will-the-2-year-treasury-yield-hit-4pt88-in-november    NO  20@0.510 last_trade=None (alone in the zone)
-  11-12 13:50 will-marved-play-for-kru-esports-in-2027                YES 20@0.146 last_trade=None (alone in the zone)
-  11-12 13:51 will-the-republicans-win-utah-in-the-2028-presidential- NO  20@0.450 last_trade=0.87 (alone in the zone)
-  11-12 13:55 will-microsoft-be-the-third-largest-company-in-the-worl YES 20@0.400 last_trade=0.39
-  11-12 14:02 will-mexico-win-the-2027-fifa-womens-world-cup          YES 20@0.430 last_trade=None (alone in the zone)
-  11-12 14:14 will-steelers-dst-be-the-highest-scoring-dst-of-the-202 YES 20@0.475 last_trade=None
-  11-12 14:24 will-rothko-untitled-sell-for-between-5pt5m-and-6pt5m-a YES 15@0.430 last_trade=0.45
-  11-12 14:32 donald-trump-of-truth-social-posts-november-13-november YES 16@0.210 last_trade=0.19999999999999996
+fills: 97 (material 97)
   11-12 14:32 donald-trump-of-truth-social-posts-november-13-november YES 4@0.080 last_trade=0.07999999999999996
   11-12 14:39 will-the-5-year-treasury-yield-hit-5pt03-in-november    NO  20@0.710 last_trade=0.27
   11-12 14:39 will-the-democrats-win-vermont-in-the-2028-presidential NO  10@0.480 last_trade=0.52
   11-12 14:41 will-the-philippines-win-miss-universe-2026             YES 20@0.270 last_trade=None (alone in the zone)
   11-12 14:56 will-the-5-year-treasury-yield-hit-5pt03-in-november    YES 20@0.390 last_trade=0.38
   11-12 14:56 will-gas-hit-3pt70-low-by-november-30-2026              NO  20@0.290 last_trade=0.73
+  11-12 20:09 will-openai-run-an-ad-during-super-bowl-lxi             NO  5@0.260 last_trade=0.75
+  11-12 20:24 will-openai-run-an-ad-during-super-bowl-lxi             YES 20@0.780 last_trade=0.75
+  11-12 20:25 will-chinas-monthly-inflation-increase-by-0pt1-in-novem YES 5@0.370 last_trade=None (alone in the zone)
+  11-12 20:28 voice-30-live-week-2-elimination-koudia                 NO  20@0.710 last_trade=None (alone in the zone)
+  11-12 20:53 will-the-5-year-treasury-yield-hit-5pt07-in-november    YES 20@0.330 last_trade=None
+  11-12 20:56 will-jensen-huang-be-the-1-searched-person-on-google-th YES 13@0.390 last_trade=0.10999999999999999 (alone in the zone)
+  11-12 20:58 will-ebenezer-score-at-least-55-on-the-rotten-tomatoes- YES 10@0.430 last_trade=None (alone in the zone)
+  11-12 20:58 will-japans-core-cpi-increase-by-less-than-or-equal-to- NO  20@0.329 last_trade=None (alone in the zone)
+  11-12 21:00 target-q3-comparable-sales-growth-5-or-more             YES 20@0.290 last_trade=None
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    100 markets  rewards $  160.18  trading $  -78.55  net $  +81.63  fills  33  quoted   70.9 market-hours
-  mostly alone in the zone                58 markets  rewards $  141.66  trading $  -42.92  net $  +98.74  fills  15  quoted   59.1 market-hours
-  with other makers in the zone           42 markets  rewards $   18.52  trading $  -35.63  net $  -17.11  fills  18  quoted   11.8 market-hours
-  never filled                            71 markets  rewards $  117.98  trading $   -5.84  net $ +112.14  fills   0  quoted   49.6 market-hours
-  filled                                  29 markets  rewards $   42.20  trading $  -72.71  net $  -30.51  fills  33  quoted   21.3 market-hours
+  all                                     92 markets  rewards $  234.23  trading $  -91.13  net $ +143.11  fills  37  quoted   91.9 market-hours
+  mostly alone in the zone                60 markets  rewards $  214.26  trading $  -47.93  net $ +166.34  fills  18  quoted   78.5 market-hours
+  with other makers in the zone           32 markets  rewards $   19.97  trading $  -43.20  net $  -23.23  fills  19  quoted   13.4 market-hours
+  never filled                            59 markets  rewards $  185.25  trading $  -12.21  net $ +173.04  fills   0  quoted   68.1 market-hours
+  filled                                  33 markets  rewards $   48.98  trading $  -78.92  net $  -29.94  fills  37  quoted   23.7 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
     $  -6.74  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
+    $  -6.57  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
     $  -5.80  rewards $  2.26  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
     $  -4.64  rewards $  0.00  fills 1  pool $42/d  Will primmie play for Paper Rex in 2027?
-    $  -4.54  rewards $  0.78  fills 1  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
 
-hedges: 55, 970.298 shares, cost $39.76 = 4.10c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-12 14:30 will-gas-hit-3pt65-low-by-november-30-2026              bought YES 40@0.485 held@0.545 cost/share +0.0400
-  11-12 14:32 donald-trump-of-truth-social-posts-november-13-november bought NO  16@0.800 held@0.210 cost/share +0.0180
-  11-12 14:39 will-the-democrats-win-vermont-in-the-2028-presidential bought YES 10@0.520 held@0.480 cost/share +0.0100
+hedges: 58, 1015.3 shares, cost $41.31 = 4.07c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-12 14:39 will-the-5-year-treasury-yield-hit-5pt03-in-november    bought YES 20@0.338 held@0.710 cost/share +0.0587
   11-12 14:44 will-the-philippines-win-miss-universe-2026             bought NO  20@0.780 held@0.270 cost/share +0.0586
   11-12 14:49 will-170-189-ships-transit-the-bab-el-mandeb-strait-bet bought YES 20@0.480 held@0.580 cost/share +0.0600
@@ -68,5 +65,8 @@ hedges: 55, 970.298 shares, cost $39.76 = 4.10c a share (the largest reward earn
   11-12 14:56 will-the-5-year-treasury-yield-hit-5pt03-in-november    bought NO  20@0.620 held@0.390 cost/share +0.0218
   11-12 17:45 will-camilo-santana-be-the-next-brazilian-chief-of-staf bought YES 20@0.600 held@0.450 cost/share +0.0596
   11-12 19:34 will-gas-hit-3pt70-low-by-november-30-2026              bought YES 20@0.760 held@0.290 cost/share +0.0573
+  11-12 20:09 will-openai-run-an-ad-during-super-bowl-lxi             bought YES 5@0.758 held@0.260 cost/share +0.0272
+  11-12 20:25 will-openai-run-an-ad-during-super-bowl-lxi             bought NO  20@0.260 held@0.780 cost/share +0.0496
+  11-12 20:54 will-the-5-year-treasury-yield-hit-5pt07-in-november    bought NO  20@0.680 held@0.330 cost/share +0.0209
 
 settlements: 0, realised $0.00
