@@ -1,0 +1,46 @@
+# "Награды" — liquidity-rewards farmer R, PAPER (pmbot/rewards, unit pmbot-rewards). Why and what to expect: reports/68.
+# Polymarket pays ~$115k a day to makers who rest two-sided quotes near the price (public wallet data: 1400 wallets get
+# >= $1 a day; the 498 "pure farmers" keep about half of what they are paid, a third of them lose). The rule copies the
+# largest ones: minimum size on both outcomes, many markets, and after a fill buy the other outcome at once and merge.
+# Paper measures what it can without money: fills against the real trade stream, the hedge against the live book,
+# our share of each pool by the documented formula. The real payout is Polymarket's and needs a live test (reports/68, 7).
+journal_dir = "data/journal-rewards"
+
+[rewards]
+mode = "paper"
+state_file = "data/state/rewards_paper.json"
+# selection: every 10 minutes, by expected reward per $ of capital (empty pools are found by others within hours)
+min_rate = 5                  # $/day pool of a market
+min_expected_reward = 2.0     # our quote must be expected to earn at least $2 a day there (fills cost ~$1 a market-day)
+max_volume_24h = 500          # skip markets that traded more than $500 in 24 h: there fills cost more than the rewards
+# deadline questions ("... by November 30?", "... before 2027?") are skipped by default (rewards.deadline_regex)
+min_days_left = 2             # skip markets that end within 2 days (outcome often already known)
+price_lo = 0.10
+price_hi = 0.90
+max_markets = 45
+max_empty_frac = 0.5          # at most half of the markets may be ones where nobody else quotes near the price
+quote_budget_usd = 1000       # paper pUSD: resting bids + open positions
+max_per_market_usd = 60       # = markets with a rewards min size of 20-60 shares
+max_candidates = 400
+reselect_min = 10
+hold_bonus = 1.5              # a market we already quote ranks 1.5x higher: no jumping between markets every 10 minutes
+# quoting
+dist_cents = 2.0              # others score in the zone: bid at price - 2c, ask (= NO bid) at price + 2c
+alone_frac = 0.85             # nobody else scores: 85 % of the max spread out (3.8c of 4.5c; the whole pool at any score)
+size_mult = 1.0               # order size = the market's rewards min size
+requote_min_s = 30            # an order scores only after 30 s on the book: do not move it for one tick
+requote_ticks = 1
+min_order_age_s = 30
+# hedge
+hedge = true                  # after a fill: buy the other outcome and merge the pair back to $1
+max_hedge_cost = 0.06         # ... if the pair costs at most $1.06 a share, taker fee included; else keep and retry
+hedge_latency_ms = 300
+fee_rate = 0.05               # when the market's own taker fee rate is unknown
+# risk
+min_fill_shares = 1           # smaller fills are kept in the position but do not pause the market
+cooldown_min = 10             # after a material fill: no quotes in that market for 10 min, then re-centre
+max_fills_per_market_day = 2  # in any 24 hours
+max_inventory_usd_per_market = 40
+daily_loss_limit = 50         # trading loss of the day (hedges + marks) -> quotes off until 00:00 UTC
+feed_stale_s = 45             # no market-websocket message for this long -> no quotes
+max_ref_disagree = 0.03       # no quotes while a fresh trade (<= 10 min) is this far from the book mid
