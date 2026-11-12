@@ -41,11 +41,18 @@ def main(path):
     alone = defaultdict(float)
     samples = defaultdict(lambda: [0, 0])
     fills, settles, hedges, days = [], [], [], []
+    per_market = {}                      # run start -> the last per-market table of that run
+    starts = []
+
+    def run_of(e):
+        return starts[-1] if starts else 0
     last_status, last_select, first_t, last_t = None, None, None, None
     for e in events(path):
         first_t = first_t or e["t"]
         last_t = e["t"]
         k = e["type"]
+        if k == "start":
+            starts.append(e["t"])
         if k == "rsample":
             rew[day(e["t"])] += e.get("inc", 0)
             off[day(e["t"])] += e.get("official", 0)
@@ -60,6 +67,8 @@ def main(path):
             hedges.append(e)
         elif k == "rday":
             days.append(e)
+        elif k == "rmarkets":
+            per_market[run_of(e)] = e.get("markets") or []
         elif k == "rstatus":
             last_status = e
         elif k == "select":
@@ -110,6 +119,26 @@ def main(path):
     for f in fills[-15:]:
         print(f"  {fmt(f['t'])} {f['key'][:55]:55s} {'YES' if f['side'] == 'Y' else 'NO '} "
               f"{f['size']:g}@{f['price']:.3f} last_trade={f.get('last_trade')}{' (alone in the zone)' if f.get('alone') else ''}")
+    rows = [m for tab in per_market.values() for m in tab]
+    if rows:
+        def line(name, sel):
+            if not sel:
+                return
+            rew = sum(m["reward"] for m in sel)
+            trade = sum(m["hedge_pnl"] + m["open_pnl"] for m in sel)
+            print(f"  {name:38s} {len(sel):3d} markets  rewards ${rew:8.2f}  trading ${trade:+8.2f}  net ${rew + trade:+8.2f}  "
+                  f"fills {sum(m['fills'] for m in sel):3d}  quoted {sum(m['quoted_min'] for m in sel) / 60:6.1f} market-hours")
+        print("\nby market (rewards = estimate by the book; trading = hedges + open positions at the mark):")
+        line("all", rows)
+        line("mostly alone in the zone", [m for m in rows if m["alone"] > 0.5 * m["reward"] > 0])
+        line("with other makers in the zone", [m for m in rows if not m["alone"] > 0.5 * m["reward"]])
+        line("never filled", [m for m in rows if m["fills"] == 0])
+        line("filled", [m for m in rows if m["fills"] > 0])
+        worst = sorted(rows, key=lambda m: m["hedge_pnl"] + m["open_pnl"])[:8]
+        print("  worst by trading:")
+        for m in worst:
+            if m["hedge_pnl"] + m["open_pnl"] < 0:
+                print(f"    ${m['hedge_pnl'] + m['open_pnl']:+7.2f}  rewards ${m['reward']:6.2f}  fills {m['fills']}  pool ${m['rate']:.0f}/d  {m['q'][:60]}")
     if hedges:
         n = sum(h.get("size", 0) for h in hedges)
         cost = sum(h.get("cost_per_share", 0) * h.get("size", 0) for h in hedges)

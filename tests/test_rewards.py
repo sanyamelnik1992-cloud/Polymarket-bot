@@ -188,6 +188,19 @@ def test_select_takes_the_lower_of_the_book_and_the_official_share():
                      details={}) == []
 
 
+def test_select_keeps_the_markets_we_already_quote():
+    """First paper run: 45 picks were 163 different markets in 1.9 hours. A held market ranks hold_bonus higher."""
+    rc = RewardsCfg(max_markets=1, max_empty_frac=1.0)
+    raw = [raw_market("a", rate=50), raw_market("b", rate=60)]
+    books = {t: {"bids": [], "asks": [], "tick_size": "0.01"} for t in ("a-Y", "b-Y")}
+    assert [p.slug for p in mk.select(rc, J(), raw_markets=raw, books=books, details={})] == ["b"]
+    j = J()
+    assert [p.slug for p in mk.select(rc, j, raw_markets=raw, books=books, details={}, held={"c-a"})] == ["a"]
+    assert j.ev[0]["kept"] == 1
+    raw[1] = raw_market("b", rate=80)                                 # 60 % more is more than the 1.5x bonus
+    assert [p.slug for p in mk.select(rc, J(), raw_markets=raw, books=books, details={}, held={"c-a"})] == ["b"]
+
+
 def test_select_refuses_an_empty_collection():
     """An empty answer must raise, so the farmer keeps its previous selection instead of dropping every market."""
     with pytest.raises(RuntimeError):

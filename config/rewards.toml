@@ -23,6 +23,7 @@ quote_budget_usd = 1000       # paper pUSD: resting bids + open positions
 max_per_market_usd = 60       # = markets with a rewards min size of 20-60 shares
 max_candidates = 400
 reselect_min = 10
+hold_bonus = 1.5              # a market we already quote ranks 1.5x higher: no jumping between markets every 10 minutes
 # quoting
 dist_cents = 2.0              # others score in the zone: bid at price - 2c, ask (= NO bid) at price + 2c
 alone_frac = 0.85             # nobody else scores: 85 % of the max spread out (3.8c of 4.5c; the whole pool at any score)

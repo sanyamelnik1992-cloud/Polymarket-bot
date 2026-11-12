@@ -243,9 +243,11 @@ def apply_details(rm, details):
     return d.get("rewards_on", True) and d.get("accepting", True)
 
 
-def select(rc, journal=None, raw_markets=None, books=None, now=None, details=None):
+def select(rc, journal=None, raw_markets=None, books=None, now=None, details=None, held=()):
     """Pick markets by estimated reward per $ of capital until the budget or max_markets is reached.
-    Empty-book markets (we would be the only quote) are capped at rc.max_empty_frac of the picks."""
+    Empty-book markets (we would be the only quote) are capped at rc.max_empty_frac of the picks.
+    `held` = condition ids we quote now: they rank rc.hold_bonus higher, so a small change of the numbers does not
+    throw a market out (an order has to rest 30 s before it scores, and every re-entry risks a bad first quote)."""
     raw_markets = raw_markets if raw_markets is not None else fetch_reward_markets(rc.max_pages, min_rate=rc.min_rate)
     if not raw_markets:                        # an empty answer must not look like "no markets": keep the old selection
         raise RuntimeError("empty rewards collection")
@@ -253,7 +255,8 @@ def select(rc, journal=None, raw_markets=None, books=None, now=None, details=Non
     cands = sorted(cands, key=lambda x: -(x.est_reward / x.size))[: rc.max_candidates]
     books = books if books is not None else fetch_books([c.yes for c in cands])
     priced = [c for c in cands if price_market(c, books.get(c.yes), rc) and c.est_reward >= rc.min_expected_reward]
-    priced.sort(key=lambda c: -(c.est_reward / c.capital))
+    held = set(held)
+    priced.sort(key=lambda c: -(c.est_reward / c.capital) * (rc.hold_bonus if c.condition_id in held else 1.0))
     picks, cap, n_empty = [], 0.0, 0
     max_empty = int(rc.max_markets * rc.max_empty_frac)
     for c in priced:
@@ -270,7 +273,7 @@ def select(rc, journal=None, raw_markets=None, books=None, now=None, details=Non
     picks = [c for c in picks if apply_details(c, details)]       # rewards switched off / not accepting orders: skip
     if journal:
         journal.log("select", candidates=len(cands), priced=len(priced), picked=len(picks),
-                    capital=round(sum(c.capital for c in picks), 2),
+                    capital=round(sum(c.capital for c in picks), 2), kept=sum(c.condition_id in held for c in picks),
                     est_reward_day=round(sum(c.est_reward for c in picks), 2), empty=sum(c.empty for c in picks),
                     markets=[{"slug": c.slug, "rate": c.rate, "v": c.v, "size": c.size, "price": c.price,
                               "comp": round(c.comp, 3), "share": round(c.est_share, 3), "est": round(c.est_reward, 2),

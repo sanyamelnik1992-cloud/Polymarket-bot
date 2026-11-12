@@ -31,6 +31,9 @@ class RewardsCfg:
     quote_budget_usd: float = 1000.0     # pUSD all resting bids may tie up
     max_per_market_usd: float = 60.0     # pUSD both bids of one market may tie up
     reselect_min: float = 10.0           # empty pools are found by other makers within hours (reports/68): look often
+    hold_bonus: float = 1.5              # a market we already quote ranks as if it paid this much more: without it the
+                                         # 45 picks were 163 different markets in 1.9 hours and orders rarely got old
+                                         # enough to score (first paper run, reports/68)
     # quoting
     dist_cents: float = 2.0              # our bid/ask distance from the reference price when others score in the zone
     alone_frac: float = 0.85             # ... and when nobody else scores: this share of the max spread (a lone maker

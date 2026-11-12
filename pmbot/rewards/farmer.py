@@ -117,7 +117,11 @@ class MState:
         self.alone = False               # nobody else scored in the zone at the last quote pass
         self.reward_total = 0.0
         self.stress_total = 0.0
+        self.alone_total = 0.0           # the part of reward_total earned while nobody else scored
         self.last_share = 0.0
+        self.fills = 0                   # fills since this market was first selected (journal `rmarkets`)
+        self.hedge_pnl = 0.0             # realised by hedges here (negative = what the exits cost)
+        self.quoted_s = 0.0              # seconds with at least one order old enough to score
 
 
 class Farmer:
@@ -307,6 +311,7 @@ class Farmer:
             o["size"] -= size
         material = size >= self.rc.min_fill_shares
         if ms is not None:
+            ms.fills += 1
             ms.hedge_after = now + self.rc.hedge_latency_ms / 1000.0
         if material and ms is not None:
             ms.cooldown_until = now + self.rc.cooldown_min * 60
@@ -366,7 +371,8 @@ class Farmer:
     async def selector(self):
         while not self._stop:
             try:
-                picks = await asyncio.to_thread(mk.select, self.rc, self.journal)
+                held = {ms.rm.condition_id for ms in self.markets.values() if ms.active}
+                picks = await asyncio.to_thread(mk.select, self.rc, self.journal, held=held)
                 self.apply_selection(picks)
             except Exception as e:  # noqa: BLE001   (an empty or failed fetch keeps the previous selection)
                 log.warning("selection failed: %s", e)
@@ -415,6 +421,8 @@ class Farmer:
             h[0] += 1
             h[1] += n
             h[2] += n * cost
+            if ms is not None:
+                ms.hedge_pnl += pnl
             self.journal.log("rhedge", key=slug, buy=buy, size=round(n, 4), price=round(q, 4), fee=round(fee, 5),
                              held=round(held, 4), cost_per_share=round(cost, 4), pnl=round(pnl, 4),
                              pairs=round(pairs, 4))
@@ -605,6 +613,7 @@ class Farmer:
                 ms.last_share = 0.0
                 continue
             n_live += 1
+            ms.quoted_s += dt
             if not feed_up:
                 continue                                     # cannot score against a silent book: no credit
             bids, asks = self.levels(ms.rm.yes)
@@ -625,6 +634,7 @@ class Farmer:
             off_total += k * official_share(ms.rm.rate, ms.rm.comp, q_ours)
             if q_comp <= 1e-9:
                 alone_total += inc
+                ms.alone_total += inc
         for book, x in ((self.rewards_by_day, inc_total), (self.stress_by_day, stress_total),
                         (self.official_by_day, off_total), (self.alone_by_day, alone_total)):
             book[day] = book.get(day, 0.0) + x
@@ -742,6 +752,24 @@ class Farmer:
                       "rate": m.rm.rate, "empty": m.alone} for m in top if m.reward_total > 0]
         return st
 
+    def market_stats(self):
+        """Per-market totals since each market was first selected (for the report: where the money came from)."""
+        out = []
+        for slug, ms in self.markets.items():
+            if not (ms.reward_total or ms.fills or ms.quoted_s):
+                continue
+            ps = self.pos.get(slug)
+            open_pnl = 0.0
+            if ps and (ps.yes or ps.no):
+                y, n = self.mark_prices(slug)
+                pairs = min(ps.yes, ps.no)
+                open_pnl = pairs + (ps.yes - pairs) * y + (ps.no - pairs) * n - ps.cost
+            out.append({"slug": slug[:70], "q": ms.rm.question[:70], "rate": ms.rm.rate, "comp": round(ms.rm.comp, 3),
+                        "reward": round(ms.reward_total, 3), "alone": round(ms.alone_total, 3),
+                        "quoted_min": round(ms.quoted_s / 60, 1), "fills": ms.fills,
+                        "hedge_pnl": round(ms.hedge_pnl, 3), "open_pnl": round(open_pnl, 3), "active": ms.active})
+        return out
+
     def check_risk(self, st):
         now = self.clock()
         if st["trading_pnl_today"] <= -self.rc.daily_loss_limit and now >= self.halted_until:
@@ -773,6 +801,7 @@ class Farmer:
                 st = self.status()
                 self.check_risk(st)
                 self.journal.log("rstatus", **st)
+                self.journal.log("rmarkets", markets=self.market_stats())
                 self._save()
             except Exception as e:  # noqa: BLE001
                 log.warning("status failed: %s", e)
@@ -824,6 +853,7 @@ class Farmer:
             await self.pull(ms, "stop")
         st = self.status()
         self.journal.log("rstatus", **st)
+        self.journal.log("rmarkets", markets=self.market_stats())
         self.journal.log("stopped", **{k: st[k] for k in ("rewards_total", "trading_pnl", "total_pnl")})
         self._save()
         for t in tasks:
