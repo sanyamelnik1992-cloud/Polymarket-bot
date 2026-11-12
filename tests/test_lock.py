@@ -449,9 +449,11 @@ def test_lock_tiers_lower_probability_needs_cheaper_ask():
     assert tier.execution.mode == "paper" and tier.lock.entry == "taker" and tier.lock.tiers
     # everything except theta, tiers and the files is L's
     assert tier.risk.state_file != paper.risk.state_file and tier.journal_dir != paper.journal_dir
-    for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
+    for k in ("agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_min", "a_max", "min_edge", "rel_lo", "rel_hi",
               "assets", "max_entries_per_window"):
         assert getattr(tier.lock, k) == getattr(paper.lock, k), k
+    # reports/70: below big_shares_p (the p 0.95-0.97 tier) L3 buys 2 shares, not L's 5; still above the $1 exchange minimum
+    assert tier.lock.shares == 2 and tier.lock.shares * min(t[1] for t in tier.lock.tiers) >= 1.05
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
     for k in ("max_usd_per_entry", "daily_loss_limit", "max_open_usd", "max_open_entries"):   # the twin has live's money limits (reports/67)
         assert getattr(tier.risk, k) == getattr(live.risk, k), k
@@ -516,8 +518,8 @@ def test_lock_tier_wide_is_l3_with_a_lower_price_floor(tables):
     tier = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),      # L4 keeps the p 0.90-0.95 tier (reports/59)
                             overrides={"lock": {"sigma_floor_bp": 0.0, **FOUR_TIERS["lock"]}})
     assert wide.risk.state_file != tier.risk.state_file and wide.journal_dir != tier.journal_dir
-    for k in ("theta", "agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_max", "min_edge", "rel_lo", "rel_hi", "shares",
-              "assets", "tiers", "max_entries_per_window"):
+    for k in ("theta", "agree", "dmin_bp", "adv1_bp", "adv3_bp", "jump_bp", "a_max", "min_edge", "rel_lo", "rel_hi",
+              "assets", "tiers", "max_entries_per_window"):     # shares: L4 keeps 5, L3 buys 2 below p 0.97 (reports/70)
         assert getattr(wide.lock, k) == getattr(tier.lock, k), k
     from pmbot.bot.lock import decide_state
     K, now_s, cl, last = scenario(bp=1.0, rel=270.0)
@@ -723,7 +725,8 @@ def test_open_risk_counts_orders_in_flight(tmp_path, monkeypatch):
 
     br = Slow()
     cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
-                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""},
+                                      "lock": {"shares": 5.0}})          # the 5-share numbers below (L3 has 2 since reports/70)
     assert cfg.risk.max_open_entries == 1                 # one entry at a time (by count since reports/67, $10 fits a 10-share entry)
     j = _J()
     bot = LockBot(cfg, j, broker=br, tables=_Tab())
@@ -806,7 +809,7 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
     a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
     for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip",   # the insurance (reports/64) is 5m-only: measured on 5m books
-              "big_shares", "big_shares_p"):                        # 10 shares (reports/67) too: 15m keeps 5
+              "big_shares", "big_shares_p", "shares"):              # 10 shares (reports/67), 2 below p 0.97 (reports/70): 15m keeps 5
         a.pop(k), b.pop(k)
     assert a == b, "L3-15 must keep the L3 rule"
     assert l15.risk.max_open_usd == 5.0 and l15.lock.big_shares == 0 and l3.risk.max_open_entries == 1   # one entry at a time
@@ -822,7 +825,7 @@ def test_lm3_bids_the_tier_price_of_the_model_probability():
     c = lm3.lock
     assert lm3.execution.mode == "paper" and c.entry == "maker" and c.tiers == l3.lock.tiers and c.theta == l3.lock.theta
     assert c.adv3_bp == lm2.lock.adv3_bp == 1.0                     # the maker's tighter Binance guard
-    for k in ("agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "a_max", "rel_lo", "rel_hi", "shares", "assets"):
+    for k in ("agree", "dmin_bp", "adv1_bp", "jump_bp", "a_min", "a_max", "rel_lo", "rel_hi", "assets"):    # shares: LM3 keeps 5 (reports/70)
         assert getattr(c, k) == getattr(l3.lock, k), k
     assert lm3.risk.state_file not in ("", l3.risk.state_file, lm2.risk.state_file)
     assert len({lm3.journal_dir, l3.journal_dir, lm2.journal_dir}) == 3
@@ -1337,11 +1340,11 @@ def test_ten_shares_on_the_upper_tiers_one_entry_at_a_time(tmp_path, monkeypatch
     import pmbot.bot.lock as lockmod
     from pmbot.bot.state import Window
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
-    assert (live.lock.shares, live.lock.big_shares, live.lock.big_shares_p) == (5.0, 10.0, 0.97)
+    assert (live.lock.shares, live.lock.big_shares, live.lock.big_shares_p) == (2.0, 10.0, 0.97)   # 2 below 0.97: reports/70
     assert live.risk.max_usd_per_entry >= 10 * live.lock.a_max and live.risk.max_open_entries == 1
     for name in ("lock15_live.toml", "lock15_tier.toml", "lock_99_live.toml", "lock_99.toml", "lock_tier_wide.toml"):
         assert load_lock_config(os.path.join(ROOT, "config", name)).lock.big_shares == 0, name
-    for bad in ({"lock": {"big_shares": 4.0}}, {"lock": {"big_shares": 10.5}}, {"lock": {"big_shares_p": 1.0}},
+    for bad in ({"lock": {"big_shares": 1.0}}, {"lock": {"big_shares": 10.5}}, {"lock": {"big_shares_p": 1.0}},
                 {"risk": {"max_usd_per_entry": 9.0}}, {"risk": {"max_open_entries": -1}}):
         with pytest.raises(ValueError):
             load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"), overrides=bad)
@@ -1356,7 +1359,7 @@ def test_ten_shares_on_the_upper_tiers_one_entry_at_a_time(tmp_path, monkeypatch
             self.calls.append((key, shares, limit))
             return limit, shares, 0.0
 
-    for p_model, ask, want in ((0.985, 0.98, 10), (0.975, 0.95, 10), (0.96, 0.93, 5)):
+    for p_model, ask, want in ((0.985, 0.98, 10), (0.975, 0.95, 10), (0.96, 0.93, 2)):
         br = Br()
         cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
                                overrides={"risk": {"state_file": str(tmp_path / f"s{want}{ask}.json"), "kill_file": ""}})
