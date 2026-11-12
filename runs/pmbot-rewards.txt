@@ -1,0 +1,46 @@
+journal data/journal-rewards: 0.4 h of events, 11-12 08:36 -> 11-12 09:02 UTC
+now: markets 45, quoting 41, bids $759.34, feed ok, pool rate at current shares $1686.89/day
+rewards (estimate by the book): today $31.588, total $31.588; by Polymarket's competitiveness: total $34.737; earned alone in a zone: total $23.543; stress (one more identical maker): total $16.317
+hedges: 0 for 0 shares, lost $0; inventory not hedged yet: $26.93
+positions: value $19.05 cost $26.93 -> open $-7.88; realised $0.0; trading $-7.88 (today -7.88)
+TOTAL (rewards estimate + trading): $23.71; CAUTIOUS (lower estimate, without the part earned alone, + trading): $0.17; fills total 5
+
+top markets by estimated reward:
+  $   1.65  share 1.00  pool $100/d  empty will-gas-hit-3pt70-low-by-november-30-2026
+  $   1.65  share 1.00  pool $98/d  empty will-openrouter-process-between-210t-and-220t-tokens-the-wee
+  $   1.45  share 0.00  pool $102/d  empty will-anthropic-be-the-2-ai-lab-at-the-end-of-november-2026
+  $   1.43  share 1.00  pool $57/d  empty will-rothko-untitled-sell-for-between-3pt5m-and-4pt5m-at-auc
+  $   1.26  share 0.89  pool $86/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
+  $   1.26  share 0.00  pool $100/d  empty will-gas-hit-3pt65-low-by-november-30-2026
+  $   1.02  share 1.00  pool $108/d  will-uk-annual-inflation-be-between-3pt7-and-3pt9-in-october
+  $   1.01  share 0.17  pool $84/d  will-the-ornn-h200-index-be-at-least-6pt50-on-december-31-20
+  $   1.01  share 1.00  pool $61/d  empty will-openrouter-process-between-220t-and-230t-tokens-the-wee
+  $   0.99  share 1.00  pool $61/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
+  $   0.94  share 1.00  pool $58/d  empty highest-temperature-in-paris-on-november-14-2026-11c
+  $   0.87  share 0.00  pool $59/d  empty will-google-be-the-2-ai-lab-at-the-end-of-november-2026
+
+by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
+  2026-11-12: book $33.18, official $36.65, alone $24.71 | hedges 0 ($0.00) | trading: day not closed | samples 24, avg markets scoring 40.7
+
+last selection: 45 markets of 391 priced, capital $835.52, est $2183.7/day, empty books 22
+
+fills: 5 (material 5)
+  11-12 08:51 will-connor-closs-win-the-voice-season-30               YES 5@0.310 last_trade=None (alone in the zone)
+  11-12 08:55 will-gas-hit-3pt65-low-by-november-30-2026              NO  20@0.540 last_trade=None (alone in the zone)
+  11-12 08:57 will-two-people-dissent-the-december-fed-decision-20260 YES 20@0.254 last_trade=None (alone in the zone)
+  11-12 08:58 will-google-be-the-2-ai-lab-at-the-end-of-november-2026 YES 20@0.260 last_trade=0.22 (alone in the zone)
+  11-12 08:59 will-anthropic-be-the-2-ai-lab-at-the-end-of-november-2 NO  10@0.430 last_trade=0.65 (alone in the zone)
+
+by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
+  all                                     55 markets  rewards $   30.18  trading $   -7.88  net $  +22.30  fills   5  quoted   14.4 market-hours
+  mostly alone in the zone                25 markets  rewards $   23.20  trading $   -6.20  net $  +17.00  fills   3  quoted    8.7 market-hours
+  with other makers in the zone           30 markets  rewards $    6.98  trading $   -1.68  net $   +5.30  fills   2  quoted    5.7 market-hours
+  never filled                            50 markets  rewards $   26.52  trading $   +0.00  net $  +26.52  fills   0  quoted   13.3 market-hours
+  filled                                   5 markets  rewards $    3.66  trading $   -7.88  net $   -4.22  fills   5  quoted    1.1 market-hours
+  worst by trading:
+    $  -4.00  rewards $  1.26  fills 1  pool $100/d  Will US gas hit $3.65 (Low) in November?
+    $  -1.88  rewards $  0.00  fills 1  pool $56/d  Will two people dissent the December Fed decision?
+    $  -1.40  rewards $  0.87  fills 1  pool $59/d  Will Google be the #2 AI lab at the end of November 2026?
+    $  -0.80  rewards $  1.45  fills 1  pool $102/d  Will Anthropic be the #2 AI lab at the end of November 2026?
+
+settlements: 0, realised $0.00

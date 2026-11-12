@@ -1,30 +1,20 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261111-205016
-mode: live  duration: 671.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1343, 'prewarm': 536, 'lock_state': 5507, 'strike': 532, 'order_filled': 16, 'fill': 16, 'lock_entry': 16, 'provisional': 16, 'settle': 16, 'order_rejected': 6, 'lock_miss': 6, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1, 'lock_hedge_miss': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261112-083520
+mode: live  duration: 27.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 54, 'prewarm': 20, 'lock_state': 54, 'strike': 16, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-lock orders: sent 22  filled 16  ask gone 6  errors 0
-  signal -> exchange answer, ms: median 311  p90 678  max 999
-  market prewarm (2 lookups + signing), ms: median 153  max 610  n 536
-  fill price minus the ask we saw, cents: mean -0.62  worst +1.0
-  misses came 18-60 s before the end; model p 0.953-0.993
-  exchange rejections by code: {'fak_not_filled': 6}
-  order_failed sol-1794468000: RequestRejectedError invalid amount for a marketable BUY order ($0.55), min size: 1
-  order_error sol-1794468000:  invalid amount for a marketable BUY order ($0.55), min size: 1
+lock orders: sent 1  filled 1  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 335  p90 335  max 335
+  market prewarm (2 lookups + signing), ms: median 154  max 248  n 20
+  fill price minus the ask we saw, cents: mean +3.00  worst +3.0
 
-fills: 16  shares: 101  notional: $93.80
+fills: 1  shares: 10  notional: $9.80
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        2  10.225      9.30      0.910  250.503
-eth        3  20.324     18.80      0.923  257.428
-sol        6  35.633     32.75      0.915  253.881
-xrp        5  35.214     32.95      0.932  247.707
+eth        1    10.0       9.8       0.98  241.288
 
 settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          2   9.359  0.866          0.866     0.0     1.000  0.327  0.539  0.093
-eth          3  18.898  1.425          1.425     0.0     1.000  0.378  0.668  0.075
-sol          6  32.933 -2.354         -2.354     0.0     0.833 -4.676  0.772 -0.071
-xrp          5  33.098  2.116          2.116     0.0     1.000  0.327  0.566  0.064
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+eth          1  9.814  0.186          0.186     0.0       1.0  0.186  0.186  0.019
 
-TOTAL pnl $+2.05 (ex-rebate $+2.05) on cost $94.29 -> ROI +2.18%; windows 16, t-stat +0.40
-max drawdown $-4.68; hedged windows (both sides filled): 0
+TOTAL pnl $+0.19 (ex-rebate $+0.19) on cost $9.81 -> ROI +1.90%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
