@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261111-205016
-mode: live  duration: 550.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1100, 'prewarm': 440, 'lock_state': 4722, 'strike': 436, 'order_filled': 13, 'fill': 13, 'lock_entry': 13, 'provisional': 13, 'settle': 12, 'order_rejected': 5, 'lock_miss': 5}
+mode: live  duration: 610.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1221, 'prewarm': 488, 'lock_state': 5100, 'strike': 484, 'order_filled': 13, 'fill': 13, 'lock_entry': 13, 'provisional': 13, 'settle': 13, 'order_rejected': 6, 'lock_miss': 6}
 
-lock orders: sent 18  filled 13  ask gone 5  errors 0
+lock orders: sent 19  filled 13  ask gone 6  errors 0
   signal -> exchange answer, ms: median 302  p90 784  max 999
-  market prewarm (2 lookups + signing), ms: median 150  max 521  n 440
+  market prewarm (2 lookups + signing), ms: median 153  max 610  n 488
   fill price minus the ask we saw, cents: mean -0.15  worst +1.0
-  misses came 18-60 s before the end; model p 0.962-0.993
-  exchange rejections by code: {'fak_not_filled': 5}
+  misses came 18-60 s before the end; model p 0.953-0.993
+  exchange rejections by code: {'fak_not_filled': 6}
 
 fills: 13  shares: 86  notional: $79.85
        fills  shares  notional  avg_price  med_rel
@@ -21,8 +21,8 @@ settled windows:
 asset                                                                              
 btc          2   9.359  0.866          0.866     0.0       1.0  0.327  0.539  0.093
 eth          3  18.898  1.425          1.425     0.0       1.0  0.378  0.668  0.075
-sol          3  18.885  1.223          1.223     0.0       1.0  0.327  0.467  0.065
+sol          4  23.558  1.551          1.551     0.0       1.0  0.327  0.467  0.066
 xrp          4  28.425  1.789          1.789     0.0       1.0  0.378  0.566  0.063
 
-TOTAL pnl $+5.30 (ex-rebate $+5.30) on cost $75.57 -> ROI +7.02%; windows 12, t-stat +14.66
+TOTAL pnl $+5.63 (ex-rebate $+5.63) on cost $80.24 -> ROI +7.02%; windows 13, t-stat +14.89
 max drawdown $0.00; hedged windows (both sides filled): 0
