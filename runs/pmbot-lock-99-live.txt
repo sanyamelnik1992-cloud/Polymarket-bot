@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261111-204635
-mode: live  duration: 434.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 868, 'prewarm': 348, 'lock_state': 3702, 'strike': 332, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2, 'order_rejected': 7, 'lock_miss': 7}
+mode: live  duration: 495.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 990, 'prewarm': 396, 'lock_state': 4009, 'strike': 380, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2, 'order_rejected': 10, 'lock_miss': 10}
 
-lock orders: sent 9  filled 2  ask gone 7  errors 0
-  signal -> exchange answer, ms: median 220  p90 564  max 564
-  market prewarm (2 lookups + signing), ms: median 148  max 378  n 348
+lock orders: sent 12  filled 2  ask gone 10  errors 0
+  signal -> exchange answer, ms: median 234  p90 355  max 564
+  market prewarm (2 lookups + signing), ms: median 148  max 378  n 396
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
   misses came 21-60 s before the end; model p 0.991-0.998
-  exchange rejections by code: {'fak_not_filled': 7}
+  exchange rejections by code: {'fak_not_filled': 10}
 
 fills: 2  shares: 7  notional: $6.86
        fills  shares  notional  avg_price  med_rel
