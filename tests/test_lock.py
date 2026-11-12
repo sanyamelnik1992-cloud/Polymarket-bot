@@ -1266,6 +1266,48 @@ def test_insurance_buys_the_other_side_once_on_a_reversal(tmp_path, monkeypatch)
     assert dict(j.ev)["settle"]["pnl"] == pytest.approx(5 - cost, abs=1e-3)
 
 
+def test_cheap_insurance_is_still_a_valid_order(tmp_path, monkeypatch):
+    """reports/69: on 12 Nov 07:24 the insurance of a SOL Down entry (5 shares) found Up at 0.09, sent 5 shares capped at 0.11 =
+    $0.55 and the exchange refused it ("invalid amount for a marketable BUY order ($0.55), min size: 1"); the window then lost
+    -$4.68. A cheap insurance buys enough whole shares for $1.05."""
+    import time as _t
+    import pmbot.bot.lock as lockmod
+    from pmbot.bot.state import Window
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((token, side, limit, shares))
+            assert shares * limit >= 1.0                               # what the exchange demands of a marketable BUY
+            return 0.09, shares, 0.0
+    br = Br()
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+    now = int(_t.time() * 1000)
+    w = bot.st.add_window(Window(asset="sol", start=now // 1000 - 258, slug="s", condition_id="c", token_up="u", token_down="d"))
+    bot.entries[w.key] = [{"side": "D", "shares": 5.0538, "price": 0.9201, "cost": 4.65, "fee": 0.026, "t": now / 1000,
+                           "limit": 0.93, "p": 0.954}]
+    bot.st.feed_alive["binance"] = now
+    bot.st.feed_alive["clob"]["sol"] = int(_t.time() * 1000) + 60_000
+    bot.st.books["u"] = Book(bids={0.08: 10}, asks={0.09: 50.0})
+    monkeypatch.setattr(lockmod, "decide_state", lambda c, *a, **kw: ("U", 0.7357, {"rel": 258.3, "side": "U", "p": 0.7357}))
+
+    async def tick():
+        await bot.decide_once(now)
+        await asyncio.sleep(0.01)
+    asyncio.run(tick())
+    assert br.calls == [("u", "U", 0.11, 10)]                         # min(0.7357 - 0.20, 0.09 + 0.02) = 0.11; ceil(1.05 / 0.11) = 10
+    es = bot.entries[w.key]
+    assert es[1]["hedge"] and es[1]["shares"] == 10
+    bot._settle(w.key, "Up")                                           # what happened: Up won
+    assert bot.risk["realized_by_day"][bot.today(bot.end_of(w.key))] == pytest.approx(10 - 0.9 - 4.676, abs=1e-3)
+
+
 def test_l3_15_live_is_its_paper_twin_with_live_limits():
     """reports/65: the 15-minute rule on real money is exactly its paper twin pmbot-lock-15-tier (the rule measured in the replay
     and on paper), with the live limits of the other live bots and its own books."""

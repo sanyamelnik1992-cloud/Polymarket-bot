@@ -36,3 +36,5 @@ resume_next_day = false
 
 [execution]
 mode = "live"
+cl_feed = "both"      # reports/69: Chainlink from PolyBolt and the legacy RTDS socket, first arrival wins. RTDS alone timed out ~10 times
+                      # on the night of 11-12 Nov (a few blind seconds each); live 5m runs "both" since 11 Nov 20:50 (reports/66)

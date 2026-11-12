@@ -35,6 +35,8 @@ log = logging.getLogger("pmbot.lock")
 # ------------------------------------------------------------------------------------------------ config
 DURATIONS = {300: "5m", 900: "15m"}     # window length -> slug tag (btc-updown-15m-<start>)
 PROV_MIN_BP = 0.5        # provisional result with forward-filled prints: |TWAP / strike - 1| must be at least this (bp)
+MIN_BUY_USD = 1.05       # the exchange refuses a marketable BUY under $1 ("invalid amount ... min size: 1"): the insurance of 12 Nov 07:24
+                         # (5 shares at 0.11 = $0.55) was refused and the window lost -$4.68 instead of ~0 (reports/69)
 
 
 @dataclass
@@ -851,6 +853,12 @@ class LockBot:
             self._why(key, "hedge_wait", {**ctx, "ask": ask[0] if ask else None, "cap": round(cap, 4)})
             return
         limit = min(cap, ask[0] + c.hedge_slip)
+        sent = tick_floor(limit, 0.01)                            # the cap _execute sends (0.01 grid)
+        if sent < 0.01:
+            return
+        # a cheap insurance must still be a valid order: at least MIN_BUY_USD, in whole shares. The extra shares are bought at
+        # <= model - margin, so they only add to the window when the reversal holds (12 Nov 07:24: Up at 0.09, Up won)
+        need = max(need, math.ceil(MIN_BUY_USD / sent - 1e-9))
         self.busy.add(key)
         asyncio.get_running_loop().create_task(self._execute(
             w, {"side": other, "limit": limit, "ask": ask[0], "p": p}, need,

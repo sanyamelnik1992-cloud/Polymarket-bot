@@ -125,6 +125,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   window at a time), `daily_loss_limit` 10 (a second loss stops it, not the first). Replay 7-11 Nov with the insurance and these
   limits: +$28.12 vs +$18.22 at 5 shares, every UTC day positive, worst trade -$4.44; without the insurance the 10 shares would have
   had a -$9.53 loss. 15m live and L99 keep 5 shares. Back to 5 (`big_shares = 0`) if the upper tiers lose > 3 % over 30 entries.
+  **`reports/69_insurance_min_order_two_feeds.md` (12 Nov)**: the exchange refuses a marketable BUY under $1 ("invalid amount ...
+  min size: 1"): on 12 Nov 07:24 the insurance of a SOL loss (Up at 0.09, 5 shares = $0.55) was refused and the window lost -$4.68
+  instead of ~+$4. `MIN_BUY_USD = 1.05`: a cheap insurance buys ceil(1.05 / price) whole shares. All live bots and their twins now
+  read Chainlink from PolyBolt + RTDS (`cl_feed = "both"`; RTDS alone timed out ~10 times that night); `pmbot-lock-tier` stays on
+  RTDS as the A/B reference. Binance had no outage. Live since 11 Nov 20:50: 5m 24 / 2 lost / +$0.27 (10-share 10 / 0 / +$4.71,
+  bottom tier 14 / 2 / -$4.00), 15m 9 / 0 / +$17.28.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
