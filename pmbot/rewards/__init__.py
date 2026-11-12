@@ -1,5 +1,6 @@
-"""Liquidity-rewards farmer: quote small two-sided orders near the price in markets with reward pools.
+"""Liquidity-rewards farmer R: quote minimum-size two-sided orders in markets with reward pools, hedge fills at once.
 
-See PLAYBOOK.md (3.4) and reports/34, reports/37 for why; scoring follows Polymarket docs (Programs -> Liquidity
-Rewards). Paper only for now: real payouts can only be confirmed by a live test.
+Why, on what evidence and what is still unknown: reports/68_liquidity_rewards.md (public wallet data of the makers
+who earn the rewards, a 7-day replay on 1440 markets, the life of an empty pool). Scoring follows Polymarket docs
+(Programs -> Liquidity Rewards). Paper only: the real payout can only be confirmed by a live test.
 """

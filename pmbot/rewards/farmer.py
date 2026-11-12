@@ -9,12 +9,14 @@ The rule follows what the largest reward earners do (reports/68: public wallet d
   * an order scores only after it has rested `min_age` seconds (market field r.moas, 30 s on most markets), so a
     resting order is kept while the target moved by at most `requote_ticks` and it still sits inside the zone;
   * fills: PaperBroker on the public trade stream with the queue model (a print through our price fills us, a print
-    AT our price first uses up the size that rested there before us);
+    AT our price first uses up the size that rested there before us). A real order that appears at or through our
+    price is a fill too: on the exchange it would have traded with ours. Without this rule an empty market looks
+    free on paper -- there are no prints, the informed trader simply moves the book past our quote;
   * hedge: `hedge_latency_ms` after a fill we buy the other outcome from the live book if the pair then costs at most
     1 + `max_hedge_cost` a share (taker fee included) and merge the pair back to $1: a small certain loss instead of
     an open position. An exit that is too expensive is retried on every pass; until then the position is inventory;
   * a material fill (>= min_fill_shares) pulls all quotes in that market for `cooldown_min`, then re-centres; after
-    `max_fills_per_market_day` material fills the market rests until 00:00 UTC; a side stops being bid once its
+    `max_fills_per_market_day` material fills within 24 hours the market rests; a side stops being bid once its
     unhedged inventory reaches `max_inventory_usd_per_market`. Counters survive restarts;
   * quotes are only live while the market feed is alive (no websocket message for `feed_stale_s` -> pull everything);
     a quote that would cross the book is replaced at once;
@@ -25,7 +27,8 @@ The rule follows what the largest reward earners do (reports/68: public wallet d
     All are ESTIMATES -- the real payout is decided by Polymarket and can only be confirmed live;
   * settlement: when Polymarket closes a market (Gamma `closed`, outcomePrices 1/0) the position is paid out and its
     PnL is realised; until then it is marked at the last mid;
-  * trading PnL = realised (hedges, settlements) + mark-to-market of open positions. The daily loss stop uses it.
+  * trading PnL = realised (hedges, settlements) + mark-to-market of open positions (unpaired shares at the mid,
+    but never above the price the book offers them for). The daily loss stop uses it.
 """
 import asyncio
 import json
@@ -139,6 +142,7 @@ class Farmer:
         self.realized = 0.0
         self.realized_by_day = {}
         self.mfills = {}                 # slug -> material fills today
+        self.fill_ts = {}                # slug -> times of the material fills of the last 24 h (the cap is rolling)
         self.day = utc_day(clock())
         self.day_base = None             # trading PnL at the start of the UTC day
         self.halted_until = 0.0
@@ -167,6 +171,7 @@ class Farmer:
                               else Position(d["yes"], d["no"], d["cost"]))
             self.meta[slug] = {"yes": d.get("yes_token"), "no": d.get("no_token"), "mid": d.get("mid"),
                                "end": d.get("end"), "fee": d.get("fee")}
+        self.fill_ts = {k: [float(t) for t in v] for k, v in (s.get("fill_ts") or {}).items()}
         if s.get("day") == self.day:
             self.day_base = s.get("day_base")
             self.halted_until = s.get("halted_until", 0.0)
@@ -187,7 +192,7 @@ class Farmer:
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
             json.dump({"day": self.day, "day_base": self.day_base, "halted_until": self.halted_until,
-                       "mfills": self.mfills, "rewards_by_day": self.rewards_by_day,
+                       "mfills": self.mfills, "fill_ts": self.fill_ts, "rewards_by_day": self.rewards_by_day,
                        "official_by_day": self.official_by_day, "alone_by_day": self.alone_by_day,
                        "stress_by_day": self.stress_by_day, "fills_by_day": self.fills_by_day,
                        "hedges_by_day": self.hedges_by_day, "realized": self.realized,
@@ -237,14 +242,27 @@ class Farmer:
             meta["mid"] = m
         return m
 
+    def mark_prices(self, slug):
+        """(YES mark, NO mark) for unpaired shares: the mid, but never above what the book offers that outcome for.
+        After an informed fill the mid of a wide book is still the old last trade; the new ask is the truth."""
+        m = self.mid_of(slug)
+        m = 0.5 if m is None else m
+        ms = self.markets.get(slug)
+        token = ms.rm.yes if ms else self.meta.get(slug, {}).get("yes")
+        bids, asks = self.levels(token) if token else ([], [])
+        y = min(m, asks[0][0]) if asks else m
+        n = 1 - (max(m, bids[0][0]) if bids else m)
+        return y, n
+
     def open_marks(self):
         """(inventory value, cost, mark-to-market PnL) over the open positions."""
         val = cost = 0.0
         for slug, ps in self.pos.items():
             if not (ps.yes or ps.no):
                 continue
-            m = self.mid_of(slug)
-            val += ps.value(m if m is not None else 0.5)
+            y, n = self.mark_prices(slug)
+            pairs = min(ps.yes, ps.no)
+            val += pairs + (ps.yes - pairs) * y + (ps.no - pairs) * n
             cost += ps.cost
         return val, cost, val - cost
 
@@ -293,8 +311,9 @@ class Farmer:
         if material and ms is not None:
             ms.cooldown_until = now + self.rc.cooldown_min * 60
             self.mfills[slug] = self.mfills.get(slug, 0) + 1
+            self.fill_ts[slug] = [t for t in self.fill_ts.get(slug, []) if now - t < 86400] + [now]
         self.journal.log("rfill", key=slug, side=fill["side"], price=fill["price"], size=round(size, 4),
-                         material=material, last_trade=ms.last_trade if ms else None,
+                         material=material, cross=bool(fill.get("cross")), last_trade=ms.last_trade if ms else None,
                          alone=ms.alone if ms else None, fills_today=self.mfills.get(slug, 0),
                          pos={"yes": round(ps.yes, 2), "no": round(ps.no, 2), "cost": round(ps.cost, 2)})
         self._save()
@@ -435,12 +454,16 @@ class Farmer:
     def bids_usd(self):
         return sum(o["price"] * max(o["size"], 0) for ms in self.markets.values() for o in ms.orders.values())
 
+    def fills_24h(self, slug, now):
+        """Material fills of a market in the last 24 hours (a market that keeps hitting us is not quoted)."""
+        return sum(1 for t in self.fill_ts.get(slug, []) if now - t < 86400)
+
     def targets(self, ms, now):
         """{"Y": (price, size), "N": (price, size)} we want resting now (sides may be missing)."""
         rc = self.rc
         if not ms.active or now < ms.cooldown_until or now < self.halted_until:
             return {}
-        if self.mfills.get(ms.rm.slug, 0) >= rc.max_fills_per_market_day:
+        if self.fills_24h(ms.rm.slug, now) >= rc.max_fills_per_market_day:
             return {}
         if ms.rm.end_ts - now < rc.min_days_left * 86400 * 0.5:
             return {}
@@ -493,11 +516,34 @@ class Farmer:
             return True
         return now - cur["t"] < self.rc.requote_min_s
 
+    def cross_fills(self, ms, now_ms):
+        """A real order resting at or through the price of our live order would have traded with it: fill us for the
+        size that crossed, at our price. Returns the shares filled."""
+        bids, asks = self.levels(ms.rm.yes)
+        tot = 0.0
+        for side, cur in list(ms.orders.items()):
+            po = self.broker.orders.get(cur["oid"])
+            if po is None or not po.live_at(now_ms) or cur["size"] <= 1e-9:
+                continue                               # not on the book yet (our own latency): nothing to hit
+            if side == "Y":
+                avail = sum(s for p, s in asks if p <= cur["price"] + 1e-9)
+            else:
+                avail = sum(s for p, s in bids if p >= 1 - cur["price"] - 1e-9)
+            q = min(po.remaining, avail)
+            if q <= 1e-9:
+                continue
+            po.remaining -= q
+            tot += q
+            self.on_fill({"order_id": cur["oid"], "token": po.token, "key": ms.rm.slug, "side": side,
+                          "price": cur["price"], "size": q, "ts": now_ms, "cross": True})
+        return tot
+
     async def quote_once(self):
         now = self.clock()
         now_ms = int(now * 1000)
         self.hedge_once()
         for ms in list(self.markets.values()):
+            self.cross_fills(ms, now_ms)
             tg = self.targets(ms, now)
             bids, asks = self.levels(ms.rm.yes)
             best_bid = bids[0][0] if bids else None

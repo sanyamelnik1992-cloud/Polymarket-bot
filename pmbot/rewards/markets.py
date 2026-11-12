@@ -156,6 +156,7 @@ def candidates(raw_markets, rc, now=None):
     now = now or time.time()
     today = time.strftime("%Y-%m-%d", time.gmtime(now))
     excl = re.compile(rc.exclude_regex, re.I) if rc.exclude_regex else None
+    deadline = re.compile(rc.deadline_regex, re.I) if rc.deadline_regex else None
     out, seen = [], set()
     for m in raw_markets:
         toks = m.get("tokens") or []
@@ -168,7 +169,9 @@ def candidates(raw_markets, rc, now=None):
         if rate < rc.min_rate:
             continue
         q = m.get("question") or ""
-        if excl and excl.search(q):
+        if (excl and excl.search(q)) or (deadline and deadline.search(q)):
+            continue
+        if rc.max_volume_24h and float(m.get("volume_24hr") or 0) > rc.max_volume_24h:
             continue
         e = end_ts(m)
         if not (e - now > rc.min_days_left * 86400):          # also drops unknown end dates (nan)

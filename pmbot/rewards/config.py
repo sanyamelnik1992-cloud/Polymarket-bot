@@ -11,12 +11,19 @@ class RewardsCfg:
     kill_file: str = "STOP"
     # selection
     min_rate: float = 5.0                # $/day pool of the market (the ranking is by expected reward, this only trims)
-    min_expected_reward: float = 1.0     # $/day our quote must be expected to earn in a market (payouts under $1 are not paid)
+    min_expected_reward: float = 2.0     # $/day our quote must be expected to earn in a market: fills cost about $1 a
+                                         # market-day in quiet markets (replay, reports/68), and payouts under $1 are not paid
     min_days_left: float = 2.0           # stay away from markets close to resolution (outcome often known)
     price_lo: float = 0.10               # displayed YES price range we quote in
     price_hi: float = 0.90
     exclude_regex: str = (r"\bvs\.?\b|o/u|spread:|handicap|game \d|map \d|\bset \d|winner|match|"
                           r"up or down|kills|total (?:goals|points|rounds)")
+    # "... by November 30?", "... before 2027?", "released by ...": the price decays to zero and jumps on news, a resting
+    # bid is run over. Replay of 345 such markets, 7 days: rewards $975 a day, fills cost $964 (the others kept 49 %)
+    deadline_regex: str = (r"\bby (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d|\breleased by\b|\bbefore\b|"
+                           r"\bby (?:the )?end of\b|\bby 20\d\d\b|\bby \w+ \d{1,2}\b")
+    max_volume_24h: float = 500.0        # skip markets that traded more than this in 24 h ($): in the replay a minimum-size
+                                         # quote kept 89 % of its rewards at zero volume, 10 % at $500-2000, lost above
     max_pages: int = 10                  # rewards collection pages (500 markets each, best pools first)
     max_candidates: int = 400            # how many of the best candidates (by the official estimate) get a book lookup
     max_markets: int = 45
@@ -43,7 +50,7 @@ class RewardsCfg:
     # risk
     min_fill_shares: float = 1.0         # fills at least this big start the cooldown and count toward the daily cap
     cooldown_min: float = 10.0           # no quotes in a market after a material fill
-    max_fills_per_market_day: int = 3
+    max_fills_per_market_day: int = 2    # ... in any 24 hours: markets that filled us twice a day lost in the replay
     max_inventory_usd_per_market: float = 40.0   # stop bidding a side once its unhedged inventory costs this much
     feed_stale_s: float = 45.0           # no websocket message for this long -> quote nothing
     max_ref_disagree: float = 0.03       # no quotes while the last trade (<= trade_fresh_s old) is this far off the book

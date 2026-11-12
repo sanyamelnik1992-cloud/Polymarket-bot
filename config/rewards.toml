@@ -11,7 +11,9 @@ mode = "paper"
 state_file = "data/state/rewards_paper.json"
 # selection: every 10 minutes, by expected reward per $ of capital (empty pools are found by others within hours)
 min_rate = 5                  # $/day pool of a market
-min_expected_reward = 1.0     # our quote must be expected to earn at least $1 a day there (smaller payouts are not paid)
+min_expected_reward = 2.0     # our quote must be expected to earn at least $2 a day there (fills cost ~$1 a market-day)
+max_volume_24h = 500          # skip markets that traded more than $500 in 24 h: there fills cost more than the rewards
+# deadline questions ("... by November 30?", "... before 2027?") are skipped by default (rewards.deadline_regex)
 min_days_left = 2             # skip markets that end within 2 days (outcome often already known)
 price_lo = 0.10
 price_hi = 0.90
@@ -36,7 +38,7 @@ fee_rate = 0.05               # when the market's own taker fee rate is unknown
 # risk
 min_fill_shares = 1           # smaller fills are kept in the position but do not pause the market
 cooldown_min = 10             # after a material fill: no quotes in that market for 10 min, then re-centre
-max_fills_per_market_day = 3
+max_fills_per_market_day = 2  # in any 24 hours
 max_inventory_usd_per_market = 40
 daily_loss_limit = 50         # trading loss of the day (hedges + marks) -> quotes off until 00:00 UTC
 feed_stale_s = 45             # no market-websocket message for this long -> no quotes

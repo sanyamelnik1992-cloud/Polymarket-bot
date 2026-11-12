@@ -106,8 +106,15 @@ def test_candidates_filters():
            raw_market("cheap", price=0.03), raw_market("sport", q="Lakers vs. Celtics"),
            raw_market("crypto", q="Bitcoin Up or Down on November 9?"),
            raw_market("big", min_size=200),                       # 200 shares a side = ~$200: over max_per_market_usd
-           raw_market("crowded", rate=50, comp=40.0)]             # 2000 points compete: our 6 points earn 15 cents a day
+           raw_market("crowded", rate=50, comp=40.0),             # 2000 points compete: our 6 points earn 15 cents a day
+           raw_market("deadline", q="US x Iran ceasefire by November 30?"),
+           raw_market("deadline2", q="Will the U.S. invade Iran before 2027?"),
+           raw_market("deadline3", q="Next Astra Model (6.1+) released by November 12, 2026?"),
+           dict(raw_market("busy"), volume_24hr=2500.0)]          # $2500 traded in 24 h: fills cost more than rewards
     assert [c.slug for c in mk.candidates(raw, rc)] == ["ok"]
+    # both filters can be switched off
+    loose = RewardsCfg(deadline_regex="", max_volume_24h=0)
+    assert {c.slug for c in mk.candidates(raw, loose)} == {"ok", "deadline", "deadline2", "deadline3", "busy"}
 
 
 def test_candidates_expected_reward_uses_competitiveness():
@@ -246,15 +253,43 @@ def test_zero_size_print_is_not_a_fill(tmp_path):
     assert "m" not in f.pos and f.markets["m"].cooldown_until == 0
 
 
-def test_crossing_order_is_replaced_at_once(tmp_path):
-    """Our YES bid at 0.49 must not stay after the book moves so that the best ask is 0.49 (it would be a taker)."""
-    f = farmer_with_market(tmp_path, requote_min_s=999)              # a long re-quote timer must not hold it
+def test_real_order_through_our_price_is_a_fill(tmp_path):
+    """Somebody posts an ask at our bid price: on the exchange it would have traded with our bid. On paper the
+    book just shows it; it must count as a fill (the informed kind), not as a reason to step away for free."""
+    f = farmer_with_market(tmp_path, requote_min_s=999)
     asyncio.run(f.quote_once())
     assert f.markets["m"].orders["Y"]["price"] == 0.46
+    f.clock.t += 1                                                    # our order is live now
     b = f.feed.books["Y"]
-    b.asks = {0.46: 50.0, 0.70: 100.0}                               # the ask moved down onto our bid
+    b.asks = {0.40: 12.0, 0.70: 100.0}                                # 12 shares offered at 0.40, through our 0.46 bid
     asyncio.run(f.quote_once())
-    assert f.markets["m"].orders["Y"]["price"] < 0.46
+    fill = f.journal.of("rfill")[0]
+    assert fill["cross"] and fill["size"] == 12 and fill["price"] == 0.46 and f.pos["m"].yes == 12
+    assert not f.markets["m"].orders and f.markets["m"].cooldown_until > f.clock()
+    # the position is marked at what the book now offers it for (0.40), not at the old 0.50 reference
+    assert f.status()["open_pnl"] == pytest.approx(12 * (0.40 - 0.46))
+
+
+def test_crossing_before_our_order_is_live_just_moves_it(tmp_path):
+    """Within our own placement latency the order is not on the book yet: nothing to hit, the quote steps away."""
+    f = farmer_with_market(tmp_path, requote_min_s=999)
+    asyncio.run(f.quote_once())
+    b = f.feed.books["Y"]
+    b.asks = {0.46: 50.0, 0.70: 100.0}                                # the ask moved onto our bid in the same instant
+    asyncio.run(f.quote_once())
+    assert "m" not in f.pos and f.markets["m"].orders["Y"]["price"] < 0.46
+
+
+def test_a_bid_through_our_ask_fills_the_no_side(tmp_path):
+    f = farmer_with_market(tmp_path)
+    asyncio.run(f.quote_once())
+    assert f.markets["m"].orders["N"]["price"] == 0.46                # = a YES ask at 0.54
+    f.clock.t += 1
+    f.feed.books["Y"].bids = {0.60: 100.0, 0.30: 100.0}               # a buyer bids 0.60 for YES: he would lift 0.54
+    asyncio.run(f.quote_once())
+    assert f.pos["m"].no == 20 and f.journal.of("rfill")[0]["cross"]
+    # the book is 0.60 / 0.70 now: YES is worth 0.65 (and never less than the 0.60 bid), so NO is worth 0.35
+    assert f.status()["open_pnl"] == pytest.approx(20 * (0.35 - 0.46))
 
 
 def test_unselected_markets_without_position_are_forgotten(tmp_path):
@@ -301,7 +336,25 @@ def test_max_fills_survive_a_restart(tmp_path):
         f.markets["m"].cooldown_until = 0                            # skip the cooldown, count the fills
     assert f.mfills["m"] == 2 and f.targets(f.markets["m"], f.clock()) == {}
     g = Farmer(f.rc, J(), clock=f.clock)                              # restart from the state file
-    assert g.mfills.get("m") == 2
+    assert g.mfills.get("m") == 2 and g.fills_24h("m", g.clock()) == 2
+
+
+def test_fill_cap_is_rolling_24_hours(tmp_path):
+    """Two fills late in the evening must not be forgotten at midnight: the market rests for 24 hours."""
+    f = farmer_with_market(tmp_path, max_fills_per_market_day=2)
+    asyncio.run(f.quote_once())
+    for _ in range(2):
+        f.clock.t += 1
+        f.on_trade("Y", "SELL", 0.40, 5, int(f.clock() * 1000))
+        f.markets["m"].cooldown_until = 0
+    f.clock.t += 6 * 3600
+    f.feed.last_msg = f.clock()
+    f.mfills = {}                                                     # as roll_day() does at 00:00 UTC
+    assert f.targets(f.markets["m"], f.clock()) == {}
+    f.clock.t += 19 * 3600
+    f.feed.last_msg = f.clock()
+    f.markets["m"].last_trade_t = None                                # the old print is no reason to stay away any more
+    assert f.targets(f.markets["m"], f.clock()) != {}
 
 
 # ---------------------------------------------------------------- distance, order age, queue
@@ -340,10 +393,13 @@ def test_resting_order_keeps_its_age_on_a_small_move(tmp_path):
     asyncio.run(f.quote_once())
     assert ms.orders["Y"]["oid"] == oid and ms.orders["Y"]["t"] == t0 and ms.orders["Y"]["price"] == 0.48
     assert f.sample_once() > 0                                        # ... and it still scores (3c from the mid)
-    contested(f, bid=0.52, ask=0.56)                                  # three more cents: 6c away, outside the zone
+    noid = ms.orders["N"]["oid"]
+    contested(f, bid=0.44, ask=0.50)                                  # the others stepped down: the mid is 0.47 now
     f.clock.t += 1
     asyncio.run(f.quote_once())
-    assert ms.orders["Y"]["oid"] != oid and ms.orders["Y"]["price"] == 0.52
+    # our 0.48 bid is above the mid (much too close) and our 0.52 ask is 5c away (outside the 4.5c zone): both move
+    assert ms.orders["Y"]["oid"] != oid and ms.orders["Y"]["price"] == 0.45
+    assert ms.orders["N"]["oid"] != noid and ms.orders["N"]["price"] == 0.51
 
 
 def test_order_too_close_to_the_price_is_moved_at_once(tmp_path):
