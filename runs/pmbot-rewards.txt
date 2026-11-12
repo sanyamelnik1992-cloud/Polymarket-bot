@@ -1,46 +1,70 @@
-journal data/journal-rewards: 0.4 h of events, 11-12 08:36 -> 11-12 09:02 UTC
-now: markets 45, quoting 41, bids $759.34, feed ok, pool rate at current shares $1686.89/day
-rewards (estimate by the book): today $31.588, total $31.588; by Polymarket's competitiveness: total $34.737; earned alone in a zone: total $23.543; stress (one more identical maker): total $16.317
-hedges: 0 for 0 shares, lost $0; inventory not hedged yet: $26.93
-positions: value $19.05 cost $26.93 -> open $-7.88; realised $0.0; trading $-7.88 (today -7.88)
-TOTAL (rewards estimate + trading): $23.71; CAUTIOUS (lower estimate, without the part earned alone, + trading): $0.17; fills total 5
+journal data/journal-rewards: 1.4 h of events, 11-12 08:36 -> 11-12 10:01 UTC
+now: markets 45, quoting 40, bids $744.08, feed ok, pool rate at current shares $1593.27/day
+rewards (estimate by the book): today $98.357, total $98.357; by Polymarket's competitiveness: total $111.364; earned alone in a zone: total $68.259; stress (one more identical maker): total $51.634
+hedges: 8 for 159.3 shares, lost $7.75; inventory not hedged yet: $98.16
+positions: value $100.64 cost $124.36 -> open $-23.72; realised $-7.75; trading $-31.47 (today -31.47)
+TOTAL (rewards estimate + trading): $66.88; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-1.38; fills total 28
 
 top markets by estimated reward:
-  $   1.65  share 1.00  pool $100/d  empty will-gas-hit-3pt70-low-by-november-30-2026
-  $   1.65  share 1.00  pool $98/d  empty will-openrouter-process-between-210t-and-220t-tokens-the-wee
-  $   1.45  share 0.00  pool $102/d  empty will-anthropic-be-the-2-ai-lab-at-the-end-of-november-2026
-  $   1.43  share 1.00  pool $57/d  empty will-rothko-untitled-sell-for-between-3pt5m-and-4pt5m-at-auc
-  $   1.26  share 0.89  pool $86/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
-  $   1.26  share 0.00  pool $100/d  empty will-gas-hit-3pt65-low-by-november-30-2026
-  $   1.02  share 1.00  pool $108/d  will-uk-annual-inflation-be-between-3pt7-and-3pt9-in-october
-  $   1.01  share 0.17  pool $84/d  will-the-ornn-h200-index-be-at-least-6pt50-on-december-31-20
-  $   1.01  share 1.00  pool $61/d  empty will-openrouter-process-between-220t-and-230t-tokens-the-wee
-  $   0.99  share 1.00  pool $61/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
-  $   0.94  share 1.00  pool $58/d  empty highest-temperature-in-paris-on-november-14-2026-11c
-  $   0.87  share 0.00  pool $59/d  empty will-google-be-the-2-ai-lab-at-the-end-of-november-2026
+  $   4.29  share 0.89  pool $86/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
+  $   4.06  share 0.24  pool $100/d  will-gas-hit-3pt70-low-by-november-30-2026
+  $   3.75  share 1.00  pool $53/d  empty will-rothko-untitled-sell-for-between-3pt5m-and-4pt5m-at-auc
+  $   3.57  share 1.00  pool $63/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
+  $   3.57  share 1.00  pool $61/d  empty will-openrouter-process-between-220t-and-230t-tokens-the-wee
+  $   3.35  share 1.00  pool $100/d  empty will-gas-hit-3pt65-low-by-november-30-2026
+  $   3.16  share 1.00  pool $56/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $   2.95  share 1.00  pool $50/d  empty will-the-republicans-win-tennessee-in-the-2028-presidential-
+  $   2.92  share 1.00  pool $50/d  empty will-eric-trump-join-trump-at-apec-in-china
+  $   2.92  share 1.00  pool $50/d  empty will-the-democrats-win-vermont-in-the-2028-presidential-elec
+  $   2.92  share 1.00  pool $50/d  empty will-the-republicans-win-vermont-in-the-2028-presidential-el
+  $   2.92  share 1.00  pool $50/d  empty will-jared-kushner-join-trump-at-apec-in-china
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
-  2026-11-12: book $33.18, official $36.65, alone $24.71 | hedges 0 ($0.00) | trading: day not closed | samples 24, avg markets scoring 40.7
+  2026-11-12: book $99.14, official $112.26, alone $68.79 | hedges 8 ($7.75) | trading: day not closed | samples 86, avg markets scoring 38.8
 
-last selection: 45 markets of 391 priced, capital $835.52, est $2183.7/day, empty books 22
+last selection: 45 markets of 397 priced, capital $836.56, est $1910.22/day, empty books 22
 
-fills: 5 (material 5)
-  11-12 08:51 will-connor-closs-win-the-voice-season-30               YES 5@0.310 last_trade=None (alone in the zone)
-  11-12 08:55 will-gas-hit-3pt65-low-by-november-30-2026              NO  20@0.540 last_trade=None (alone in the zone)
-  11-12 08:57 will-two-people-dissent-the-december-fed-decision-20260 YES 20@0.254 last_trade=None (alone in the zone)
-  11-12 08:58 will-google-be-the-2-ai-lab-at-the-end-of-november-2026 YES 20@0.260 last_trade=0.22 (alone in the zone)
-  11-12 08:59 will-anthropic-be-the-2-ai-lab-at-the-end-of-november-2 NO  10@0.430 last_trade=0.65 (alone in the zone)
+fills: 28 (material 28)
+  11-12 09:31 will-openrouter-process-between-210t-and-220t-tokens-th NO  20@0.420 last_trade=0.6
+  11-12 09:31 will-openrouter-process-between-220t-and-230t-tokens-th YES 8.36@0.150 last_trade=0.12
+  11-12 09:31 will-openrouter-process-between-220t-and-230t-tokens-th YES 4.9438@0.150 last_trade=0.10999999999999999
+  11-12 09:31 will-openrouter-process-between-220t-and-230t-tokens-th YES 6.6962@0.150 last_trade=0.10999999999999999
+  11-12 09:35 will-japan-q3-gdp-growth-annualized-be-between-0pt8-and YES 20@0.274 last_trade=None (alone in the zone)
+  11-12 09:36 highest-temperature-in-madrid-on-november-14-2026-15c   NO  15.24@0.660 last_trade=0.35
+  11-12 09:36 highest-temperature-in-madrid-on-november-14-2026-15c   NO  4.76@0.660 last_trade=0.35
+  11-12 09:37 walmart-wmt-q3-us-comparable-sales-ex-fuel-growth-20261 NO  20@0.310 last_trade=None
+  11-12 09:38 nba-2026-27-eastern-conference-1-seed-philadelphia-76er YES 20@0.240 last_trade=None (alone in the zone)
+  11-12 09:43 will-the-white-house-call-a-full-lid-by-630-pm-on-novem YES 20@0.540 last_trade=0.26 (alone in the zone)
+  11-12 09:48 will-the-10-year-japanese-government-bond-yield-on-the- NO  20@0.758 last_trade=0.222
+  11-12 09:53 will-the-2-year-treasury-yield-dip-below-4pt44-in-novem YES 20@0.405 last_trade=None (alone in the zone)
+  11-12 09:53 highest-temperature-in-seoul-on-november-14-2026-13c    NO  20@0.530 last_trade=None
+  11-12 09:59 donald-trump-of-truth-social-posts-november-13-november YES 5@0.261 last_trade=None
+  11-12 10:00 highest-temperature-in-wellington-on-november-14-2026-2 YES 20@0.440 last_trade=0.45999999999999996
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                     55 markets  rewards $   30.18  trading $   -7.88  net $  +22.30  fills   5  quoted   14.4 market-hours
-  mostly alone in the zone                25 markets  rewards $   23.20  trading $   -6.20  net $  +17.00  fills   3  quoted    8.7 market-hours
-  with other makers in the zone           30 markets  rewards $    6.98  trading $   -1.68  net $   +5.30  fills   2  quoted    5.7 market-hours
-  never filled                            50 markets  rewards $   26.52  trading $   +0.00  net $  +26.52  fills   0  quoted   13.3 market-hours
-  filled                                   5 markets  rewards $    3.66  trading $   -7.88  net $   -4.22  fills   5  quoted    1.1 market-hours
+  all                                     64 markets  rewards $   73.16  trading $  -24.77  net $  +48.39  fills  17  quoted   35.7 market-hours
+  mostly alone in the zone                28 markets  rewards $   57.14  trading $  -11.24  net $  +45.90  fills   7  quoted   25.5 market-hours
+  with other makers in the zone           36 markets  rewards $   16.02  trading $  -13.53  net $   +2.49  fills  10  quoted   10.2 market-hours
+  never filled                            48 markets  rewards $   59.92  trading $   +0.00  net $  +59.92  fills   0  quoted   29.1 market-hours
+  filled                                  16 markets  rewards $   13.23  trading $  -24.77  net $  -11.54  fills  17  quoted    6.6 market-hours
   worst by trading:
-    $  -4.00  rewards $  1.26  fills 1  pool $100/d  Will US gas hit $3.65 (Low) in November?
-    $  -1.88  rewards $  0.00  fills 1  pool $56/d  Will two people dissent the December Fed decision?
-    $  -1.40  rewards $  0.87  fills 1  pool $59/d  Will Google be the #2 AI lab at the end of November 2026?
-    $  -0.80  rewards $  1.45  fills 1  pool $102/d  Will Anthropic be the #2 AI lab at the end of November 2026?
+    $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
+    $  -5.10  rewards $  1.92  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
+    $  -4.28  rewards $  0.12  fills 1  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
+    $  -2.29  rewards $  0.00  fills 1  pool $56/d  Will two people dissent the December Fed decision?
+    $  -2.20  rewards $  0.91  fills 1  pool $40/d  Will Google be the #2 AI lab at the end of November 2026?
+    $  -1.40  rewards $  0.01  fills 1  pool $47/d  Will the highest temperature in Wellington be 20°C on Novemb
+    $  -1.20  rewards $  0.40  fills 1  pool $63/d  Walmart (WMT) Q3 US comp sales (ex-fuel) growth 2.5% to 4%?
+    $  -1.05  rewards $  0.09  fills 1  pool $31/d  Will Connor Closs win The Voice: Season 30?
+
+hedges: 8, 159.34 shares, cost $7.75 = 4.87c a share (the largest reward earners pay 1.3c + fee: reports/68)
+  11-12 09:09 will-morena-win-the-most-seats-in-the-2027-colima-congr bought NO  20@0.480 held@0.570 cost/share +0.0600
+  11-12 09:14 will-anthropic-be-the-2-ai-lab-at-the-end-of-november-2 bought YES 19.34@0.530 held@0.507 cost/share +0.0472
+  11-12 09:16 will-openrouter-process-between-210t-and-220t-tokens-th bought NO  20@0.480 held@0.530 cost/share +0.0200
+  11-12 09:27 highest-temperature-in-wellington-on-november-14-2026-1 bought NO  20@0.640 held@0.400 cost/share +0.0515
+  11-12 09:31 will-openrouter-process-between-210t-and-220t-tokens-th bought YES 20@0.630 held@0.420 cost/share +0.0593
+  11-12 09:31 will-openrouter-process-between-220t-and-230t-tokens-th bought NO  20@0.893 held@0.150 cost/share +0.0470
+  11-12 09:36 highest-temperature-in-madrid-on-november-14-2026-15c   bought YES 20@0.380 held@0.660 cost/share +0.0518
+  11-12 09:54 highest-temperature-in-seoul-on-november-14-2026-13c    bought YES 20@0.510 held@0.530 cost/share +0.0525
 
 settlements: 0, realised $0.00

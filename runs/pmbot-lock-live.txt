@@ -1,20 +1,20 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261112-083520
-mode: live  duration: 27.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 54, 'prewarm': 20, 'lock_state': 54, 'strike': 16, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: live  duration: 86.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 172, 'prewarm': 68, 'lock_state': 355, 'strike': 64, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4}
 
-lock orders: sent 1  filled 1  ask gone 0  errors 0
-  signal -> exchange answer, ms: median 335  p90 335  max 335
-  market prewarm (2 lookups + signing), ms: median 154  max 248  n 20
-  fill price minus the ask we saw, cents: mean +3.00  worst +3.0
+lock orders: sent 4  filled 4  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 335  p90 510  max 510
+  market prewarm (2 lookups + signing), ms: median 190  max 323  n 68
+  fill price minus the ask we saw, cents: mean +0.75  worst +3.0
 
-fills: 1  shares: 10  notional: $9.80
+fills: 4  shares: 30  notional: $28.90
        fills  shares  notional  avg_price  med_rel
 asset                                             
-eth        1    10.0       9.8       0.98  241.288
+eth        4  30.164      28.9      0.948  247.405
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-eth          1  9.814  0.186          0.186     0.0       1.0  0.186  0.186  0.019
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+eth          4  28.983 -3.928         -3.928     0.0      0.75 -4.679  0.378 -0.136
 
-TOTAL pnl $+0.19 (ex-rebate $+0.19) on cost $9.81 -> ROI +1.90%; windows 1, t-stat +nan
-max drawdown $0.00; hedged windows (both sides filled): 0
+TOTAL pnl $-3.93 (ex-rebate $-3.93) on cost $28.98 -> ROI -13.55%; windows 4, t-stat -0.80
+max drawdown $-4.68; hedged windows (both sides filled): 0
