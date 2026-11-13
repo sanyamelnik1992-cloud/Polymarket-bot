@@ -1,73 +1,73 @@
-journal data/journal-rewards: 26.4 h of events, 11-12 08:36 -> 11-13 11:02 UTC
-now: markets 45, quoting 45, bids $681.19, feed ok, pool rate at current shares $900.73/day
-rewards (estimate by the book): today $588.316, total $1211.637; by Polymarket's competitiveness: total $1402.382; earned alone in a zone: total $869.301; stress (one more identical maker): total $638.556
-hedges: 115 for 2091.9 shares, lost $73.33; inventory not hedged yet: $317.91
-positions: value $229.36 cost $317.91 -> open $-88.55; realised $-94.32; trading $-182.87 (today -45.3)
-TOTAL (rewards estimate + trading): $1028.77; CAUTIOUS (lower estimate, without the part earned alone, + trading): $159.47; fills total 195
+journal data/journal-rewards: 27.4 h of events, 11-12 08:36 -> 11-13 12:01 UTC
+now: markets 45, quoting 44, bids $669.07, feed ok, pool rate at current shares $981.77/day
+rewards (estimate by the book): today $633.985, total $1257.306; by Polymarket's competitiveness: total $1465.522; earned alone in a zone: total $900.051; stress (one more identical maker): total $662.847
+hedges: 123 for 2241.7 shares, lost $78.8; inventory not hedged yet: $327.01
+positions: value $239.53 cost $327.01 -> open $-87.49; realised $-102.6; trading $-190.08 (today -52.51)
+TOTAL (rewards estimate + trading): $1067.22; CAUTIOUS (lower estimate, without the part earned alone, + trading): $167.17; fills total 209
 
 top markets by estimated reward:
-  $   4.57  share 0.08  pool $90/d  will-south-koreas-sa-unemployment-rate-increase-between-octo
-  $   3.97  share 0.00  pool $101/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
-  $   3.39  share 1.00  pool $55/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $   3.23  share 0.00  pool $62/d  will-openrouter-process-between-220t-and-230t-tokens-the-wee
-  $   2.99  share 0.62  pool $61/d  will-the-ornn-h100-index-be-between-3pt50-and-4pt00-on-decem
-  $   2.91  share 1.00  pool $50/d  empty will-the-white-house-call-a-full-lid-by-630-pm-on-november-1
-  $   2.91  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $   2.89  share 0.90  pool $89/d  will-the-republicans-win-nebraska-in-the-2028-presidential-e
-  $   2.66  share 1.00  pool $49/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
-  $   2.62  share 1.00  pool $45/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $   2.28  share 1.00  pool $42/d  empty will-morena-win-the-most-seats-in-the-2027-morelos-congress-
-  $   2.27  share 1.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   7.87  share 1.00  pool $84/d  empty will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
+  $   5.74  share 1.00  pool $56/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $   5.50  share 1.00  pool $62/d  empty will-openrouter-process-between-220t-and-230t-tokens-the-wee
+  $   5.03  share 1.00  pool $50/d  empty will-the-white-house-call-a-full-lid-by-630-pm-on-november-1
+  $   5.03  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $   4.74  share 1.00  pool $49/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
+  $   4.64  share 1.00  pool $50/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $   4.39  share 0.00  pool $63/d  will-the-ornn-h100-index-be-between-3pt50-and-4pt00-on-decem
+  $   4.15  share 1.00  pool $46/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
+  $   3.92  share 1.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   3.55  share 0.00  pool $40/d  will-morena-win-the-most-seats-in-the-2027-morelos-congress-
+  $   3.08  share 0.00  pool $56/d  empty highest-temperature-in-seattle-on-november-15-2026-54-55f
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
-  2026-11-13: book $589.21, official $711.05, alone $378.87 | hedges 46 ($24.36) | trading: day not closed | samples 654, avg markets scoring 31.6
+  2026-11-13: book $633.99, official $772.83, alone $409.10 | hedges 54 ($29.83) | trading: day not closed | samples 714, avg markets scoring 31.8
 
-last selection: 45 markets of 108 priced, capital $839.08, est $1677.38/day, empty books 22
+last selection: 45 markets of 84 priced, capital $839.24, est $1458.52/day, empty books 22
 
-fills: 195 (material 192)
-  11-13 08:40 will-the-median-home-value-in-los-angeles-metro-be-less NO  20@0.630 last_trade=None
-  11-13 08:45 will-anthropics-valuation-be-between-1pt75t-and-2pt00t- NO  20@0.610 last_trade=0.64 (alone in the zone)
-  11-13 08:52 will-the-republicans-win-nebraska-in-the-2028-president NO  20@0.180 last_trade=0.85
-  11-13 08:54 will-the-ornn-rtx-6000-index-be-between-1pt75-and-2pt00 YES 20@0.086 last_trade=0.07699999999999996
-  11-13 09:00 will-connor-closs-come-in-third-place-on-the-voice-seas NO  0.51@0.840 last_trade=0.53 (alone in the zone)
-  11-13 09:00 will-anthropics-valuation-be-between-1pt75t-and-2pt00t- NO  7.54@0.340 last_trade=0.7
-  11-13 09:09 will-canadas-november-2026-unemployment-rate-be-6pt4    NO  9.99@0.870 last_trade=0.18
-  11-13 09:12 will-openrouter-process-between-200t-and-210t-tokens-th YES 20@0.290 last_trade=0.26
-  11-13 09:42 will-annual-inflation-be-3pt7-in-november               YES 20@0.200 last_trade=0.18999999999999995
-  11-13 09:50 will-matthew-mcconaughey-appear-in-a-2027-big-game-comm YES 5@0.550 last_trade=None (alone in the zone)
-  11-13 10:16 will-anthropics-valuation-be-between-1pt75t-and-2pt00t- YES 24.36@0.680 last_trade=0.44999999999999996
-  11-13 10:39 will-gpt-astra-output-price-be-30-or-below-in-2026      YES 20@0.410 last_trade=0.35
-  11-13 10:39 will-uk-annual-inflation-be-between-3pt7-and-3pt9-in-oc NO  20@0.360 last_trade=None
-  11-13 10:47 will-the-democrats-win-mississippi-in-the-2028-presiden YES 20@0.250 last_trade=None
+fills: 209 (material 205)
   11-13 10:53 will-openrouter-process-between-220t-and-230t-tokens-th NO  16.6@0.520 last_trade=0.5
+  11-13 11:05 anthropic-ipo-closing-market-cap-above-1pt25t           YES 20@0.830 last_trade=0.8
+  11-13 11:07 will-the-republicans-win-nebraska-in-the-2028-president NO  19.7558@0.150 last_trade=0.86
+  11-13 11:08 highest-temperature-in-lucknow-on-november-15-2026-29c  NO  20@0.750 last_trade=None
+  11-13 11:08 white-house-of-tweets-november-10-november-17-2026-200p NO  5@0.410 last_trade=0.65 (alone in the zone)
+  11-13 11:14 highest-temperature-in-los-angeles-on-november-15-2026- YES 20@0.390 last_trade=0.26
+  11-13 11:14 highest-temperature-in-los-angeles-on-november-15-2026- NO  20@0.720 last_trade=0.37
+  11-13 11:15 will-zekken-play-for-nrg-in-2027-1788364450495          NO  20@0.235 last_trade=0.77
+  11-13 11:17 will-jon-ossoff-win-the-nevada-democratic-presidential- YES 20@0.180 last_trade=None (alone in the zone)
+  11-13 11:25 will-tyreek-hill-sign-with-the-los-angeles-rams-in-2026 YES 20@0.135 last_trade=0.121
+  11-13 11:29 will-jon-ossoff-win-the-nevada-democratic-presidential- NO  20@0.850 last_trade=0.17
+  11-13 11:30 will-the-democrats-win-wisconsin-in-the-2028-presidenti YES 0.52@0.490 last_trade=0.48
+  11-13 11:42 highest-temperature-in-wuhan-on-november-15-2026-19c    YES 20@0.320 last_trade=None
+  11-13 11:55 will-the-highest-score-achieved-by-a-spacexai-grok-mode NO  20@0.640 last_trade=None
+  11-13 11:59 highest-temperature-in-seoul-on-november-15-2026-16c    NO  20@0.480 last_trade=0.53
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    251 markets  rewards $  614.40  trading $ -156.32  net $ +458.08  fills  85  quoted  312.7 market-hours
-  mostly alone in the zone               121 markets  rewards $  529.44  trading $  -73.76  net $ +455.68  fills  39  quoted  231.2 market-hours
-  with other makers in the zone          130 markets  rewards $   84.96  trading $  -82.56  net $   +2.40  fills  46  quoted   81.5 market-hours
-  never filled                           178 markets  rewards $  433.96  trading $  -30.14  net $ +403.82  fills   0  quoted  219.3 market-hours
-  filled                                  73 markets  rewards $  180.44  trading $ -126.18  net $  +54.26  fills  85  quoted   93.4 market-hours
+  all                                    258 markets  rewards $  636.70  trading $ -156.74  net $ +479.96  fills  88  quoted  333.5 market-hours
+  mostly alone in the zone               125 markets  rewards $  553.26  trading $  -74.61  net $ +478.65  fills  40  quoted  245.7 market-hours
+  with other makers in the zone          133 markets  rewards $   83.43  trading $  -82.13  net $   +1.30  fills  48  quoted   87.9 market-hours
+  never filled                           182 markets  rewards $  448.97  trading $  -28.99  net $ +419.99  fills   0  quoted  233.1 market-hours
+  filled                                  76 markets  rewards $  187.72  trading $ -127.75  net $  +59.97  fills  88  quoted  100.4 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
     $  -6.74  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
     $  -6.50  rewards $  4.67  fills 2  pool $24/d  Will Anthropic’s valuation be between $1.75T and $2.00T at t
     $  -6.40  rewards $  0.00  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
-    $  -6.40  rewards $  0.68  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
+    $  -6.40  rewards $  1.29  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.26  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
 
-hedges: 115, 2091.91 shares, cost $73.34 = 3.51c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-13 08:39 highest-temperature-in-nyc-on-november-15-2026-52-53f   bought NO  20@0.900 held@0.150 cost/share +0.0545
-  11-13 08:45 will-the-median-home-value-in-los-angeles-metro-be-less bought YES 20@0.410 held@0.630 cost/share +0.0521
-  11-13 08:53 will-the-republicans-win-nebraska-in-the-2028-president bought YES 20@0.860 held@0.180 cost/share +0.0448
-  11-13 09:13 will-gas-hit-3pt95-high-by-november-30-2026             bought YES 25@0.240 held@0.802 cost/share +0.0493
-  11-13 09:17 will-openrouter-process-between-200t-and-210t-tokens-th bought NO  20@0.740 held@0.290 cost/share +0.0377
-  11-13 09:42 will-annual-inflation-be-3pt7-in-november               bought NO  20@0.770 held@0.200 cost/share -0.0211
-  11-13 09:51 will-matthew-mcconaughey-appear-in-a-2027-big-game-comm bought YES 15@0.470 held@0.470 cost/share -0.0475
-  11-13 10:37 will-canadas-gdp-growth-rate-mom-in-september-2026-be-b bought YES 20@0.480 held@0.560 cost/share +0.0525
+hedges: 123, 2241.66 shares, cost $78.81 = 3.52c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-13 10:53 will-openrouter-process-between-220t-and-230t-tokens-th bought YES 16.6@0.500 held@0.520 cost/share +0.0300
   11-13 10:58 will-camilo-santana-be-the-next-brazilian-chief-of-staf bought NO  20@0.510 held@0.540 cost/share +0.0600
+  11-13 11:07 will-the-republicans-win-nebraska-in-the-2028-president bought YES 19.7558@0.880 held@0.150 cost/share +0.0340
+  11-13 11:08 highest-temperature-in-lucknow-on-november-15-2026-29c  bought YES 20@0.290 held@0.750 cost/share +0.0503
+  11-13 11:11 anthropic-ipo-closing-market-cap-above-1pt25t           bought NO  20@0.210 held@0.830 cost/share +0.0466
+  11-13 11:15 will-zekken-play-for-nrg-in-2027-1788364450495          bought YES 20@0.770 held@0.235 cost/share +0.0139
+  11-13 11:20 will-tyreek-hill-sign-with-the-los-angeles-rams-in-2026 bought YES 10@0.190 held@0.840 cost/share +0.0377
+  11-13 11:25 will-tyreek-hill-sign-with-the-los-angeles-rams-in-2026 bought NO  20@0.879 held@0.135 cost/share +0.0193
+  11-13 11:43 highest-temperature-in-wuhan-on-november-15-2026-19c    bought NO  20@0.720 held@0.320 cost/share +0.0501
+  11-13 11:48 will-uk-annual-inflation-be-between-3pt7-and-3pt9-in-oc bought YES 20@0.670 held@0.360 cost/share +0.0411
 
 settlements: 0, realised $0.00
