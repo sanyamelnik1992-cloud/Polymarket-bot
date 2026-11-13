@@ -233,6 +233,8 @@ def candidates(raw_markets, rc, now=None):
         if size > rc.max_per_market_usd / 0.9:                # two bids cost about $1 per share together
             continue
         comp = float(m.get("market_competitiveness") or 0)
+        if rc.max_competitiveness and comp >= rc.max_competitiveness:
+            continue
         d = quote_dist(rc, v, alone=comp * rate < 1.0)
         share = official_share(rate, comp, order_score(v, d, size))
         if rate * share < rc.min_expected_reward:

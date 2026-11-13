@@ -46,6 +46,8 @@ from .feed import BookFeed
 from .scoring import adjusted_mid, official_share, our_share, plan_quotes, walk_asks, zone_scores
 
 log = logging.getLogger("pmbot.rewards")
+RM_KEYS = ("slug", "question", "condition_id", "yes", "no", "rate", "v", "min_size", "end_ts", "tick", "min_order",
+           "price", "last_trade", "comp", "size", "fee_rate", "min_age")       # enough of a market to quote its exit
 SETTLE_GRACE_S = 3600          # look for a resolution at most this long after the market's end (then keep polling)
 ZONE_MARGIN = 0.25             # cents: a resting order closer than this to the edge of the zone is moved in
 
@@ -175,7 +177,15 @@ class Farmer:
             self.pos[slug] = (Position(d["yes"], d["no"], cy=d["cy"], cn=d["cn"]) if "cy" in d
                               else Position(d["yes"], d["no"], d["cost"]))
             self.meta[slug] = {"yes": d.get("yes_token"), "no": d.get("no_token"), "mid": d.get("mid"),
-                               "end": d.get("end"), "fee": d.get("fee")}
+                               "end": d.get("end"), "fee": d.get("fee"), "rm": d.get("rm")}
+            if d.get("rm"):                            # the market is known again: its exit bid can rest at once
+                try:
+                    rm = d["rm"]
+                    ms = self.markets[slug] = MState(mk.RMarket(**{**rm, "end_ts": rm.get("end_ts") or float("nan")}))
+                    ms.active = False
+                    self.token_slug[rm["yes"]], self.token_slug[rm["no"]] = slug, slug
+                except (TypeError, KeyError):
+                    pass
         self.fill_ts = {k: [float(t) for t in v] for k, v in (s.get("fill_ts") or {}).items()}
         # the day's base and stop are kept per date: on 12 Nov a stop at 11:14 did not survive the update restart at
         # 11:46 (the bot quoted again from a fresh base and stopped a second time). Whatever the cause, today's entry
@@ -201,9 +211,11 @@ class Farmer:
         for slug, ps in self.pos.items():
             if ps.yes or ps.no:
                 m = self.meta.get(slug, {})
+                ms = self.markets.get(slug)
                 positions[slug] = {"yes": ps.yes, "no": ps.no, "cost": ps.cost, "cy": ps.cy, "cn": ps.cn,
                                    "yes_token": m.get("yes"), "no_token": m.get("no"), "mid": self.mid_of(slug),
-                                   "end": m.get("end"), "fee": m.get("fee")}
+                                   "end": m.get("end"), "fee": m.get("fee"),
+                                   "rm": {k: getattr(ms.rm, k) for k in RM_KEYS} if ms else m.get("rm")}
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
             json.dump({"day": self.day, "day_base": self.day_base, "halted_until": self.halted_until,
@@ -392,9 +404,10 @@ class Farmer:
         """Flatten what a fill left: buy the other outcome from the live book when the pair then costs at most
         1 + max_hedge_cost a share (taker fee included) and merge the pair. Returns the number of hedges done."""
         rc = self.rc
+        now = self.clock()
+        merged = self.merge_pairs(now)
         if not rc.hedge or not self.feed_ok():
             return 0
-        now = self.clock()
         done = 0
         for slug, ps in list(self.pos.items()):
             imb = ps.yes - ps.no
@@ -437,9 +450,31 @@ class Farmer:
             if not (ps.yes or ps.no):
                 del self.pos[slug]
             done += 1
-        if done:
+        if done or merged:
             self._save()
         return done
+
+    def merge_pairs(self, now=None):
+        """YES and NO of the same market held together are $1 a pair: merge them (the exchange's merge) as soon as both
+        exist. Before, pairs made by two passive fills stayed in the positions and kept the budget busy."""
+        now = self.clock() if now is None else now
+        n = 0
+        for slug, ps in list(self.pos.items()):
+            pairs = min(ps.yes, ps.no)
+            if pairs < 1.0 - 1e-9:                     # dust is not worth a transaction
+                continue
+            pairs, pnl = ps.merge()
+            day = utc_day(now)
+            self.realized += pnl
+            self.realized_by_day[day] = self.realized_by_day.get(day, 0.0) + pnl
+            ms = self.markets.get(slug)
+            if ms is not None:
+                ms.hedge_pnl += pnl
+            self.journal.log("rmerge", key=slug, pairs=round(pairs, 4), pnl=round(pnl, 4))
+            if not (ps.yes or ps.no):
+                del self.pos[slug]
+            n += 1
+        return n
 
     def unhedged_usd(self):
         """Cost of the inventory that is not paired (what a hedge could not flatten yet)."""
@@ -474,12 +509,30 @@ class Farmer:
         """Material fills of a market in the last 24 hours (a market that keeps hitting us is not quoted)."""
         return sum(1 for t in self.fill_ts.get(slug, []) if now - t < 86400)
 
+    def reducing_side(self, ms):
+        """"N" when we hold unpaired YES (a NO bid pairs it), "Y" when we hold unpaired NO, None when flat."""
+        ps = self.pos.get(ms.rm.slug)
+        if not ps:
+            return None
+        imb = ps.yes - ps.no
+        if imb >= ms.rm.min_order - 1e-9:
+            return "N"
+        if -imb >= ms.rm.min_order - 1e-9:
+            return "Y"
+        return None
+
     def targets(self, ms, now):
-        """{"Y": (price, size), "N": (price, size)} we want resting now (sides may be missing)."""
+        """{"Y": (price, size), "N": (price, size)} we want resting now (sides may be missing).
+        With unpaired inventory (reduce_only) only the bid that pairs it rests -- also during the cooldown and after
+        the market left the selection: the exit waits at the reward distance instead of paying the spread, and a
+        second fill can no longer double the position (12-13 Nov: $350 of unpaired inventory, marked -25 %)."""
         rc = self.rc
-        if not ms.active or now < ms.cooldown_until or now < self.halted_until:
+        reduce = self.reducing_side(ms) if rc.reduce_only else None
+        if now < self.halted_until:
             return {}
-        if self.fills_24h(ms.rm.slug, now) >= rc.max_fills_per_market_day:
+        if reduce is None and (not ms.active or now < ms.cooldown_until):
+            return {}
+        if reduce is None and self.fills_24h(ms.rm.slug, now) >= rc.max_fills_per_market_day:
             return {}
         if ms.rm.end_ts - now < rc.min_days_left * 86400 * 0.5:
             return {}
@@ -509,6 +562,11 @@ class Farmer:
             return {}
         ms.ref, ms.alone = ref, alone
         out = {"Y": (bid, size), "N": (round(1 - ask, 6), size)}
+        if reduce is not None:
+            ps = self.pos[ms.rm.slug]
+            need = abs(ps.yes - ps.no)                 # the exit bid is just big enough to pair what we hold
+            p = out[reduce][0]
+            return {reduce: (p, max(round(need, 2), ms.rm.min_order))}
         ps = self.pos.get(ms.rm.slug)
         if ps:
             if (ps.yes - ps.no) * bid >= rc.max_inventory_usd_per_market:
@@ -585,8 +643,9 @@ class Farmer:
                 if cur:
                     await self.broker.cancel([cur["oid"]], now_ms)
                     ms.orders.pop(side, None)
-                if self.budget_used() + price * size > self.rc.quote_budget_usd:
-                    continue
+                exit_bid = self.rc.reduce_only and self.reducing_side(ms) == side
+                if not exit_bid and self.budget_used() + price * size > self.rc.quote_budget_usd:
+                    continue                           # the bid that pairs inventory frees money when it fills
                 token = ms.rm.yes if side == "Y" else ms.rm.no
                 ahead = dict(self.levels(token)[0]).get(price, 0.0)       # size already resting at our price
                 oid = await self.broker.place(token, ms.rm.slug, side, price, size, now_ms, queue_ahead=ahead)
