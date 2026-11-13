@@ -1,34 +1,31 @@
-journal data/journal-rewards: 14.4 h of events, 11-12 08:36 -> 11-12 23:02 UTC
-now: markets 45, quoting 42, bids $688.1, feed ok, pool rate at current shares $1209.24/day
-rewards (estimate by the book): today $566.539, total $566.539; by Polymarket's competitiveness: total $628.411; earned alone in a zone: total $453.463; stress (one more identical maker): total $295.647
-hedges: 66 for 1160.3 shares, lost $45.95; inventory not hedged yet: $243.55
-positions: value $226.17 cost $310.55 -> open $-84.38; realised $-45.95; trading $-130.33 (today -38.44)
-TOTAL (rewards estimate + trading): $436.21; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-17.26; fills total 114
+journal data/journal-rewards: 15.4 h of events, 11-12 08:36 -> 11-13 00:02 UTC
+now: markets 45, quoting 41, bids $666.1, feed ok, pool rate at current shares $1229.8/day
+rewards (estimate by the book): today $621.487, total $621.487; by Polymarket's competitiveness: total $690.575; earned alone in a zone: total $489.685; stress (one more identical maker): total $324.443
+hedges: 69 for 1229.1 shares, lost $48.98; inventory not hedged yet: $264.57
+positions: value $245.1 cost $331.57 -> open $-86.47; realised $-48.98; trading $-135.44 (today -43.55)
+TOTAL (rewards estimate + trading): $486.04; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-3.64; fills total 120
 
 top markets by estimated reward:
-  $   4.00  share 1.00  pool $63/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
-  $   3.82  share 1.00  pool $58/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
-  $   3.75  share 0.57  pool $85/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
-  $   3.72  share 0.00  pool $101/d  empty will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
-  $   3.57  share 1.00  pool $54/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $   3.33  share 1.00  pool $49/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
-  $   3.25  share 1.00  pool $52/d  empty will-there-be-4-or-more-codex-weekly-usage-limit-resets-in-t
-  $   3.24  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $   3.23  share 1.00  pool $49/d  empty will-the-democrats-win-nebraska-in-the-2028-presidential-ele
-  $   3.09  share 1.00  pool $42/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
-  $   2.59  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
-  $   2.52  share 1.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   6.66  share 1.00  pool $65/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
+  $   6.36  share 0.00  pool $100/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
+  $   6.30  share 1.00  pool $58/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
+  $   5.90  share 0.50  pool $84/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
+  $   5.88  share 1.00  pool $54/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $   5.42  share 1.00  pool $53/d  empty will-there-be-4-or-more-codex-weekly-usage-limit-resets-in-t
+  $   5.39  share 1.00  pool $46/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
+  $   5.35  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $   5.33  share 1.00  pool $49/d  empty will-the-democrats-win-nebraska-in-the-2028-presidential-ele
+  $   5.03  share 1.00  pool $44/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
+  $   4.48  share 1.00  pool $48/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $   4.28  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
-  2026-11-12: book $570.85, official $633.42, alone $456.28 | hedges 66 ($45.95) | trading: day not closed | samples 861, avg markets scoring 22.4
+  2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading: day not closed | samples 918, avg markets scoring 23.2
+  2026-11-13: book $2.03, official $2.40, alone $1.35 | hedges 0 ($0.00) | trading: day not closed | samples 2, avg markets scoring 34.5
 
-last selection: 45 markets of 85 priced, capital $836.32, est $1732.64/day, empty books 22
+last selection: 45 markets of 82 priced, capital $835.68, est $1617.51/day, empty books 22
 
-fills: 116 (material 116)
-  11-12 21:27 will-the-bank-of-korea-increase-the-base-rate-by-25-bps YES 20@0.230 last_trade=None
-  11-12 21:35 will-any-other-model-be-the-best-ai-model-on-november-2 NO  20@0.810 last_trade=0.20999999999999996
-  11-12 21:36 will-montenegro-win-2026-27-nations-league-group-c2     NO  5.6@0.104 last_trade=0.915 (alone in the zone)
-  11-12 21:39 will-morena-win-the-most-seats-in-the-2027-baja-califor NO  20@0.280 last_trade=0.73
+fills: 120 (material 120)
   11-12 21:43 will-philippines-come-in-3rd-place-at-eurovision-asia-2 YES 20@0.094 last_trade=0.06899999999999995 (alone in the zone)
   11-12 21:58 will-gas-hit-3pt95-high-by-november-30-2026             NO  20@0.790 last_trade=0.22
   11-12 22:07 will-the-democrats-win-new-york-in-the-2028-presidentia NO  20@0.150 last_trade=0.85
@@ -40,13 +37,17 @@ fills: 116 (material 116)
   11-12 22:44 will-ebenezer-score-at-least-45-on-the-rotten-tomatoes- YES 20@0.780 last_trade=None
   11-12 22:58 will-marved-play-for-kru-esports-in-2027                YES 20@0.201 last_trade=None (alone in the zone)
   11-12 23:00 will-the-5-year-treasury-yield-hit-4pt99-in-november    NO  20@0.350 last_trade=None (alone in the zone)
+  11-12 23:17 will-ebenezer-score-at-least-45-on-the-rotten-tomatoes- YES 8.85@0.730 last_trade=0.7
+  11-12 23:39 will-canadas-november-2026-unemployment-rate-be-6pt7    NO  20@0.750 last_trade=0.26
+  11-12 23:45 will-the-5-year-treasury-yield-hit-5pt12-in-november    NO  20@0.830 last_trade=None
+  11-12 23:48 will-fernando-haddad-be-the-next-brazilian-chief-of-sta YES 20@0.280 last_trade=None
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    145 markets  rewards $  332.57  trading $ -101.58  net $ +230.98  fills  50  quoted  143.3 market-hours
-  mostly alone in the zone                83 markets  rewards $  292.77  trading $  -48.62  net $ +244.15  fills  25  quoted  111.4 market-hours
-  with other makers in the zone           62 markets  rewards $   39.80  trading $  -52.96  net $  -13.17  fills  25  quoted   32.0 market-hours
-  never filled                           100 markets  rewards $  258.58  trading $  -11.32  net $ +247.26  fills   0  quoted  112.1 market-hours
-  filled                                  45 markets  rewards $   73.99  trading $  -90.26  net $  -16.27  fills  50  quoted   31.2 market-hours
+  all                                    150 markets  rewards $  376.78  trading $ -104.77  net $ +272.01  fills  54  quoted  169.3 market-hours
+  mostly alone in the zone                83 markets  rewards $  321.75  trading $  -49.22  net $ +272.54  fills  25  quoted  126.8 market-hours
+  with other makers in the zone           67 markets  rewards $   55.03  trading $  -55.55  net $   -0.53  fills  29  quoted   42.5 market-hours
+  never filled                           102 markets  rewards $  296.89  trading $  -13.20  net $ +283.69  fills   0  quoted  133.9 market-hours
+  filled                                  48 markets  rewards $   79.89  trading $  -91.57  net $  -11.68  fills  54  quoted   35.4 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
@@ -54,13 +55,10 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.26  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
+    $  -5.82  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
     $  -5.80  rewards $  2.26  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
-    $  -5.17  rewards $  0.50  fills 1  pool $100/d  Will US gas hit $3.95 (High) in November?
 
-hedges: 66, 1160.3 shares, cost $45.95 = 3.96c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-12 20:25 will-openai-run-an-ad-during-super-bowl-lxi             bought NO  20@0.260 held@0.780 cost/share +0.0496
-  11-12 20:54 will-the-5-year-treasury-yield-hit-5pt07-in-november    bought NO  20@0.680 held@0.330 cost/share +0.0209
-  11-12 21:35 will-any-other-model-be-the-best-ai-model-on-november-2 bought YES 20@0.210 held@0.810 cost/share +0.0266
+hedges: 69, 1229.15 shares, cost $48.98 = 3.99c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-12 21:39 will-morena-win-the-most-seats-in-the-2027-baja-califor bought YES 20@0.730 held@0.280 cost/share +0.0179
   11-12 21:43 will-philippines-come-in-3rd-place-at-eurovision-asia-2 bought NO  20@0.931 held@0.094 cost/share +0.0282
   11-12 22:07 will-the-democrats-win-new-york-in-the-2028-presidentia bought YES 20@0.861 held@0.150 cost/share +0.0156
@@ -68,5 +66,8 @@ hedges: 66, 1160.3 shares, cost $45.95 = 3.96c a share (the largest reward earne
   11-12 22:18 target-q3-comparable-sales-growth-5-or-more             bought NO  20@0.760 held@0.290 cost/share +0.0573
   11-12 22:20 will-2026-rank-between-10th-and-12th-among-the-highest- bought NO  20@0.740 held@0.280 cost/share +0.0296
   11-12 22:23 donald-trump-of-truth-social-posts-november-13-november bought NO  5@0.820 held@0.180 cost/share +0.0074
+  11-12 23:07 will-the-5-year-treasury-yield-hit-4pt99-in-november    bought YES 20@0.680 held@0.350 cost/share +0.0409
+  11-12 23:33 will-the-bank-of-korea-increase-the-base-rate-by-25-bps bought NO  20@0.820 held@0.230 cost/share +0.0574
+  11-12 23:55 will-ebenezer-score-at-least-45-on-the-rotten-tomatoes- bought NO  28.85@0.263 held@0.765 cost/share +0.0369
 
 settlements: 0, realised $0.00

@@ -1,3 +1,8 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261112-212243
-mode: live  duration: 99.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 198, 'prewarm': 80, 'lock_state': 476, 'strike': 76}
+mode: live  duration: 159.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 319, 'prewarm': 128, 'lock_state': 958, 'strike': 124, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1, 'lock_miss': 1}
+
+lock orders: sent 1  filled 0  ask gone 0  errors 1
+  market prewarm (2 lookups + signing), ms: median 158  max 680  n 128
+  order_failed sol-1794524400: RequestRejectedError internal server error
+  order_error sol-1794524400:  internal server error
 no fills
