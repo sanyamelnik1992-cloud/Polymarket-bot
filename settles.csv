@@ -1650,3 +1650,16 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-13 12:54:19,pmbot-lock-live,live,eth-1794573900,Down,2.0,0,1.8691,0,0.0,-1.8691
 2026-11-13 12:54:22,pmbot-lock-tier-wide,paper,eth-1794573900,Down,5.0,0,4.6728,0,0.0,-4.6728
 2026-11-13 12:56:12,pmbot-lock-tier-wide,paper,btc-1794573900,Down,5.0,0,4.437,0,0.0,-4.437
+2026-11-13 13:05:11,pmbot-lock-live,live,sol-1794574500,Down,0,8.69,8.2844,8.69,0.0,0.4056
+2026-11-13 13:05:54,pmbot-lock-tier-wide,paper,btc-1794574500,Up,5.0,0,4.437,5.0,0.0,0.563
+2026-11-13 13:10:07,pmbot-lock-tier-pb,paper,sol-1794574800,Up,0,2.0,1.8503,0,0.0,-1.8503
+2026-11-13 13:10:08,pmbot-lock-tier,paper,sol-1794574800,Up,0,2.0,1.8315,0,0.0,-1.8315
+2026-11-13 13:10:12,pmbot-lock-live,live,sol-1794574800,Up,0,2.044,1.8717,0,0.0,-1.8717
+2026-11-13 13:10:15,pmbot-lock-tier-wide,paper,sol-1794574800,Up,0,5.0,4.6728,0,0.0,-4.6728
+2026-11-13 13:17:18,pmbot-lock-tier-wide,paper,btc-1794575100,Down,0,5.0,3.7673,5.0,0.0,1.2327
+2026-11-13 13:20:19,pmbot-lock-tier-wide,paper,xrp-1794575400,Up,5.0,0,4.5787,5.0,0.0,0.4213
+2026-11-13 13:20:36,pmbot-lock-15-live,live,xrp-1794574800,Down,0,5.0,4.6728,5.0,0.0,0.3272
+2026-11-13 13:20:37,pmbot-lock-15-tier,paper,xrp-1794574800,Down,0,5.0,4.6728,5.0,0.0,0.3272
+2026-11-13 13:21:00,pmbot-lock-tier-wide,paper,btc-1794575400,Up,0,5.0,4.3421,0,0.0,-4.3421
+2026-11-13 13:35:17,pmbot-lock-15-live,live,xrp-1794575700,Down,0,5.0549,4.5818,5.0549,0.0,0.4731
+2026-11-13 13:35:21,pmbot-lock-15-tier,paper,xrp-1794575700,Down,0,5.0,4.5787,5.0,0.0,0.4213
