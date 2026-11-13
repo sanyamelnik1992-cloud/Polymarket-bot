@@ -1,31 +1,31 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261112-212252
-mode: live  duration: 159.6 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 128, 'status': 319, 'lock_state': 1090, 'strike': 124, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3, 'order_rejected': 2, 'lock_miss': 5, 'order_failed': 3, 'order_error': 3, 'window_blocked': 3}
+mode: live  duration: 218.6 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 176, 'status': 437, 'lock_state': 1822, 'strike': 172, 'order_filled': 5, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 5, 'order_rejected': 4, 'lock_miss': 7, 'order_failed': 3, 'order_error': 3, 'window_blocked': 3}
 
-lock orders: sent 8  filled 3  ask gone 2  errors 3
-  signal -> exchange answer, ms: median 276  p90 316  max 316
-  market prewarm (2 lookups + signing), ms: median 156  max 370  n 128
-  fill price minus the ask we saw, cents: mean -3.59  worst -1.0
-  misses came 41-48 s before the end; model p 0.961-0.971
-  exchange rejections by code: {'fak_not_filled': 2}
+lock orders: sent 12  filled 5  ask gone 4  errors 3
+  signal -> exchange answer, ms: median 276  p90 390  max 390
+  market prewarm (2 lookups + signing), ms: median 150  max 370  n 176
+  fill price minus the ask we saw, cents: mean -2.15  worst +0.0
+  misses came 41-60 s before the end; model p 0.961-0.992
+  exchange rejections by code: {'fak_not_filled': 4}
   order_error xrp-1794524400:  internal server error
   order_failed eth-1794524400: RequestRejectedError internal server error
   order_error eth-1794524400:  internal server error
   order_failed sol-1794524400: RequestRejectedError internal server error
   order_error sol-1794524400:  internal server error
 
-fills: 3  shares: 15  notional: $13.22
+fills: 5  shares: 27  notional: $24.58
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        1  10.528      9.50      0.902  286.331
-eth        1   2.114      1.86      0.880  245.792
+btc        2  12.550     11.36      0.911  266.266
+eth        2  12.114     11.36      0.915  260.898
 sol        1   2.090      1.86      0.890  274.006
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-btc          1  9.565  0.964          0.964     0.0       1.0  0.964  0.964  0.101
-eth          1  1.876  0.238          0.238     0.0       1.0  0.238  0.238  0.127
-sol          1  1.874  0.216          0.216     0.0       1.0  0.216  0.216  0.115
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+btc          2  11.435  1.115          1.115     0.0       1.0  0.151  0.964  0.097
+eth          2  11.409  0.705          0.705     0.0       1.0  0.238  0.467  0.062
+sol          1   1.874  0.216          0.216     0.0       1.0  0.216  0.216  0.115
 
-TOTAL pnl $+1.42 (ex-rebate $+1.42) on cost $13.31 -> ROI +10.64%; windows 3, t-stat +1.92
+TOTAL pnl $+2.04 (ex-rebate $+2.04) on cost $24.72 -> ROI +8.23%; windows 5, t-stat +2.73
 max drawdown $0.00; hedged windows (both sides filled): 0

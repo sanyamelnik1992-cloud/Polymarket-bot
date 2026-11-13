@@ -1,33 +1,31 @@
-journal data/journal-rewards: 15.4 h of events, 11-12 08:36 -> 11-13 00:02 UTC
-now: markets 45, quoting 41, bids $666.1, feed ok, pool rate at current shares $1229.8/day
-rewards (estimate by the book): today $621.487, total $621.487; by Polymarket's competitiveness: total $690.575; earned alone in a zone: total $489.685; stress (one more identical maker): total $324.443
-hedges: 69 for 1229.1 shares, lost $48.98; inventory not hedged yet: $264.57
-positions: value $245.1 cost $331.57 -> open $-86.47; realised $-48.98; trading $-135.44 (today -43.55)
-TOTAL (rewards estimate + trading): $486.04; CAUTIOUS (lower estimate, without the part earned alone, + trading): $-3.64; fills total 120
+journal data/journal-rewards: 16.4 h of events, 11-12 08:36 -> 11-13 01:01 UTC
+now: markets 45, quoting 38, bids $634.24, feed ok, pool rate at current shares $1026.42/day
+rewards (estimate by the book): today $45.567, total $668.888; by Polymarket's competitiveness: total $748.431; earned alone in a zone: total $523.2; stress (one more identical maker): total $349.664
+hedges: 69 for 1229.1 shares, lost $48.98; inventory not hedged yet: $298.57
+positions: value $276.37 cost $365.57 -> open $-89.2; realised $-48.98; trading $-138.17 (today -0.6)
+TOTAL (rewards estimate + trading): $530.72; CAUTIOUS (lower estimate, without the part earned alone, + trading): $7.52; fills total 122
 
 top markets by estimated reward:
-  $   6.66  share 1.00  pool $65/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
-  $   6.36  share 0.00  pool $100/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
-  $   6.30  share 1.00  pool $58/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
-  $   5.90  share 0.50  pool $84/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
-  $   5.88  share 1.00  pool $54/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $   5.42  share 1.00  pool $53/d  empty will-there-be-4-or-more-codex-weekly-usage-limit-resets-in-t
-  $   5.39  share 1.00  pool $46/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
-  $   5.35  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $   5.33  share 1.00  pool $49/d  empty will-the-democrats-win-nebraska-in-the-2028-presidential-ele
-  $   5.03  share 1.00  pool $44/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
-  $   4.48  share 1.00  pool $48/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $   4.28  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
+  $   9.29  share 1.00  pool $51/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
+  $   8.71  share 1.00  pool $57/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
+  $   8.18  share 1.00  pool $56/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $   8.05  share 0.52  pool $83/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
+  $   7.53  share 1.00  pool $51/d  empty will-there-be-4-or-more-codex-weekly-usage-limit-resets-in-t
+  $   7.42  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $   7.37  share 1.00  pool $50/d  empty will-the-democrats-win-nebraska-in-the-2028-presidential-ele
+  $   7.35  share 1.00  pool $47/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
+  $   7.18  share 0.00  pool $96/d  empty will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
+  $   6.84  share 1.00  pool $51/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
+  $   6.47  share 1.00  pool $48/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $   5.94  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
-  2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading: day not closed | samples 918, avg markets scoring 23.2
-  2026-11-13: book $2.03, official $2.40, alone $1.35 | hedges 0 ($0.00) | trading: day not closed | samples 2, avg markets scoring 34.5
+  2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
+  2026-11-13: book $50.75, official $61.48, alone $34.27 | hedges 0 ($0.00) | trading: day not closed | samples 59, avg markets scoring 34.9
 
-last selection: 45 markets of 82 priced, capital $835.68, est $1617.51/day, empty books 22
+last selection: 45 markets of 86 priced, capital $836.28, est $2460.92/day, empty books 22
 
-fills: 120 (material 120)
-  11-12 21:43 will-philippines-come-in-3rd-place-at-eurovision-asia-2 YES 20@0.094 last_trade=0.06899999999999995 (alone in the zone)
-  11-12 21:58 will-gas-hit-3pt95-high-by-november-30-2026             NO  20@0.790 last_trade=0.22
+fills: 122 (material 122)
   11-12 22:07 will-the-democrats-win-new-york-in-the-2028-presidentia NO  20@0.150 last_trade=0.85
   11-12 22:11 will-jensen-huang-rank-in-googles-top-5-most-searched-p NO  20@0.550 last_trade=0.49
   11-12 22:14 will-meta-be-the-3-ai-lab-at-the-end-of-january-2027-st NO  20@0.850 last_trade=None
@@ -41,13 +39,15 @@ fills: 120 (material 120)
   11-12 23:39 will-canadas-november-2026-unemployment-rate-be-6pt7    NO  20@0.750 last_trade=0.26
   11-12 23:45 will-the-5-year-treasury-yield-hit-5pt12-in-november    NO  20@0.830 last_trade=None
   11-12 23:48 will-fernando-haddad-be-the-next-brazilian-chief-of-sta YES 20@0.280 last_trade=None
+  11-13 00:02 will-the-bank-of-russia-decrease-the-key-rate-by-25-bps NO  20@0.870 last_trade=None
+  11-13 00:43 will-the-5-year-treasury-yield-hit-5pt12-in-november    NO  20@0.830 last_trade=None
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    150 markets  rewards $  376.78  trading $ -104.77  net $ +272.01  fills  54  quoted  169.3 market-hours
-  mostly alone in the zone                83 markets  rewards $  321.75  trading $  -49.22  net $ +272.54  fills  25  quoted  126.8 market-hours
-  with other makers in the zone           67 markets  rewards $   55.03  trading $  -55.55  net $   -0.53  fills  29  quoted   42.5 market-hours
-  never filled                           102 markets  rewards $  296.89  trading $  -13.20  net $ +283.69  fills   0  quoted  133.9 market-hours
-  filled                                  48 markets  rewards $   79.89  trading $  -91.57  net $  -11.68  fills  54  quoted   35.4 market-hours
+  all                                    148 markets  rewards $  407.76  trading $ -106.03  net $ +301.72  fills  56  quoted  190.1 market-hours
+  mostly alone in the zone                84 markets  rewards $  346.79  trading $  -49.22  net $ +297.57  fills  25  quoted  140.1 market-hours
+  with other makers in the zone           64 markets  rewards $   60.97  trading $  -56.81  net $   +4.16  fills  31  quoted   50.0 market-hours
+  never filled                            99 markets  rewards $  322.48  trading $  -14.15  net $ +308.33  fills   0  quoted  151.2 market-hours
+  filled                                  49 markets  rewards $   85.27  trading $  -91.88  net $   -6.61  fills  56  quoted   38.9 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
@@ -55,7 +55,7 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.26  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
-    $  -5.82  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
+    $  -5.88  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
     $  -5.80  rewards $  2.26  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
 
 hedges: 69, 1229.15 shares, cost $48.98 = 3.99c a share (the largest reward earners pay 1.3c + fee: reports/68)

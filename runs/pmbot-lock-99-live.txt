@@ -1,8 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261112-212243
-mode: live  duration: 159.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 319, 'prewarm': 128, 'lock_state': 958, 'strike': 124, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1, 'lock_miss': 1}
+mode: live  duration: 218.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 437, 'prewarm': 176, 'lock_state': 1616, 'strike': 172, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1, 'lock_miss': 2, 'order_rejected': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-lock orders: sent 1  filled 0  ask gone 0  errors 1
-  market prewarm (2 lookups + signing), ms: median 158  max 680  n 128
+lock orders: sent 3  filled 1  ask gone 1  errors 1
+  signal -> exchange answer, ms: median 309  p90 309  max 309
+  market prewarm (2 lookups + signing), ms: median 155  max 680  n 176
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+  misses came 57-57 s before the end; model p 0.992-0.992
+  exchange rejections by code: {'fak_not_filled': 1}
   order_failed sol-1794524400: RequestRejectedError internal server error
   order_error sol-1794524400:  internal server error
-no fills
+
+fills: 1  shares: 5  notional: $4.90
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+sol        1     5.0       4.9       0.98   246.36
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+sol          1  4.907  0.093          0.093     0.0       1.0  0.093  0.093  0.019
+
+TOTAL pnl $+0.09 (ex-rebate $+0.09) on cost $4.91 -> ROI +1.90%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
