@@ -1,22 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-tier/20261112-212232
-mode: paper  duration: 639.3 min  events: {'start': 1, 'status': 1278, 'lock_state': 3241, 'strike': 168, 'lock_miss': 2, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4}
+mode: paper  duration: 697.8 min  events: {'start': 1, 'status': 1395, 'lock_state': 3435, 'strike': 184, 'lock_miss': 2, 'fill': 6, 'lock_entry': 6, 'provisional': 6, 'settle': 6}
 
-lock orders: sent 6  filled 4  ask gone 2  errors 0
-  signal -> exchange answer, ms: median 302  p90 307  max 307
-  fill price minus the ask we saw, cents: mean -1.25  worst +0.0
+lock orders: sent 8  filled 6  ask gone 2  errors 0
+  signal -> exchange answer, ms: median 302  p90 315  max 315
+  fill price minus the ask we saw, cents: mean -1.50  worst +0.0
   misses came 37-59 s before the end; model p 0.916-0.963
 
-fills: 4  shares: 20  notional: $18.25
+fills: 6  shares: 30  notional: $27.05
        fills  shares  notional  avg_price  med_rel
 asset                                             
-eth        3    15.0     13.85      0.923  849.764
+btc        1     5.0      4.30      0.860  847.362
+eth        4    20.0     18.35      0.918  849.036
 sol        1     5.0      4.40      0.880  859.956
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-eth          3  13.924  1.076          1.076     0.0       1.0  0.280  0.468  0.077
+btc          1   4.342  0.658          0.658     0.0       1.0  0.658  0.658  0.152
+eth          4  18.456  1.544          1.544     0.0       1.0  0.280  0.468  0.084
 sol          1   4.437  0.563          0.563     0.0       1.0  0.563  0.563  0.127
 
-TOTAL pnl $+1.64 (ex-rebate $+1.64) on cost $18.36 -> ROI +8.93%; windows 4, t-stat +6.32
+TOTAL pnl $+2.77 (ex-rebate $+2.77) on cost $27.23 -> ROI +10.15%; windows 6, t-stat +7.99
 max drawdown $0.00; hedged windows (both sides filled): 0
