@@ -109,7 +109,7 @@ def run_dirs(journal_dir, max_age_s=None):
 
 
 _WANTED = ('"type":"settle"', '"type":"fill"', '"type":"kill"', '"type":"start"', '"type":"status"',
-           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"')
+           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"', '"type":"rday"')
 
 
 def read_events(run_dir, since_ts=0.0):
@@ -270,10 +270,16 @@ def rewards_summary(unit="pmbot-rewards"):
     state, since = unit_state(unit)
     if not journal:
         return None
-    ev = [e for e in events_since(journal, time.time() - 2 * 86400) if e["type"] == "rstatus"]
+    evs = events_since(journal, time.time() - 8 * 86400)
+    ev = [e for e in evs if e["type"] == "rstatus"]
     if not ev and state in ("inactive", "unknown", "n/a"):
         return None
-    return {"unit": unit, "state": state, "since": since, "mode": mode or "paper", "status": ev[-1] if ev else None}
+    days = {}
+    for e in evs:                                   # the close of each UTC day (the last one wins after restarts)
+        if e["type"] == "rday" and e.get("day"):
+            days[e["day"]] = e
+    return {"unit": unit, "state": state, "since": since, "mode": mode or "paper", "status": ev[-1] if ev else None,
+            "days": [days[d] for d in sorted(days)]}
 
 
 def format_rewards():

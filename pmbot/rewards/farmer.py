@@ -802,6 +802,8 @@ class Farmer:
               "stress_total": round(sum(self.stress_by_day.values()), 3),
               "inv_value": round(val, 2), "inv_cost": round(cost, 2), "unhedged_usd": round(self.unhedged_usd(), 2),
               "open_pnl": round(open_pnl, 2), "realized": round(self.realized, 2),
+              "realized_today": round(self.realized_by_day.get(day, 0.0), 2),
+              "open_positions": sum(1 for p in self.pos.values() if abs(p.yes - p.no) >= 1.0),
               "trading_pnl": round(trading, 2), "trading_pnl_today": round(trading - self.day_base, 2),
               "fills_today": self.fills_by_day.get(day, 0), "fills_total": sum(self.fills_by_day.values()),
               "hedges_today": h[0], "hedge_loss_today": round(h[2], 2),
