@@ -31,6 +31,11 @@ class RewardsCfg:
     quote_budget_usd: float = 1000.0     # pUSD the resting bids and the open positions may tie up together
     max_per_market_usd: float = 60.0     # pUSD both bids of one market may tie up
     reselect_min: float = 10.0           # empty pools are found by other makers within hours (reports/68): look often
+    max_competitiveness: float = 1.0     # skip markets where the others already score this many points per $1 of the daily
+                                         # pool. 12-13 Nov on the server: such markets paid $1.28 an hour and cost $1.50 in
+                                         # fills (41 fills in 45 market-hours); markets nobody or almost nobody scores in
+                                         # paid $2.33 and cost $0.33 (36 fills in 207 market-hours). Replay of 7 days:
+                                         # competitiveness 1-5 kept 11 % of the rewards, above 5 lost (reports/68, 12). 0 = off
     hold_bonus: float = 1.5              # a market we already quote ranks as if it paid this much more: without it the
                                          # 45 picks were 163 different markets in 1.9 hours and orders rarely got old
                                          # enough to score (first paper run, reports/68)
@@ -55,6 +60,7 @@ class RewardsCfg:
     cooldown_min: float = 10.0           # no quotes in a market after a material fill
     max_fills_per_market_day: int = 2    # ... in any 24 hours: markets that filled us twice a day lost in the replay
     max_inventory_usd_per_market: float = 40.0   # stop bidding a side once its unhedged inventory costs this much
+    reduce_only: bool = True             # with unpaired inventory quote only the bid that pairs it (see Farmer.targets)
     feed_stale_s: float = 45.0           # no websocket message for this long -> quote nothing
     max_ref_disagree: float = 0.03       # no quotes while the last trade (<= trade_fresh_s old) is this far off the book
     trade_fresh_s: float = 600.0

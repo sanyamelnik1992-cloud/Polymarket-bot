@@ -112,7 +112,7 @@ def test_candidates_filters():
            raw_market("crowded", rate=50, comp=40.0),             # 2000 points compete: our 6 points earn 15 cents a day
            raw_market("deadline", q="US x Iran ceasefire by November 30?"),
            raw_market("deadline2", q="Will the U.S. invade Iran before 2027?"),
-           raw_market("deadline3", q="Next Astra Model (6.1+) released by November 12, 2026?"),
+           raw_market("deadline3", q="Next Astra Model (6.1+) released by June 30, 2027?"),
            dict(raw_market("busy"), volume_24hr=2500.0)]          # $2500 traded in 24 h: fills cost more than rewards
     assert [c.slug for c in mk.candidates(raw, rc)] == ["ok"]
     # both filters can be switched off
@@ -178,7 +178,7 @@ def test_select_prices_and_caps_empty_books():
 def test_select_takes_the_lower_of_the_book_and_the_official_share():
     """The book shows nobody in the zone, Polymarket's number says 100 points already compete: believe the lower,
     and quote at the contested distance (far out we would score next to nothing against them)."""
-    rc = RewardsCfg()
+    rc = RewardsCfg(max_competitiveness=0)                           # the cap is tested on its own below
     books = {"a-Y": {"bids": [], "asks": [], "tick_size": "0.01"}}
     (p,) = mk.select(rc, J(), raw_markets=[raw_market("a", rate=50, comp=2.0)], books=books, details={}, lasts=LASTS)
     q = order_score(4.5, 2.0, 20)
@@ -239,9 +239,16 @@ def test_quotes_fill_cooldown_and_position(tmp_path):
     f.on_trade("Y", "SELL", 0.40, 50, int(f.clock() * 1000))        # a taker sells YES through our bid
     assert f.pos["m"].yes == 20 and f.pos["m"].cost == pytest.approx(9.2)
     assert ms.cooldown_until > f.clock()
-    assert f.targets(ms, f.clock()) == {}                            # cooling down: no quotes
+    # cooling down: no new risk, only the bid that pairs the 20 YES (a NO bid at the reward distance from the new
+    # price 0.40: the pair would cost 0.46 + 0.56 = 1.02, cheaper than paying the spread)
+    assert f.targets(ms, f.clock()) == {"N": (0.56, 20.0)}
     asyncio.run(f.quote_once())
-    assert not ms.orders                                              # the NO bid was pulled too
+    assert "Y" not in ms.orders and ms.orders["N"]["price"] == 0.56
+    g = farmer_with_market(tmp_path / "off", reduce_only=False, hedge=False)
+    asyncio.run(g.quote_once())
+    g.clock.t += 1
+    g.on_trade("Y", "SELL", 0.40, 50, int(g.clock() * 1000))
+    assert g.targets(g.markets["m"], g.clock()) == {}                # without reduce_only: nothing while cooling down
 
 
 def test_fill_wakes_the_quoter(tmp_path):
@@ -394,7 +401,7 @@ def test_max_fills_survive_a_restart(tmp_path):
         f.on_trade("Y", "SELL", 0.40, 5, int(f.clock() * 1000))
         f.feed.last_msg = f.clock()
         f.markets["m"].cooldown_until = 0                            # skip the cooldown, count the fills
-    assert f.mfills["m"] == 2 and f.targets(f.markets["m"], f.clock()) == {}
+    assert f.mfills["m"] == 2 and set(f.targets(f.markets["m"], f.clock())) == {"N"}   # only the exit of the 10 YES
     g = Farmer(f.rc, J(), clock=f.clock)                              # restart from the state file
     assert g.mfills.get("m") == 2 and g.fills_24h("m", g.clock()) == 2
 
@@ -410,6 +417,7 @@ def test_fill_cap_is_rolling_24_hours(tmp_path):
     f.clock.t += 6 * 3600
     f.feed.last_msg = f.clock()
     f.mfills = {}                                                     # as roll_day() does at 00:00 UTC
+    f.pos.clear()                                                     # flat: the cap alone decides
     assert f.targets(f.markets["m"], f.clock()) == {}
     f.clock.t += 19 * 3600
     f.feed.last_msg = f.clock()
@@ -671,8 +679,51 @@ def test_stop_counts_only_the_rewards_earned_next_to_others(tmp_path):
     assert g.halted_until > g.clock()                                # trading only: rewards ignored
 
 
+def test_inventory_quotes_only_the_side_that_pairs_it(tmp_path):
+    """reduce_only: 20 unpaired YES -> only a NO bid for 20, also after the market left the selection."""
+    f = farmer_with_market(tmp_path)
+    f.pos["m"] = Position(yes=25, no=5, cost=12.5)
+    tg = f.targets(f.markets["m"], f.clock())
+    assert set(tg) == {"N"} and tg["N"][1] == 20
+    f.markets["m"].active = False                                     # deselected: the exit still rests
+    assert set(f.targets(f.markets["m"], f.clock())) == {"N"}
+    f.pos["m"] = Position(yes=2, no=0, cost=1.0)                      # under the 5-share minimum: flat for quoting
+    assert f.targets(f.markets["m"], f.clock()) == {}                 # deselected and flat: nothing
+
+
+def test_pairs_are_merged_at_once(tmp_path):
+    f = farmer_with_market(tmp_path, hedge=False)
+    f.pos["m"] = Position()
+    f.pos["m"].add("Y", 20, 20 * 0.46)
+    f.pos["m"].add("N", 20, 20 * 0.50)                                # both bids filled: 20 pairs at 0.96
+    assert f.merge_pairs() == 1 and "m" not in f.pos
+    assert f.realized == pytest.approx(20 * 0.04) and f.journal.of("rmerge")[0]["pairs"] == 20
+    assert f.budget_used() == 0
+
+
+def test_exit_bid_survives_a_restart_and_ignores_the_budget(tmp_path):
+    """After a restart the market of an unpaired position is known again (its exit bid can rest before any selection);
+    the exit bid is placed even when the budget is used up: it frees money when it fills."""
+    f = farmer_with_market(tmp_path, quote_budget_usd=5)
+    f.pos["m"] = Position(yes=20, no=0, cost=9.2)
+    asyncio.run(f.quote_once())
+    assert set(f.markets["m"].orders) == {"N"}                       # over the $5 budget, the exit bid rests anyway
+    f._save()
+    g = Farmer(f.rc, J(), clock=f.clock)
+    assert "m" in g.markets and not g.markets["m"].active and g.markets["m"].rm.v == 4.5
+    g.feed.books["Y"] = f.feed.books["Y"]
+    g.feed.last_msg = g.clock()
+    assert set(g.targets(g.markets["m"], g.clock())) == {"N"}
+
+
+def test_competitiveness_cap():
+    raw = [raw_market("a", rate=50, comp=0.5), raw_market("b", rate=50, comp=1.5)]
+    assert [c.slug for c in mk.candidates(raw, RewardsCfg())] == ["a"]
+    assert {c.slug for c in mk.candidates(raw, RewardsCfg(max_competitiveness=0))} == {"a", "b"}
+
+
 def test_inventory_cap_removes_the_side_that_adds_to_it(tmp_path):
-    f = farmer_with_market(tmp_path, max_inventory_usd_per_market=10)
+    f = farmer_with_market(tmp_path, max_inventory_usd_per_market=10, reduce_only=False)
     f.pos["m"] = Position(yes=40, no=0, cost=20)                     # long YES: no more YES bids
     tg = f.targets(f.markets["m"], f.clock())
     assert "Y" not in tg and "N" in tg

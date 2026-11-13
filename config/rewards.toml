@@ -24,6 +24,7 @@ max_per_market_usd = 60       # = markets with a rewards min size of 20-60 share
 max_candidates = 400
 reselect_min = 10
 hold_bonus = 1.5              # a market we already quote ranks 1.5x higher: no jumping between markets every 10 minutes
+max_competitiveness = 1.0     # skip markets where others score >= 1 point per $1 of pool: they paid $1.28/h and cost $1.50/h on 12-13 Nov
 # quoting
 dist_cents = 2.0              # others score in the zone: bid at price - 2c, ask (= NO bid) at price + 2c
 alone_frac = 0.85             # nobody else scores: 85 % of the max spread out (3.8c of 4.5c; the whole pool at any score)
@@ -41,6 +42,7 @@ min_fill_shares = 1           # smaller fills are kept in the position but do no
 cooldown_min = 10             # after a material fill: no quotes in that market for 10 min, then re-centre
 max_fills_per_market_day = 2  # in any 24 hours
 max_inventory_usd_per_market = 40
+reduce_only = true            # with unpaired inventory only the bid that pairs it rests (also in the cooldown, after deselection)
 daily_loss_limit = 50         # the day's cautious result (trading + rewards where others score too) -> quotes off until 00:00 UTC
 stop_counts_rewards = true    # trading alone stopped the paper day twice on 12 Nov while the rewards were not counted (reports/68, 9)
 feed_stale_s = 45             # no market-websocket message for this long -> no quotes
