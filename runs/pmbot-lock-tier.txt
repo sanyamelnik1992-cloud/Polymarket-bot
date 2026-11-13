@@ -1,22 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier/20261113-093543
-mode: paper  duration: 445.8 min  events: {'start': 1, 'status': 891, 'lock_state': 5637, 'strike': 337, 'lock_miss': 5, 'fill': 4, 'lock_entry': 3, 'lock_hedge_miss': 1, 'lock_hedge': 1, 'settle': 3, 'provisional': 2}
+mode: paper  duration: 505.9 min  events: {'start': 1, 'status': 1011, 'lock_state': 6228, 'strike': 381, 'lock_miss': 5, 'fill': 5, 'lock_entry': 4, 'lock_hedge_miss': 1, 'lock_hedge': 1, 'settle': 4, 'provisional': 2}
 
-lock orders: sent 8  filled 3  ask gone 5  errors 0
-  signal -> exchange answer, ms: median 305  p90 991  max 991
-  fill price minus the ask we saw, cents: mean +0.00  worst +1.0
+lock orders: sent 9  filled 4  ask gone 5  errors 0
+  signal -> exchange answer, ms: median 304  p90 991  max 991
+  fill price minus the ask we saw, cents: mean +0.25  worst +1.0
   misses came 31-53 s before the end; model p 0.953-0.976
 
-fills: 4  shares: 16  notional: $14.22
+fills: 5  shares: 18  notional: $16.08
        fills  shares  notional  avg_price  med_rel
 asset                                             
-eth        3    14.0     12.40      0.813  244.813
+eth        4    16.0     14.26      0.842  259.370
 sol        1     2.0      1.82      0.910  249.054
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-eth          2  12.483 -0.483         -0.483     0.0       0.5 -1.043  0.560 -0.039
-sol          1   1.832 -1.832         -1.832     0.0       0.0 -1.832 -1.832 -1.000
+eth          3  14.352 -0.352         -0.352     0.0     0.667 -1.043  0.560 -0.025
+sol          1   1.832 -1.832         -1.832     0.0     0.000 -1.832 -1.832 -1.000
 
-TOTAL pnl $-2.31 (ex-rebate $-2.31) on cost $14.31 -> ROI -16.17%; windows 3, t-stat -1.10
+TOTAL pnl $-2.18 (ex-rebate $-2.18) on cost $16.18 -> ROI -13.49%; windows 4, t-stat -1.00
 max drawdown $-1.83; hedged windows (both sides filled): 1
