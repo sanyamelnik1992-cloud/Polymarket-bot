@@ -1,38 +1,31 @@
-journal data/journal-rewards: 22.4 h of events, 11-12 08:36 -> 11-13 07:02 UTC
-now: markets 45, quoting 34, bids $549.0, feed ok, pool rate at current shares $1042.18/day
-rewards (estimate by the book): today $396.64, total $1019.961; by Polymarket's competitiveness: total $1170.273; earned alone in a zone: total $739.321; stress (one more identical maker): total $537.74
-hedges: 97 for 1763.3 shares, lost $60.11; inventory not hedged yet: $329.62
-positions: value $338.55 cost $449.25 -> open $-110.7; realised $-60.11; trading $-170.82 (today -33.25)
-TOTAL (rewards estimate + trading): $849.15; CAUTIOUS (lower estimate, without the part earned alone, + trading): $109.82; fills total 168
+journal data/journal-rewards: 23.4 h of events, 11-12 08:36 -> 11-13 08:02 UTC
+now: markets 45, quoting 36, bids $546.84, feed ok, pool rate at current shares $1284.22/day
+rewards (estimate by the book): today $448.129, total $1071.45; by Polymarket's competitiveness: total $1230.563; earned alone in a zone: total $775.572; stress (one more identical maker): total $564.629
+hedges: 102 for 1835.3 shares, lost $63.68; inventory not hedged yet: $331.02
+positions: value $339.39 cost $450.65 -> open $-111.26; realised $-63.68; trading $-174.93 (today -37.37)
+TOTAL (rewards estimate + trading): $896.52; CAUTIOUS (lower estimate, without the part earned alone, + trading): $120.94; fills total 175
 
 top markets by estimated reward:
-  $  23.29  share 1.00  pool $59/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
-  $  22.57  share 0.87  pool $83/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
-  $  22.52  share 1.00  pool $54/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
-  $  22.22  share 1.00  pool $55/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $  19.89  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $  18.46  share 1.00  pool $48/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $  16.43  share 1.00  pool $56/d  empty will-chinas-cpi-increase-by-0pt4-over-the-12-month-period-en
-  $  16.39  share 0.00  pool $38/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
-  $  15.91  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
-  $  15.11  share 1.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
-  $  12.17  share 0.00  pool $63/d  empty will-canadas-gdp-growth-rate-mom-in-september-2026-be-betwee
-  $   8.81  share 0.98  pool $39/d  will-hugo-motta-be-the-next-president-of-brazils-chamber-of-
+  $  25.61  share 0.00  pool $77/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
+  $  24.93  share 0.65  pool $84/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
+  $  24.80  share 1.00  pool $54/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
+  $  24.79  share 1.00  pool $72/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $  21.99  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $  20.45  share 1.00  pool $46/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $  18.71  share 1.00  pool $54/d  empty will-chinas-cpi-increase-by-0pt4-over-the-12-month-period-en
+  $  17.59  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
+  $  16.75  share 1.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $  16.39  share 0.00  pool $36/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
+  $  14.59  share 0.96  pool $59/d  will-canadas-gdp-growth-rate-mom-in-september-2026-be-betwee
+  $  10.45  share 1.00  pool $39/d  will-hugo-motta-be-the-next-president-of-brazils-chamber-of-
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
-  2026-11-13: book $400.37, official $482.07, alone $250.89 | hedges 28 ($11.14) | trading: day not closed | samples 413, avg markets scoring 32.6
+  2026-11-13: book $451.83, official $542.46, alone $286.81 | hedges 33 ($14.70) | trading: day not closed | samples 474, avg markets scoring 32.2
 
-last selection: 45 markets of 96 priced, capital $838.02, est $1782.22/day, empty books 22
+last selection: 45 markets of 115 priced, capital $836.4, est $1876.74/day, empty books 22
 
-fills: 168 (material 167)
-  11-13 05:05 will-jensen-huang-join-softbank-next                    YES 19.9966@0.170 last_trade=0.12
-  11-13 05:05 will-jensen-huang-join-softbank-next                    YES 0.0034@0.170 last_trade=0.09999999999999998
-  11-13 05:08 will-tyreek-hill-sign-with-the-los-angeles-rams-in-2026 NO  10@0.840 last_trade=0.31999999999999995
-  11-13 05:17 will-the-gospel-of-christmas-be-the-top-us-netflix-movi YES 20@0.160 last_trade=0.14
-  11-13 05:32 will-google-be-the-second-best-ai-agent-lab-at-the-end- NO  20@0.658 last_trade=0.286 (alone in the zone)
-  11-13 05:33 will-jensen-huang-join-microsoft-next                   NO  20@0.840 last_trade=0.16000000000000003
-  11-13 05:38 will-the-ornn-rtx-5090-index-be-between-0pt70-and-0pt75 YES 6.9@0.122 last_trade=0.10199999999999998
+fills: 175 (material 173)
   11-13 05:44 will-trumps-approval-rating-be-less-than-38pt0-on-novem NO  5@0.730 last_trade=0.44999999999999996
   11-13 06:02 will-annual-inflation-be-3pt6-in-november               YES 20@0.170 last_trade=None
   11-13 06:16 will-jensen-huang-join-oracle-next                      YES 1.2527@0.100 last_trade=0.08999999999999997
@@ -41,13 +34,20 @@ fills: 168 (material 167)
   11-13 06:22 will-reminders-of-him-be-the-2-us-netflix-movie-this-we YES 12@0.520 last_trade=0.55 (alone in the zone)
   11-13 06:24 will-170-189-ships-transit-the-bab-el-mandeb-strait-bet NO  20@0.570 last_trade=0.45
   11-13 06:38 will-jensen-huang-join-spacex-next                      YES 20@0.150 last_trade=0.12
+  11-13 07:04 highest-temperature-in-shanghai-on-november-15-2026-19c NO  20@0.570 last_trade=0.44
+  11-13 07:06 highest-temperature-in-shanghai-on-november-15-2026-20c YES 7@0.150 last_trade=0.14
+  11-13 07:22 will-the-ornn-rtx-6000-index-be-between-1pt25-and-1pt50 NO  20@0.770 last_trade=0.25
+  11-13 07:23 will-the-republicans-win-missouri-in-the-2028-president YES 0.18@0.810 last_trade=0.66
+  11-13 07:24 will-there-be-4-or-more-codex-weekly-usage-limit-resets YES 20@0.061 last_trade=0.009000000000000008 (alone in the zone)
+  11-13 07:35 highest-temperature-in-moscow-on-november-15-2026-4c    NO  5@0.590 last_trade=None (alone in the zone)
+  11-13 07:50 will-there-be-exactly-1-codex-weekly-usage-limit-reset- YES 5@0.250 last_trade=0.03 (alone in the zone)
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    158 markets  rewards $  526.61  trading $ -128.92  net $ +397.69  fills  71  quoted  245.9 market-hours
-  mostly alone in the zone                88 markets  rewards $  450.67  trading $  -59.50  net $ +391.17  fills  33  quoted  191.2 market-hours
-  with other makers in the zone           70 markets  rewards $   75.94  trading $  -69.42  net $   +6.52  fills  38  quoted   54.7 market-hours
-  never filled                            97 markets  rewards $  402.17  trading $  -17.75  net $ +384.42  fills   0  quoted  188.5 market-hours
-  filled                                  61 markets  rewards $  124.44  trading $ -111.17  net $  +13.27  fills  71  quoted   57.4 market-hours
+  all                                    156 markets  rewards $  560.87  trading $ -129.75  net $ +431.12  fills  74  quoted  258.3 market-hours
+  mostly alone in the zone                88 markets  rewards $  480.31  trading $  -63.90  net $ +416.41  fills  34  quoted  205.7 market-hours
+  with other makers in the zone           68 markets  rewards $   80.56  trading $  -65.85  net $  +14.70  fills  40  quoted   52.5 market-hours
+  never filled                            92 markets  rewards $  405.54  trading $  -17.73  net $ +387.81  fills   0  quoted  184.8 market-hours
+  filled                                  64 markets  rewards $  155.33  trading $ -112.03  net $  +43.30  fills  74  quoted   73.5 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
@@ -55,19 +55,19 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.26  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
-    $  -5.96  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
+    $  -5.98  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
     $  -5.80  rewards $  2.26  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
 
-hedges: 97, 1763.31 shares, cost $60.12 = 3.41c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-13 03:54 will-jensen-huang-join-oracle-next                      bought NO  6@0.950 held@0.070 cost/share +0.0219
-  11-13 04:08 will-travis-kelce-appear-in-a-2027-big-game-commercial  bought NO  40@0.660 held@0.355 cost/share +0.0262
-  11-13 04:24 will-heartland-be-the-top-us-netflix-movie-this-week    bought YES 20@0.300 held@0.730 cost/share +0.0405
-  11-13 04:51 will-jensen-huang-join-softbank-next                    bought NO  20@0.883 held@0.160 cost/share +0.0473
-  11-13 05:18 will-tom-brady-appear-in-a-2027-big-game-commercial     bought YES 10@0.550 held@0.140 cost/share -0.2976
+hedges: 102, 1835.31 shares, cost $63.68 = 3.47c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-13 05:33 will-jensen-huang-join-microsoft-next                   bought YES 20@0.180 held@0.840 cost/share +0.0259
   11-13 05:38 will-the-ornn-rtx-5090-index-be-between-0pt70-and-0pt75 bought NO  6.9@0.900 held@0.122 cost/share +0.0256
   11-13 05:48 will-jensen-huang-join-softbank-next                    bought NO  20@0.880 held@0.170 cost/share +0.0542
   11-13 06:04 will-annual-inflation-be-3pt6-in-november               bought NO  20@0.880 held@0.170 cost/share +0.0553
   11-13 06:38 will-jensen-huang-join-spacex-next                      bought NO  21.2588@0.880 held@0.151 cost/share +0.0348
+  11-13 07:06 highest-temperature-in-shanghai-on-november-15-2026-20c bought NO  7@0.860 held@0.150 cost/share +0.0160
+  11-13 07:10 highest-temperature-in-shanghai-on-november-15-2026-19c bought YES 20@0.470 held@0.570 cost/share +0.0525
+  11-13 07:22 will-the-ornn-rtx-6000-index-be-between-1pt25-and-1pt50 bought YES 20@0.270 held@0.770 cost/share +0.0479
+  11-13 07:24 will-there-be-4-or-more-codex-weekly-usage-limit-resets bought NO  20@0.998 held@0.061 cost/share +0.0591
+  11-13 07:55 highest-temperature-in-moscow-on-november-15-2026-4c    bought YES 5@0.450 held@0.590 cost/share +0.0524
 
 settlements: 0, realised $0.00
