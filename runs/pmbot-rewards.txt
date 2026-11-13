@@ -1,38 +1,31 @@
-journal data/journal-rewards: 34.4 h of events, 11-12 08:36 -> 11-13 19:02 UTC
-now: markets 45, quoting 42, bids $607.43, feed ok, pool rate at current shares $918.95/day
-rewards (estimate by the book): today $887.298, total $1510.619; by Polymarket's competitiveness: total $1820.541; earned alone in a zone: total $1059.469; stress (one more identical maker): total $799.806
-hedges: 155 for 2853.1 shares, lost $87.44; inventory not hedged yet: $385.53
-positions: value $282.89 cost $385.54 -> open $-102.65; realised $-134.75; trading $-237.39 (today -99.82)
-TOTAL (rewards estimate + trading): $1273.22; CAUTIOUS (lower estimate, without the part earned alone, + trading): $213.76; fills total 282
+journal data/journal-rewards: 35.4 h of events, 11-12 08:36 -> 11-13 20:02 UTC
+now: markets 45, quoting 45, bids $619.34, feed ok, pool rate at current shares $1128.21/day
+rewards (estimate by the book): today $928.751, total $1552.072; by Polymarket's competitiveness: total $1879.223; earned alone in a zone: total $1086.139; stress (one more identical maker): total $822.072
+hedges: 158 for 2898.5 shares, lost $89.42; inventory not hedged yet: $381.75
+positions: value $284.88 cost $381.76 -> open $-96.87; realised $-157.93; trading $-254.8 (today -117.23)
+TOTAL (rewards estimate + trading): $1297.27; CAUTIOUS (lower estimate, without the part earned alone, + trading): $211.13; fills total 289
 
 top markets by estimated reward:
-  $  22.28  share 1.00  pool $55/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $  19.60  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $  18.67  share 1.00  pool $50/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $  17.57  share 1.00  pool $85/d  empty will-canadas-gdp-growth-rate-mom-in-september-2026-be-betwee
-  $  10.89  share 1.00  pool $44/d  empty will-connor-closs-come-in-third-place-on-the-voice-season-30
-  $   8.40  share 1.00  pool $57/d  empty will-the-democrats-win-wisconsin-in-the-2028-presidential-el
-  $   7.38  share 1.00  pool $38/d  empty salesforce-q3-current-rpo-growth-cc-14-to-15
-  $   5.44  share 0.06  pool $40/d  will-the-highest-score-achieved-by-a-spacexai-grok-model-on-
-  $   5.40  share 0.67  pool $49/d  will-the-ornn-h100-index-be-between-3pt00-and-3pt25-on-novem
+  $  24.56  share 1.00  pool $55/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $  21.67  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $  20.73  share 1.00  pool $50/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $  19.43  share 0.99  pool $68/d  will-canadas-gdp-growth-rate-mom-in-september-2026-be-betwee
+  $  12.67  share 1.00  pool $43/d  empty will-connor-closs-come-in-third-place-on-the-voice-season-30
+  $  10.63  share 0.20  pool $57/d  will-the-democrats-win-wisconsin-in-the-2028-presidential-el
+  $   8.96  share 1.00  pool $39/d  empty salesforce-q3-current-rpo-growth-cc-14-to-15
+  $   7.29  share 1.00  pool $60/d  empty will-who-s-dat-girl-ayra-starr-and-rema-win-best-global-musi
+  $   5.63  share 1.00  pool $50/d  empty will-sabrina-carpenter-perform-at-coachella-2027
+  $   5.55  share 0.05  pool $40/d  will-the-highest-score-achieved-by-a-spacexai-grok-model-on-
   $   5.27  share 0.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
-  $   4.82  share 1.00  pool $60/d  empty will-who-s-dat-girl-ayra-starr-and-rema-win-best-global-musi
-  $   4.54  share 0.97  pool $48/d  empty kroger-q3-identical-sales-without-fuel-growth-0pt5-to-1
+  $   4.89  share 0.57  pool $200/d  will-workin-man-willie-sings-merle-willie-nelson-win-best-tr
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
-  2026-11-13: book $887.30, official $1127.85, alone $568.52 | hedges 86 ($38.47) | trading: day not closed | samples 1132, avg markets scoring 31.3
+  2026-11-13: book $929.72, official $1187.96, alone $595.71 | hedges 89 ($40.45) | trading: day not closed | samples 1190, avg markets scoring 31.4
 
-last selection: 45 markets of 60 priced, capital $836.5, est $1642.36/day, empty books 22
+last selection: 45 markets of 61 priced, capital $836.04, est $1847.71/day, empty books 22
 
-fills: 282 (material 274)
-  11-13 17:02 will-the-hunger-games-sunrise-on-the-reaping-opening-we YES 20@0.430 last_trade=0.42000000000000004
-  11-13 17:11 will-openrouter-process-between-200t-and-210t-tokens-th NO  5@0.740 last_trade=0.24
-  11-13 17:13 will-psoe-win-the-second-most-seats-in-toledo-in-the-20 YES 20@0.510 last_trade=None
-  11-13 17:21 will-christopher-nolan-the-odyssey-win-best-director-at YES 1.7544@0.460 last_trade=0.43000000000000005
-  11-13 17:27 white-house-of-tweets-november-10-november-17-2026-200p YES 5@0.710 last_trade=0.75 (alone in the zone)
-  11-13 17:34 will-pabel-munoz-win-the-next-quito-mayoral-elections   NO  7.6923@0.390 last_trade=0.65 (alone in the zone)
-  11-13 17:38 will-black-doves-season-2-be-the-2-us-netflix-show-this NO  15@0.630 last_trade=0.47
+fills: 289 (material 281)
   11-13 17:39 will-smoke-skrillex-isoxo-cristale-and-teezandos-win-be NO  20@0.840 last_trade=0.19
   11-13 17:49 will-anthropics-valuation-be-between-750b-and-1pt00t-at YES 20@0.180 last_trade=0.17000000000000004
   11-13 18:13 will-opalite-chris-lake-remix-taylor-swift-win-best-rem NO  5@0.720 last_trade=None (alone in the zone)
@@ -41,27 +34,31 @@ fills: 282 (material 274)
   11-13 18:41 will-pan-win-the-most-seats-in-the-2027-chihuahua-congr YES 20@0.480 last_trade=None
   11-13 18:44 will-trumps-approval-rating-be-at-least-38pt0-on-novemb NO  20@0.260 last_trade=0.9 (alone in the zone)
   11-13 18:52 will-japan-q3-gdp-growth-annualized-be-between-0pt8-and NO  20@0.850 last_trade=0.13
+  11-13 19:06 tsn-quarterly-earnings-nongaap-eps-11-16-2026-0pt60     YES 50@0.640 last_trade=0.66
+  11-13 19:17 will-the-cure-olivia-rodrigo-win-best-pop-solo-performa YES 20@0.300 last_trade=0.27
+  11-13 19:33 will-sza-perform-at-coachella-2027                      NO  10.75@0.130 last_trade=0.9
+  11-13 19:48 will-la-bola-negra-win-best-motion-picture-drama-at-the NO  20@0.820 last_trade=None
+  11-13 19:49 will-mauro-vieira-be-the-next-brazilian-minister-of-for YES 20@0.460 last_trade=None
+  11-13 19:55 will-smoke-skrillex-isoxo-cristale-and-teezandos-win-be YES 20@0.820 last_trade=0.84
+  11-13 19:58 will-the-cure-olivia-rodrigo-win-best-pop-solo-performa NO  20@0.820 last_trade=0.21
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    263 markets  rewards $  738.22  trading $ -189.07  net $ +549.14  fills 114  quoted  467.2 market-hours
-  mostly alone in the zone               124 markets  rewards $  622.79  trading $  -83.64  net $ +539.15  fills  47  quoted  316.8 market-hours
-  with other makers in the zone          139 markets  rewards $  115.42  trading $ -105.43  net $   +9.99  fills  67  quoted  150.4 market-hours
-  never filled                           168 markets  rewards $  518.97  trading $  -26.12  net $ +492.85  fills   0  quoted  287.7 market-hours
-  filled                                  95 markets  rewards $  219.25  trading $ -162.95  net $  +56.29  fills 114  quoted  179.5 market-hours
+  all                                    264 markets  rewards $  752.29  trading $ -192.88  net $ +559.41  fills 114  quoted  474.9 market-hours
+  mostly alone in the zone               123 markets  rewards $  636.22  trading $  -82.94  net $ +553.27  fills  45  quoted  319.9 market-hours
+  with other makers in the zone          141 markets  rewards $  116.07  trading $ -109.93  net $   +6.14  fills  69  quoted  155.0 market-hours
+  never filled                           169 markets  rewards $  530.52  trading $  -26.12  net $ +504.40  fills   0  quoted  291.0 market-hours
+  filled                                  95 markets  rewards $  221.77  trading $ -166.75  net $  +55.01  fills 114  quoted  183.9 market-hours
   worst by trading:
+    $ -13.20  rewards $  0.34  fills 2  pool $34/d  Will Smoke - Skrillex, ISOxo, Cristale & TeeZandos win Best 
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
-    $  -9.00  rewards $  0.52  fills 1  pool $50/d  Will Tyson Foods (TSN) beat quarterly earnings?
-    $  -7.20  rewards $  2.95  fills 1  pool $29/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
+    $  -7.20  rewards $  3.34  fills 1  pool $42/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
     $  -6.74  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
     $  -6.50  rewards $  4.67  fills 2  pool $24/d  Will Anthropic’s valuation be between $1.75T and $2.00T at t
     $  -6.40  rewards $  0.00  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
 
-hedges: 155, 2853.13 shares, cost $87.45 = 3.07c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-13 15:55 will-is-it-cool-steve-lacy-feat-sza-win-best-randb-coll bought NO  19.9@0.190 held@0.830 cost/share +0.0277
-  11-13 15:58 will-core-pce-yoy-be-3pt3pct-in-october-2026            bought NO  20@0.590 held@0.420 cost/share +0.0221
-  11-13 16:22 will-primmie-play-for-paper-rex-in-2027-1788364450495   bought YES 40@0.415 held@0.565 cost/share -0.0074
+hedges: 158, 2898.5 shares, cost $89.43 = 3.09c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-13 16:27 will-november-2026-core-cpi-yoy-be-2pt8                 bought NO  20@0.850 held@0.190 cost/share +0.0464
   11-13 16:32 will-canadas-november-2026-unemployment-rate-be-6pt6    bought YES 20@0.175 held@0.840 cost/share +0.0222
   11-13 17:02 will-the-hunger-games-sunrise-on-the-reaping-opening-we bought NO  20@0.580 held@0.430 cost/share +0.0222
@@ -69,5 +66,8 @@ hedges: 155, 2853.13 shares, cost $87.45 = 3.07c a share (the largest reward ear
   11-13 17:34 will-pabel-munoz-win-the-next-quito-mayoral-elections   bought YES 7.6923@0.650 held@0.390 cost/share +0.0491
   11-13 17:40 will-russia-target-kyiv-on-november-8-2026-20261102     bought NO  31.3636@0.690 held@0.332 cost/share +0.0222
   11-13 18:47 will-billie-eilish-perform-at-coachella-2027            bought NO  20@0.420 held@0.620 cost/share +0.0522
+  11-13 19:23 will-the-cure-olivia-rodrigo-win-best-pop-solo-performa bought NO  20@0.730 held@0.300 cost/share +0.0399
+  11-13 19:33 will-sza-perform-at-coachella-2027                      bought YES 10.75@0.900 held@0.130 cost/share +0.0345
+  11-13 19:33 will-venezuela-win-miss-universe-2026                   bought NO  14.62@0.845 held@0.204 cost/share +0.0555
 
 settlements: 0, realised $0.00
