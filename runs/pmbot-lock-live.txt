@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261112-212252
-mode: live  duration: 279.6 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 224, 'status': 559, 'lock_state': 2533, 'strike': 220, 'order_filled': 8, 'fill': 8, 'lock_entry': 8, 'provisional': 8, 'settle': 8, 'order_rejected': 5, 'lock_miss': 8, 'order_failed': 3, 'order_error': 3, 'window_blocked': 3}
+mode: live  duration: 339.1 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 272, 'status': 678, 'lock_state': 3953, 'strike': 268, 'order_filled': 8, 'fill': 8, 'lock_entry': 8, 'provisional': 8, 'settle': 8, 'order_rejected': 6, 'lock_miss': 9, 'order_failed': 3, 'order_error': 3, 'window_blocked': 3}
 
-lock orders: sent 16  filled 8  ask gone 5  errors 3
-  signal -> exchange answer, ms: median 276  p90 316  max 390
-  market prewarm (2 lookups + signing), ms: median 146  max 370  n 224
+lock orders: sent 17  filled 8  ask gone 6  errors 3
+  signal -> exchange answer, ms: median 280  p90 316  max 390
+  market prewarm (2 lookups + signing), ms: median 151  max 370  n 272
   fill price minus the ask we saw, cents: mean -1.35  worst +2.0
   misses came 41-60 s before the end; model p 0.950-0.992
-  exchange rejections by code: {'fak_not_filled': 5}
+  exchange rejections by code: {'fak_not_filled': 6}
   order_error xrp-1794524400:  internal server error
   order_failed eth-1794524400: RequestRejectedError internal server error
   order_error eth-1794524400:  internal server error

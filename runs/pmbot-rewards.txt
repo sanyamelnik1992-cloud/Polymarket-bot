@@ -1,53 +1,53 @@
-journal data/journal-rewards: 17.4 h of events, 11-12 08:36 -> 11-13 02:02 UTC
-now: markets 45, quoting 37, bids $616.1, feed ok, pool rate at current shares $1188.9/day
-rewards (estimate by the book): today $148.084, total $771.405; by Polymarket's competitiveness: total $873.12; earned alone in a zone: total $558.365; stress (one more identical maker): total $406.754
-hedges: 77 for 1374.1 shares, lost $47.8; inventory not hedged yet: $294.82
-positions: value $281.03 cost $383.62 -> open $-102.59; realised $-47.8; trading $-150.39 (today -12.82)
-TOTAL (rewards estimate + trading): $621.01; CAUTIOUS (lower estimate, without the part earned alone, + trading): $62.65; fills total 132
+journal data/journal-rewards: 18.4 h of events, 11-12 08:36 -> 11-13 03:01 UTC
+now: markets 45, quoting 35, bids $605.86, feed ok, pool rate at current shares $1022.07/day
+rewards (estimate by the book): today $210.939, total $834.26; by Polymarket's competitiveness: total $950.961; earned alone in a zone: total $602.638; stress (one more identical maker): total $440.394
+hedges: 82 for 1494.1 shares, lost $53.29; inventory not hedged yet: $302.77
+positions: value $279.55 cost $391.57 -> open $-112.02; realised $-53.29; trading $-165.31 (today -27.74)
+TOTAL (rewards estimate + trading): $668.95; CAUTIOUS (lower estimate, without the part earned alone, + trading): $66.31; fills total 141
 
 top markets by estimated reward:
-  $  11.44  share 1.00  pool $51/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
-  $  11.12  share 1.00  pool $57/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
-  $  10.54  share 1.00  pool $56/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $  10.51  share 0.50  pool $83/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
-  $   9.71  share 1.00  pool $52/d  empty will-there-be-4-or-more-codex-weekly-usage-limit-resets-in-t
-  $   9.53  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $   9.45  share 1.00  pool $50/d  empty will-the-democrats-win-nebraska-in-the-2028-presidential-ele
-  $   9.02  share 1.00  pool $54/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
-  $   8.49  share 1.00  pool $48/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $   8.40  share 0.72  pool $45/d  will-reminders-of-him-be-the-2-us-netflix-movie-this-week
-  $   7.70  share 0.00  pool $92/d  will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70-on-n
-  $   7.62  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
+  $  13.64  share 1.00  pool $54/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
+  $  13.50  share 1.00  pool $57/d  empty will-there-be-exactly-1-codex-weekly-usage-limit-reset-in-th
+  $  12.85  share 1.00  pool $55/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $  12.64  share 0.61  pool $84/d  will-the-republicans-win-tennessee-in-the-2028-presidential-
+  $  11.83  share 1.00  pool $53/d  empty will-there-be-4-or-more-codex-weekly-usage-limit-resets-in-t
+  $  11.59  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $  10.93  share 1.00  pool $46/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
+  $  10.47  share 1.00  pool $48/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $  10.30  share 1.00  pool $50/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
+  $   9.28  share 1.00  pool $40/d  empty will-gpt-astra-output-price-be-30-or-below-in-2026
+  $   8.64  share 1.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   7.77  share 1.00  pool $51/d  empty will-chinas-cpi-increase-by-0pt4-over-the-12-month-period-en
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
-  2026-11-13: book $152.61, official $185.29, alone $70.83 | hedges 9 ($1.17) | trading: day not closed | samples 120, avg markets scoring 35.7
+  2026-11-13: book $213.87, official $261.57, alone $113.98 | hedges 13 ($4.32) | trading: day not closed | samples 178, avg markets scoring 34.8
 
-last selection: 45 markets of 97 priced, capital $836.82, est $2028.54/day, empty books 22
+last selection: 45 markets of 94 priced, capital $838.48, est $1712.11/day, empty books 22
 
-fills: 132 (material 132)
-  11-12 23:39 will-canadas-november-2026-unemployment-rate-be-6pt7    NO  20@0.750 last_trade=0.26
-  11-12 23:45 will-the-5-year-treasury-yield-hit-5pt12-in-november    NO  20@0.830 last_trade=None
-  11-12 23:48 will-fernando-haddad-be-the-next-brazilian-chief-of-sta YES 20@0.280 last_trade=None
-  11-13 00:02 will-the-bank-of-russia-decrease-the-key-rate-by-25-bps NO  20@0.870 last_trade=None
-  11-13 00:43 will-the-5-year-treasury-yield-hit-5pt12-in-november    NO  20@0.830 last_trade=None
-  11-13 01:11 will-reminders-of-him-be-the-2-us-netflix-movie-this-we NO  7@0.550 last_trade=0.56 (alone in the zone)
-  11-13 01:16 will-canadas-november-2026-unemployment-rate-be-6pt7    NO  20@0.750 last_trade=0.26
-  11-13 01:28 will-lady-gaga-appear-at-the-2026-nfl-christmas-day-hal NO  20@0.820 last_trade=0.21
-  11-13 01:33 will-sabrina-carpenter-appear-at-the-2026-nfl-christmas NO  20@0.770 last_trade=0.26
+fills: 141 (material 141)
   11-13 01:33 will-adele-appear-at-the-2026-nfl-christmas-day-halftim YES 20@0.330 last_trade=None
   11-13 01:41 will-jensen-huang-rank-in-googles-top-5-most-searched-p YES 20@0.470 last_trade=0.49
   11-13 01:41 kroger-q3-identical-sales-without-fuel-growth-0pt5-to-1 NO  20@0.700 last_trade=0.3
   11-13 01:47 will-andrea-bocelli-appear-at-the-2026-nfl-christmas-da NO  20@0.820 last_trade=0.2
   11-13 01:54 will-sabrina-carpenter-appear-at-the-2026-nfl-christmas YES 20@0.320 last_trade=0.31999999999999995
   11-13 01:57 will-canadas-gdp-growth-rate-mom-in-september-2026-be-b NO  20@0.560 last_trade=0.45
+  11-13 02:23 will-a-dogs-perfect-christmas-be-the-2-global-netflix-m NO  5@0.750 last_trade=None
+  11-13 02:31 will-the-democrats-win-nebraska-in-the-2028-presidentia YES 20@0.100 last_trade=None (alone in the zone)
+  11-13 02:33 will-matthew-mcconaughey-appear-in-a-2027-big-game-comm NO  20@0.470 last_trade=None (alone in the zone)
+  11-13 02:34 will-camilo-santana-be-the-next-brazilian-chief-of-staf YES 20@0.540 last_trade=None
+  11-13 02:36 will-ryan-reynolds-appear-in-a-2027-big-game-commercial YES 20@0.390 last_trade=None (alone in the zone)
+  11-13 02:39 will-kevin-hart-appear-in-a-2027-big-game-commercial    NO  20@0.590 last_trade=0.42
+  11-13 02:49 will-there-be-4-or-more-north-korea-tests-in-november-2 NO  20@0.610 last_trade=0.39
+  11-13 02:51 will-pan-win-the-most-seats-in-the-2027-guanajuato-cong NO  20@0.240 last_trade=0.74
+  11-13 02:55 will-travis-kelce-appear-in-a-2027-big-game-commercial  YES 20@0.470 last_trade=0.48
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    151 markets  rewards $  473.25  trading $ -116.53  net $ +356.72  fills  61  quoted  192.1 market-hours
-  mostly alone in the zone                80 markets  rewards $  365.73  trading $  -49.79  net $ +315.94  fills  25  quoted  145.2 market-hours
-  with other makers in the zone           71 markets  rewards $  107.52  trading $  -66.74  net $  +40.78  fills  36  quoted   47.0 market-hours
-  never filled                            98 markets  rewards $  371.53  trading $  -14.45  net $ +357.08  fills   0  quoted  148.8 market-hours
-  filled                                  53 markets  rewards $  101.72  trading $ -102.08  net $   -0.36  fills  61  quoted   43.3 market-hours
+  all                                    153 markets  rewards $  448.87  trading $ -121.64  net $ +327.22  fills  64  quoted  191.0 market-hours
+  mostly alone in the zone                86 markets  rewards $  389.95  trading $  -55.23  net $ +334.71  fills  29  quoted  152.9 market-hours
+  with other makers in the zone           67 markets  rewards $   58.92  trading $  -66.41  net $   -7.49  fills  35  quoted   38.0 market-hours
+  never filled                            96 markets  rewards $  339.94  trading $  -14.43  net $ +325.51  fills   0  quoted  146.7 market-hours
+  filled                                  57 markets  rewards $  108.93  trading $ -107.22  net $   +1.71  fills  64  quoted   44.2 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
@@ -55,19 +55,19 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.26  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.20  rewards $  1.70  fills 2  pool $50/d  Will the White House call a full lid by 6:30 PM on November 
+    $  -5.86  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
     $  -5.80  rewards $  2.26  fills 1  pool $10/d  Will Russia target Kyiv on November 8, 2026?
-    $  -5.78  rewards $  0.00  fills 1  pool $50/d  Will Marved play for KRÜ Esports in 2027?
 
-hedges: 78, 1414.15 shares, cost $50.15 = 3.55c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-12 23:55 will-ebenezer-score-at-least-45-on-the-rotten-tomatoes- bought NO  28.85@0.263 held@0.765 cost/share +0.0369
-  11-13 01:09 will-canadas-november-2026-unemployment-rate-be-6pt7    bought YES 20@0.260 held@0.750 cost/share +0.0196
-  11-13 01:33 will-canadas-november-2026-unemployment-rate-be-6pt7    bought YES 20@0.290 held@0.750 cost/share +0.0503
-  11-13 01:33 will-adele-appear-at-the-2026-nfl-christmas-day-halftim bought NO  20@0.700 held@0.330 cost/share +0.0405
+hedges: 82, 1494.15 shares, cost $53.30 = 3.57c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-13 01:41 will-jensen-huang-rank-in-googles-top-5-most-searched-p bought YES 20@0.150 held@0.550 cost/share -0.2936
   11-13 01:41 kroger-q3-identical-sales-without-fuel-growth-0pt5-to-1 bought YES 20@0.320 held@0.700 cost/share +0.0287
   11-13 01:43 will-lady-gaga-appear-at-the-2026-nfl-christmas-day-hal bought YES 20@0.216 held@0.820 cost/share +0.0445
   11-13 01:47 will-andrea-bocelli-appear-at-the-2026-nfl-christmas-da bought YES 20@0.210 held@0.820 cost/share +0.0383
   11-13 01:51 highest-temperature-in-wellington-on-november-14-2026-2 bought NO  5@0.600 held@0.440 cost/share +0.0520
   11-13 02:01 will-the-5-year-treasury-yield-hit-5pt12-in-november    bought YES 40@0.220 held@0.830 cost/share +0.0586
+  11-13 02:31 will-the-democrats-win-nebraska-in-the-2028-presidentia bought NO  20@0.947 held@0.100 cost/share +0.0487
+  11-13 02:39 will-kevin-hart-appear-in-a-2027-big-game-commercial    bought YES 20@0.440 held@0.590 cost/share +0.0423
+  11-13 02:49 will-there-be-4-or-more-north-korea-tests-in-november-2 bought YES 20@0.410 held@0.610 cost/share +0.0200
+  11-13 02:51 will-pan-win-the-most-seats-in-the-2027-guanajuato-cong bought YES 20@0.800 held@0.240 cost/share +0.0464
 
 settlements: 0, realised $0.00
