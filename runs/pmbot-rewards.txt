@@ -1,56 +1,56 @@
-journal data/journal-rewards: 30.4 h of events, 11-12 08:36 -> 11-13 15:02 UTC
-now: markets 45, quoting 46, bids $591.29, feed ok, pool rate at current shares $794.74/day
-rewards (estimate by the book): today $740.072, total $1363.393; by Polymarket's competitiveness: total $1612.606; earned alone in a zone: total $967.29; stress (one more identical maker): total $719.683
-hedges: 139 for 2522.2 shares, lost $79.64; inventory not hedged yet: $405.62
-positions: value $306.33 cost $406.34 -> open $-100.01; realised $-109.69; trading $-209.69 (today -72.13)
-TOTAL (rewards estimate + trading): $1153.7; CAUTIOUS (lower estimate, without the part earned alone, + trading): $186.41; fills total 244
+journal data/journal-rewards: 31.4 h of events, 11-12 08:36 -> 11-13 16:02 UTC
+now: markets 45, quoting 43, bids $625.43, feed ok, pool rate at current shares $1121.95/day
+rewards (estimate by the book): today $775.527, total $1398.848; by Polymarket's competitiveness: total $1664.337; earned alone in a zone: total $989.299; stress (one more identical maker): total $739.208
+hedges: 147 for 2674.1 shares, lost $84.36; inventory not hedged yet: $373.51
+positions: value $277.15 cost $373.52 -> open $-96.37; realised $-125.97; trading $-222.33 (today -84.76)
+TOTAL (rewards estimate + trading): $1176.52; CAUTIOUS (lower estimate, without the part earned alone, + trading): $187.22; fills total 256
 
 top markets by estimated reward:
-  $  12.92  share 1.00  pool $56/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $  11.47  share 0.71  pool $57/d  will-openrouter-process-between-220t-and-230t-tokens-the-wee
-  $  11.26  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
-  $  10.79  share 1.00  pool $51/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
-  $  10.44  share 1.00  pool $49/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $   8.02  share 0.27  pool $73/d  will-canadas-gdp-growth-rate-mom-in-september-2026-be-betwee
-  $   5.81  share 0.00  pool $50/d  will-the-white-house-call-a-full-lid-by-630-pm-on-november-1
+  $  15.29  share 1.00  pool $59/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $  13.35  share 1.00  pool $50/d  empty will-robinhood-run-an-ad-during-super-bowl-lxi
+  $  12.98  share 1.00  pool $54/d  empty will-south-koreas-2026-annual-inflation-be-at-least-3pt0
+  $  12.49  share 1.00  pool $49/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $  10.35  share 0.50  pool $62/d  will-canadas-gdp-growth-rate-mom-in-september-2026-be-betwee
+  $   5.59  share 1.00  pool $43/d  empty will-connor-closs-come-in-third-place-on-the-voice-season-30
   $   5.27  share 0.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
-  $   4.62  share 0.00  pool $31/d  empty will-connor-closs-come-in-third-place-on-the-voice-season-30
-  $   3.79  share 0.00  pool $40/d  will-the-highest-score-achieved-by-a-spacexai-grok-model-on-
-  $   3.63  share 0.00  pool $25/d  empty will-canadas-november-2026-unemployment-rate-be-6pt9
-  $   2.76  share 0.71  pool $31/d  will-rafael-fiziev-fight-mateusz-gamrot-next-202606292059418
+  $   4.43  share 0.30  pool $40/d  will-the-highest-score-achieved-by-a-spacexai-grok-model-on-
+  $   4.39  share 1.00  pool $50/d  empty will-marved-play-for-kru-esports-in-2027
+  $   3.66  share 1.00  pool $29/d  empty will-the-ornn-rtx-6000-index-be-between-1pt75-and-2pt00-on-n
+  $   2.95  share 0.00  pool $42/d  will-reminders-of-him-be-the-2-us-netflix-movie-this-week
+  $   2.95  share 0.00  pool $44/d  empty will-the-gospel-of-christmas-be-the-2-us-netflix-movie-this-
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
-  2026-11-13: book $740.62, official $920.81, alone $476.69 | hedges 70 ($30.67) | trading: day not closed | samples 892, avg markets scoring 31.7
+  2026-11-13: book $776.27, official $972.77, alone $498.86 | hedges 78 ($35.38) | trading: day not closed | samples 956, avg markets scoring 31.6
 
-last selection: 45 markets of 99 priced, capital $839.12, est $1424.58/day, empty books 22
+last selection: 45 markets of 95 priced, capital $864.34, est $1685.14/day, empty books 22
 
-fills: 245 (material 237)
-  11-13 13:35 nba-2026-27-eff-leader-nikola-jokic                     NO  0.02@0.705 last_trade=0.486
-  11-13 13:50 will-the-30-year-treasury-yield-hit-5pt49-in-november   NO  20@0.310 last_trade=0.69
-  11-13 13:54 will-jensen-huang-rank-in-googles-top-5-most-searched-p NO  20@0.790 last_trade=None (alone in the zone)
-  11-13 13:54 will-is-it-cool-steve-lacy-feat-sza-win-best-randb-coll YES 20@0.830 last_trade=0.81
-  11-13 13:54 will-is-it-cool-steve-lacy-feat-sza-win-best-randb-coll NO  0.1@0.170 last_trade=0.88
-  11-13 14:01 will-a-dogs-perfect-christmas-be-the-2-global-netflix-m YES 5@0.420 last_trade=0.42000000000000004
-  11-13 14:03 will-canadas-november-2026-unemployment-rate-be-6pt9    YES 20@0.160 last_trade=0.15000000000000002
-  11-13 14:04 will-190-209-ships-transit-the-bab-el-mandeb-strait-bet NO  20@0.810 last_trade=0.13 (alone in the zone)
-  11-13 14:13 will-the-30-year-treasury-yield-hit-5pt49-in-november   YES 0.57@0.760 last_trade=0.74
-  11-13 14:18 will-the-2-year-treasury-yield-hit-5pt02-in-november    NO  20@0.874 last_trade=None
-  11-13 14:26 will-dune-part-three-win-best-sound-at-the-99th-academy YES 20@0.370 last_trade=None
-  11-13 14:39 will-moonshot-be-the-third-best-chinese-ai-company-at-t YES 20@0.280 last_trade=0.25
+fills: 257 (material 249)
   11-13 14:46 will-the-gospel-of-christmas-be-the-2-us-netflix-movie- NO  20@0.800 last_trade=0.6
   11-13 14:52 will-trumps-approval-rating-be-at-least-38pt0-on-novemb NO  20@0.410 last_trade=0.69
   11-13 15:01 will-rafael-fiziev-fight-mateusz-gamrot-next-2026062920 NO  10@0.736 last_trade=None
+  11-13 15:06 will-rafael-fiziev-fight-mateusz-gamrot-next-2026062920 YES 10@0.308 last_trade=0.291
+  11-13 15:09 will-uk-gdp-growth-in-q4-2026-be-between-0pt2-and-0pt3  NO  20@0.810 last_trade=0.15000000000000002 (alone in the zone)
+  11-13 15:14 will-the-30-year-treasury-yield-hit-5pt49-in-november   YES 7.2353@0.840 last_trade=0.83
+  11-13 15:17 will-xiaomi-be-the-second-best-chinese-ai-company-at-th YES 12@0.230 last_trade=0.24
+  11-13 15:23 will-trumps-approval-rating-be-at-least-38pt0-on-novemb YES 20@0.660 last_trade=0.7 (alone in the zone)
+  11-13 15:25 will-uk-gdp-growth-in-q4-2026-be-between-0pt2-and-0pt3  YES 20@0.240 last_trade=0.22999999999999998
+  11-13 15:26 will-core-pce-yoy-be-3pt3pct-in-october-2026            YES 20@0.450 last_trade=0.44
+  11-13 15:27 will-trumps-approval-rating-be-at-least-37pt0-on-novemb NO  20@0.410 last_trade=0.59
+  11-13 15:27 will-jensen-huang-rank-in-googles-top-5-most-searched-p YES 20@0.660 last_trade=0.6599999999999999
+  11-13 15:43 will-openrouter-process-between-200t-and-210t-tokens-th YES 5@0.330 last_trade=0.20999999999999996
+  11-13 15:58 will-core-pce-yoy-be-3pt3pct-in-october-2026            YES 20@0.420 last_trade=0.42000000000000004
+  11-13 16:02 will-marved-play-for-kru-esports-in-2027                YES 20@0.201 last_trade=None (alone in the zone)
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    264 markets  rewards $  686.67  trading $ -169.31  net $ +517.35  fills 110  quoted  401.5 market-hours
-  mostly alone in the zone               130 markets  rewards $  587.94  trading $  -85.87  net $ +502.07  fills  48  quoted  283.6 market-hours
-  with other makers in the zone          134 markets  rewards $   98.72  trading $  -83.44  net $  +15.28  fills  62  quoted  118.0 market-hours
-  never filled                           171 markets  rewards $  465.49  trading $  -29.32  net $ +436.18  fills   0  quoted  257.7 market-hours
-  filled                                  93 markets  rewards $  221.18  trading $ -140.00  net $  +81.18  fills 110  quoted  143.8 market-hours
+  all                                    259 markets  rewards $  684.19  trading $ -176.17  net $ +508.02  fills 107  quoted  405.3 market-hours
+  mostly alone in the zone               128 markets  rewards $  585.50  trading $  -83.07  net $ +502.43  fills  45  quoted  285.1 market-hours
+  with other makers in the zone          131 markets  rewards $   98.68  trading $  -93.10  net $   +5.58  fills  62  quoted  120.2 market-hours
+  never filled                           171 markets  rewards $  484.69  trading $  -29.62  net $ +455.07  fills   0  quoted  274.2 market-hours
+  filled                                  88 markets  rewards $  199.50  trading $ -146.55  net $  +52.95  fills 107  quoted  131.2 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
-    $  -8.00  rewards $  2.22  fills 1  pool $37/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
+    $  -7.20  rewards $  2.95  fills 1  pool $44/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
     $  -6.74  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
     $  -6.50  rewards $  4.67  fills 2  pool $24/d  Will Anthropic’s valuation be between $1.75T and $2.00T at t
@@ -58,16 +58,16 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
     $  -6.26  rewards $  0.05  fills 0  pool $12/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
 
-hedges: 139, 2522.17 shares, cost $79.66 = 3.16c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-13 13:12 will-the-south-african-reserve-bank-increase-the-repo-r bought YES 20@0.260 held@0.780 cost/share +0.0496
-  11-13 13:19 will-the-30-year-treasury-yield-hit-5pt61-in-november   bought NO  20@0.850 held@0.200 cost/share +0.0564
-  11-13 13:22 will-the-south-african-reserve-bank-increase-the-repo-r bought NO  20@0.800 held@0.250 cost/share +0.0580
-  11-13 13:53 will-marved-play-for-kru-esports-in-2027                bought NO  40@0.870 held@0.173 cost/share +0.0487
-  11-13 13:54 will-jensen-huang-rank-in-googles-top-5-most-searched-p bought NO  20@0.160 held@0.470 cost/share -0.3633
-  11-13 13:57 will-the-gospel-of-christmas-be-the-top-us-netflix-movi bought NO  20@0.870 held@0.160 cost/share +0.0357
-  11-13 13:59 will-jensen-huang-be-the-1-searched-person-on-google-th bought NO  13@0.642 held@0.390 cost/share +0.0438
-  11-13 14:39 will-moonshot-be-the-third-best-chinese-ai-company-at-t bought NO  20@0.755 held@0.280 cost/share +0.0424
+hedges: 147, 2674.07 shares, cost $84.37 = 3.16c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-13 14:56 will-the-white-house-call-a-full-lid-by-630-pm-on-novem bought NO  20@0.580 held@0.240 cost/share -0.1703
   11-13 14:58 will-trumps-approval-rating-be-less-than-38pt0-on-novem bought YES 5@0.320 held@0.730 cost/share +0.0587
+  11-13 15:09 will-uk-gdp-growth-in-q4-2026-be-between-0pt4-and-0pt5  bought NO  20@0.760 held@0.220 cost/share -0.0109
+  11-13 15:09 will-uk-gdp-growth-in-q4-2026-be-between-0pt2-and-0pt3  bought NO  20@0.780 held@0.240 cost/share +0.0286
+  11-13 15:13 will-canadas-november-2026-unemployment-rate-be-6pt9    bought NO  20@0.890 held@0.160 cost/share +0.0549
+  11-13 15:17 will-xiaomi-be-the-second-best-chinese-ai-company-at-th bought NO  12@0.800 held@0.230 cost/share +0.0364
+  11-13 15:23 will-trumps-approval-rating-be-at-least-38pt0-on-novemb bought YES 20@0.620 held@0.410 cost/share +0.0394
+  11-13 15:26 will-core-pce-yoy-be-3pt3pct-in-october-2026            bought NO  20@0.590 held@0.450 cost/share +0.0521
+  11-13 15:55 will-is-it-cool-steve-lacy-feat-sza-win-best-randb-coll bought NO  19.9@0.190 held@0.830 cost/share +0.0277
+  11-13 15:58 will-core-pce-yoy-be-3pt3pct-in-october-2026            bought NO  20@0.590 held@0.420 cost/share +0.0221
 
 settlements: 0, realised $0.00
