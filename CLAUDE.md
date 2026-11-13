@@ -191,7 +191,8 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   score paid $1.28 and cost $1.50 per quoted hour (alone ones +$2.33 / -$0.33) -> `max_competitiveness = 1`; unpaired
   inventory ($350, marked -25 %) is worked out by `reduce_only` (only the bid that pairs it rests, also in the cooldown,
   after deselection and after a restart: positions keep `RM_KEYS` of their market in the state), pairs are merged at
-  once (`merge_pairs`, journal `rmerge`), the exit bid ignores the budget. Nearly all income is now from (almost) empty
+  once (`merge_pairs`, journal `rmerge`), the exit bid ignores the budget. Telegram: `/r` = R's money in detail (today, total, by day
+  from `rday`, positions, stop), `/rhow` = plain explanation (`notify.REWARDS_HOW`), R line in the digest. Nearly all income is now from (almost) empty
   pools: the part only a live test can confirm.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.

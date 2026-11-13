@@ -284,6 +284,10 @@ def format_digest(since, hours=6):
     pb = pairs_block(ops.today_utc())
     if pb:
         lines += [pb, ""]
+    for u in ops.REWARD_UNITS:
+        rl = rewards_digest_line(u)
+        if rl:
+            lines += [rl, ""]
     lines += [paper_note(units)]
     return "\n".join(lines)
 
@@ -312,25 +316,124 @@ def _status_block(s):
     return out
 
 
+REWARDS_HOW = """🎁 <b>Как работает бот «Награды» (R)</b>
+
+Polymarket каждый день платит тем, кто держит заявки на покупку и продажу рядом с ценой. На каждый рынок назначена
+сумма в день, её делят между всеми, чьи заявки стоят достаточно близко к цене.
+
+1️⃣ Раз в 10 минут бот выбирает до 45 рынков, где его маленькая заявка получит самую большую долю этой суммы.
+Рынки, где уже стоит много других, пропускает: там чаще исполняют и меньше платят.
+2️⃣ В каждом ставит две заявки по ~20 акций: купить «Да» чуть ниже цены и купить «Нет» чуть выше.
+Пока они стоят, капает награда.
+3️⃣ Иногда кто-то торгует против нашей заявки — это <b>исполнение</b>. У нас остаётся одна сторона. Бот сразу
+докупает вторую: пара «Да» + «Нет» всегда стоит ровно $1, позиция закрыта с потерей в несколько центов на акцию.
+4️⃣ Если докупить дорого — бот держит позицию и ставит одну заявку, которая её закроет. Новых заявок в этом рынке
+не ставит, пока не закроет.
+5️⃣ <b>Заработок = награды − потери на исполнениях.</b>
+6️⃣ Стоп: если итог дня (потери плюс надёжная часть наград) хуже −$50, бот выключается до 00:00 UTC и потом
+включается сам.
+
+<b>Что значат цифры</b>
+💰 <b>награды</b> — расчёт по формуле биржи. Бот бумажный: денег нет, это оценка.
+🏝 <b>где мы одни</b> — награды с рынков, где кроме нас никто не стоит. Самая ненадёжная часть: заплатит ли биржа
+за неё — проверит только живой тест.
+💸 <b>потери</b> — выходы из исполненных заявок и позиции, которые ещё не закрыты (по текущей цене).
+🛡 <b>осторожный итог</b> — награды без «где мы одни» минус потери. Если он в плюсе — стратегия работает даже в
+худшем случае.
+
+Цифры подробно: /r"""
+
+
+def _rewards_parts(st):
+    """(rewards, alone, losses, total, cautious) of today from an rstatus record; older records lack some keys."""
+    rew = st.get("rewards_today") or 0.0
+    alone = st.get("alone_today") or 0.0
+    loss = st.get("trading_pnl_today") or 0.0
+    cautious = st.get("cautious_today")
+    if cautious is None:
+        low = min(rew, st.get("official_today", rew)) - alone
+        cautious = max(low, 0.0) + loss
+    return rew, alone, loss, rew + loss, cautious
+
+
 def _rewards_block(unit):
-    """The liquidity-rewards farmer in /status. Its income is an ESTIMATE of Polymarket's payout, so it is shown apart
-    from the bots' totals: the estimate by the book, the cautious figure, and what the fills cost."""
+    """The liquidity-rewards farmer in /status: what it earned today, what it lost, the result. Its income is an
+    ESTIMATE of Polymarket's payout, so it is shown apart from the bots' totals."""
     r = ops.rewards_summary(unit)
     if not r:
         return []
-    out = [f"{label(unit)}", f"   {ops.STATE_RU.get(r['state'], esc(r['state']))} {ops.fmt_age(r['since'])} · бумага"]
+    out = [f"🎁 <b>Награды · R</b> · бумага · {ops.STATE_RU.get(r['state'], esc(r['state']))} {ops.fmt_age(r['since'])}"]
     st = r["status"]
     if not st:
         return out + ["   статуса ещё нет"]
-    out.append(f"   🎁 награды, оценка: сегодня {money(st['rewards_today'], True)} · всего {money(st['rewards_total'])}")
-    out.append(f"   из них на рынках, где мы одни: {money(st.get('alone_total'))} (самая ненадёжная часть)")
-    out.append(f"   {dot(st['trading_pnl'])} потери на исполнениях: {money(st['trading_pnl'])} · исполнений сегодня "
-               f"{st['fills_today']} · хеджей {st.get('hedges_today', 0)}")
-    out.append(f"   итог осторожно: {money(st.get('cautious_pnl'), True)} · рынков {st['markets']} "
-               f"(котирует {st['quoting']})")
+    rew, alone, loss, total, cautious = _rewards_parts(st)
+    out.append(f"   💰 заработал сегодня (расчёт): {money(rew, True)}  · 🏝 из них где мы одни {money(alone)}")
+    out.append(f"   💸 потерял на исполнениях: {money(loss, True)}  · исполнений {st.get('fills_today', 0)}")
+    out.append(f"   {dot(total)} итог дня: {money(total, True)}  · 🛡 осторожно {money(cautious, True)}")
     if st.get("halted"):
-        out.append("   ⛔ котировки выключены до 00:00 UTC (дневной убыток)")
+        out.append("   ⛔ стоп до 00:00 UTC: итог дня хуже −$50, потом включится сам")
+    out.append("   подробно: /r · как работает: /rhow")
     return out
+
+
+def format_rewards(unit="pmbot-rewards"):
+    """/r: the liquidity-rewards farmer in detail -- today, since the start, by day, what it holds now."""
+    r = ops.rewards_summary(unit)
+    if not r:
+        return "🎁 бот «Награды» (R) не запущен. Запуск: /restart pmbot-rewards\nКак работает: /rhow"
+    lines = [f"🎁 <b>Награды · R</b> · бумага (без денег)",
+             f"{ops.STATE_RU.get(r['state'], esc(r['state']))} {ops.fmt_age(r['since'])}", ""]
+    st = r["status"]
+    if not st:
+        return "\n".join(lines + ["статуса ещё нет: первые цифры через 5 минут после запуска"])
+    rew, alone, loss, total, cautious = _rewards_parts(st)
+    real = st.get("realized_today")
+    lines += [f"<b>Сегодня</b> (с 00:00 UTC)",
+              f"💰 награды (расчёт): {money(rew, True)}",
+              f"   🏝 из них где мы одни: {money(alone)}",
+              f"💸 потери: {money(loss, True)}"]
+    if real is not None:
+        lines.append(f"   закрытые выходы: {money(real)} · незакрытые позиции по цене: {money(loss - real)}")
+    lines += [f"{dot(total)} итог дня: {money(total, True)}",
+              f"🛡 осторожный итог: {money(cautious, True)}", ""]
+    tot_rew = st.get("rewards_total") or 0.0
+    tot_trade = st.get("trading_pnl") or 0.0
+    lines += [f"<b>С начала</b>",
+              f"💰 {money(tot_rew)} (🏝 {money(st.get('alone_total'))}) · 💸 {money(tot_trade)}",
+              f"{dot(tot_rew + tot_trade)} итог {money(tot_rew + tot_trade, True)} · 🛡 осторожно "
+              f"{money(st.get('cautious_pnl'), True)}", ""]
+    days = (r.get("days") or [])[-5:]
+    if days:
+        lines.append("<b>По дням</b> (💰 награды · 🏝 одни · 💸 потери → 🛡 осторожно)")
+        for d in days:
+            dr, da, dt = d.get("rewards") or 0.0, d.get("alone") or 0.0, d.get("trading_pnl_day") or 0.0
+            dc = max(min(dr, d.get("official", dr)) - da, 0.0) + dt
+            lines.append(f"{esc(str(d['day'])[5:])}: 💰 {money(dr)} · 🏝 {money(da)} · 💸 {money(dt)} → 🛡 {money(dc, True)}")
+        lines.append("")
+    lines += ["<b>Сейчас</b>",
+              f"рынков {st.get('markets', 0)}, заявки стоят в {st.get('quoting', 0)} (одни в {st.get('alone_now', 0)}) "
+              f"· на ${st.get('bids_usd', 0):.0f}",
+              f"📦 незакрытые позиции: рынков {st.get('open_positions', '?')}, куплены за ${st.get('unhedged_usd', 0):.0f}, "
+              f"сейчас стоят ${st.get('inv_value', 0):.0f}",
+              f"исполнений сегодня {st.get('fills_today', 0)} · закрыто докупкой {st.get('hedges_today', 0)} "
+              f"(потеряно {money(-(st.get('hedge_loss_today') or 0))})"]
+    lines.append("⛔ стоп до 00:00 UTC: итог дня хуже −$50" if st.get("halted")
+                 else f"стоп: если осторожный итог дня станет хуже −$50 (сейчас {money(cautious)})")
+    if st.get("feed") is False:
+        lines.append("⚠️ поток цен молчит: заявки сняты, пока он не вернётся")
+    lines += ["", "Награды — расчёт: что заплатит биржа на самом деле, проверит только живой тест. Как работает: /rhow"]
+    return "\n".join(lines)
+
+
+def rewards_digest_line(unit="pmbot-rewards"):
+    """One line for the digest, or None when the farmer has no status."""
+    r = ops.rewards_summary(unit)
+    if not r or not r["status"]:
+        return None
+    rew, alone, loss, total, cautious = _rewards_parts(r["status"])
+    halted = " · ⛔ стоп до 00:00" if r["status"].get("halted") else ""
+    return (f"🎁 <b>Награды · R</b> (бумага), сегодня: 💰 заработал {money(rew)} (🏝 где одни {money(alone)}) · "
+            f"💸 потерял {money(loss)} · итог {money(total, True)} · 🛡 осторожно {money(cautious)}{halted} · /r")
 
 
 def format_status():

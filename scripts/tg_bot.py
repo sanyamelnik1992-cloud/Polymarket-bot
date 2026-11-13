@@ -27,7 +27,8 @@ TOKEN = os.environ.get("PMBOT_TG_TOKEN", "").strip()
 CHAT = os.environ.get("PMBOT_TG_CHAT", "").strip().replace(" ", "")      # everyone who receives broadcasts
 CHATS = [c for c in CHAT.split(",") if c]
 OWNER = CHATS[0] if CHATS else ""
-VIEWER_COMMANDS = {"/start", "/help", "/status", "/trades", "/server", "/chart", "/review"}   # read-only
+VIEWER_COMMANDS = {"/start", "/help", "/status", "/trades", "/server", "/chart", "/review", "/r", "/rewards",
+                   "/rhow"}   # read-only
 _reply_chat = None   # chat of the command being handled (cmd_chart sends its picture there)
 DIGEST_HOURS = sorted({int(h) % 24 for h in os.environ.get("PMBOT_TG_DIGEST_HOURS", "6,12,18").replace(" ", "").split(",")
                         if h.isdigit()})
@@ -39,6 +40,7 @@ HELP = """🤖 <b>pmbot — команды</b>
 📈 /chart [дней] — график накопленного PnL (по умолчанию 7 дней)
 🔬 /review — разбор дня и вердикт по экспериментам (C/D) прямо сейчас
 🧾 /trades — последние 10 закрытых окон
+🎁 /r — бот «Награды»: заработал, потерял, итог по дням · /rhow — как он работает
 🖥 /server — CPU, RAM, диск
 📜 /log [юнит] — последние строки лога
 
@@ -49,7 +51,7 @@ HELP = """🤖 <b>pmbot — команды</b>
 ⏹ /off юнит — остановить один юнит (например /off pmbot-5m-live)
 
 <b>Боты</b>
-""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS if u.startswith("pmbot-5m")) + f"\n{label('pmbot-rewards')} — <code>pmbot-rewards</code> (запуск: /restart pmbot-rewards)" + """
+""" + "\n".join(f"{label(u)} — <code>{u}</code>" for u in ops.BOT_UNITS if u.startswith("pmbot-5m")) + f"\n{label('pmbot-rewards')} — <code>pmbot-rewards</code> (запуск: /restart pmbot-rewards; подробно: /r)" + """
 
 Сам присылаю: сводку в """ + ", ".join(f"{h:02d}:00" for h in DIGEST_HOURS) + """ UTC, ночной разбор с графиком в 00:20 UTC,
 тревоги (стоп, ошибки, падение юнита, мало места)."""
@@ -167,6 +169,8 @@ def cmd_log(arg):
 COMMANDS = {
     "/start": lambda a: HELP, "/help": lambda a: HELP,
     "/status": lambda a: notify.format_status(),
+    "/r": lambda a: notify.format_rewards(), "/rewards": lambda a: notify.format_rewards(),
+    "/rhow": lambda a: notify.REWARDS_HOW,
     "/trades": lambda a: notify.format_trades(), "/server": lambda a: notify.format_server(),
     "/chart": cmd_chart, "/review": cmd_review,
     "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart, "/off": cmd_off,
@@ -272,7 +276,7 @@ def main():
         requests.post(f"{API}/setMyCommands", timeout=15, json={"commands": [
             {"command": c.strip("/"), "description": d} for c, d in [
                 ("/status", "статус и PnL"), ("/chart", "график PnL"), ("/review", "разбор и вердикт"),
-                ("/trades", "последние сделки"),
+                ("/trades", "последние сделки"), ("/r", "бот «Награды»: деньги"), ("/rhow", "как работает «Награды»"),
                 ("/server", "сервер"), ("/log", "лог"), ("/stop", "АВАРИЙНЫЙ СТОП"), ("/resume", "снять стоп"),
                 ("/update", "обновить код"), ("/restart", "перезапустить юнит"), ("/help", "помощь")]]})
     except requests.RequestException:

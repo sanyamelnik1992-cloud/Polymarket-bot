@@ -179,7 +179,8 @@ curl -fsSL https://raw.githubusercontent.com/sanyamelnik1992-cloud/Polymarket-bo
 .venv/bin/python scripts/report_rewards.py data/journal-rewards
 ```
 
-Статус — в `/status` (блок «Награды · R») и в часовом отчёте (`server-reports`, раздел «Liquidity rewards»,
+Статус — в `/status` (блок «Награды · R»: заработал / потерял / итог дня / осторожно), подробно — `/r`
+(сегодня, с начала, по дням, позиции, стоп), простое объяснение — `/rhow`; в утренней сводке строка R; и в часовом отчёте (`server-reports`, раздел «Liquidity rewards»,
 `runs/pmbot-rewards.txt`). Как читать цифры:
 
 | строка | что это |

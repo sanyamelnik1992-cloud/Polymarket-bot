@@ -856,10 +856,44 @@ def test_status_and_report_show_the_farmer(tmp_path, monkeypatch):
     txt = ops.format_rewards()
     assert "pmbot-rewards [paper]" in txt and "где мы одни в зоне" in txt and "осторожно" in txt and "хеджей всего 0" in txt
     block = "\n".join(notify._rewards_block("pmbot-rewards"))
-    assert "Награды" in block and "награды, оценка" in block and "итог осторожно" in block and "бумага" in block
+    assert "Награды" in block and "заработал сегодня" in block and "потерял на исполнениях" in block
+    assert "итог дня" in block and "осторожно" in block and "бумага" in block and "/rhow" in block
     monkeypatch.setattr(ops, "unit_state", lambda u: ("inactive", None))
     monkeypatch.setattr(ops, "events_since", lambda journal, since: [])
     assert ops.format_rewards() == "" and notify._rewards_block("pmbot-rewards") == []      # never ran: not shown
+    assert "не запущен" in notify.format_rewards() and notify.rewards_digest_line() is None
+
+
+def test_telegram_r_command_explains_money_and_days(tmp_path, monkeypatch):
+    """/r: today (earned, lost, result, cautious), since the start, by day, what it holds now; /rhow in plain words."""
+    import importlib
+    import sys
+    import time
+    from pmbot import notify, ops
+    f = farmer_with_market(tmp_path, hedge=False)
+    asyncio.run(f.quote_once())
+    f.clock.t += 31
+    f.sample_once()
+    f.pos["m"] = Position(yes=20, no=0, cost=9.2)                      # an open position marked at 0.50: +0.8
+    f.realized_by_day[f.day] = f.realized = -1.5                       # a closed exit
+    st = dict(f.status(), type="rstatus", t=time.time())
+    day = {"type": "rday", "t": time.time() - 3600, "day": "2026-11-12", "rewards": 623.3, "official": 692.7,
+           "alone": 491.0, "trading_pnl_day": -45.7, "fills": 120, "hedges": 69, "hedge_loss": 49.0}
+    monkeypatch.setattr(ops, "unit_state", lambda u: ("active", time.time() - 3600))
+    monkeypatch.setattr(ops, "events_since", lambda journal, since: [day, st])
+    txt = notify.format_rewards()
+    for s_ in ("Сегодня", "награды (расчёт)", "где мы одни", "потери", "закрытые выходы: −1.50$", "незакрытые позиции по цене",
+               "итог дня", "осторожный итог", "С начала", "По дням", "11-12", "Сейчас", "незакрытые позиции: рынков 1",
+               "/rhow"):
+        assert s_ in txt, s_
+    assert "11-12: 💰 +623.30$ · 🏝 +491.00$ · 💸 −45.70$ → 🛡 <b>+86.60$</b>" in txt          # 623.3 - 491 - 45.7
+    assert "заработал" in notify.rewards_digest_line() and "/r" in notify.rewards_digest_line()
+    assert "Как работает" in notify.REWARDS_HOW and "/r" in notify.REWARDS_HOW
+    monkeypatch.setenv("PMBOT_TG_TOKEN", "x")
+    sys.path.insert(0, "scripts")
+    tg = importlib.import_module("tg_bot")
+    assert {"/r", "/rhow"} <= tg.VIEWER_COMMANDS and tg.COMMANDS["/rhow"]("") == notify.REWARDS_HOW
+    assert "/r " in tg.HELP or "/r —" in tg.HELP
 
 
 def test_kill_message_of_the_farmer_says_it_resumes_by_itself():
