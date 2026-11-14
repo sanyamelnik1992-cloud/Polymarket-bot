@@ -1,24 +1,14 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261114-163026
-mode: paper  duration: 210.6 min  events: {'start': 1, 'status': 421, 'lock_state': 3380, 'strike': 152, 'lock_miss': 4, 'fill': 11, 'lock_entry': 11, 'provisional': 10, 'settle': 9}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261114-203656
+mode: paper  duration: 24.5 min  events: {'start': 1, 'status': 49, 'lock_state': 453, 'strike': 12, 'lock_miss': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2}
 
-lock orders: sent 15  filled 11  ask gone 4  errors 0
-  signal -> exchange answer, ms: median 306  p90 408  max 495
-  fill price minus the ask we saw, cents: mean -0.91  worst +0.0
-  misses came 50-56 s before the end; model p 0.905-0.946
+lock orders: sent 4  filled 2  ask gone 2  errors 0
+  signal -> exchange answer, ms: median 320  p90 371  max 371
+  fill price minus the ask we saw, cents: mean -0.50  worst +0.0
+  misses came 38-43 s before the end; model p 0.941-0.970
 
-fills: 11  shares: 55  notional: $48.55
+fills: 2  shares: 10  notional: $8.45
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        7    35.0     30.55      0.873  250.002
-eth        2    10.0      8.90      0.890  246.063
-xrp        2    10.0      9.10      0.910  262.548
-
-settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          6  26.715  3.285          3.285     0.0       1.0  0.421  0.753  0.123
-eth          1   4.532  0.468          0.468     0.0       1.0  0.468  0.468  0.103
-xrp          2   9.157  0.843          0.843     0.0       1.0  0.421  0.421  0.092
-
-TOTAL pnl $+4.60 (ex-rebate $+4.60) on cost $40.40 -> ROI +11.38%; windows 9, t-stat +12.13
-max drawdown $0.00; hedged windows (both sides filled): 0
+eth        1     5.0      4.40       0.88  255.568
+sol        1     5.0      4.05       0.81  261.090
+no settled windows yet

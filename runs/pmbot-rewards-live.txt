@@ -1,0 +1,36 @@
+journal data/journal-rewards-live: 0.0 h of events, 11-14 20:29 -> 11-14 20:30 UTC
+
+LIVE TEST (real money; exch = the exchange's own numbers, paper = our estimate):
+  orders placed 2, rejected 0, fills 1
+  11-14 20:30 balance $196.87
+  11-14 20:30 read-only check: percentages ok, markets with a share 0, earnings yesterday {}
+  11-14 20:30 market: Will 3+ ships transit the Strait of Hormuz on any day week of November 16? | pool $40.0/d comp 0.0 alone in the zone | kind alone, 20.0 shares a side, $17.6 | cid 0xc420a39da727be2f86b1fd16a5a67e23213811be61e5e8b71aff3e8768737fbf
+  11-14 20:30 FILL: N 20.0 @ 0.37
+  11-14 20:30 RLIVE_FILL: N 20.0 @ 0.37
+  11-14 20:30 DONE (fill): quoted 0.0 min, samples 0; exch share mean None% last None%; paper share mean None; max None%, halved after None min; scoring in None of samples; THE EXCHANGE ACCRUED $0.0 against paper $0.0 (by time at the exchange's share $None; pool $40.0/day); fills 1; position {'yes': 0.0, 'no': 20.0, 'cost': 7.4}; orders placed 2; left open 0
+now: markets 1, quoting 0, bids $0, feed ok, pool rate at current shares $0.0/day
+rewards (estimate by the book): today $0.0, total $0; by Polymarket's competitiveness: total $0; earned alone in a zone: total $0; stress (one more identical maker): total $0
+hedges: 0 for 0 shares, lost $0; inventory not hedged yet: $7.4
+positions: value $7.4 cost $7.4 -> open $0.0; realised $0.0; trading $0.0 (today 0.0)
+TOTAL (rewards estimate + trading): $0.0; CAUTIOUS (lower estimate, without the part earned alone, + trading): $0.0; fills total 1
+
+by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
+
+fills: 1 (material 1)
+  11-14 20:30 will-3-ships-transit-the-strait-of-hormuz-on-any-day-we NO  20@0.370 last_trade=0.63 (alone in the zone)
+
+by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
+  all                                      1 markets  rewards $    0.00  trading $   +0.00  net $   +0.00  fills   1  quoted    0.0 market-hours
+  with other makers in the zone            1 markets  rewards $    0.00  trading $   +0.00  net $   +0.00  fills   1  quoted    0.0 market-hours
+  filled                                   1 markets  rewards $    0.00  trading $   +0.00  net $   +0.00  fills   1  quoted    0.0 market-hours
+
+by kind of market at selection (journals since 14 Nov; $/h = per quoted market-hour):
+  competitiveness (others' score per $1 of pool):
+  24 h volume, $:
+  days to the end:
+  price of YES:
+  pool, $ a day:
+  rewards min size, shares:
+  worst by trading:
+
+settlements: 0, realised $0.00
