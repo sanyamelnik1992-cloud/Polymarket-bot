@@ -1,38 +1,32 @@
-journal data/journal-rewards: 47.4 h of events, 11-12 08:36 -> 11-14 08:02 UTC
-now: markets 45, quoting 51, bids $627.54, feed ok, pool rate at current shares $629.78/day
-rewards (estimate by the book): today $247.519, total $1961.783; by Polymarket's competitiveness: total $2508.21; earned alone in a zone: total $1360.924; stress (one more identical maker): total $1045.485
-hedges: 204 for 3679.2 shares, lost $117.2; inventory not hedged yet: $368.75
-positions: value $278.02 cost $368.76 -> open $-90.74; realised $-233.14; trading $-323.89 (today -31.27)
-TOTAL (rewards estimate + trading): $1637.9; CAUTIOUS (lower estimate, without the part earned alone, + trading): $276.97; fills total 387
+journal data/journal-rewards: 48.4 h of events, 11-12 08:36 -> 11-14 09:01 UTC
+now: markets 45, quoting 54, bids $621.5, feed ok, pool rate at current shares $836.81/day
+rewards (estimate by the book): today $282.163, total $1996.427; by Polymarket's competitiveness: total $2560.028; earned alone in a zone: total $1383.05; stress (one more identical maker): total $1064.111
+hedges: 207 for 3737.8 shares, lost $119.68; inventory not hedged yet: $377.55
+positions: value $278.08 cost $377.56 -> open $-99.48; realised $-235.62; trading $-335.1 (today -42.48)
+TOTAL (rewards estimate + trading): $1661.32; CAUTIOUS (lower estimate, without the part earned alone, + trading): $278.27; fills total 393
 
 top markets by estimated reward:
-  $  23.58  share 1.00  pool $69/d  empty will-morena-win-the-most-seats-in-the-2027-yucatan-congress-
+  $  26.47  share 1.00  pool $69/d  empty will-morena-win-the-most-seats-in-the-2027-yucatan-congress-
   $  15.11  share 0.00  pool $38/d  will-connor-closs-come-in-third-place-on-the-voice-season-30
   $  15.04  share 0.00  pool $60/d  empty will-who-s-dat-girl-ayra-starr-and-rema-win-best-global-musi
   $  10.69  share 0.00  pool $58/d  will-the-democrats-win-wisconsin-in-the-2028-presidential-el
-  $   8.50  share 1.00  pool $41/d  empty salesforce-q3-current-rpo-growth-cc-14-to-15
-  $   7.75  share 1.00  pool $38/d  empty will-openrouter-process-between-230t-and-240t-tokens-the-wee
-  $   7.05  share 1.00  pool $50/d  empty will-twice-release-a-song-in-2026
+  $  10.00  share 0.50  pool $43/d  salesforce-q3-current-rpo-growth-cc-14-to-15
+  $   9.34  share 1.00  pool $38/d  empty will-openrouter-process-between-230t-and-240t-tokens-the-wee
+  $   9.15  share 1.00  pool $50/d  empty will-twice-release-a-song-in-2026
+  $   8.19  share 1.00  pool $47/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
   $   6.54  share 0.00  pool $50/d  empty will-the-gospel-of-christmas-be-the-2-us-netflix-movie-this-
-  $   6.45  share 0.00  pool $47/d  empty will-reminders-of-him-be-the-2-us-netflix-movie-this-week
-  $   5.50  share 0.02  pool $39/d  will-salahdine-parnasse-fight-rafael-fiziev-next
-  $   4.46  share 0.01  pool $26/d  will-social-democratic-party-win-the-most-seats-in-the-2027-
-  $   4.43  share 0.00  pool $50/d  empty will-marved-play-for-kru-esports-in-2027
+  $   4.99  share 1.00  pool $38/d  empty will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65-on-n
+  $   4.64  share 1.00  pool $40/d  empty will-195-ships-transit-the-bab-el-mandeb-strait-week-of-nove
+  $   4.52  share 0.76  pool $50/d  will-disclosure-day-be-nominated-for-best-sound-at-the-99th-
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
   2026-11-13: book $1090.94, official $1428.76, alone $706.86 | hedges 103 ($49.44) | trading $-155.05, cautious net $+229.04 | samples 1432, avg markets scoring 31.8
-  2026-11-14: book $248.66, official $388.40, alone $163.83 | hedges 32 ($18.79) | trading: day not closed | samples 484, avg markets scoring 33.3
+  2026-11-14: book $282.16, official $438.58, alone $185.24 | hedges 35 ($21.27) | trading: day not closed | samples 545, avg markets scoring 33.4
 
-last selection: 45 markets of 90 priced, capital $834.96, est $1348.31/day, empty books 22
+last selection: 45 markets of 112 priced, capital $833.72, est $1479.16/day, empty books 22
 
-fills: 387 (material 379)
-  11-14 05:54 will-the-7-day-average-ship-traffic-through-the-suez-ca NO  20@0.270 last_trade=None (alone in the zone)
-  11-14 06:06 will-the-black-ball-be-nominated-for-best-sound-at-the- YES 20@0.550 last_trade=0.51
-  11-14 06:08 will-openais-valuation-be-between-1pt30t-and-1pt45t-at- YES 20@0.350 last_trade=0.37
-  11-14 06:08 will-openais-valuation-be-between-1pt30t-and-1pt45t-at- NO  20@0.720 last_trade=0.3
-  11-14 06:09 highest-temperature-in-chengdu-on-november-16-2026-14c  YES 20@0.187 last_trade=None
-  11-14 06:15 ted-cruz-of-tweets-november-10-november-17-2026-20-39   NO  20@0.880 last_trade=None
+fills: 393 (material 384)
   11-14 06:32 highest-temperature-in-amsterdam-on-november-16-2026-11 NO  20@0.790 last_trade=0.23
   11-14 06:32 highest-temperature-in-amsterdam-on-november-16-2026-11 YES 1.4337@0.190 last_trade=0.17000000000000004 (alone in the zone)
   11-14 06:33 highest-temperature-in-amsterdam-on-november-16-2026-11 YES 7@0.380 last_trade=0.30000000000000004
@@ -42,27 +36,30 @@ fills: 387 (material 379)
   11-14 07:16 will-the-5-year-treasury-yield-hit-5pt03-in-november    YES 20@0.620 last_trade=0.6
   11-14 07:20 highest-temperature-in-munich-on-november-16-2026-11c   NO  18.9189@0.634 last_trade=0.37
   11-14 08:00 highest-temperature-in-tokyo-on-november-16-2026-20c    NO  20@0.560 last_trade=0.447
+  11-14 08:25 highest-temperature-in-nyc-on-november-16-2026-52-53f   NO  20@0.580 last_trade=0.43000000000000005
+  11-14 08:28 highest-temperature-in-karachi-on-november-16-2026-33c  NO  0.38@0.470 last_trade=0.56
+  11-14 08:28 highest-temperature-in-karachi-on-november-16-2026-33c  YES 18.9712@0.510 last_trade=0.5
+  11-14 08:43 will-the-fed-hikehikehike-in-the-next-three-decisions-d YES 20@0.330 last_trade=None (alone in the zone)
+  11-14 08:51 white-house-of-tweets-november-13-november-20-2026-180- YES 9.63@0.207 last_trade=0.246
+  11-14 08:56 will-the-ornn-h100-index-be-at-least-3pt25-on-november- YES 20@0.500 last_trade=None
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    273 markets  rewards $  726.08  trading $ -193.59  net $ +532.49  fills 133  quoted  654.7 market-hours
-  mostly alone in the zone               130 markets  rewards $  630.04  trading $  -87.05  net $ +542.99  fills  50  quoted  385.1 market-hours
-  with other makers in the zone          143 markets  rewards $   96.04  trading $ -106.54  net $  -10.50  fills  83  quoted  269.5 market-hours
-  never filled                           165 markets  rewards $  463.98  trading $  -28.84  net $ +435.14  fills   0  quoted  297.3 market-hours
-  filled                                 108 markets  rewards $  262.10  trading $ -164.75  net $  +97.35  fills 133  quoted  357.4 market-hours
+  all                                    283 markets  rewards $  743.55  trading $ -202.51  net $ +541.04  fills 135  quoted  667.5 market-hours
+  mostly alone in the zone               129 markets  rewards $  639.55  trading $  -89.00  net $ +550.55  fills  50  quoted  373.4 market-hours
+  with other makers in the zone          154 markets  rewards $  104.00  trading $ -113.51  net $   -9.51  fills  85  quoted  294.1 market-hours
+  never filled                           173 markets  rewards $  479.95  trading $  -28.55  net $ +451.39  fills   0  quoted  313.6 market-hours
+  filled                                 110 markets  rewards $  263.60  trading $ -173.95  net $  +89.65  fills 135  quoted  353.9 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -7.40  rewards $  0.12  fills 1  pool $50/d  Will Trump's approval rating be at least 37.0 on November 20
     $  -7.00  rewards $  6.54  fills 1  pool $50/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
-    $  -6.93  rewards $  0.19  fills 0  pool $50/d  Will "Ebenezer" score at least 55 on the Rotten Tomatoes Tom
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
     $  -6.74  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
+    $  -6.65  rewards $  0.26  fills 0  pool $50/d  Will "Ebenezer" score at least 55 on the Rotten Tomatoes Tom
     $  -6.50  rewards $  4.67  fills 2  pool $24/d  Will Anthropic’s valuation be between $1.75T and $2.00T at t
     $  -6.40  rewards $  0.00  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
 
-hedges: 204, 3679.19 shares, cost $117.22 = 3.19c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-14 05:42 will-google-be-the-second-best-ai-agent-lab-at-the-end- bought YES 20@0.467 held@0.583 cost/share +0.0600
-  11-14 05:49 will-google-be-the-second-best-ai-agent-lab-at-the-end- bought YES 20@0.499 held@0.523 cost/share +0.0320
-  11-14 05:51 will-pabel-munoz-win-the-next-quito-mayoral-elections   bought YES 10.6154@0.650 held@0.400 cost/share +0.0591
+hedges: 207, 3737.79 shares, cost $119.70 = 3.20c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-14 05:57 will-openais-frontier-output-token-price-be-at-or-below bought YES 9.4643@0.690 held@0.310 cost/share +0.0086
   11-14 06:01 will-the-7-day-average-ship-traffic-through-the-suez-ca bought YES 20@0.700 held@0.270 cost/share -0.0195
   11-14 06:08 will-openais-valuation-be-between-1pt30t-and-1pt45t-at- bought YES 20@0.300 held@0.700 cost/share +0.0084
@@ -70,5 +67,8 @@ hedges: 204, 3679.19 shares, cost $117.22 = 3.19c a share (the largest reward ea
   11-14 06:34 will-the-black-ball-be-nominated-for-best-sound-at-the- bought NO  20@0.490 held@0.550 cost/share +0.0525
   11-14 07:33 highest-temperature-in-munich-on-november-16-2026-11c   bought YES 18.9189@0.413 held@0.634 cost/share +0.0591
   11-14 07:39 will-psoe-win-the-second-most-seats-in-toledo-in-the-20 bought NO  20@0.540 held@0.510 cost/share +0.0599
+  11-14 08:25 highest-temperature-in-nyc-on-november-16-2026-52-53f   bought YES 20@0.440 held@0.580 cost/share +0.0323
+  11-14 08:27 will-salahdine-parnasse-fight-rafael-fiziev-next        bought YES 20@0.550 held@0.490 cost/share +0.0524
+  11-14 08:28 highest-temperature-in-karachi-on-november-16-2026-33c  bought NO  18.5912@0.520 held@0.510 cost/share +0.0425
 
 settlements: 0, realised $0.00
