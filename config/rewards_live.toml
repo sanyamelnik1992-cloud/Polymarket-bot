@@ -1,0 +1,46 @@
+# LIVE TEST of the liquidity-rewards rule: REAL MONEY, deliberately tiny (unit pmbot-rewards-live, reports/68 section 14).
+# Owner's word 14 Nov: "давай все делай под реальные деньги, будем тестировать".
+# One market, the paper bot's quotes (the market's minimum size on both outcomes, about $20 resting), for 3 hours.
+# It does not try to earn: it reads from the exchange what paper cannot know (is a lone maker credited the pool, does
+# our share match the formula, is a pool paid by the minute or by the day). No hedge, no merge. The first fill ends the
+# test and the shares stay in the wallet. NOT enabled at boot: the owner starts it (Telegram: /restart pmbot-rewards-live).
+journal_dir = "data/journal-rewards-live"
+
+[rewards]
+mode = "live"
+state_file = ""               # nothing is carried from one test to the next: the wallet itself is the record
+# selection and quoting: the paper bot's numbers (config/rewards.toml), so the test measures the same rule
+min_rate = 5
+min_expected_reward = 2.0
+max_volume_24h = 500
+min_days_left = 2
+price_lo = 0.10
+price_hi = 0.90
+max_candidates = 400
+max_competitiveness = 1.0
+dist_cents = 2.0
+alone_frac = 0.85
+size_mult = 1.0
+requote_min_s = 30
+requote_ticks = 1
+min_order_age_s = 30
+min_fill_shares = 1
+feed_stale_s = 45
+max_ref_disagree = 0.03
+daily_loss_limit = 12         # a mark-to-market loss of the day worse than this also ends the test
+
+[live]
+kind = "alone"                # "alone": a pool nobody else scores in (the main question); "shared": next to other makers
+minutes = 180                 # 3 hours: by time that is 1/8 of a pool, above the $1 payout minimum for a pool of $20+ a day
+max_open_usd = 20             # both resting bids together
+max_shares = 20               # one order = the usual rewards minimum size
+price_lo = 0.30               # the market's price: a filled bid is then at most 20 shares at ~0.66 = $13 in the wallet
+price_hi = 0.70
+min_rate = 20
+reserve_usd = 40              # collateral that must stay free on top: the lock bots trade from the same wallet
+order_ttl_s = 1200            # every order expires by itself after 20 min; a fresh one replaces it 5 min earlier
+refresh_before_s = 300
+heartbeat_s = 4               # the exchange cancels our orders ~10 s after the last heartbeat (dead-man switch)
+max_orders = 300
+poll_s = 60
+stop_on_fill = true

@@ -3,7 +3,8 @@
   python scripts/wallet_balance.py [OUT]      OUT = data/state/wallet.json
 
 Runs from pmbot-wallet.timer with the secrets env (/etc/pmbot/pmbot.env), so the report never needs them.
-Writes only numbers: {"t", "usd" (collateral), "positions_value" (open positions at market)} or {"t", "error": <type>}.
+Writes only numbers: {"t", "usd" (collateral), "positions_value" (open positions at market), "rewards" (the exchange's
+own liquidity-reward numbers per public market id)} or {"t", "error": <type>}.
 """
 import asyncio
 import json
@@ -29,6 +30,26 @@ async def fetch():
         out["positions_value"] = round(sum(float(r.get("currentValue") or 0) for r in rows), 4)
     except Exception:  # noqa: BLE001 - the cash balance alone is still useful
         pass
+    try:
+        out["rewards"] = await rewards(c)
+    except Exception as e:  # noqa: BLE001 - never at the cost of the balance
+        out["rewards_error"] = type(e).__name__
+    return out
+
+
+async def rewards(c, days=3, now=None):
+    """What the exchange itself says about liquidity rewards of this account (the live rewards test reads it,
+    reports/68): our share per market right now and the $ credited per market for the last days. Market ids are public
+    condition ids; nothing here identifies the wallet."""
+    now = now or time.time()
+    pct = await c.get_reward_percentages()
+    out = {"pct": {str(k): round(float(v), 4) for k, v in list(pct.items())[:200] if v}, "earn": {}}
+    for back in range(days):
+        day = time.strftime("%Y-%m-%d", time.gmtime(now - back * 86400))
+        m = {}
+        async for e in c.list_user_earnings_for_day(date=day).iter_items():
+            m[str(e.condition_id)] = round(m.get(str(e.condition_id), 0.0) + float(e.earnings), 6)
+        out["earn"][day] = m
     return out
 
 

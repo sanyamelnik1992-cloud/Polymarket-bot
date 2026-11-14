@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-maker3", "pmbot-lock-99", "pmbot-lock-99-live", "pmbot-lock-tier-pb", "pmbot-lock-tier-late", "pmbot-lock-live", "pmbot-lock-15-live", "pmbot-hourly"]
 REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/68), its own journal format
-ALL_UNITS = BOT_UNITS + REWARD_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
+REWARD_LIVE_UNITS = ["pmbot-rewards-live"]  # the live test of the rewards rule: REAL MONEY, one market (pmbot/rewards/live.py)
+ALL_UNITS = BOT_UNITS + REWARD_UNITS + REWARD_LIVE_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
 
@@ -109,7 +110,8 @@ def run_dirs(journal_dir, max_age_s=None):
 
 
 _WANTED = ('"type":"settle"', '"type":"fill"', '"type":"kill"', '"type":"start"', '"type":"status"',
-           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"', '"type":"rday"')
+           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"', '"type":"rday"',
+           '"type":"rlive')            # rlive, rlive_market, rlive_fill, rlive_done, ...: the live rewards test
 
 
 def read_events(run_dir, since_ts=0.0):
@@ -280,6 +282,82 @@ def rewards_summary(unit="pmbot-rewards"):
             days[e["day"]] = e
     return {"unit": unit, "state": state, "since": since, "mode": mode or "paper", "status": ev[-1] if ev else None,
             "days": [days[d] for d in sorted(days)]}
+
+
+def rewards_live_summary(unit="pmbot-rewards-live"):
+    """The latest live test of the rewards rule (REAL MONEY): its market, the exchange's own numbers next to the paper
+    estimate, how it ended, and what the exchange credited for that market (wallet file, pmbot-wallet.timer). None when
+    it never ran."""
+    journal, _, _ = bot_paths(unit)
+    state, since = unit_state(unit)
+    if not journal:
+        return None
+    evs = [e for e in events_since(journal, time.time() - 8 * 86400)
+           if e["type"].startswith("rlive") or e["type"] in ("start", "kill")]
+    heads = [i for i, e in enumerate(evs) if e["type"] == "start" or (e["type"] == "kill" and "live gate" in str(e.get("reason")))]
+    if not heads:
+        return None
+    run = evs[heads[-1]:]
+
+    def last(kind):
+        return next((e for e in reversed(run) if e["type"] == kind), None)
+    market = last("rlive_market")
+    out = {"unit": unit, "state": state, "since": since, "tests": sum(evs[i]["type"] == "start" for i in heads),
+           "refused": run[0].get("reason") if run[0]["type"] == "kill" else None, "start": run[0], "market": market,
+           "done": last("rlive_done"), "no_market": last("rlive_no_market"), "check": last("rlive_check"),
+           "samples": [e for e in run if e["type"] == "rlive"], "fills": [e for e in run if e["type"] == "rlive_fill"],
+           "earn": {}, "earn_days": [], "pct_now": None}
+    try:
+        rw = json.load(open(os.path.join(REPO, WALLET_FILE))).get("rewards") or {}
+    except (OSError, ValueError):
+        rw = {}
+    cid = (market or {}).get("cid")
+    out["earn_days"] = sorted(rw.get("earn") or {})
+    if cid:
+        out["earn"] = {d: m[cid] for d, m in (rw.get("earn") or {}).items() if cid in m}
+        out["pct_now"] = (rw.get("pct") or {}).get(cid)
+    return out
+
+
+def format_rewards_live():
+    """Plain-text block of the live rewards test for the server report; empty string when it never ran."""
+    out = []
+    for unit in REWARD_LIVE_UNITS:
+        r = rewards_live_summary(unit)
+        if not r:
+            continue
+        out.append(f"{unit} [LIVE] {STATE_RU.get(r['state'], r['state'])} {fmt_age(r['since'])}; тестов за 8 дней: {r['tests']}")
+        if r["refused"]:
+            out.append(f"  запуск отклонён: {r['refused']}")
+            continue
+        m, d = r["market"], r["done"]
+        if not m:
+            out.append("  рынок не выбран" + (f" (подходящих нет: вид {r['no_market'].get('kind')})" if r["no_market"] else " (ещё выбирает)"))
+            continue
+        out.append(f"  рынок: {m.get('question')} | пул {m.get('rate')}$/день, конкуренция {m.get('comp')}, "
+                   f"{'мы одни в зоне' if m.get('empty') else 'в зоне есть другие'}, вид теста {m.get('kind')}")
+        sm = r["samples"]
+        pcts = [x["exch_pct"] for x in sm if "exch_pct" in x and len(x.get("bids") or {}) == 2]
+        if sm:
+            x = sm[-1]
+            out.append(f"  замеров {len(sm)}; последний: доля по бирже {x.get('exch_pct', 'нет ответа')}%, по расчёту "
+                       f"{100 * x.get('paper_share', 0):.1f}%, заявки считаются биржей: {x.get('scoring', 'нет ответа')}, "
+                       f"заявки {x.get('bids')}")
+        if pcts:
+            out.append(f"  доля по бирже за тест: средняя {sum(pcts) / len(pcts):.1f}%, мин {min(pcts):.1f}%, макс {max(pcts):.1f}%")
+        for fl in r["fills"]:
+            out.append(f"  ИСПОЛНЕНИЕ: {'Да' if fl.get('side') == 'Y' else 'Нет'} {fl.get('size')} по {fl.get('price')}")
+        if d:
+            out.append(f"  итог: конец по причине {d.get('why')}; заявки стояли {d.get('quoted_min')} мин; расчёт наград "
+                       f"{d.get('paper_reward')}$; по времени и доле биржи {d.get('by_time_exch')}$; весь пул {d.get('whole_pool')}$; "
+                       f"исполнений {d.get('fills')}; позиция {d.get('position')}; заявок осталось открытыми {d.get('orders_left_open')}")
+        if r["earn"]:
+            out.append("  НАЧИСЛЕНО БИРЖЕЙ по этому рынку: " + ", ".join(f"{k}: {v:.4f}$" for k, v in sorted(r["earn"].items())))
+        elif r["earn_days"]:
+            out.append(f"  начислений биржи по этому рынку пока нет (дни в ответе биржи: {', '.join(r['earn_days'])})")
+        else:
+            out.append("  начисления биржи ещё не прочитаны (pmbot-wallet.timer)")
+    return "\n".join(out)
 
 
 def format_rewards():

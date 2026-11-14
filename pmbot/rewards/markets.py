@@ -293,7 +293,7 @@ def price_market(rm, raw_book, rc):
     rm.size, rm.capital, rm.est_share = size, cap, share
     rm.est_reward = rm.rate * share
     rm.empty = q_comp <= 1e-9
-    rm.extra = {"mid": mid, "q_comp": round(q_comp, 2), "q_ours": round(q_ours, 2),
+    rm.extra = {"mid": mid, "ref": ref, "q_comp": round(q_comp, 2), "q_ours": round(q_ours, 2),
                 "spread": (asks[0][0] - bids[0][0]) if bids and asks else None}
     return True
 

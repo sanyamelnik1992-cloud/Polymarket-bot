@@ -677,6 +677,8 @@ class Farmer:
                 token = ms.rm.yes if side == "Y" else ms.rm.no
                 ahead = dict(self.levels(token)[0]).get(price, 0.0)       # size already resting at our price
                 oid = await self.broker.place(token, ms.rm.slug, side, price, size, now_ms, queue_ahead=ahead)
+                if oid is None:
+                    continue                           # a live order was refused: nothing rests, the next pass retries
                 ms.orders[side] = {"oid": oid, "price": price, "size": size, "t": now}
                 self.journal.log("rquote", key=ms.rm.slug, side=side, price=price, size=size, crossing=crossing,
                                  alone=ms.alone, ref=round(ms.ref, 4) if ms.ref is not None else None,

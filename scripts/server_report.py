@@ -32,6 +32,7 @@ def main(out):
           "## PnL by day", "```", ops.format_pnl(days=30), "```", "",
           "## Quality, last 24 h (markout, pairs, latency, wallet)", "```", ops.format_quality(24), "```", "",
           "## Liquidity rewards (paper, estimates)", "```", ops.format_rewards() or "не запускался", "```", "",
+          "## Liquidity rewards LIVE TEST (real money)", "```", ops.format_rewards_live() or "не запускался", "```", "",
           "## Last 30 settled windows", "```", ops.format_trades(30), "```", "",
           "## Server", "```", ops.format_server(), "```"]
     text = "\n".join(md) + "\n"
@@ -74,7 +75,7 @@ def main(out):
                            capture_output=True, text=True, timeout=300, cwd=ops.REPO)
         open(os.path.join(out, "runs", f"{unit}.txt"), "w").write(r.stdout[-20000:] + r.stderr[-2000:])
 
-    for unit in ops.REWARD_UNITS:                         # the rewards farmer has its own journal format and report
+    for unit in ops.REWARD_UNITS + ops.REWARD_LIVE_UNITS:  # the rewards farmer has its own journal format and report
         journal, _, _ = ops.bot_paths(unit)
         if not journal or not os.path.isdir(os.path.join(ops.REPO, journal)):
             continue
