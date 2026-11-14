@@ -1,36 +1,32 @@
-journal data/journal-rewards: 44.4 h of events, 11-12 08:36 -> 11-14 05:02 UTC
-now: markets 45, quoting 50, bids $607.82, feed ok, pool rate at current shares $870.67/day
-rewards (estimate by the book): today $162.466, total $1876.73; by Polymarket's competitiveness: total $2371.023; earned alone in a zone: total $1302.445; stress (one more identical maker): total $999.372
-hedges: 193 for 3480.2 shares, lost $109.33; inventory not hedged yet: $390.03
-positions: value $280.98 cost $390.04 -> open $-109.07; realised $-217.58; trading $-326.65 (today -34.03)
-TOTAL (rewards estimate + trading): $1550.08; CAUTIOUS (lower estimate, without the part earned alone, + trading): $247.64; fills total 369
+journal data/journal-rewards: 45.4 h of events, 11-12 08:36 -> 11-14 06:02 UTC
+now: markets 45, quoting 49, bids $618.62, feed ok, pool rate at current shares $724.91/day
+rewards (estimate by the book): today $192.192, total $1906.456; by Polymarket's competitiveness: total $2416.269; earned alone in a zone: total $1322.302; stress (one more identical maker): total $1015.602
+hedges: 198 for 3560.3 shares, lost $112.97; inventory not hedged yet: $380.84
+positions: value $279.01 cost $380.85 -> open $-101.84; realised $-221.23; trading $-323.07 (today -30.45)
+TOTAL (rewards estimate + trading): $1583.39; CAUTIOUS (lower estimate, without the part earned alone, + trading): $261.09; fills total 373
 
 top markets by estimated reward:
-  $  46.88  share 1.00  pool $69/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $  38.39  share 1.00  pool $49/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $  21.12  share 0.00  pool $50/d  will-sabrina-carpenter-perform-at-coachella-2027
+  $  17.86  share 1.00  pool $69/d  empty will-morena-win-the-most-seats-in-the-2027-yucatan-congress-
   $  15.11  share 0.00  pool $38/d  will-connor-closs-come-in-third-place-on-the-voice-season-30
   $  15.04  share 0.00  pool $60/d  empty will-who-s-dat-girl-ayra-starr-and-rema-win-best-global-musi
-  $  14.95  share 1.00  pool $69/d  empty will-morena-win-the-most-seats-in-the-2027-yucatan-congress-
   $  10.69  share 0.00  pool $58/d  will-the-democrats-win-wisconsin-in-the-2028-presidential-el
+  $   7.86  share 0.00  pool $40/d  empty salesforce-q3-current-rpo-growth-cc-14-to-15
   $   6.54  share 0.00  pool $50/d  empty will-the-gospel-of-christmas-be-the-2-us-netflix-movie-this-
-  $   6.46  share 1.00  pool $40/d  empty salesforce-q3-current-rpo-growth-cc-14-to-15
-  $   5.95  share 1.00  pool $40/d  empty will-the-us-rank-24th-25th-in-the-world-happiness-report-202
-  $   5.27  share 0.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   5.35  share 0.07  pool $39/d  will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   4.92  share 0.37  pool $50/d  will-bts-perform-at-coachella-2027
+  $   4.59  share 1.00  pool $38/d  empty will-openrouter-process-between-230t-and-240t-tokens-the-wee
   $   4.43  share 0.00  pool $50/d  empty will-marved-play-for-kru-esports-in-2027
+  $   4.26  share 0.24  pool $26/d  will-social-democratic-party-win-the-most-seats-in-the-2027-
+  $   4.00  share 0.00  pool $26/d  will-mauro-vieira-be-the-next-brazilian-minister-of-foreign-
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
   2026-11-13: book $1090.94, official $1428.76, alone $706.86 | hedges 103 ($49.44) | trading $-155.05, cautious net $+229.04 | samples 1432, avg markets scoring 31.8
-  2026-11-14: book $163.75, official $251.29, alone $105.41 | hedges 21 ($10.92) | trading: day not closed | samples 302, avg markets scoring 33.4
+  2026-11-14: book $193.14, official $296.39, alone $125.14 | hedges 27 ($14.18) | trading: day not closed | samples 362, avg markets scoring 33.3
 
-last selection: 45 markets of 111 priced, capital $831.28, est $1692.22/day, empty books 22
+last selection: 45 markets of 87 priced, capital $835.9, est $1364.09/day, empty books 22
 
-fills: 369 (material 361)
-  11-14 03:57 will-blackpink-perform-at-coachella-2027                YES 20@0.510 last_trade=0.5
-  11-14 03:58 france-first-round-vote-share-jean-luc-melenchon-21-24  NO  20@0.720 last_trade=None
-  11-14 04:06 will-the-2-year-treasury-yield-hit-4pt92-in-november    NO  20@0.664 last_trade=None (alone in the zone)
-  11-14 04:09 kroger-q3-identical-sales-without-fuel-growth-0pt5-to-1 NO  20@0.610 last_trade=None
+fills: 373 (material 365)
   11-14 04:09 will-sabrina-carpenter-perform-at-coachella-2027        NO  5@0.810 last_trade=0.43 (alone in the zone)
   11-14 04:09 will-sabrina-carpenter-perform-at-coachella-2027        NO  5@0.810 last_trade=0.43 (alone in the zone)
   11-14 04:13 will-israel-be-top-5-in-the-world-happiness-report-2027 NO  20@0.880 last_trade=0.36
@@ -42,13 +38,17 @@ fills: 369 (material 361)
   11-14 04:48 will-google-be-the-second-best-ai-agent-lab-at-the-end- NO  20@0.583 last_trade=0.424
   11-14 04:50 will-the-invite-be-nominated-for-best-film-editing-at-t YES 5@0.330 last_trade=None
   11-14 04:59 will-elsinore-be-nominated-for-best-film-editing-at-the YES 17.6@0.220 last_trade=0.19
+  11-14 05:11 will-the-us-rank-20th-21st-in-the-world-happiness-repor YES 20@0.160 last_trade=0.08999999999999997 (alone in the zone)
+  11-14 05:49 will-google-be-the-second-best-ai-agent-lab-at-the-end- NO  20@0.523 last_trade=0.49
+  11-14 05:51 will-pabel-munoz-win-the-next-quito-mayoral-elections   NO  10.6154@0.400 last_trade=0.64
+  11-14 05:54 will-the-7-day-average-ship-traffic-through-the-suez-ca NO  20@0.270 last_trade=None (alone in the zone)
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    280 markets  rewards $  803.68  trading $ -197.80  net $ +605.88  fills 136  quoted  644.6 market-hours
-  mostly alone in the zone               132 markets  rewards $  708.81  trading $  -94.48  net $ +614.33  fills  56  quoted  399.7 market-hours
-  with other makers in the zone          148 markets  rewards $   94.86  trading $ -103.32  net $   -8.45  fills  80  quoted  244.9 market-hours
-  never filled                           169 markets  rewards $  524.78  trading $  -22.02  net $ +502.76  fills   0  quoted  305.3 market-hours
-  filled                                 111 markets  rewards $  278.90  trading $ -175.78  net $ +103.12  fills 136  quoted  339.4 market-hours
+  all                                    274 markets  rewards $  705.87  trading $ -190.08  net $ +515.78  fills 131  quoted  621.3 market-hours
+  mostly alone in the zone               131 markets  rewards $  604.46  trading $  -86.69  net $ +517.78  fills  50  quoted  356.1 market-hours
+  with other makers in the zone          143 markets  rewards $  101.40  trading $ -103.40  net $   -1.99  fills  81  quoted  265.1 market-hours
+  never filled                           165 markets  rewards $  446.96  trading $  -21.80  net $ +425.16  fills   0  quoted  275.7 market-hours
+  filled                                 109 markets  rewards $  258.90  trading $ -168.28  net $  +90.62  fills 131  quoted  345.6 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -7.40  rewards $  0.12  fills 1  pool $50/d  Will Trump's approval rating be at least 37.0 on November 20
@@ -59,16 +59,16 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
     $  -6.40  rewards $  0.00  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
 
-hedges: 193, 3480.2 shares, cost $109.35 = 3.14c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-14 02:37 will-denmark-be-2nd-in-the-world-happiness-report-2027  bought YES 15.3636@0.550 held@0.450 cost/share +0.0124
-  11-14 02:38 will-mc-win-the-most-seats-in-the-2027-jalisco-congress bought YES 20@0.550 held@0.500 cost/share +0.0599
-  11-14 03:12 will-too-too-bad-buju-banton-win-best-reggae-album-at-t bought NO  10@0.870 held@0.140 cost/share +0.0157
-  11-14 03:32 will-us-gdp-growth-in-q4-2026-be-between-3pt5pct-and-4p bought NO  20@0.897 held@0.158 cost/share +0.0596
-  11-14 03:35 will-marco-rubio-win-the-iowa-republican-presidential-c bought NO  9@0.862 held@0.170 cost/share +0.0371
-  11-14 03:38 will-costa-rica-be-top-5-in-the-world-happiness-report- bought YES 12.19@0.930 held@0.120 cost/share +0.0533
+hedges: 199, 3580.28 shares, cost $112.60 = 3.15c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-14 03:47 will-denmark-be-2nd-in-the-world-happiness-report-2027  bought YES 20@0.610 held@0.430 cost/share +0.0519
   11-14 04:36 will-chris-minns-be-the-next-premier-of-new-south-wales bought YES 20@0.672 held@0.330 cost/share +0.0108
   11-14 04:46 kroger-q3-identical-sales-without-fuel-growth-0pt5-to-1 bought YES 20@0.440 held@0.610 cost/share +0.0599
   11-14 04:59 will-elsinore-be-nominated-for-best-film-editing-at-the bought NO  17.6@0.810 held@0.220 cost/share +0.0377
+  11-14 05:28 will-the-us-rank-20th-21st-in-the-world-happiness-repor bought NO  20@0.890 held@0.160 cost/share +0.0549
+  11-14 05:42 will-google-be-the-second-best-ai-agent-lab-at-the-end- bought YES 20@0.467 held@0.583 cost/share +0.0600
+  11-14 05:49 will-google-be-the-second-best-ai-agent-lab-at-the-end- bought YES 20@0.499 held@0.523 cost/share +0.0320
+  11-14 05:51 will-pabel-munoz-win-the-next-quito-mayoral-elections   bought YES 10.6154@0.650 held@0.400 cost/share +0.0591
+  11-14 05:57 will-openais-frontier-output-token-price-be-at-or-below bought YES 9.4643@0.690 held@0.310 cost/share +0.0086
+  11-14 06:01 will-the-7-day-average-ship-traffic-through-the-suez-ca bought YES 20@0.700 held@0.270 cost/share -0.0195
 
 settlements: 0, realised $0.00
