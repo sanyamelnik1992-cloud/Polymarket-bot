@@ -1,4 +1,4 @@
-"""LIVE test of the liquidity-rewards rule: REAL MONEY, deliberately tiny (reports/68, section 14).
+"""LIVE test of the liquidity-rewards rule: REAL MONEY, deliberately tiny (reports/68, section 12).
 
 One market, the paper bot's own quotes (minimum size on both outcomes), for a few hours. The point is not to earn but
 to read from the exchange what paper cannot know: is a lone maker credited the pool, does our share next to other
@@ -318,10 +318,43 @@ class RewardsLiveBroker:
         for oid in getattr(resp, "canceled", ()) or ():
             self.orders.pop(oid, None)
         nc = getattr(resp, "not_canceled", {}) or {}
-        for oid in nc:                                     # matched or gone already: a late fill is still counted
-            self.orders.pop(oid, None)
         self.log("order_cancelled", order_ids=list(getattr(resp, "canceled", ()) or ()),
                  not_canceled={k: str(v)[:80] for k, v in nc.items()})
+        for oid in nc:                                     # matched or gone already: ask the exchange what it filled
+            self.orders.pop(oid, None)
+            await self.account(oid)
+
+    async def account(self, oid):
+        """Compare one order of this run with the exchange's own record and count what matched without a stream event
+        (the stream can miss a trade while it reconnects; an uncounted fill would let the test quote again)."""
+        o = self.known.get(oid)
+        if o is None:
+            return 0.0
+        try:
+            x = await self.client.get_order(order_id=oid)
+        except Exception as e:  # noqa: BLE001
+            self.log("rlive_error", where="get_order", error=str(e)[:200])
+            return 0.0
+        matched = float(getattr(x, "size_matched", 0) or 0)
+        q = matched - (o.size - o.remaining)
+        if q <= 1e-9:
+            return 0.0
+        o.remaining -= q
+        if o.remaining <= 1e-9:
+            self.orders.pop(oid, None)
+        fill = {"order_id": oid, "token": o.token, "key": o.key, "side": o.side, "price": o.price, "size": q,
+                "ts": int(time.time() * 1000), "trade_id": None, "status": "RECONCILED"}
+        self.log("fill", **fill)
+        if self.on_fill:
+            self.on_fill(fill)
+        return q
+
+    async def reconcile(self):
+        """account() for every order we believe resting. Returns the shares found filled."""
+        tot = 0.0
+        for oid in list(self.orders):
+            tot += await self.account(oid)
+        return tot
 
     def gc(self, now_ms):
         """Forget orders whose own expiry passed (the exchange removed them)."""
@@ -363,7 +396,9 @@ class RewardsLiveBroker:
                 self.log("fill_failed", trade_id=pl.id, order_id=mo.order_id)
                 continue
             self._seen_fills.add(uid)
-            q, px = float(mo.matched_amount), float(mo.price)
+            q, px = min(float(mo.matched_amount), o.remaining), float(mo.price)
+            if q <= 1e-9:
+                continue                                   # already counted from the exchange's record (account())
             o.remaining -= q
             if o.remaining <= 1e-9:
                 self.orders.pop(mo.order_id, None)
@@ -502,7 +537,7 @@ class LiveFarmer(Farmer):
                 picks = await asyncio.to_thread(self._select, wide, None)
                 c = choose_market(picks, self.lc)
                 if c is None:
-                    self.journal.log("rlive_no_market", kind=self.lc.kind, looked_at=len(picks))
+                    self.journal.log("rlive_no_market", test_kind=self.lc.kind, looked_at=len(picks))
                     self.finish("no_market")
                     return
                 self.market = c
@@ -510,7 +545,7 @@ class LiveFarmer(Farmer):
                 self.journal.log("rlive_market", key=c.slug, question=c.question, cid=c.condition_id, rate=c.rate,
                                  comp=round(c.comp, 3), empty=c.empty, v=c.v, min_size=c.min_size, size=c.size,
                                  price=c.price, capital=round(c.capital, 2), est_reward_day=round(c.est_reward, 2),
-                                 kind=self.lc.kind, minutes=self.lc.minutes, vol=c.vol)
+                                 test_kind=self.lc.kind, minutes=self.lc.minutes, vol=c.vol)
             except Exception as e:  # noqa: BLE001
                 log.warning("selection failed: %s", e)
                 self.journal.log("rerror", where="select", error=str(e)[:300])
@@ -522,6 +557,9 @@ class LiveFarmer(Farmer):
     async def exchange_once(self):
         ms = self.markets.get(self.market.slug) if self.market else None
         if ms is None:
+            return None
+        await self.broker.reconcile()                      # a fill the stream missed ends the test here
+        if self._stop:
             return None
         oids = {o["oid"]: side for side, o in ms.orders.items()}
         st = await self.broker.reward_state(self.market.condition_id, list(oids))
@@ -575,7 +613,7 @@ class LiveFarmer(Farmer):
         return {"why": self.why_stop or "time", "key": self.market.slug if self.market else None,
                 "question": self.market.question if self.market else None,
                 "cid": self.market.condition_id if self.market else None, "rate": rate,
-                "kind": self.lc.kind, "quoted_min": round(q_min, 1), "samples": len(self.exch),
+                "test_kind": self.lc.kind, "quoted_min": round(q_min, 1), "samples": len(self.exch),
                 "exch_pct_mean": round(mean_pct, 2) if mean_pct is not None else None,
                 "exch_pct_last": pcts[-1] if pcts else None,
                 "paper_share_mean": round(sum(paper) / len(paper), 4) if paper else None,
@@ -593,7 +631,7 @@ class LiveFarmer(Farmer):
         duration_s = duration_s if duration_s is not None else self.lc.minutes * 60
         await self.broker.start()                          # raises LiveGateError: nothing was placed
         self.t_start = self.clock()
-        self.journal.log("start", mode="live", bot="rewards-live", kind=self.lc.kind, minutes=self.lc.minutes,
+        self.journal.log("start", mode="live", bot="rewards-live", test_kind=self.lc.kind, minutes=self.lc.minutes,
                          max_open_usd=self.lc.max_open_usd, max_shares=self.lc.max_shares,
                          balance=round(self.broker.balance_usd, 2))
         day = utc_day(self.t_start)
@@ -607,12 +645,16 @@ class LiveFarmer(Farmer):
         try:
             t0 = time.time()
             while not self._stop and time.time() - t0 < duration_s:
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.2)
+            if not self.why_stop:                          # the parent's quote loop also stops on the kill file
+                self.why_stop = ("time" if time.time() - t0 >= duration_s else
+                                 "kill_file" if self.rc.kill_file and os.path.exists(self.rc.kill_file) else "stopped")
+            if self.why_stop == "time":
+                try:
+                    await self.exchange_once()             # one last reading while the orders still rest
+                except Exception:  # noqa: BLE001
+                    pass
             self._stop = True
-            try:
-                await self.exchange_once()                 # one last reading while the orders still rest
-            except Exception:  # noqa: BLE001
-                pass
         finally:
             for ms in self.markets.values():
                 try:

@@ -41,6 +41,7 @@ def main(path):
     alone = defaultdict(float)
     samples = defaultdict(lambda: [0, 0])
     fills, settles, hedges, days, merges, gone = [], [], [], [], [], []
+    live = []                            # events of the live test (pmbot/rewards/live.py), real money
     per_market = {}                      # run start -> the last per-market table of that run
     starts = []
 
@@ -73,6 +74,8 @@ def main(path):
             gone.append(e)
         elif k == "rmerge":
             merges.append(e)
+        if k.startswith("rlive") or k in ("order_placed", "order_rejected", "order_cancelled", "fill", "kill", "balance"):
+            live.append(e)
         elif k == "rstatus":
             last_status = e
         elif k == "select":
@@ -81,6 +84,8 @@ def main(path):
         print("no events")
         return
     print(f"journal {path}: {(last_t - first_t) / 3600:.1f} h of events, {fmt(first_t)} -> {fmt(last_t)} UTC")
+    if any(e["type"].startswith("rlive") for e in live):
+        live_section(live)
     if last_status:
         s = last_status
         print(f"now: markets {s['markets']}, quoting {s['quoting']}, bids ${s['bids_usd']}, feed "
@@ -192,6 +197,45 @@ def main(path):
     for e in settles[-10:]:
         print(f"  {fmt(e['t'])} {e['key'][:55]:55s} yes {e['yes']:g} no {e['no']:g} cost {e['cost']:.2f} "
               f"payoff {e['payoff']:.2f} pnl {e['pnl']:+.2f}")
+
+
+def live_section(live):
+    """The live test (REAL MONEY): what the exchange itself reported next to the paper estimate, minute by minute."""
+    print("\nLIVE TEST (real money; exch = the exchange's own numbers, paper = our estimate):")
+    n_placed = sum(e["type"] == "order_placed" for e in live)
+    n_rej = sum(e["type"] == "order_rejected" for e in live)
+    print(f"  orders placed {n_placed}, rejected {n_rej}, fills {sum(e['type'] == 'fill' for e in live)}")
+    shown = 0
+    for e in live:
+        k = e["type"]
+        if k == "balance":
+            print(f"  {fmt(e['t'])} balance ${e.get('pusd')}")
+        elif k == "kill":
+            print(f"  {fmt(e['t'])} STOPPED: {e.get('reason')}")
+        elif k == "rlive_check":
+            print(f"  {fmt(e['t'])} read-only check: percentages {'ok' if e.get('pct_ok') else 'FAILED'}, markets with a share "
+                  f"{e.get('markets_with_pct')}, earnings yesterday {e.get('earnings_yesterday')}")
+        elif k == "rlive_market":
+            print(f"  {fmt(e['t'])} market: {e.get('question')} | pool ${e.get('rate')}/d comp {e.get('comp')} "
+                  f"{'alone in the zone' if e.get('empty') else 'others in the zone'} | kind {e.get('test_kind')}, "
+                  f"{e.get('size')} shares a side, ${e.get('capital')} | cid {e.get('cid')}")
+        elif k == "rlive_no_market":
+            print(f"  {fmt(e['t'])} no market fits (kind {e.get('test_kind')}, looked at {e.get('looked_at')})")
+        elif k in ("rlive_refused", "rlive_error", "order_rejected"):
+            print(f"  {fmt(e['t'])} {k}: {({x: e[x] for x in e if x not in ('t', 'type', 'mode', 'token')})}")
+        elif k in ("fill", "rlive_fill"):
+            print(f"  {fmt(e['t'])} {k.upper()}: {e.get('side')} {e.get('size')} @ {e.get('price')}")
+        elif k == "rlive":
+            shown += 1
+            if shown <= 5 or shown % 10 == 0:              # the first minutes, then every tenth sample
+                print(f"  {fmt(e['t'])} exch share {e.get('exch_pct', 'n/a')}%  paper share {100 * e.get('paper_share', 0):.1f}%  "
+                      f"scoring {e.get('scoring', 'n/a')}  bids {e.get('bids')}  ref {e.get('ref')}  paper ${e.get('paper_reward')}")
+        elif k == "rlive_done":
+            print(f"  {fmt(e['t'])} DONE ({e.get('why')}): quoted {e.get('quoted_min')} min, samples {e.get('samples')}; exch share "
+                  f"mean {e.get('exch_pct_mean')}% last {e.get('exch_pct_last')}%; paper share mean {e.get('paper_share_mean')}; "
+                  f"scoring in {e.get('scoring_all')} of samples; paper reward ${e.get('paper_reward')}; by time at the exchange "
+                  f"share ${e.get('by_time_exch')}; whole pool ${e.get('whole_pool')}; fills {e.get('fills')}; position "
+                  f"{e.get('position')}; orders placed {e.get('orders_placed')}; left open {e.get('orders_left_open')}")
 
 
 if __name__ == "__main__":

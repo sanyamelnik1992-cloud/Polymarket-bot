@@ -332,10 +332,10 @@ def format_rewards_live():
             continue
         m, d = r["market"], r["done"]
         if not m:
-            out.append("  рынок не выбран" + (f" (подходящих нет: вид {r['no_market'].get('kind')})" if r["no_market"] else " (ещё выбирает)"))
+            out.append("  рынок не выбран" + (f" (подходящих нет: вид {r['no_market'].get('test_kind')})" if r["no_market"] else " (ещё выбирает)"))
             continue
         out.append(f"  рынок: {m.get('question')} | пул {m.get('rate')}$/день, конкуренция {m.get('comp')}, "
-                   f"{'мы одни в зоне' if m.get('empty') else 'в зоне есть другие'}, вид теста {m.get('kind')}")
+                   f"{'мы одни в зоне' if m.get('empty') else 'в зоне есть другие'}, вид теста {m.get('test_kind')}")
         sm = r["samples"]
         pcts = [x["exch_pct"] for x in sm if "exch_pct" in x and len(x.get("bids") or {}) == 2]
         if sm:

@@ -1,4 +1,4 @@
-# LIVE TEST of the liquidity-rewards rule: REAL MONEY, deliberately tiny (unit pmbot-rewards-live, reports/68 section 14).
+# LIVE TEST of the liquidity-rewards rule: REAL MONEY, deliberately tiny (unit pmbot-rewards-live, reports/68 section 12).
 # Owner's word 14 Nov: "давай все делай под реальные деньги, будем тестировать".
 # One market, the paper bot's quotes (the market's minimum size on both outcomes, about $20 resting), for 3 hours.
 # It does not try to earn: it reads from the exchange what paper cannot know (is a lone maker credited the pool, does
@@ -13,7 +13,7 @@ state_file = ""               # nothing is carried from one test to the next: th
 min_rate = 5
 min_expected_reward = 2.0
 max_volume_24h = 500
-min_days_left = 2
+min_days_left = 7             # the paper bot takes markets from 2 days; the test wants a calm one (no daily news market)
 price_lo = 0.10
 price_hi = 0.90
 max_candidates = 400

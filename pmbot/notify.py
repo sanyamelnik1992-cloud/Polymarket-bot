@@ -105,7 +105,7 @@ def window_name(key, length_s=300):
 def unit_for_config(config_path):
     """Which deploy/<unit>.service runs this config (to label a trading bot's own alerts)."""
     want = os.path.normpath(str(config_path or ""))
-    for unit in ops.BOT_UNITS + ops.REWARD_UNITS:
+    for unit in ops.BOT_UNITS + ops.REWARD_UNITS + ops.REWARD_LIVE_UNITS:
         cfg = ops.unit_config(unit)
         if cfg and os.path.normpath(cfg) == want:
             return unit
@@ -204,7 +204,7 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
                 f"Ставлю две заявки по {rec.get('size', 0):.0f} акций, всего ≈{rec.get('capital', 0):.0f}$, на {rec.get('minutes', 0):.0f} мин.\n"
                 f"При первом исполнении тест остановится. Цифры: /rlive")
     if kind == "rlive_no_market":
-        return (f"🧪 {who}: подходящего рынка сейчас нет (вид «{esc(rec.get('kind'))}», просмотрено {rec.get('looked_at', 0)}). "
+        return (f"🧪 {who}: подходящего рынка сейчас нет (вид «{esc(rec.get('test_kind'))}», просмотрено {rec.get('looked_at', 0)}). "
                 f"Заявок не было. Запустить ещё раз позже: /restart pmbot-rewards-live")
     if kind == "rlive_fill":
         return (f"🧪 {who}: <b>заявку исполнили</b> 💰\n{esc(rec.get('question'))}\n"
@@ -393,7 +393,7 @@ def _rewards_block(unit):
 
 WHY_RU = {"time": "время вышло", "fill": "заявку исполнили", "signal": "остановлен вручную", "kill_file": "STOP",
           "no_market": "не нашлось рынка", "broker_fatal": "биржа отказала в доступе",
-          "order_outcome_unknown": "биржа не ответила на заявку", "day_stop": "дневной стоп"}
+          "order_outcome_unknown": "биржа не ответила на заявку", "day_stop": "дневной стоп", "stopped": "остановлен"}
 
 
 def _usd(x):
