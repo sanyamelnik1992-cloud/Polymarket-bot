@@ -809,7 +809,8 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
     a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
     for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip",   # the insurance (reports/64) is 5m-only: measured on 5m books
-              "big_shares", "big_shares_p", "shares"):              # 10 shares (reports/67), 2 below p 0.97 (reports/70): 15m keeps 5
+              "big_shares", "big_shares_p", "shares",               # 10 shares (reports/67), 2 below p 0.97 (reports/70): 15m keeps 5
+              "late_tier_rel", "late_tier_p", "big_calm_s"):        # reports/71 (weak tier from second 260, calm 10 shares): 5m-only
         a.pop(k), b.pop(k)
     assert a == b, "L3-15 must keep the L3 rule"
     assert l15.risk.max_open_usd == 5.0 and l15.lock.big_shares == 0 and l3.risk.max_open_entries == 1   # one entry at a time
@@ -1139,11 +1140,17 @@ def test_shock_threshold_grows_with_volatility(tables):
 def test_bottom_tier_only_late_in_the_window(tables):
     """reports/60: with 40-57 closing prints still unknown the bottom tier (p 0.90-0.95 at an ask <= 0.91) lost 7 % on the tapes of
     1-9 Nov and 4 of the 5 live losses of 9-10 Nov; from second 260 on it lost 2 of 75. lock.late_tier_rel keeps that tier for
-    the late seconds only. It is OFF in every config: live and its twins have no bottom tier at all since reports/59."""
+    the late seconds only. Since reports/71 (14 Nov) live and its twins use it one tier higher: p 0.95-0.97 only from second 260
+    (late_tier_p 0.97; that tier lost 7 of 47 windows before second 260 on 10-13 Nov and 0 of 32 after)."""
     import dataclasses
     import glob
     from pmbot.bot.lock import tier_limit
-    off = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"), overrides=FOUR_TIERS).lock
+    live_rule = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml")).lock
+    assert (live_rule.late_tier_rel, live_rule.late_tier_p) == (260.0, 0.97)
+    assert tier_limit(live_rule, 0.96, 244.0) is None and tier_limit(live_rule, 0.96, 260.0) == 0.93      # the weak tier waits
+    assert tier_limit(live_rule, 0.975, 244.0) == 0.95 and tier_limit(live_rule, 0.995, 240.0) == 0.98    # the upper tiers do not
+    off = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                           overrides={"lock": {**FOUR_TIERS["lock"], "late_tier_rel": 0.0, "late_tier_p": 0.95}}).lock
     assert off.late_tier_rel == 0.0 and off.late_tier_p == 0.95
     c = dataclasses.replace(off, late_tier_rel=260.0)
     assert tier_limit(off, 0.92, 244.0) == 0.91                  # off: the second does not matter
@@ -1168,14 +1175,16 @@ def test_bottom_tier_only_late_in_the_window(tables):
     assert sig and sig["limit"] >= 0.93                       # the upper tiers enter early as before
     with pytest.raises(ValueError):
         load_lock_config(overrides={"lock": {"late_tier_rel": 200.0}})
-    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):      # on in one paper experiment only: live is an owner's decision
-        assert load_lock_config(path).lock.late_tier_rel == (260.0 if path.endswith("lock_tier_late.toml") else 0.0), path
+    on = ("lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml")      # live 5m, its twins, the experiment
+    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
+        lk = load_lock_config(path).lock
+        assert (lk.late_tier_rel, lk.late_tier_p) == ((260.0, 0.97) if os.path.basename(path) in on else (0.0, 0.95)), path
     # the experiment = the paper twin of live + the fourth tier from second 260; paper, and it does not stop for the day
     import dataclasses as dc
     twin = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"))
     exp = load_lock_config(os.path.join(ROOT, "config", "lock_tier_late.toml"))
     assert exp.execution.mode == "paper" and exp.risk.resume_next_day
-    assert dc.replace(exp.lock, theta=twin.lock.theta, tiers=twin.lock.tiers, late_tier_rel=0.0) == twin.lock
+    assert dc.replace(exp.lock, theta=twin.lock.theta, tiers=twin.lock.tiers) == twin.lock
     assert exp.lock.theta == 0.90 and sorted(map(tuple, exp.lock.tiers)) == sorted(map(tuple, FOUR_TIERS["lock"]["tiers"]))
     assert dc.replace(exp.risk, daily_loss_limit=twin.risk.daily_loss_limit, state_file=twin.risk.state_file) == twin.risk
     assert exp.journal_dir != twin.journal_dir and exp.risk.state_file != twin.risk.state_file
@@ -1383,3 +1392,65 @@ def test_ten_shares_on_the_upper_tiers_one_entry_at_a_time(tmp_path, monkeypatch
         asyncio.run(go())
         assert len(br.calls) == 1, br.calls                        # two coins qualify, one entry at a time
         assert br.calls[0][1] == want, (p_model, br.calls)
+
+
+def test_ten_shares_only_when_no_guard_blocked_a_moment_ago(tmp_path, monkeypatch):
+    """reports/71 (14 Nov): both 10-share losses (10 Nov 23:49 on the twins, 13 Nov 20:49 live, -$9.54) were bought 1.2-1.3 s after
+    a binance_against block. lock.big_calm_s = 3: within 3 s of a Binance guard block in the window the entry is the small size
+    (2 shares): the trade stays, the loss is 5x smaller. Live 5m and its twins only."""
+    import time as _t
+    import pmbot.bot.lock as lockmod
+    from pmbot.bot.state import Window
+    on = ("lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml")
+    import glob
+    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
+        assert load_lock_config(path).lock.big_calm_s == (3.0 if os.path.basename(path) in on else 0.0), path
+    for bad in ({"lock": {"big_calm_s": -1.0}}, {"lock": {"big_calm_s": 3.0, "big_shares": 0}}):
+        with pytest.raises(ValueError):
+            load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"), overrides=bad)
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((key, shares, limit))
+            return limit, shares, 0.0
+
+    # (guard reason seen first, ms between the block and the signal, model p, calm seconds) -> shares bought
+    cases = (("binance_against", 1200, 0.978, 3.0, 2), ("shock", 2900, 0.995, 3.0, 2), ("binance_jump", 500, 0.98, 3.0, 2),
+             ("binance_against", 3100, 0.978, 3.0, 10),          # three quiet seconds: the full size again
+             ("p", 1200, 0.978, 3.0, 10), ("ask_too_high", 300, 0.978, 3.0, 10),      # not a guard
+             ("binance_against", 1200, 0.978, 0.0, 10),          # off = reports/67
+             ("binance_against", 1200, 0.96, 3.0, 2))            # the weak tier is small anyway
+    for i, (why, gap, p_model, calm, want) in enumerate(cases):
+        br = Br()
+        cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                               overrides={"lock": {"big_calm_s": calm}, "risk": {"state_file": str(tmp_path / f"c{i}.json"),
+                                                                                "kill_file": ""}})
+        bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+        now = int(_t.time() * 1000)
+        bot.st.add_window(Window(asset="btc", start=now // 1000 - 265, slug="btc", condition_id="btc", token_up="u", token_down="d"))
+        state = {"block": True}
+
+        def fake_decide(c, tables, asset, *args, p_model=p_model, why=why, state=state, **kw):
+            if state["block"]:
+                return None, {"rel": 265.0, "side": "U", "why": why}
+            return {"side": "U", "limit": lockmod.tier_limit(c, p_model, 265.0), "ask": 0.93, "p": p_model}, {"rel": 265.0, "side": "U"}
+        monkeypatch.setattr(lockmod, "decide", fake_decide)
+
+        async def go():
+            bot.st.feed_alive["binance"] = now
+            await bot.decide_once(now)
+            assert not br.calls
+            state["block"] = False
+            bot.st.feed_alive["binance"] = now + gap
+            await bot.decide_once(now + gap)
+            await asyncio.sleep(0.01)
+        asyncio.run(go())
+        assert len(br.calls) == 1 and br.calls[0][1] == want, (why, gap, p_model, calm, br.calls)
+        entry = [kw for kind, kw in bot.j.ev if kind == "lock_entry"]
+        assert len(entry) == 1 and (entry[0].get("calm") is False) == (want == 2 and p_model >= 0.97 and calm > 0)   # journalled
+

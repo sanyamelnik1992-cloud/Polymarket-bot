@@ -131,6 +131,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   read Chainlink from PolyBolt + RTDS (`cl_feed = "both"`; RTDS alone timed out ~10 times that night); `pmbot-lock-tier` stays on
   RTDS as the A/B reference. Binance had no outage. Live since 11 Nov 20:50: 5m 24 / 2 lost / +$0.27 (10-share 10 / 0 / +$4.71,
   bottom tier 14 / 2 / -$4.00), 15m 9 / 0 / +$17.28.
+  **`reports/71_early_entries_calm_size.md` (14 Nov, owner: "можем как-то исправить ... на сервер заливай")**: 13 Nov 5m live
+  26 / 3 lost / -$7.71. Every lost window of live + twins since 10 Nov 18:52 (9 of 120) was bought before second 254. Live 5m
+  and its twins (`lock_live`, `lock_tier`, `lock_tier_pb`, `lock_tier_late`) now run `late_tier_rel = 260` with `late_tier_p = 0.97`
+  (the p 0.95-0.97 tier only from second 260: 47 windows / 7 lost before, 32 / 0 after) and `lock.big_calm_s = 3` (10 shares only
+  if no Binance guard, `GUARD_WHYS`, blocked the window in the last 3 s, else 2; `lock_entry` gets `calm: false`: both 10-share
+  losses came 1.2-1.3 s after a `binance_against` block; evidence thin, 2 of 12 vs 0 of 29, hence smaller size, not a ban).
+  Tapes 7-11 Nov: +$24.60 -> +$25.67, worst trade -$9.53 -> -$1.91, 130 -> 108 entries; costs ~$2 a day in a loss-free period.
+  The insurance has never filled live (FAK 250-330 ms behind the reversal). 15m unchanged (32 entries / 1 lost / +$22.86 since 12 Nov). Tools:
+  `reports/71_tools` (`paths.py` state paths of the live rule, `variants.py`, `journal_feat.py` for the bots' journals).
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
@@ -208,6 +217,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   kinds, the competitiveness cap. In a selection of 14 Nov 41 of 45 markets had official competitiveness 0: the "cautious" part
   also rests on nearly empty pools, so the live $20 test (report 68 section 8, step 2) is the next real step; REWARD payouts in
   the public Data API are one sum per wallet per day, no per-market breakdown, so public data cannot answer it.
+  **`reports/72_rewards_live_probe.md` (14 Nov, owner: "запускай тест")**: first REAL-MONEY probe of R, `reports/72_tools/rewards_probe.py`
+  (`plan` / `run --real-money` / `payout --date`; one pair of post-only minimum-size bids, <= $25, <= 30 min, exchange-side
+  expiration). Malacca-ships market, pool $40 a day, $17.60 in bids for 10 min: no fill, the exchange accrued $0.052
+  (`list_user_earnings_for_day`: accrual is by time, not the whole pool for presence); our share (`get_reward_percentages`) was
+  75 % for ~5 min, then 1.7 %: other makers posted tighter and larger within ~6 min, competitiveness 0 -> 1.0. The paper bot
+  would have booked $0.24-0.28 there ("alone" for hours): its "alone" rewards are overstated, one sample. Next: payout check on
+  15 Nov, 3-5 more 30-min probes to time the arrival of other makers, then fix the paper reward estimate.
   **LIVE TEST of the rewards rule, REAL MONEY (report 68 section 12; owner 14 Nov: "давай все делай под реальные деньги, будем
   тестировать")**: unit `pmbot-rewards-live` = `config/rewards_live.toml`, `scripts/run_rewards_live.py --live`,
   `pmbot/rewards/live.py` (`RewardsLiveBroker`, `LiveFarmer`, `choose_market`), listed in `ops.REWARD_LIVE_UNITS`. A TEST, not a

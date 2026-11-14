@@ -97,6 +97,10 @@ class LockCfg:
                                          # where the bot buys, the 0.97 / 0.99 tiers earned +3.7 / +2.9 c a share in both halves of 7-11 Nov
                                          # and lost ~1 in 60; with the insurance their rare loss is the one most often cut). 0 = off
     big_shares_p: float = 0.97
+    big_calm_s: float = 0.0              # > 0: big_shares only when no Binance guard (GUARD_WHYS) blocked this window in the last
+                                         # big_calm_s seconds, else `shares` (reports/71: both 10-share losses, 10 Nov 23:49 and 13 Nov
+                                         # 20:49, were bought 1.2-1.3 s after a binance_against block, the move still 1.2-1.7 bp / 3 s
+                                         # against; live + twins 10-13 Nov, p >= 0.97: 12 such windows, 2 lost, vs 29 / 0). 0 = off
 
 
 @dataclass
@@ -189,6 +193,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.hedge_p: the insurance is for the taker entry with one entry per window")
     if c.big_shares and not (c.big_shares >= c.shares and 0.5 < c.big_shares_p < 1 and float(c.big_shares).is_integer()):
         raise ValueError("lock.big_shares must be 0 (off) or a whole number >= lock.shares, big_shares_p in (0.5, 1)")
+    if c.big_calm_s < 0 or (c.big_calm_s and not c.big_shares):
+        raise ValueError("lock.big_calm_s must be >= 0 and needs lock.big_shares")
     if c.big_shares and r.max_usd_per_entry < c.big_shares * c.a_max:
         raise ValueError("risk.max_usd_per_entry must fit lock.big_shares at lock.a_max (whole shares on every live FAK)")
     if r.max_open_entries < 0:
@@ -249,6 +255,9 @@ def hist_samples(hist, now_ms_, n, step_ms=500):
         if j >= n:
             break
     return [oldest if x is None else x for x in out]
+
+
+GUARD_WHYS = ("binance_against", "binance_jump", "shock")     # Binance moving: an otherwise valid state is not bought
 
 
 def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, bn_now, bn_at_last, bn_1s,
@@ -480,6 +489,7 @@ class LockBot:
         self.warmed = set()        # window keys whose market metadata the live client already has (prewarm)
         self._bg = set()           # background tasks (prewarm): keep a reference until they finish
         self.next_try = {}         # window key -> ms
+        self.guard_t = {}          # window key -> ms of the last tick a Binance guard blocked an otherwise valid state (big_calm_s)
         self._shock_cache = {}     # asset -> (ms, bp)
         self._cl_seen, self._cl_lags = {}, []      # print delay samples of the status interval (stats.cl_lag_ms = median)
         self.last_why = {}
@@ -619,6 +629,7 @@ class LockBot:
                     self.strikes.pop(key, None)
                     self.warmed.discard(key)
                     self.next_try.pop(key, None)
+                    self.guard_t.pop(key, None)
                     self.last_why.pop(key, None)
             for f in self.feeds.values():
                 await f.sync()
@@ -782,7 +793,8 @@ class LockBot:
                 continue
             if key in self.busy or len(self.entries.get(key, [])) >= c.max_entries_per_window:
                 continue
-            if now < self.next_try.get(key, 0):
+            wait = self.next_try.get(key, 0)
+            if now < wait and (wait == float("inf") or not c.big_calm_s):
                 continue
             px = self.st.prices[w.asset]
             if now - self.st.feed_alive.get("binance", 0) > c.bn_max_age_ms:
@@ -798,13 +810,19 @@ class LockBot:
                               self._book_ask(w.token_up), self._book_ask(w.token_down),
                               shock=lambda a=w.asset: self._shock(a, now))
             if not sig:
+                if ctx.get("why") in GUARD_WHYS:
+                    self.guard_t[key] = now
                 self._why(key, ctx.get("why"), ctx)
+                continue
+            if now < wait:                 # the pause after a missed FAK: the guards above are still watched (big_calm_s)
                 continue
             self.stats["signals"] += 1
             if not ok:
                 self._why(key, "risk:" + why_risk, ctx)
                 continue
             want = c.big_shares if c.big_shares and sig["p"] >= c.big_shares_p - 1e-12 else c.shares   # reports/67
+            if want > c.shares and c.big_calm_s and now - self.guard_t.get(key, -1e18) < c.big_calm_s * 1000:
+                want, ctx = c.shares, {**ctx, "calm": False}       # reports/71: an alarm a moment ago = the small size
             shares = min(want, math.floor(self.cfg.risk.max_usd_per_entry / sig["limit"] * 100) / 100)
             cands.append((sig["p"] - sig["ask"], w, sig, shares, ctx))
         # Open risk counts the orders still in flight: all coins become eligible in the same tick at rel_lo, and an
