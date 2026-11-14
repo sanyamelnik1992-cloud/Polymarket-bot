@@ -1,22 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-tier/20261113-093542
-mode: paper  duration: 805.3 min  events: {'start': 1, 'status': 1610, 'lock_state': 2836, 'strike': 212, 'lock_miss': 9, 'fill': 8, 'lock_entry': 8, 'provisional': 8, 'settle': 7}
+mode: paper  duration: 865.8 min  events: {'start': 1, 'status': 1731, 'lock_state': 3122, 'strike': 228, 'lock_miss': 9, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 9}
 
-lock orders: sent 17  filled 8  ask gone 9  errors 0
-  signal -> exchange answer, ms: median 305  p90 399  max 533
-  fill price minus the ask we saw, cents: mean -0.38  worst +1.0
+lock orders: sent 18  filled 9  ask gone 9  errors 0
+  signal -> exchange answer, ms: median 308  p90 533  max 726
+  fill price minus the ask we saw, cents: mean -0.78  worst +1.0
   misses came 28-60 s before the end; model p 0.901-0.965
 
-fills: 8  shares: 40  notional: $36.45
+fills: 9  shares: 45  notional: $40.75
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        6    30.0     27.25      0.908  852.460
+btc        7    35.0     31.55      0.901  847.194
 xrp        2    10.0      9.20      0.920  843.809
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc          5  22.515  2.485          2.485     0.0       1.0  0.421  0.705  0.110
-xrp          2   9.252  0.748          0.748     0.0       1.0  0.327  0.421  0.081
+btc          7  31.764 -1.764         -1.764     0.0     0.857 -4.342  0.705 -0.056
+xrp          2   9.252  0.748          0.748     0.0     1.000  0.327  0.421  0.081
 
-TOTAL pnl $+3.23 (ex-rebate $+3.23) on cost $31.77 -> ROI +10.18%; windows 7, t-stat +10.42
-max drawdown $0.00; hedged windows (both sides filled): 0
+TOTAL pnl $-1.02 (ex-rebate $-1.02) on cost $41.02 -> ROI -2.48%; windows 9, t-stat -0.21
+max drawdown $-4.34; hedged windows (both sides filled): 0
