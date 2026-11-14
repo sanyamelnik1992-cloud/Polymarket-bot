@@ -229,12 +229,15 @@ def live_section(live):
             shown += 1
             if shown <= 5 or shown % 10 == 0:              # the first minutes, then every tenth sample
                 print(f"  {fmt(e['t'])} exch share {e.get('exch_pct', 'n/a')}%  paper share {100 * e.get('paper_share', 0):.1f}%  "
-                      f"scoring {e.get('scoring', 'n/a')}  bids {e.get('bids')}  ref {e.get('ref')}  paper ${e.get('paper_reward')}")
+                      f"scoring {e.get('scoring', 'n/a')}  bids {e.get('bids')}  ref {e.get('ref')}  paper ${e.get('paper_reward')}"
+                      + (f"  exch accrued ${e['exch_earned']}" if "exch_earned" in e else ""))
         elif k == "rlive_done":
             print(f"  {fmt(e['t'])} DONE ({e.get('why')}): quoted {e.get('quoted_min')} min, samples {e.get('samples')}; exch share "
                   f"mean {e.get('exch_pct_mean')}% last {e.get('exch_pct_last')}%; paper share mean {e.get('paper_share_mean')}; "
-                  f"scoring in {e.get('scoring_all')} of samples; paper reward ${e.get('paper_reward')}; by time at the exchange "
-                  f"share ${e.get('by_time_exch')}; whole pool ${e.get('whole_pool')}; fills {e.get('fills')}; position "
+                  f"max {e.get('exch_pct_max')}%, halved after {e.get('squeezed_after_min')} min; scoring in "
+                  f"{e.get('scoring_all')} of samples; THE EXCHANGE ACCRUED ${e.get('exch_earned')} against paper "
+                  f"${e.get('paper_reward')} (by time at the exchange's share ${e.get('by_time_exch')}; pool "
+                  f"${e.get('whole_pool')}/day); fills {e.get('fills')}; position "
                   f"{e.get('position')}; orders placed {e.get('orders_placed')}; left open {e.get('orders_left_open')}")
 
 

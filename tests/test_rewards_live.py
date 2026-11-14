@@ -127,7 +127,7 @@ def test_config_needs_the_live_mode_and_the_flag_and_is_one_market():
     rc, lc = load_rewards_live_config(CFG, live_flag=True)
     assert rc.mode == "live" and rc.max_markets == 1 and rc.quote_budget_usd == lc.max_open_usd == 20
     assert rc.hedge is False and rc.reduce_only is False and rc.state_file == ""
-    assert lc.kind == "alone" and lc.minutes == 180 and lc.max_shares == 20 and lc.reserve_usd == 40 and lc.stop_on_fill
+    assert lc.kind == "alone" and lc.minutes == 60 and lc.max_shares == 20 and lc.reserve_usd == 40 and lc.stop_on_fill
     paper = load_rewards_config(os.path.join(ops.REPO, "config", "rewards.toml"))
     for k in ("dist_cents", "alone_frac", "size_mult", "max_competitiveness", "max_volume_24h", "price_lo", "price_hi",
               "requote_min_s", "min_order_age_s", "max_ref_disagree"):       # the test measures the paper bot's rule
@@ -138,7 +138,7 @@ def test_config_needs_the_live_mode_and_the_flag_and_is_one_market():
 def test_config_limits_cannot_be_raised_into_a_bot(tmp_path):
     text = open(CFG).read()
     for old, new in (("max_open_usd = 20", "max_open_usd = 500"), ("max_shares = 20", "max_shares = 200"),
-                     ("minutes = 180", "minutes = 100000"), ('kind = "alone"', 'kind = "all"')):
+                     ("minutes = 60", "minutes = 100000"), ('kind = "alone"', 'kind = "all"')):
         p = tmp_path / "c.toml"
         p.write_text(text.replace(old, new))
         assert old in text
@@ -323,6 +323,22 @@ def test_choose_market_takes_the_first_that_fits_the_test():
     assert choose_market([later], LiveCfg(kind="alone"), now=now).slug == "later"
 
 
+def test_markets_quoted_by_a_recent_test_or_probe_are_skipped(tmp_path):
+    from pmbot.rewards.live import recent_markets
+    now = 1794650000
+    for d, ev in (("live/20261114-1", {"type": "rlive_market", "t": now - 3600, "key": "alone"}),
+                  ("probe/20261114-1", {"type": "probe_start", "t": now - 7200, "slug": "malacca"}),
+                  ("live/20261110-1", {"type": "rlive_market", "t": now - 4 * 86400, "key": "old"})):
+        p = tmp_path / d
+        p.mkdir(parents=True)
+        (p / "events.jsonl").write_text(json.dumps({"type": "start", "t": now}) + "\n" + json.dumps(ev) + "\n")
+    skip = recent_markets([str(tmp_path / "live"), str(tmp_path / "probe"), str(tmp_path / "none")], 48, now=now)
+    assert skip == {"alone", "malacca"}
+    picks = [rmarket("alone"), rmarket("malacca"), rmarket("old")]
+    assert choose_market(picks, LiveCfg(kind="alone"), skip=skip).slug == "old"
+    assert choose_market(picks, LiveCfg(kind="alone", slug="alone"), skip=skip).slug == "alone"      # asked for by name
+
+
 # ---------------------------------------------------------------- the farmer on one market
 def live_farmer(tmp_path, picks=None, **lc):
     rc, base = load_rewards_live_config(CFG, live_flag=True)
@@ -376,6 +392,8 @@ def test_live_test_end_to_end_quotes_reads_the_exchange_and_stops_on_a_fill(tmp_
     async def scenario():
         f = live_farmer(tmp_path, poll_s=1)
         f.broker.client.pct = {"c-alone": 100.0}
+        f.broker.client.earn = [types.SimpleNamespace(day=time.strftime("%Y-%m-%d", time.gmtime()), condition_id="c-alone",
+                                                      earnings="0.25")]      # accrued today before this test (another probe)
         set_book(f)
         task = asyncio.create_task(f.run(duration_s=30))
         for _ in range(60):                                             # the first quote pass after the selection
@@ -386,6 +404,8 @@ def test_live_test_end_to_end_quotes_reads_the_exchange_and_stops_on_a_fill(tmp_
         assert {(o.token, o.price, o.size) for o in f.broker.orders.values()} == {("alone-Y", 0.46, 20), ("alone-N", 0.46, 20)}
         rec = await f.exchange_once()
         assert rec["exch_pct"] == 100.0 and rec["scoring"] == {"Y": True, "N": True} and rec["bids"] == {"Y": 0.46, "N": 0.46}
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        f.broker.client.earn = [types.SimpleNamespace(day=day, condition_id="c-alone", earnings="0.30")]     # was 0.25 at the start
         oid = next(k for k, o in f.broker.orders.items() if o.side == "Y")
         f.broker.handle_trade(types.SimpleNamespace(id="t1", status="MATCHED", maker_orders=(
             types.SimpleNamespace(order_id=oid, matched_amount="20", price="0.46"),)))
@@ -395,6 +415,7 @@ def test_live_test_end_to_end_quotes_reads_the_exchange_and_stops_on_a_fill(tmp_
     assert done["why"] == "fill" and done["fills"] == 1 and done["position"] == {"yes": 20.0, "no": 0.0, "cost": 9.2}
     assert done["orders_left_open"] == 0 and f.broker.client.open == {} and done["exch_pct_last"] == 100.0
     assert done["whole_pool"] == 50.0 and done["key"] == "alone" and done["cid"] == "c-alone"
+    assert done["exch_earned"] == pytest.approx(0.05)                  # only what was accrued during the test
     kinds = [e["type"] for e in f.journal.ev]
     assert kinds.index("start") < kinds.index("rlive_check") < kinds.index("rlive_market") < kinds.index("order_placed")
     assert "rlive_fill" in kinds and kinds[-1] == "rlive_done" and f.journal.of("start")[0]["mode"] == "live"
@@ -456,10 +477,15 @@ def test_telegram_texts_of_the_live_test():
     done = {"why": "time", "question": "Will X?", "quoted_min": 178.0, "rate": 50.0, "exch_pct_mean": 100.0,
             "paper_share_mean": 1.0, "scoring_all": 1.0, "whole_pool": 50.0, "by_time_exch": 6.18, "paper_reward": 6.2,
             "fills": 0, "position": None, "orders_left_open": 0}
+    done.update(exch_earned=0.31, exch_pct_max=75.0, exch_pct_mean=20.0, exch_pct_last=1.7, squeezed_after_min=6.0)
     d = notify.event_message("rlive_done", done, unit="pmbot-rewards-live", mode="live")
-    assert "100.0%" in d and "50.00$" in d and "6.18$" in d and "открытых не осталось" in d and "время вышло" in d
+    assert "Биржа начислила за тест: <b>0.31$</b>" in d and "записал бы: 6.20$ (биржа дала 5% от расчёта)" in d
+    assert "лучшая 75%, средняя 20%, в конце 2%" in d and "сжали вдвое через 6 мин" in d
+    assert "открытых не осталось" in d and "время вышло" in d
     assert "Осталось открытых заявок: 2" in notify.rewards_live_done({**done, "orders_left_open": 2})
-    assert "нет ответа" in notify.rewards_live_done({**done, "exch_pct_mean": None})
+    assert "нет ответа" in notify.rewards_live_done({**done, "exch_pct_mean": None, "squeezed_after_min": None})
+    assert "не сжали" in notify.rewards_live_done({**done, "squeezed_after_min": None})
+    assert "нет данных" in notify.rewards_live_done({**done, "exch_earned": None})
 
 
 def test_status_and_report_of_the_live_test(tmp_path, monkeypatch):
@@ -486,8 +512,9 @@ def test_status_and_report_of_the_live_test(tmp_path, monkeypatch):
                 "by_time_exch": 6.18, "paper_reward": 6.2, "fills": 0, "position": None, "orders_left_open": 0})
     wallet.write_text(json.dumps({"t": now, "usd": 199.0, "rewards": {"pct": {}, "earn": {"2026-11-14": {"c1": 50.0}}}}))
     txt = notify.format_rewards_live()
-    assert "Начислено биржей" in txt and "2026-11-14: <b>50.00$</b>" in txt and "если платят по минутам: 6.18$" in txt
-    assert "НАЧИСЛЕНО БИРЖЕЙ" in ops.format_rewards_live()
+    assert "Счётчик биржи по этому рынку за день" in txt and "2026-11-14: <b>50.000$</b>" in txt
+    assert "Бот на бумаге записал бы: 6.20$" in txt and "Биржа начислила за тест: <b>нет данных</b>" in txt
+    assert "счётчик биржи по этому рынку за день" in ops.format_rewards_live()
     evs[:] = [{"type": "kill", "t": now, "reason": "live gate: collateral 30.00 < 60.00"}]
     assert "запуск отклонён" in notify.format_rewards_live() and "collateral" in ops.format_rewards_live()
     evs[:] = []

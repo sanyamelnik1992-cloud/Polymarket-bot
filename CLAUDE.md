@@ -226,21 +226,25 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   15 Nov, 3-5 more 30-min probes to time the arrival of other makers, then fix the paper reward estimate.
   **LIVE TEST of the rewards rule, REAL MONEY (report 68 section 12; owner 14 Nov: "давай все делай под реальные деньги, будем
   тестировать")**: unit `pmbot-rewards-live` = `config/rewards_live.toml`, `scripts/run_rewards_live.py --live`,
-  `pmbot/rewards/live.py` (`RewardsLiveBroker`, `LiveFarmer`, `choose_market`), listed in `ops.REWARD_LIVE_UNITS`. A TEST, not a
-  bot: ONE market (price 0.30-0.70, pool >= $20, no question about a date in the next 7 days), the paper rule's two bids
-  of 20 shares (~$18 resting), 180 minutes, the first fill ends it (no hedge, no
-  merge, the shares stay in the wallet). It reads the exchange's own numbers every minute (`get_reward_percentages`,
-  `get_orders_scoring`) next to the paper estimate (journal `rlive`, `rlive_market`, `rlive_fill`, `rlive_done`); what the
-  exchange credited per market per day is read by `scripts/wallet_balance.py` into `data/state/wallet.json` (`rewards`:
-  numbers and public condition ids only). Telegram: `/restart pmbot-rewards-live` starts one test, `/rlive` shows it. Never
-  enabled at boot, `Restart=no`, NOT in the auto-update restart list. Rules to keep: it never calls cancel-all (the wallet is
-  shared with the lock bots; orders are cancelled by id, then by the market's two tokens), it starts only with >= $60 free
-  ($20 of orders + $40 reserve), the broker itself refuses more than 20 shares / $20 resting / a third order / 300 orders a
-  run, orders are post-only GTD (20 min) with the order heartbeat, an unanswered order call or a 401/403 ends the test, fills
-  the stream missed are found by `account()` / `reconcile()`. The config loader caps the limits (<= $60, <= 60 shares, <= 24 h):
-  growing it into a bot is a separate decision of the owner and needs a hedge and merge that do not exist yet. Journal field
-  names must not be `kind` (`Journal.log(kind, **kw)`: the first version crashed in a test on that). How to read the result:
-  section 12 (whole pool vs by the minute vs nothing).
+  `pmbot/rewards/live.py` (`RewardsLiveBroker`, `LiveFarmer`, `choose_market`, `recent_markets`), listed in
+  `ops.REWARD_LIVE_UNITS`. A TEST, not a bot, and the longer, Telegram-started form of the probe of report 72: ONE market (price
+  0.30-0.70, pool >= $20, no question about a date in the next 7 days, not quoted by a test or probe in the last 48 h), the
+  paper rule's two bids of 20 shares (~$18 resting), 60 minutes, the first fill ends it (no hedge, no merge, the shares stay
+  in the wallet). Every minute it reads the exchange's own numbers (`get_reward_percentages`, `get_orders_scoring`) next to
+  the paper estimate, every 5th reading also the exchange's daily accrual counter of the market
+  (`list_user_earnings_for_day`, it moves during the day); journal `rlive`, `rlive_market`, `rlive_fill`, `rlive_done`
+  (`exch_earned` vs `paper_reward`, `exch_pct_max` / `_mean` / `_last`, `squeezed_after_min`). `scripts/wallet_balance.py` also
+  writes the exchange's reward numbers into `data/state/wallet.json` (`rewards`: numbers and public condition ids only).
+  Telegram: `/restart pmbot-rewards-live` starts one test, `/rlive` shows it. Never enabled at boot, `Restart=no`, NOT in the
+  auto-update restart list. Rules to keep: it never calls cancel-all (the wallet is shared with the lock bots; orders are
+  cancelled by id, then by the market's two tokens), it starts only with >= $60 free ($20 of orders + $40 reserve), the broker
+  itself refuses more than 20 shares / $20 resting / a third order / 300 orders a run, orders are post-only GTD (20 min) with
+  the order heartbeat, an unanswered order call or a 401/403 ends the test, fills the stream missed are found by `account()` /
+  `reconcile()`. The config loader caps the limits (<= $60, <= 60 shares, <= 24 h): growing it into a bot is a separate decision
+  of the owner and needs a hedge and merge that do not exist yet. Journal field names must not be `kind`
+  (`Journal.log(kind, **kw)`: the first version crashed in a test on that). The probe script of report 72 cancels EVERY open
+  order of the wallet when it ends: do not run it while this unit is quoting. Next: 3-5 tests on different markets, then
+  correct the paper bot's "alone" rewards by the measured share.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

@@ -348,11 +348,13 @@ def format_rewards_live():
         for fl in r["fills"]:
             out.append(f"  ИСПОЛНЕНИЕ: {'Да' if fl.get('side') == 'Y' else 'Нет'} {fl.get('size')} по {fl.get('price')}")
         if d:
-            out.append(f"  итог: конец по причине {d.get('why')}; заявки стояли {d.get('quoted_min')} мин; расчёт наград "
-                       f"{d.get('paper_reward')}$; по времени и доле биржи {d.get('by_time_exch')}$; весь пул {d.get('whole_pool')}$; "
-                       f"исполнений {d.get('fills')}; позиция {d.get('position')}; заявок осталось открытыми {d.get('orders_left_open')}")
+            out.append(f"  итог: конец по причине {d.get('why')}; заявки стояли {d.get('quoted_min')} мин; БИРЖА НАЧИСЛИЛА "
+                       f"{d.get('exch_earned')}$, бумага записала бы {d.get('paper_reward')}$; доля по бирже: лучшая "
+                       f"{d.get('exch_pct_max')}%, средняя {d.get('exch_pct_mean')}%, в конце {d.get('exch_pct_last')}%; сжали вдвое "
+                       f"через {d.get('squeezed_after_min')} мин; исполнений {d.get('fills')}; позиция {d.get('position')}; "
+                       f"заявок осталось открытыми {d.get('orders_left_open')}")
         if r["earn"]:
-            out.append("  НАЧИСЛЕНО БИРЖЕЙ по этому рынку: " + ", ".join(f"{k}: {v:.4f}$" for k, v in sorted(r["earn"].items())))
+            out.append("  счётчик биржи по этому рынку за день: " + ", ".join(f"{k}: {v:.4f}$" for k, v in sorted(r["earn"].items())))
         elif r["earn_days"]:
             out.append(f"  начислений биржи по этому рынку пока нет (дни в ответе биржи: {', '.join(r['earn_days'])})")
         else:

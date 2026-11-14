@@ -19,6 +19,8 @@ inside [0.05, 0.95], every order expires by itself (GTD) and the order heartbeat
 ever calls cancel-all: the wallet is shared, so orders are cancelled by id and, as a sweep, by the market's two tokens.
 """
 import asyncio
+import glob
+import json
 import logging
 import os
 import time
@@ -39,12 +41,15 @@ log = logging.getLogger("pmbot.rewards.live")
 class LiveCfg:
     kind: str = "alone"             # which market to pick: "alone" (nobody else in the reward zone), "shared", "any"
     slug: str = ""                  # exact market slug: skip the choice (it must still pass the limits below)
-    minutes: float = 180.0          # the test ends by itself after this long
+    minutes: float = 60.0           # the test ends by itself after this long
+    fresh_hours: float = 48.0       # skip markets a live test or probe quoted in the last N hours (reports/72: other
+                                    # makers came within ~6 min and stay for a while; a new market is a new sample)
+    earn_every: int = 5             # every N-th reading also asks what the exchange has accrued for the market today
     max_open_usd: float = 20.0      # both resting bids together
     max_shares: float = 20.0        # one order
     price_lo: float = 0.30          # price of YES of the market we pick: a filled bid then costs at most
     price_hi: float = 0.70          # max_shares * ~0.70
-    min_rate: float = 20.0          # $/day pool: 3 hours of a $20 pool are $2.50 by time, above the $1 payout minimum
+    min_rate: float = 20.0          # $/day pool: an hour of a $20 pool is $0.83 by time while we are alone in it
     calm_days: float = 7.0          # skip questions about a date in the next N days ("... on November 16?" two days
                                     # ahead): the market's own end date is often weeks later, the news is not
     reserve_usd: float = 40.0       # collateral that must stay free on top of our orders (lock bots, same wallet)
@@ -453,10 +458,34 @@ class RewardsLiveBroker:
             return None
 
 
-def choose_market(picks, lc, now=None):
+PROBE_JOURNAL = "data/journal-rewards-probe"            # reports/72_tools/rewards_probe.py writes here
+
+
+def recent_markets(dirs, hours, now=None):
+    """Slugs a live test (`rlive_market`) or the probe of reports/72 (`probe_start`) quoted in the last `hours`."""
+    now = now if now is not None else time.time()
+    out = set()
+    for d in dirs:
+        for f in sorted(glob.glob(os.path.join(d, "*", "events.jsonl"))):
+            try:
+                for line in open(f):
+                    if '"rlive_market"' not in line and '"probe_start"' not in line:
+                        continue
+                    e = json.loads(line)
+                    if now - e.get("t", 0) <= hours * 3600:
+                        out.add(e.get("key") or e.get("slug"))
+            except (OSError, ValueError):
+                continue
+    out.discard(None)
+    return out
+
+
+def choose_market(picks, lc, now=None, skip=()):
     """The first of the ranked picks that fits the test, or None. `picks` come from mk.select (book priced)."""
     now = now if now is not None else time.time()
     for c in picks:
+        if c.slug in skip and c.slug != lc.slug:
+            continue                                       # quoted by a test in the last days: take a new sample
         if lc.calm_days and mk.date_passed(c.question, now + lc.calm_days * 86400):
             continue                                       # every date it names is within the next days: news market
         if lc.slug and c.slug != lc.slug:
@@ -486,6 +515,10 @@ class LiveFarmer(Farmer):
         self._select = select
         self.market = None                # the RMarket of the test
         self.exch = []                    # samples of the exchange's numbers while we quote
+        self.t_quote = None               # when the market was chosen (the orders go out within seconds)
+        self.earn0 = None                 # $ the exchange had accrued for the test market today when we started
+        self.earn_last = None             # ... at the latest reading
+        self._polls = 0
         self.why_stop = ""
         self.t_start = None
 
@@ -552,13 +585,16 @@ class LiveFarmer(Farmer):
                 wide = replace(self.rc, max_markets=40, quote_budget_usd=1e9, max_empty_frac=1.0,
                                min_rate=max(self.rc.min_rate, self.lc.min_rate))
                 picks = await asyncio.to_thread(self._select, wide, None)
-                c = choose_market(picks, self.lc)
+                skip = recent_markets([self.rc.journal_dir, PROBE_JOURNAL], self.lc.fresh_hours) if self.lc.fresh_hours else set()
+                c = choose_market(picks, self.lc, skip=skip)
                 if c is None:
-                    self.journal.log("rlive_no_market", test_kind=self.lc.kind, looked_at=len(picks))
+                    self.journal.log("rlive_no_market", test_kind=self.lc.kind, looked_at=len(picks), skipped=len(skip))
                     self.finish("no_market")
                     return
                 self.market = c
+                self.t_quote = self.clock()
                 self.apply_selection([c])
+                await self.earned()                        # the counter before our first order
                 self.journal.log("rlive_market", key=c.slug, question=c.question, cid=c.condition_id, rate=c.rate,
                                  comp=round(c.comp, 3), empty=c.empty, v=c.v, min_size=c.min_size, size=c.size,
                                  price=c.price, capital=round(c.capital, 2), est_reward_day=round(c.est_reward, 2),
@@ -580,7 +616,8 @@ class LiveFarmer(Farmer):
             return None
         oids = {o["oid"]: side for side, o in ms.orders.items()}
         st = await self.broker.reward_state(self.market.condition_id, list(oids))
-        rec = {"key": self.market.slug, "paper_share": round(ms.last_share, 4), "alone": bool(ms.alone),
+        rec = {"key": self.market.slug, "t_rel": round(self.clock() - (self.t_quote or self.clock()), 1),
+               "paper_share": round(ms.last_share, 4), "alone": bool(ms.alone),
                "ref": round(ms.ref, 4) if ms.ref is not None else None,
                "bids": {side: o["price"] for side, o in ms.orders.items()},
                "age_s": {side: round(self.clock() - o["t"]) for side, o in ms.orders.items()},
@@ -590,10 +627,35 @@ class LiveFarmer(Farmer):
             rec["markets_with_pct"] = st.get("markets_with_pct")
         if "scoring" in st:
             rec["scoring"] = {oids[k]: v for k, v in st["scoring"].items() if k in oids}
+        self._polls += 1
+        if self.lc.earn_every and self._polls % self.lc.earn_every == 0:
+            got = await self.earned()
+            if got is not None:
+                rec["exch_earned"] = got
         self.journal.log("rlive", **rec)
         if len(ms.orders) == 2:
             self.exch.append(rec)
         return rec
+
+    async def earned(self):
+        """$ the exchange has accrued for the test market since the test began, None when it cannot be read. It is the
+        exchange's own daily counter per market, and it moves during the day (reports/72). The counter starts again
+        at 00:00 UTC, so a test across midnight adds the two days up."""
+        if self.market is None:
+            return None
+        day = utc_day(self.clock())
+        e = await self.broker.earnings(day)
+        if e is None:
+            return None
+        raw = e.get(self.market.condition_id, 0.0)
+        if self.earn0 is None:
+            self.earn0, self._earn_day, self._earn_carry, self._earn_raw = raw, day, 0.0, raw
+        if day != self._earn_day:                          # a new UTC day: its counter starts at zero
+            self._earn_carry += self._earn_raw - self.earn0
+            self.earn0, self._earn_day = 0.0, day
+        self._earn_raw = raw
+        self.earn_last = round(self._earn_carry + raw - self.earn0, 6)
+        return self.earn_last
 
     async def exchange_loop(self):
         while not self._stop:
@@ -626,6 +688,10 @@ class LiveFarmer(Farmer):
         q_min = ms.quoted_s / 60 if ms else 0.0
         rate = self.market.rate if self.market else 0.0
         mean_pct = sum(pcts) / len(pcts) if pcts else None
+        top = max(pcts) if pcts else None
+        timed = [(r.get("t_rel", 0.0), r["exch_pct"]) for r in self.exch if "exch_pct" in r]
+        t_top = next((t for t, p in timed if p == top), None)
+        squeezed = next((t for t, p in timed if t_top is not None and t > t_top and top and p < 0.5 * top), None)
         ps = self.pos.get(self.market.slug) if self.market else None
         return {"why": self.why_stop or "time", "key": self.market.slug if self.market else None,
                 "question": self.market.question if self.market else None,
@@ -633,12 +699,16 @@ class LiveFarmer(Farmer):
                 "test_kind": self.lc.kind, "quoted_min": round(q_min, 1), "samples": len(self.exch),
                 "exch_pct_mean": round(mean_pct, 2) if mean_pct is not None else None,
                 "exch_pct_last": pcts[-1] if pcts else None,
+                "exch_pct_max": top,
+                # minutes from our first order until the exchange's share fell below half of its best value: how fast
+                # other makers came (reports/72: ~6 min). None = it never did during the test
+                "squeezed_after_min": round(squeezed / 60, 1) if squeezed is not None else None,
                 "paper_share_mean": round(sum(paper) / len(paper), 4) if paper else None,
                 "scoring_all": (sum(scoring) / len(scoring)) if scoring else None,
                 "paper_reward": round(ms.reward_total, 4) if ms else 0.0,
                 "paper_alone": round(ms.alone_total, 4) if ms else 0.0,
                 "by_time_exch": round(rate * mean_pct / 100 * q_min / 1440, 4) if mean_pct is not None else None,
-                "whole_pool": rate, "fills": sum(self.fills_by_day.values()),
+                "whole_pool": rate, "exch_earned": self.earn_last, "fills": sum(self.fills_by_day.values()),
                 "position": {"yes": round(ps.yes, 2), "no": round(ps.no, 2), "cost": round(ps.cost, 2)} if ps else None,
                 "orders_placed": self.broker.placed, "orders_left_open": left,
                 "day": utc_day(self.t_start or self.clock())}
@@ -682,6 +752,10 @@ class LiveFarmer(Farmer):
                     await self.pull(ms, "stop")
                 except Exception as e:  # noqa: BLE001
                     self.journal.log("rlive_error", where="pull", error=str(e)[:200])
+            try:
+                await self.earned()                        # the exchange's counter after the test
+            except Exception:  # noqa: BLE001
+                pass
             left = await self.broker.stop()
         st = self.status()
         self.journal.log("rstatus", **st)

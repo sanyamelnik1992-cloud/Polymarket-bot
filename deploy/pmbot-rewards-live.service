@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot liquidity-rewards LIVE TEST (config/rewards_live.toml: REAL MONEY, one market, ~$20 in bids, 3 hours; reports/68)
+Description=pmbot liquidity-rewards LIVE TEST (config/rewards_live.toml: REAL MONEY, one market, ~$20 in bids, 1 hour; reports/68 section 12)
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=600

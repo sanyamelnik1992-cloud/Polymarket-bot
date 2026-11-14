@@ -38,7 +38,7 @@ BOTS = {
     "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона по 0.90–0.98, уверенность от 95%: чем она меньше, тем дешевле вход (10 акций от 97%, иначе 5; страховка при развороте; стоп −$10/день)"),
     "pmbot-lock-15-live": ("⏳", "Ступени 15 мин · L3-15", "правило «Ступени» на 15-минутных рынках: 4 ступени, уверенность от 90% (5 акций, стоп −$5/день)"),
     "pmbot-rewards": ("🎁", "Награды · R", "заявки рядом с ценой на рынках с пулами наград, после исполнения сразу хедж (paper)"),
-    "pmbot-rewards-live": ("🧪", "Награды · живой тест", "РЕАЛЬНЫЕ ДЕНЬГИ: один рынок, две заявки ≈$20, 3 часа; читает долю и начисления с биржи"),
+    "pmbot-rewards-live": ("🧪", "Награды · живой тест", "РЕАЛЬНЫЕ ДЕНЬГИ: один рынок, две заявки ≈$20, один час; читает долю и начисления с биржи"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
     "pmbot-recorder": ("📼", "REC", "рекордер"),
@@ -198,16 +198,18 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
                 f"{rec.get('price', 0):.2f}\nИтог окна теперь {money(rec.get('worst'), True)}"
                 + (f" … {money(rec.get('best'), True)}" if abs((rec.get("best") or 0) - (rec.get("worst") or 0)) > 0.05 else "")
                 + (" 💰" if live else " (paper)"))
+    if kind.startswith("rlive"):
+        who = label(unit, False) if unit else who   # the short name: these messages are long enough
     if kind == "rlive_market":                # the live test of the rewards rule picked its market (reports/68)
-        return (f"🧪 {who}: тест начался 💰\nРынок: <b>{esc(rec.get('question'))}</b>\n"
+        return (f"{who}: тест начался 💰\nРынок: <b>{esc(rec.get('question'))}</b>\n"
                 f"Пул {rec.get('rate', 0):.0f}$ в день · {'в зоне наград мы одни' if rec.get('empty') else 'в зоне есть другие мейкеры'}\n"
                 f"Ставлю две заявки по {rec.get('size', 0):.0f} акций, всего ≈{rec.get('capital', 0):.0f}$, на {rec.get('minutes', 0):.0f} мин.\n"
                 f"При первом исполнении тест остановится. Цифры: /rlive")
     if kind == "rlive_no_market":
-        return (f"🧪 {who}: подходящего рынка сейчас нет (вид «{esc(rec.get('test_kind'))}», просмотрено {rec.get('looked_at', 0)}). "
+        return (f"{who}: подходящего рынка сейчас нет (вид «{esc(rec.get('test_kind'))}», просмотрено {rec.get('looked_at', 0)}). "
                 f"Заявок не было. Запустить ещё раз позже: /restart pmbot-rewards-live")
     if kind == "rlive_fill":
-        return (f"🧪 {who}: <b>заявку исполнили</b> 💰\n{esc(rec.get('question'))}\n"
+        return (f"{who}: <b>заявку исполнили</b> 💰\n{esc(rec.get('question'))}\n"
                 f"Куплено «{'Да' if rec.get('side') == 'Y' else 'Нет'}» {rec.get('size', 0):.0f} по {rec.get('price', 0):.2f} "
                 f"= {rec.get('size', 0) * rec.get('price', 0):.2f}$\nТест остановлен, заявки сняты. Акции остались в кошельке.")
     if kind == "rlive_done":
@@ -401,27 +403,31 @@ def _usd(x):
 
 
 def rewards_live_done(d, who="🧪 <b>Награды · живой тест</b>"):
-    """The end of one live rewards test: what the exchange showed against the paper estimate, and what to expect."""
-    pct, paper = d.get("exch_pct_mean"), d.get("paper_share_mean")
-    sc = d.get("scoring_all")
-    lines = [f"🧪 {who}: тест закончен ({WHY_RU.get(d.get('why'), esc(d.get('why')))})",
+    """The end of one live rewards test: what the exchange accrued and showed against the paper estimate."""
+    pct, top, last, paper = d.get("exch_pct_mean"), d.get("exch_pct_max"), d.get("exch_pct_last"), d.get("paper_share_mean")
+    sc, got, est = d.get("scoring_all"), d.get("exch_earned"), d.get("paper_reward")
+    sq = d.get("squeezed_after_min")
+    lines = [f"{who}: тест закончен ({WHY_RU.get(d.get('why'), esc(d.get('why')))})",
              f"Рынок: <b>{esc(d.get('question'))}</b>", f"Заявки стояли {d.get('quoted_min', 0):.0f} мин · пул {d.get('rate', 0):.0f}$ в день",
              "",
-             f"Наша доля по данным биржи: <b>{'нет ответа' if pct is None else f'{pct:.1f}%'}</b>",
-             f"Наша доля по расчёту бота: {'—' if paper is None else f'{100 * paper:.1f}%'}",
-             f"Биржа считала заявки: {'нет ответа' if sc is None else f'{100 * sc:.0f}% замеров'}",
+             f"💰 Биржа начислила за тест: <b>{_usd(got)}</b>",
+             f"🧮 Бот на бумаге записал бы: {_usd(est)}"
+             + (f" (биржа дала {100 * got / est:.0f}% от расчёта)" if got is not None and est else ""),
              "",
-             "Что должно прийти завтра за этот рынок:",
-             f"• если платят за весь день одному: {_usd(d.get('whole_pool'))}",
-             f"• если платят по минутам: {_usd(d.get('by_time_exch'))}",
-             f"• расчёт бота: {_usd(d.get('paper_reward'))}"]
+             "Наша доля пула по данным биржи: " + ("нет ответа" if pct is None else
+                                                   f"лучшая {pct if top is None else top:.0f}%, средняя {pct:.0f}%, "
+                                                   f"в конце {pct if last is None else last:.0f}%"),
+             f"Доля по расчёту бота: {'—' if paper is None else f'{100 * paper:.0f}%'}",
+             ("Другие мейкеры не сжали нашу долю за время теста." if sq is None and pct is not None else
+              f"Долю сжали вдвое через {sq:.0f} мин после старта." if sq is not None else "Долю оценить нельзя: биржа не ответила."),
+             f"Биржа считала заявки: {'нет ответа' if sc is None else f'{100 * sc:.0f}% замеров'}"]
     if d.get("fills"):
         p = d.get("position") or {}
         lines += ["", f"Исполнений: {d['fills']}. В кошельке: Да {p.get('yes', 0):.0f}, Нет {p.get('no', 0):.0f}, куплено за {p.get('cost', 0):.2f}$"]
     left = d.get("orders_left_open")
     lines += ["", "Заявки сняты, открытых не осталось." if left == 0 else
               "⚠️ Не удалось проверить, что заявок не осталось." if left is None else f"⚠️ Осталось открытых заявок: {left}. Сними: /stop",
-              "Начисление биржи появится после 00:00 UTC: /rlive"]
+              "Подробно: /rlive"]
     return "\n".join(lines)
 
 
@@ -430,7 +436,7 @@ def format_rewards_live(unit="pmbot-rewards-live"):
     r = ops.rewards_live_summary(unit)
     if not r:
         return ("🧪 живой тест «Наград» ещё не запускался.\nЗапуск: /restart pmbot-rewards-live\n"
-                "Это РЕАЛЬНЫЕ ДЕНЬГИ: один рынок, две заявки ≈$20, 3 часа. При первом исполнении тест остановится.")
+                "Это РЕАЛЬНЫЕ ДЕНЬГИ: один рынок, две заявки ≈$20, один час. При первом исполнении тест остановится.")
     head = f"🧪 <b>Награды · живой тест</b> 💰 · {ops.STATE_RU.get(r['state'], esc(r['state']))} {ops.fmt_age(r['since'])}"
     if r["refused"]:
         return head + f"\n⛔ запуск отклонён: {esc(r['refused'])}"
@@ -454,9 +460,9 @@ def format_rewards_live(unit="pmbot-rewards-live"):
     if r["done"]:
         out += rewards_live_done(r["done"]).split("\n")[2:-1] + [""]
     if r["earn"]:
-        out += ["<b>Начислено биржей по этому рынку</b>"] + [f"{d}: <b>{v:.2f}$</b>" for d, v in sorted(r["earn"].items())]
+        out += ["<b>Счётчик биржи по этому рынку за день</b> (все тесты дня вместе)"] + [f"{d}: <b>{v:.3f}$</b>" for d, v in sorted(r["earn"].items())]
     elif r["earn_days"]:
-        out.append("Начислений биржи по этому рынку пока нет (появляются после 00:00 UTC).")
+        out.append("В счётчике биржи за последние дни этого рынка пока нет.")
     else:
         out.append("Начисления биржи ещё не прочитаны.")
     return "\n".join(out)
