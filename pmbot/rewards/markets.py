@@ -133,6 +133,23 @@ def date_passed(question, now=None):
     return last is not None and last < today
 
 
+def date_near(question, days, now=None):
+    """The question names a date (for "the week of <date>": its first day) earlier than `days` from today: its data or
+    its news arrive soon, somebody may know them already (reports/72: both live samples were "... week of November 16"
+    markets two days ahead; date_passed with a shifted clock let them through because the week ENDS 8 days ahead)."""
+    today = datetime.fromtimestamp(now if now is not None else time.time(), timezone.utc).date()
+    for week, mon, day, year in _DATE.findall(question or ""):
+        try:
+            d = date(int(year) if year else today.year, MONTHS.index(mon.lower()) + 1, int(day))
+        except ValueError:
+            continue
+        if not year and (today - d).days > 180:
+            d = date(d.year + 1, d.month, d.day)
+        if (d - today).days < days:
+            return True
+    return False
+
+
 def fetch_books(token_ids, session=None):
     """token -> raw book (bids/asks lists of {price,size}, tick_size, min_order_size)."""
     s = session or requests.Session()

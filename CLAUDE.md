@@ -245,6 +245,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (`Journal.log(kind, **kw)`: the first version crashed in a test on that). The probe script of report 72 cancels EVERY open
   order of the wallet when it ends: do not run it while this unit is quoting. Next: 3-5 tests on different markets, then
   correct the paper bot's "alone" rewards by the measured share.
+  Second live run, 14 Nov 20:30 UTC (`pmbot-rewards-live`, owner: "запусти на тесты стратегию"; report 72 section 5): Hormuz-ships
+  market, book 0.35 / 0.93 priced by the last trade 0.57; the NO bid 0.37 x 20 was FILLED 0.1 s after it was placed, test over,
+  20 NO shares ($7.40) stay in the wallet until 23 Nov, probably mostly lost. The paper bot had the same fill there at 18:42.
+  Fixed in the test's market choice: `recent_markets(..., marks=FILL_MARKS)` skips markets where the rule was filled (paper or
+  live) in `fresh_hours`, `markets.date_near` skips a date or a week START within `calm_days` (both samples were "week of
+  November 16" markets). Two live samples: $0.05 accrued, $7.40 at risk. Next test: `kind = "shared"`, on the owner's word.
+  Insurance (report 71 section 6): live 84 windows / 6 lost / 0 insured / 1 false alarm (-$1.27); unchanged, review after 10 tries.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

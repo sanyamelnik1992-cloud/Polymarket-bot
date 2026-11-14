@@ -459,17 +459,23 @@ class RewardsLiveBroker:
 
 
 PROBE_JOURNAL = "data/journal-rewards-probe"            # reports/72_tools/rewards_probe.py writes here
+PAPER_JOURNAL = "data/journal-rewards"                  # the paper farmer (config/rewards.toml)
 
 
-def recent_markets(dirs, hours, now=None):
-    """Slugs a live test (`rlive_market`) or the probe of reports/72 (`probe_start`) quoted in the last `hours`."""
+def recent_markets(dirs, hours, now=None, marks=('"rlive_market"', '"probe_start"')):
+    """Slugs a live test (`rlive_market`) or the probe of reports/72 (`probe_start`) quoted in the last `hours`.
+    With marks = FILL_MARKS and the paper farmer's journal: slugs where a quote of this rule was FILLED (reports/72: the
+    second live test took a market where the paper bot had been filled on the same bid two hours earlier, and the real
+    bid was hit 0.1 s after it was placed: somebody there knows more than the last trade)."""
     now = now if now is not None else time.time()
     out = set()
     for d in dirs:
         for f in sorted(glob.glob(os.path.join(d, "*", "events.jsonl"))):
             try:
+                if os.path.getmtime(f) < now - hours * 3600:
+                    continue                               # a run that ended before the window: nothing recent in it
                 for line in open(f):
-                    if '"rlive_market"' not in line and '"probe_start"' not in line:
+                    if not any(m in line for m in marks):
                         continue
                     e = json.loads(line)
                     if now - e.get("t", 0) <= hours * 3600:
@@ -480,14 +486,17 @@ def recent_markets(dirs, hours, now=None):
     return out
 
 
+FILL_MARKS = ('"rfill"', '"rlive_fill"')
+
+
 def choose_market(picks, lc, now=None, skip=()):
     """The first of the ranked picks that fits the test, or None. `picks` come from mk.select (book priced)."""
     now = now if now is not None else time.time()
     for c in picks:
         if c.slug in skip and c.slug != lc.slug:
             continue                                       # quoted by a test in the last days: take a new sample
-        if lc.calm_days and mk.date_passed(c.question, now + lc.calm_days * 86400):
-            continue                                       # every date it names is within the next days: news market
+        if lc.calm_days and mk.date_near(c.question, lc.calm_days, now):
+            continue                                       # it names a date (or a week starting) within the next days
         if lc.slug and c.slug != lc.slug:
             continue
         if abs(c.tick - 0.01) > 1e-9 or c.size > lc.max_shares + 1e-9 or c.capital > lc.max_open_usd + 1e-9:
@@ -586,6 +595,8 @@ class LiveFarmer(Farmer):
                                min_rate=max(self.rc.min_rate, self.lc.min_rate))
                 picks = await asyncio.to_thread(self._select, wide, None)
                 skip = recent_markets([self.rc.journal_dir, PROBE_JOURNAL], self.lc.fresh_hours) if self.lc.fresh_hours else set()
+                if self.lc.fresh_hours:                    # ... and markets where this rule's quote was filled, paper or live
+                    skip |= recent_markets([PAPER_JOURNAL, self.rc.journal_dir], self.lc.fresh_hours, marks=FILL_MARKS)
                 c = choose_market(picks, self.lc, skip=skip)
                 if c is None:
                     self.journal.log("rlive_no_market", test_kind=self.lc.kind, looked_at=len(picks), skipped=len(skip))

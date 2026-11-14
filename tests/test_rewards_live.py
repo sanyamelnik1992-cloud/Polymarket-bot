@@ -339,6 +339,37 @@ def test_markets_quoted_by_a_recent_test_or_probe_are_skipped(tmp_path):
     assert choose_market(picks, LiveCfg(kind="alone", slug="alone"), skip=skip).slug == "alone"      # asked for by name
 
 
+def test_markets_where_the_rule_was_filled_or_a_week_starts_soon_are_skipped(tmp_path):
+    """reports/72, second live test (14 Nov 20:30 UTC): the market "... any day week of November 16?" passed the calm filter
+    (the week ENDS 8 days ahead) although the paper bot had been filled there on the same NO bid two hours earlier; the real
+    bid was hit 0.1 s after it was placed."""
+    from pmbot.rewards import markets as mk
+    from pmbot.rewards.live import FILL_MARKS, recent_markets
+    now = 1794688200                                                    # 14 Nov 2026 20:30 UTC
+    q = "Will 3+ ships transit the Strait of Hormuz on any day week of November 16?"
+    assert mk.date_near(q, 7, now) and not mk.date_near(q, 1, now)
+    assert mk.date_near("Will Trump's approval rating be at least 38.0 on November 20, 2026?", 7, now)
+    assert not mk.date_near("Will X happen by December 31, 2026?", 7, now) and not mk.date_near("Will X win?", 7, now)
+    hormuz = rmarket("hormuz")
+    hormuz.question = q
+    assert choose_market([hormuz, rmarket("alone")], LiveCfg(kind="alone"), now=now).slug == "alone"
+    for d, ev in (("paper/20261114-1", {"type": "rfill", "t": now - 6500, "key": "eaten", "side": "N", "price": 0.37}),
+                  ("paper/20261114-1", {"type": "rquote", "t": now - 60, "key": "quoted-only"}),
+                  ("live/20261114-2", {"type": "rlive_fill", "t": now - 30, "key": "hit-live"}),
+                  ("paper/20261110-1", {"type": "rfill", "t": now - 4 * 86400, "key": "long-ago"})):
+        p = tmp_path / d
+        p.mkdir(parents=True, exist_ok=True)
+        with open(p / "events.jsonl", "a") as f:
+            f.write(json.dumps(ev) + "\n")
+    os.utime(tmp_path / "paper/20261114-1" / "events.jsonl", (now, now))
+    os.utime(tmp_path / "live/20261114-2" / "events.jsonl", (now, now))
+    os.utime(tmp_path / "paper/20261110-1" / "events.jsonl", (now - 4 * 86400, now - 4 * 86400))
+    skip = recent_markets([str(tmp_path / "paper"), str(tmp_path / "live")], 48, now=now, marks=FILL_MARKS)
+    assert skip == {"eaten", "hit-live"}
+    picks = [rmarket("eaten"), rmarket("quoted-only")]
+    assert choose_market(picks, LiveCfg(kind="alone"), now=now, skip=skip).slug == "quoted-only"
+
+
 # ---------------------------------------------------------------- the farmer on one market
 def live_farmer(tmp_path, picks=None, **lc):
     rc, base = load_rewards_live_config(CFG, live_flag=True)
