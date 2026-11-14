@@ -37,6 +37,7 @@ max_shares = 20               # one order = the usual rewards minimum size
 price_lo = 0.30               # the market's price: a filled bid is then at most 20 shares at ~0.66 = $13 in the wallet
 price_hi = 0.70
 min_rate = 20
+calm_days = 7                 # no question about a date in the next 7 days ("... on November 16?"): a calm market for the test
 reserve_usd = 40              # collateral that must stay free on top: the lock bots trade from the same wallet
 order_ttl_s = 1200            # every order expires by itself after 20 min; a fresh one replaces it 5 min earlier
 refresh_before_s = 300

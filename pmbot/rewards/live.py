@@ -45,6 +45,8 @@ class LiveCfg:
     price_lo: float = 0.30          # price of YES of the market we pick: a filled bid then costs at most
     price_hi: float = 0.70          # max_shares * ~0.70
     min_rate: float = 20.0          # $/day pool: 3 hours of a $20 pool are $2.50 by time, above the $1 payout minimum
+    calm_days: float = 7.0          # skip questions about a date in the next N days ("... on November 16?" two days
+                                    # ahead): the market's own end date is often weeks later, the news is not
     reserve_usd: float = 40.0       # collateral that must stay free on top of our orders (lock bots, same wallet)
     order_ttl_s: float = 1200.0     # every order expires by itself after this long (GTD); refreshed before it does
     refresh_before_s: float = 300.0  # ... when this little of its life is left (the exchange wants >= 3 min ahead)
@@ -120,6 +122,7 @@ class RewardsLiveBroker:
         self.fatal = ""                   # 401 / 403 from the API: stop the test
         self.suspect = False              # an order call ended without an answer: an order may rest unknown to us
         self.backoff_until = 0.0
+        self.place_after = 0.0            # monotonic: no new order before this (after a refusal by the exchange)
         self.stream_ok = False
         self.hb_ok_at = 0.0
         self._hb_id = ""
@@ -161,8 +164,14 @@ class RewardsLiveBroker:
                 await self.cancel(list(self.orders), None)
             except Exception as e:  # noqa: BLE001
                 self.log("rlive_error", where="stop_cancel", error=str(e)[:200])
-            await self.sweep()
-            left = await self.open_orders()
+            for attempt in range(3):                       # an order call cut off in flight may land a moment later
+                await self.sweep()
+                await asyncio.sleep(1.0)
+                left = await self.open_orders()
+                if left == 0:
+                    break
+            if left:
+                self.log("rlive_error", where="stop", error=f"{left} orders still open after the sweep")
         finally:
             for t in self._tasks:
                 t.cancel()
@@ -258,7 +267,7 @@ class RewardsLiveBroker:
     async def place(self, token, key, side, price, size, now_ms, queue_ahead=None):
         """One post-only GTD BUY, or None (refused by our limits or by the exchange; nothing rests then)."""
         lc = self.lc
-        if self._stopping or self.fatal or self.suspect:
+        if self._stopping or self.fatal or self.suspect or time.monotonic() < self.place_after:
             return None
         if side not in ("Y", "N") or not token:
             return self.refuse("bad_side", side=side)
@@ -284,8 +293,10 @@ class RewardsLiveBroker:
         except Exception as e:  # noqa: BLE001
             if getattr(e, "status", None) == 400:         # refused, nothing was created
                 msg = str(e)
+                cross = "crosses book" in msg
                 self.log("order_rejected", token=token, key=key, side=side, price=price, size=size,
-                         code="post_only_would_cross" if "crosses book" in msg else "http_400", message=msg[:200])
+                         code="post_only_would_cross" if cross else "http_400", message=msg[:200])
+                self.place_after = time.monotonic() + (5 if cross else 30)     # a refusal is not retried every 2 s
                 return None
             self.note_error("place", e)
             self.suspect = True                            # no answer: the order may exist. Stop and sweep the market
@@ -296,8 +307,7 @@ class RewardsLiveBroker:
             code = getattr(resp, "code", "?")
             self.log("order_rejected", token=token, key=key, side=side, price=price, size=size, latency_ms=lat,
                      code=code, message=str(getattr(resp, "message", ""))[:200])
-            if code == "not_enough_balance":
-                self.backoff_until = max(self.backoff_until, time.monotonic() + 60)
+            self.place_after = time.monotonic() + (60 if code == "not_enough_balance" else 30)
             return None
         o = LiveOrder(token, key, side, price, size, now, exp)
         self.orders[resp.order_id] = o
@@ -337,6 +347,10 @@ class RewardsLiveBroker:
             return 0.0
         matched = float(getattr(x, "size_matched", 0) or 0)
         q = matched - (o.size - o.remaining)
+        status = str(getattr(x, "status", "") or "").upper()
+        if oid in self.orders and any(w in status for w in ("CANCEL", "EXPIRE", "INVALID")):
+            self.orders.pop(oid, None)                     # the exchange removed it (heartbeat lapse, expiry): place again
+            self.log("order_gone", order_id=oid, status=status)
         if q <= 1e-9:
             return 0.0
         o.remaining -= q
@@ -439,9 +453,12 @@ class RewardsLiveBroker:
             return None
 
 
-def choose_market(picks, lc):
+def choose_market(picks, lc, now=None):
     """The first of the ranked picks that fits the test, or None. `picks` come from mk.select (book priced)."""
+    now = now if now is not None else time.time()
     for c in picks:
+        if lc.calm_days and mk.date_passed(c.question, now + lc.calm_days * 86400):
+            continue                                       # every date it names is within the next days: news market
         if lc.slug and c.slug != lc.slug:
             continue
         if abs(c.tick - 0.01) > 1e-9 or c.size > lc.max_shares + 1e-9 or c.capital > lc.max_open_usd + 1e-9:
@@ -634,7 +651,6 @@ class LiveFarmer(Farmer):
         self.journal.log("start", mode="live", bot="rewards-live", test_kind=self.lc.kind, minutes=self.lc.minutes,
                          max_open_usd=self.lc.max_open_usd, max_shares=self.lc.max_shares,
                          balance=round(self.broker.balance_usd, 2))
-        day = utc_day(self.t_start)
         yday = utc_day(self.t_start - 86400)
         check = await self.broker.reward_state("", [])     # a read-only call before any order: are these endpoints ours
         self.journal.log("rlive_check", pct_ok="pct" in check, markets_with_pct=check.get("markets_with_pct"),
@@ -656,14 +672,17 @@ class LiveFarmer(Farmer):
                     pass
             self._stop = True
         finally:
+            self._stop = True
+            self.broker._stopping = True                   # no new order from here on, whatever is still running
+            for t in tasks:                                # the quote loop first: it must not place while we cancel
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
             for ms in self.markets.values():
                 try:
                     await self.pull(ms, "stop")
                 except Exception as e:  # noqa: BLE001
                     self.journal.log("rlive_error", where="pull", error=str(e)[:200])
             left = await self.broker.stop()
-            for t in tasks:
-                t.cancel()
         st = self.status()
         self.journal.log("rstatus", **st)
         self.journal.log("rmarkets", markets=self.market_stats())

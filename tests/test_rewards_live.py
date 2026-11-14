@@ -57,6 +57,7 @@ class FakeClient:
         self.place_error = None
         self.earn = []
         self.matched = {}                # order id -> shares the exchange says were matched
+        self.status = {}                 # order id -> status in the exchange's record (default LIVE)
 
     async def get_balance_allowance(self, asset_type):
         return types.SimpleNamespace(balance=self.balance)
@@ -87,7 +88,8 @@ class FakeClient:
 
     async def get_order(self, order_id):
         self.calls.append(("get_order", order_id))
-        return types.SimpleNamespace(size_matched=str(self.matched.get(order_id, 0)), status="LIVE")
+        return types.SimpleNamespace(size_matched=str(self.matched.get(order_id, 0)),
+                                     status=self.status.get(order_id, "LIVE"))
 
     def list_open_orders(self, asset_id=None, **kw):
         return Pager([k for k, v in self.open.items() if v["asset_id"] == asset_id])
@@ -202,10 +204,19 @@ def test_order_count_is_capped_and_an_unanswered_order_stops_everything():
         err.status = 400
         d.client.place_error = err                                     # a clean refusal: nothing exists, try later
         assert await d.place("Y", "m", "Y", 0.46, 20, 0) is None and not d.suspect and not d.fatal
+        n = len(d.client.calls)
+        assert await d.place("Y", "m", "Y", 0.46, 20, 0) is None and len(d.client.calls) == n      # ... not at once
+        assert d.health()[0] is True and d.placed == 1                  # the other side is not pulled for it
+        d.place_after = 0.0
         e401 = RuntimeError("unauthorized")
         e401.status = 401
         d.client.place_error = e401
         assert await d.place("Y", "m", "Y", 0.46, 20, 0) is None and d.fatal
+        g = broker()                                                    # an order the exchange removed is forgotten
+        oid = await g.place("Y", "m", "Y", 0.46, 20, 0)
+        g.client.status[oid] = "CANCELED"
+        assert await g.reconcile() == 0 and oid not in g.orders
+        assert await g.place("Y", "m", "Y", 0.46, 20, 0) == "o2"        # ... so the side can be quoted again
     run(scenario())
 
 
@@ -302,6 +313,14 @@ def test_choose_market_takes_the_first_that_fits_the_test():
     assert choose_market(picks, LiveCfg(kind="any", slug="alone")).slug == "alone"
     assert choose_market(picks[:5], LiveCfg(kind="any")) is None
     assert choose_market(picks, LiveCfg(kind="any", slug="cheap")) is None       # a named market must still fit
+    soon = rmarket("soon")
+    soon.question = "Will Ukraine target Moscow on November 16, 2026?"
+    now = 1794650000                                                    # 14 Nov 2026: the question is two days ahead
+    assert choose_market([soon, rmarket("alone")], LiveCfg(kind="alone"), now=now).slug == "alone"
+    assert choose_market([soon], LiveCfg(kind="alone", calm_days=0), now=now).slug == "soon"
+    later = rmarket("later")
+    later.question = "Will X happen by December 31, 2026?"
+    assert choose_market([later], LiveCfg(kind="alone"), now=now).slug == "later"
 
 
 # ---------------------------------------------------------------- the farmer on one market

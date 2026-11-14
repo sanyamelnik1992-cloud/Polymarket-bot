@@ -208,6 +208,23 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   kinds, the competitiveness cap. In a selection of 14 Nov 41 of 45 markets had official competitiveness 0: the "cautious" part
   also rests on nearly empty pools, so the live $20 test (report 68 section 8, step 2) is the next real step; REWARD payouts in
   the public Data API are one sum per wallet per day, no per-market breakdown, so public data cannot answer it.
+  **LIVE TEST of the rewards rule, REAL MONEY (report 68 section 12; owner 14 Nov: "давай все делай под реальные деньги, будем
+  тестировать")**: unit `pmbot-rewards-live` = `config/rewards_live.toml`, `scripts/run_rewards_live.py --live`,
+  `pmbot/rewards/live.py` (`RewardsLiveBroker`, `LiveFarmer`, `choose_market`), listed in `ops.REWARD_LIVE_UNITS`. A TEST, not a
+  bot: ONE market (price 0.30-0.70, pool >= $20, no question about a date in the next 7 days), the paper rule's two bids
+  of 20 shares (~$18 resting), 180 minutes, the first fill ends it (no hedge, no
+  merge, the shares stay in the wallet). It reads the exchange's own numbers every minute (`get_reward_percentages`,
+  `get_orders_scoring`) next to the paper estimate (journal `rlive`, `rlive_market`, `rlive_fill`, `rlive_done`); what the
+  exchange credited per market per day is read by `scripts/wallet_balance.py` into `data/state/wallet.json` (`rewards`:
+  numbers and public condition ids only). Telegram: `/restart pmbot-rewards-live` starts one test, `/rlive` shows it. Never
+  enabled at boot, `Restart=no`, NOT in the auto-update restart list. Rules to keep: it never calls cancel-all (the wallet is
+  shared with the lock bots; orders are cancelled by id, then by the market's two tokens), it starts only with >= $60 free
+  ($20 of orders + $40 reserve), the broker itself refuses more than 20 shares / $20 resting / a third order / 300 orders a
+  run, orders are post-only GTD (20 min) with the order heartbeat, an unanswered order call or a 401/403 ends the test, fills
+  the stream missed are found by `account()` / `reconcile()`. The config loader caps the limits (<= $60, <= 60 shares, <= 24 h):
+  growing it into a bot is a separate decision of the owner and needs a hedge and merge that do not exist yet. Journal field
+  names must not be `kind` (`Journal.log(kind, **kw)`: the first version crashed in a test on that). How to read the result:
+  section 12 (whole pool vs by the minute vs nothing).
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
