@@ -36,6 +36,7 @@ class RMarket:
     price: float = 0.5       # displayed price at selection: the MIDDLE of the book when it is wide (not a price!)
     last_trade: float | None = None  # YES price of the last trade at selection (CLOB /last-trades-prices)
     comp: float = 0.0        # official competitiveness at selection (total score per $1 of the daily pool)
+    vol: float = 0.0         # $ traded in 24 h at selection (the report groups fills by it)
     est_share: float = 0.0
     est_reward: float = 0.0  # $ per day at selection (the lower of the book and the official estimate)
     capital: float = 0.0     # pUSD our two bids need
@@ -241,7 +242,8 @@ def candidates(raw_markets, rc, now=None):
             continue
         rm = RMarket(slug=m.get("market_slug") or m["condition_id"], question=q[:120], condition_id=m["condition_id"],
                      yes=toks[0]["token_id"], no=toks[1]["token_id"], rate=rate, v=v, min_size=min_size, end_ts=e,
-                     price=price, comp=comp, size=size, est_share=share, est_reward=rate * share)
+                     price=price, comp=comp, size=size, est_share=share, est_reward=rate * share,
+                     vol=float(m.get("volume_24hr") or 0))
         out.append(rm)
     return out
 

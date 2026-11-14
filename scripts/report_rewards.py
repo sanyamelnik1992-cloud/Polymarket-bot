@@ -40,7 +40,7 @@ def main(path):
     off = defaultdict(float)
     alone = defaultdict(float)
     samples = defaultdict(lambda: [0, 0])
-    fills, settles, hedges, days = [], [], [], []
+    fills, settles, hedges, days, merges, gone = [], [], [], [], [], []
     per_market = {}                      # run start -> the last per-market table of that run
     starts = []
 
@@ -69,6 +69,10 @@ def main(path):
             days.append(e)
         elif k == "rmarkets":
             per_market[run_of(e)] = e.get("markets") or []
+        elif k == "rmk":                 # a market the bot stopped following: its totals, once
+            gone.append(e)
+        elif k == "rmerge":
+            merges.append(e)
         elif k == "rstatus":
             last_status = e
         elif k == "select":
@@ -119,7 +123,7 @@ def main(path):
     for f in fills[-15:]:
         print(f"  {fmt(f['t'])} {f['key'][:55]:55s} {'YES' if f['side'] == 'Y' else 'NO '} "
               f"{f['size']:g}@{f['price']:.3f} last_trade={f.get('last_trade')}{' (alone in the zone)' if f.get('alone') else ''}")
-    rows = [m for tab in per_market.values() for m in tab]
+    rows = [m for tab in per_market.values() for m in tab] + gone
     if rows:
         def line(name, sel):
             if not sel:
@@ -134,6 +138,31 @@ def main(path):
         line("with other makers in the zone", [m for m in rows if not m["alone"] > 0.5 * m["reward"]])
         line("never filled", [m for m in rows if m["fills"] == 0])
         line("filled", [m for m in rows if m["fills"] > 0])
+        feat = [m for m in rows if "vol" in m]                # journals since 14 Nov carry what a market looked like
+        if feat:
+            print("\nby kind of market at selection (journals since 14 Nov; $/h = per quoted market-hour):")
+
+            def group(name, key, edges):
+                print(f"  {name}:")
+                for lo, hi in zip(edges, edges[1:]):
+                    sel = [m for m in feat if m.get(key) is not None and lo <= m[key] < hi]
+                    hrs = sum(m["quoted_min"] for m in sel) / 60
+                    if not sel or hrs <= 0:
+                        continue
+                    rew = sum(m["reward"] for m in sel)
+                    al = sum(m["alone"] for m in sel)
+                    tr = sum(m["hedge_pnl"] + m["open_pnl"] for m in sel)
+                    nf = sum(m["fills"] for m in sel)
+                    label = "0" if hi < 1e-6 else f"{0 if lo < 1e-6 else lo:g}..{hi:g}" if hi < 1e4 else f"{lo:g}+"
+                    print(f"    {label}".ljust(18) + f"{len(sel):4d} markets {hrs:7.1f} h  rewards ${rew:8.2f} (alone "
+                          f"${al:8.2f})  trading ${tr:+8.2f}  fills {nf:3d} = {nf / hrs:.2f}/h  "
+                          f"not alone ${(rew - al) / hrs:+.2f}/h  trading ${tr / hrs:+.2f}/h")
+            group("competitiveness (others' score per $1 of pool)", "comp", [0, 1e-9, 0.1, 0.3, 1, 1e9])
+            group("24 h volume, $", "vol", [0, 1, 50, 200, 500, 1e9])
+            group("days to the end", "days", [0, 4, 8, 20, 60, 400, 1e5])
+            group("price of YES", "price", [0, 0.2, 0.4, 0.6, 0.8, 1.01])
+            group("pool, $ a day", "rate", [0, 20, 40, 80, 1e9])
+            group("rewards min size, shares", "min_size", [0, 21, 51, 1e9])
         worst = sorted(rows, key=lambda m: m["hedge_pnl"] + m["open_pnl"])[:8]
         print("  worst by trading:")
         for m in worst:
@@ -147,6 +176,18 @@ def main(path):
         for h in hedges[-10:]:
             print(f"  {fmt(h['t'])} {h['key'][:55]:55s} bought {'NO ' if h['buy'] == 'N' else 'YES'} "
                   f"{h['size']:g}@{h['price']:.3f} held@{h['held']:.3f} cost/share {h['cost_per_share']:+.4f}")
+    if merges:
+        def mline(name, sel):
+            if sel:
+                n = sum(m.get("pairs", 0) for m in sel)
+                pnl = sum(m.get("pnl", 0) for m in sel)
+                print(f"  {name:34s} {len(sel):3d} for {n:7.1f} pairs  ${pnl:+8.2f} = {100 * pnl / max(n, 1e-9):+.1f}c a pair")
+        print("\npairs closed by our own bids (no taker fee), by the time since the fill:")
+        aged = [m for m in merges if m.get("age_s") is not None]
+        mline("all", merges)
+        mline("within 30 min", [m for m in aged if m["age_s"] < 1800])
+        mline("30 min - 3 h", [m for m in aged if 1800 <= m["age_s"] < 10800])
+        mline("after 3 h (the bid follows the price)", [m for m in aged if m["age_s"] >= 10800])
     print(f"\nsettlements: {len(settles)}, realised ${sum(e.get('pnl', 0) for e in settles):.2f}")
     for e in settles[-10:]:
         print(f"  {fmt(e['t'])} {e['key'][:55]:55s} yes {e['yes']:g} no {e['no']:g} cost {e['cost']:.2f} "

@@ -194,6 +194,20 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   once (`merge_pairs`, journal `rmerge`), the exit bid ignores the budget. Telegram: `/r` = R's money in detail (today, total, by day
   from `rday`, positions, stop), `/rhow` = plain explanation (`notify.REWARDS_HOW`), R line in the digest. Nearly all income is now from (almost) empty
   pools: the part only a live test can confirm.
+  14 Nov (report 68 section 11, `reports/68_tools/server_hist.py` + `server_markout.py` rebuild the bot's history, fills and
+  post-fill prices from the hourly reports): 49 h on the server = rewards estimate +$2030 ($1406 alone), trading -$334, cautious
+  +$291, unpaired inventory $378 at cost ($280 at the mark). The rules of 13 Nov did NOT cut the fills (8.5/h vs 7.5/h) or the
+  inventory; rewards per hour fell by a third (cause not visible in the old report). Facts: an opening fill is 3.5c a share
+  against us at once and it stays (adverse selection, ~$0.70 a fill, the same alone or not); a taker hedge costs 3.8c (holding
+  the same positions: 1.7c); the EXIT BID closed 33 positions at -11.2c while holding them was -3.6c (exits within 30 min: -12c
+  vs +2c; after 3 h: -9c vs -8c; t = -3.3): right after a fill the reference price is the sweep that filled us. Hence
+  `exit_patience_h = 3` (for 3 h after the fill the exit bid pays at most what makes the pair cost 1 + `max_hedge_cost`, then
+  it follows the price; `Position.t`, `Farmer.exit_cap`). The journal now has `rmk` (a market's totals when it is dropped) and
+  market features in `rmarkets` (comp, vol, days, price, pool), `exit` on `rquote`, `age_s` on `rmerge`; the hourly report
+  prints "by kind of market" and "pairs closed by our own bids". Not changed for lack of data: the 0.80-0.90 price zone, market
+  kinds, the competitiveness cap. In a selection of 14 Nov 41 of 45 markets had official competitiveness 0: the "cautious" part
+  also rests on nearly empty pools, so the live $20 test (report 68 section 8, step 2) is the next real step; REWARD payouts in
+  the public Data API are one sum per wallet per day, no per-market breakdown, so public data cannot answer it.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
