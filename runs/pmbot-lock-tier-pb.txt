@@ -1,24 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-pb/20261113-093556
-mode: paper  duration: 925.1 min  events: {'start': 1, 'status': 1849, 'lock_state': 10807, 'strike': 736, 'lock_miss': 10, 'fill': 11, 'lock_entry': 11, 'provisional': 11, 'settle': 11, 'kill': 1}
+mode: paper  duration: 986.1 min  events: {'start': 1, 'status': 1971, 'lock_state': 11405, 'strike': 784, 'lock_miss': 10, 'fill': 12, 'lock_entry': 12, 'provisional': 12, 'settle': 12, 'kill': 1}
 
-lock orders: sent 21  filled 11  ask gone 10  errors 0
-  signal -> exchange answer, ms: median 302  p90 320  max 665
-  fill price minus the ask we saw, cents: mean -0.82  worst +1.0
+lock orders: sent 22  filled 12  ask gone 10  errors 0
+  signal -> exchange answer, ms: median 303  p90 320  max 665
+  fill price minus the ask we saw, cents: mean -0.75  worst +1.0
   misses came 16-60 s before the end; model p 0.954-0.992
 
-fills: 11  shares: 46  notional: $43.04
+fills: 12  shares: 48  notional: $44.90
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        2     4.0      3.66      0.915  260.373
 eth        7    38.0     35.82      0.936  255.324
-sol        2     4.0      3.56      0.890  259.122
+sol        3     6.0      5.42      0.903  249.647
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
 btc          2   3.682  0.318          0.318     0.0     1.000  0.131  0.187  0.086
 eth          7  35.964 -9.964         -9.964     0.0     0.714 -9.440  0.467 -0.277
-sol          2   3.587 -1.587         -1.587     0.0     0.500 -1.850  0.263 -0.442
+sol          3   5.456 -1.456         -1.456     0.0     0.667 -1.850  0.263 -0.267
 
-TOTAL pnl $-11.23 (ex-rebate $-11.23) on cost $43.23 -> ROI -25.98%; windows 11, t-stat -1.16
+TOTAL pnl $-11.10 (ex-rebate $-11.10) on cost $45.10 -> ROI -24.61%; windows 12, t-stat -1.14
 max drawdown $-11.36; hedged windows (both sides filled): 0

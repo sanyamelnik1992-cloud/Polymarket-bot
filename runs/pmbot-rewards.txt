@@ -1,68 +1,65 @@
-journal data/journal-rewards: 40.4 h of events, 11-12 08:36 -> 11-14 01:01 UTC
-now: markets 45, quoting 46, bids $636.72, feed ok, pool rate at current shares $835.63/day
-rewards (estimate by the book): today $35.33, total $1749.594; by Polymarket's competitiveness: total $2176.186; earned alone in a zone: total $1221.15; stress (one more identical maker): total $929.912
-hedges: 177 for 3234.4 shares, lost $100.5; inventory not hedged yet: $358.87
-positions: value $249.82 cost $358.88 -> open $-109.07; realised $-179.71; trading $-288.77 (today 3.85)
-TOTAL (rewards estimate + trading): $1460.82; CAUTIOUS (lower estimate, without the part earned alone, + trading): $239.67; fills total 328
+journal data/journal-rewards: 41.4 h of events, 11-12 08:36 -> 11-14 02:02 UTC
+now: markets 44, quoting 48, bids $659.15, feed ok, pool rate at current shares $839.26/day
+rewards (estimate by the book): today $68.834, total $1783.098; by Polymarket's competitiveness: total $2224.81; earned alone in a zone: total $1240.054; stress (one more identical maker): total $948.396
+hedges: 180 for 3271.0 shares, lost $101.12; inventory not hedged yet: $355.3
+positions: value $247.39 cost $355.32 -> open $-107.92; realised $-184.9; trading $-292.83 (today -0.21)
+TOTAL (rewards estimate + trading): $1490.27; CAUTIOUS (lower estimate, without the part earned alone, + trading): $250.22; fills total 338
 
 top markets by estimated reward:
-  $  37.13  share 1.00  pool $62/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
-  $  30.33  share 1.00  pool $49/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
-  $  17.89  share 0.00  pool $73/d  empty will-south-african-inflation-be-between-4pt7-and-5pt0-in-202
-  $  15.07  share 1.00  pool $50/d  empty will-sabrina-carpenter-perform-at-coachella-2027
-  $  15.04  share 0.00  pool $84/d  empty will-who-s-dat-girl-ayra-starr-and-rema-win-best-global-musi
-  $  14.19  share 0.99  pool $28/d  will-connor-closs-come-in-third-place-on-the-voice-season-30
+  $  39.56  share 1.00  pool $54/d  empty will-there-be-exactly-3-codex-weekly-usage-limit-resets-in-t
+  $  32.37  share 1.00  pool $49/d  empty will-ukmto-publish-8-11-notices-between-november-9-november-
+  $  17.15  share 1.00  pool $50/d  empty will-sabrina-carpenter-perform-at-coachella-2027
+  $  15.04  share 0.00  pool $85/d  empty will-who-s-dat-girl-ayra-starr-and-rema-win-best-global-musi
+  $  14.88  share 0.28  pool $26/d  will-connor-closs-come-in-third-place-on-the-voice-season-30
+  $  10.72  share 0.00  pool $35/d  empty will-morena-win-the-most-seats-in-the-2027-yucatan-congress-
   $  10.69  share 0.00  pool $58/d  will-the-democrats-win-wisconsin-in-the-2028-presidential-el
-  $   9.98  share 1.00  pool $35/d  empty will-morena-win-the-most-seats-in-the-2027-yucatan-congress-
-  $   7.32  share 0.66  pool $40/d  will-the-pitt-win-best-television-series-drama-at-the-84th-g
-  $   6.55  share 0.00  pool $48/d  empty will-dinastia-peso-pluma-and-tito-double-p-win-best-musica-m
-  $   6.54  share 0.00  pool $46/d  will-the-gospel-of-christmas-be-the-2-us-netflix-movie-this-
-  $   5.55  share 0.00  pool $35/d  will-pan-win-the-most-seats-in-the-2027-queretaro-congress-e
+  $   8.52  share 0.83  pool $41/d  will-the-pitt-win-best-television-series-drama-at-the-84th-g
+  $   6.63  share 1.00  pool $50/d  empty will-bts-perform-at-coachella-2027
+  $   6.54  share 0.00  pool $49/d  empty will-the-gospel-of-christmas-be-the-2-us-netflix-movie-this-
+  $   5.27  share 0.00  pool $39/d  empty will-salahdine-parnasse-fight-rafael-fiziev-next
+  $   4.43  share 0.00  pool $50/d  empty will-marved-play-for-kru-esports-in-2027
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
   2026-11-13: book $1090.94, official $1428.76, alone $706.86 | hedges 103 ($49.44) | trading $-155.05, cautious net $+229.04 | samples 1432, avg markets scoring 31.8
-  2026-11-14: book $35.33, official $54.74, alone $23.34 | hedges 5 ($2.09) | trading: day not closed | samples 61, avg markets scoring 35.1
+  2026-11-14: book $68.83, official $103.36, alone $42.25 | hedges 8 ($2.70) | trading: day not closed | samples 122, avg markets scoring 33.7
 
-last selection: 45 markets of 65 priced, capital $838.22, est $1718.85/day, empty books 22
+last selection: 44 markets of 66 priced, capital $819.66, est $1500.87/day, empty books 22
 
-fills: 328 (material 320)
-  11-13 22:50 will-the-5-year-treasury-yield-hit-5pt03-in-november    NO  20@0.510 last_trade=None
-  11-13 22:52 white-house-of-tweets-november-10-november-17-2026-180- NO  5@0.690 last_trade=0.35 (alone in the zone)
-  11-13 23:07 will-who-s-dat-girl-ayra-starr-and-rema-win-best-global YES 20@0.184 last_trade=None (alone in the zone)
-  11-13 23:31 faa-outage-attributed-to-ai                             YES 20@0.300 last_trade=0.29000000000000004
-  11-13 23:38 faa-outage-attributed-to-ai                             NO  20@0.760 last_trade=0.23
-  11-13 23:39 faa-ground-stop-cause-telecom-carrier-or-contractor-fau YES 20@0.510 last_trade=0.5
-  11-13 23:40 will-gas-hit-3pt60-low-by-november-30-2026              YES 20@0.560 last_trade=0.56
-  11-13 23:40 will-openais-valuation-be-between-1pt30t-and-1pt45t-at- NO  20@0.700 last_trade=None
-  11-13 23:49 will-pholks-leon-thomas-win-best-progressive-randb-albu NO  20@0.740 last_trade=0.27
-  11-14 00:09 will-pierre-cere-win-the-2026-rosemontla-petite-patrie- YES 17.69@0.300 last_trade=None
+fills: 338 (material 330)
   11-14 00:13 will-south-african-inflation-be-between-4pt7-and-5pt0-i YES 20@0.379 last_trade=0.355
   11-14 00:29 will-widow-s-bay-win-best-television-series-comedy-or-m NO  5.6341@0.200 last_trade=0.82
   11-14 00:34 will-canadas-november-2026-unemployment-rate-be-6pt9    NO  5.79@0.830 last_trade=0.18000000000000005
   11-14 00:52 will-pp-win-the-most-seats-in-ciudad-real-in-the-2026-s NO  20@0.160 last_trade=0.84
   11-14 00:56 will-netherlands-be-top-5-in-the-world-happiness-report YES 20@0.330 last_trade=0.30000000000000004
+  11-14 01:03 will-iceland-be-2nd-in-the-world-happiness-report-2027  NO  9.99@0.540 last_trade=0.47
+  11-14 01:17 autozone-q1-domestic-same-store-sales-growth-2pt5-to-3p NO  20@0.740 last_trade=None
+  11-14 01:21 will-south-african-inflation-be-between-4pt7-and-5pt0-i NO  20@0.700 last_trade=0.31
+  11-14 01:25 will-widow-s-bay-win-best-television-series-comedy-or-m YES 9@0.790 last_trade=0.79
+  11-14 01:26 will-the-ornn-rtx-5090-index-be-between-0pt60-and-0pt65 YES 15.1@0.120 last_trade=None
+  11-14 01:33 will-openais-frontier-output-token-price-be-at-or-below NO  20@0.310 last_trade=None (alone in the zone)
+  11-14 01:39 will-gpt-astra-output-price-be-30-or-below-in-2026      NO  20@0.640 last_trade=0.38
+  11-14 01:49 autozone-q1-domestic-same-store-sales-growth-2pt5-to-3p YES 20@0.360 last_trade=0.33999999999999997
+  11-14 01:49 will-pierre-cere-win-the-2026-rosemontla-petite-patrie- YES 17.69@0.290 last_trade=None
+  11-14 01:57 will-home-depot-q3-comparable-sales-growth-be-between-2 YES 20@0.210 last_trade=0.19999999999999996
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    278 markets  rewards $  795.86  trading $ -200.77  net $ +595.10  fills 131  quoted  576.8 market-hours
-  mostly alone in the zone               132 markets  rewards $  701.90  trading $  -86.21  net $ +615.69  fills  49  quoted  372.5 market-hours
-  with other makers in the zone          146 markets  rewards $   93.96  trading $ -114.56  net $  -20.59  fills  82  quoted  204.3 market-hours
-  never filled                           170 markets  rewards $  530.23  trading $  -24.22  net $ +506.01  fills   0  quoted  293.6 market-hours
-  filled                                 108 markets  rewards $  265.63  trading $ -176.54  net $  +89.09  fills 131  quoted  283.2 market-hours
+  all                                    274 markets  rewards $  787.32  trading $ -202.53  net $ +584.80  fills 132  quoted  588.6 market-hours
+  mostly alone in the zone               129 markets  rewards $  689.74  trading $  -86.53  net $ +603.22  fills  48  quoted  374.2 market-hours
+  with other makers in the zone          145 markets  rewards $   97.58  trading $ -116.00  net $  -18.42  fills  84  quoted  214.4 market-hours
+  never filled                           167 markets  rewards $  539.50  trading $  -24.22  net $ +515.28  fills   0  quoted  302.5 market-hours
+  filled                                 107 markets  rewards $  247.81  trading $ -178.31  net $  +69.51  fills 132  quoted  286.1 market-hours
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $  -7.40  rewards $  0.12  fills 1  pool $50/d  Will Trump's approval rating be at least 37.0 on November 20
-    $  -7.00  rewards $  6.54  fills 1  pool $46/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
+    $  -7.00  rewards $  6.54  fills 1  pool $49/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
     $  -6.80  rewards $  5.25  fills 1  pool $51/d  Will the Republicans win Tennessee in the 2028 Presidential 
     $  -6.74  rewards $  0.05  fills 0  pool $40/d  Will the 2-year Treasury yield dip below 4.44% in November?
     $  -6.50  rewards $  4.67  fills 2  pool $24/d  Will Anthropic’s valuation be between $1.75T and $2.00T at t
     $  -6.40  rewards $  0.00  fills 0  pool $50/d  Will Jensen Huang rank in Google’s Top 5 Most Searched Peopl
     $  -6.29  rewards $  0.01  fills 1  pool $9/d  Will Steelers D/ST be the highest-scoring D/ST of the 2026-2
 
-hedges: 177, 3234.36 shares, cost $100.51 = 3.11c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-13 21:59 will-the-bank-of-england-increase-the-bank-rate-by-25-b bought YES 20@0.650 held@0.380 cost/share +0.0414
-  11-13 22:12 will-canadas-gdp-growth-rate-mom-in-september-2026-be-b bought YES 20@0.397 held@0.650 cost/share +0.0590
-  11-13 22:44 will-the-ornn-rtx-5090-index-be-between-0pt65-and-0pt70 bought YES 20@0.500 held@0.540 cost/share +0.0500
+hedges: 180, 3271.04 shares, cost $101.13 = 3.09c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-13 23:40 faa-ground-stop-cause-telecom-carrier-or-contractor-fau bought NO  20@0.520 held@0.510 cost/share +0.0400
   11-13 23:49 will-pholks-leon-thomas-win-best-progressive-randb-albu bought YES 20@0.270 held@0.740 cost/share +0.0199
   11-14 00:09 will-pierre-cere-win-the-2026-rosemontla-petite-patrie- bought NO  17.69@0.710 held@0.300 cost/share +0.0182
@@ -70,5 +67,8 @@ hedges: 177, 3234.36 shares, cost $100.51 = 3.11c a share (the largest reward ea
   11-14 00:34 will-canadas-november-2026-unemployment-rate-be-6pt9    bought YES 5.79@0.180 held@0.830 cost/share +0.0174
   11-14 00:52 will-pp-win-the-most-seats-in-ciudad-real-in-the-2026-s bought YES 20@0.866 held@0.160 cost/share +0.0306
   11-14 00:53 will-anthropics-valuation-be-between-750b-and-1pt00t-at bought NO  20@0.860 held@0.180 cost/share +0.0448
+  11-14 01:03 will-iceland-be-2nd-in-the-world-happiness-report-2027  bought YES 9.99@0.470 held@0.540 cost/share +0.0225
+  11-14 01:25 will-widow-s-bay-win-best-television-series-comedy-or-m bought NO  9@0.210 held@0.790 cost/share +0.0083
+  11-14 01:49 will-pierre-cere-win-the-2026-rosemontla-petite-patrie- bought NO  17.69@0.720 held@0.290 cost/share +0.0181
 
 settlements: 0, realised $0.00
