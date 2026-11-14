@@ -1,38 +1,32 @@
-journal data/journal-rewards: 60.4 h of events, 11-12 08:36 -> 11-14 21:01 UTC
-now: markets 45, quoting 55, bids $587.13, feed ok, pool rate at current shares $747.24/day
-rewards (estimate by the book): today $651.164, total $2365.428; by Polymarket's competitiveness: total $3156.592; earned alone in a zone: total $1619.804; stress (one more identical maker): total $1263.275
-hedges: 234 for 4204.0 shares, lost $134.76; inventory not hedged yet: $412.58
-positions: value $308.72 cost $412.58 -> open $-103.86; realised $-284.32; trading $-388.17 (today -95.55)
-TOTAL (rewards estimate + trading): $1977.25; CAUTIOUS (lower estimate, without the part earned alone, + trading): $357.45; fills total 451
+journal data/journal-rewards: 61.4 h of events, 11-12 08:36 -> 11-14 22:01 UTC
+now: markets 45, quoting 51, bids $572.58, feed ok, pool rate at current shares $675.9/day
+rewards (estimate by the book): today $682.752, total $2397.016; by Polymarket's competitiveness: total $3208.858; earned alone in a zone: total $1640.49; stress (one more identical maker): total $1280.202
+hedges: 237 for 4260.2 shares, lost $136.34; inventory not hedged yet: $423.18
+positions: value $320.6 cost $423.18 -> open $-102.58; realised $-286.71; trading $-389.29 (today -96.67)
+TOTAL (rewards estimate + trading): $2007.73; CAUTIOUS (lower estimate, without the part earned alone, + trading): $367.24; fills total 457
 
 top markets by estimated reward:
-  $   0.67  share 1.00  pool $50/d  empty will-trumps-approval-rating-be-at-least-38pt0-on-november-20
-  $   0.63  share 0.93  pool $50/d  will-newjeans-release-a-song-in-2026
-  $   0.62  share 1.00  pool $46/d  will-openrouter-process-240t-or-more-tokens-the-week-of-nove
-  $   0.62  share 0.95  pool $49/d  will-jd-vance-win-the-south-carolina-republican-presidential
-  $   0.59  share 0.00  pool $100/d  empty will-gas-hit-3pt90-high-by-november-30-2026
-  $   0.54  share 1.00  pool $40/d  empty will-1650-ships-transit-the-malacca-strait-week-of-november-
-  $   0.54  share 1.00  pool $40/d  empty will-320-ships-transit-the-suez-canal-week-of-november-16
-  $   0.54  share 1.00  pool $40/d  empty will-330-ships-transit-the-suez-canal-week-of-november-16
-  $   0.54  share 1.00  pool $40/d  empty will-300-ships-transit-the-suez-canal-week-of-november-16
-  $   0.54  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-panama-canal
-  $   0.54  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-panama-canal
-  $   0.54  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
+  $   2.74  share 1.00  pool $50/d  empty will-trumps-approval-rating-be-at-least-38pt0-on-november-20
+  $   2.33  share 1.00  pool $49/d  empty will-openrouter-process-between-210t-and-220t-tokens-the-wee
+  $   2.27  share 0.95  pool $40/d  will-jd-vance-win-the-south-carolina-republican-presidential
+  $   2.19  share 1.00  pool $40/d  empty will-320-ships-transit-the-suez-canal-week-of-november-16
+  $   2.19  share 1.00  pool $40/d  empty will-330-ships-transit-the-suez-canal-week-of-november-16
+  $   2.19  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-panama-canal
+  $   2.19  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-panama-canal
+  $   2.19  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
+  $   2.19  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
+  $   2.19  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
+  $   2.19  share 1.00  pool $40/d  empty will-the-2-year-treasury-yield-hit-4pt97-in-november
+  $   2.16  share 0.07  pool $50/d  will-newjeans-release-a-song-in-2026
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
   2026-11-13: book $1090.94, official $1428.76, alone $706.86 | hedges 103 ($49.44) | trading $-155.05, cautious net $+229.04 | samples 1432, avg markets scoring 31.8
-  2026-11-14: book $653.63, official $1039.32, alone $423.70 | hedges 62 ($36.36) | trading: day not closed | samples 1255, avg markets scoring 32.0
+  2026-11-14: book $684.75, official $1091.20, alone $444.03 | hedges 65 ($37.94) | trading: day not closed | samples 1314, avg markets scoring 32.0
 
-last selection: 45 markets of 212 priced, capital $828.96, est $1694.07/day, empty books 22
+last selection: 45 markets of 207 priced, capital $858.6, est $1598.02/day, empty books 22
 
-fills: 451 (material 441)
-  11-14 16:49 will-the-5-year-treasury-yield-hit-5pt07-in-november    YES 10@0.310 last_trade=0.28
-  11-14 16:49 will-the-5-year-treasury-yield-hit-5pt07-in-november    YES 10@0.310 last_trade=0.28
-  11-14 16:55 ted-cruz-of-tweets-november-10-november-17-2026-20-39   YES 20@0.061 last_trade=0.033 (alone in the zone)
-  11-14 17:07 will-geraldo-alckmin-be-the-next-brazilian-minister-of- YES 20@0.280 last_trade=0.27
-  11-14 17:21 will-reminders-of-him-be-the-2-us-netflix-movie-this-we NO  5@0.880 last_trade=0.15
-  11-14 18:22 will-uk-gdp-growth-in-q4-2026-be-between-0pt4-and-0pt5  NO  20@0.720 last_trade=0.26
+fills: 457 (material 447)
   11-14 18:32 will-the-10-year-treasury-yield-hit-5pt17-in-november   NO  20@0.180 last_trade=0.84
   11-14 18:34 will-the-10-year-treasury-yield-hit-5pt17-in-november   YES 20@0.870 last_trade=0.89
   11-14 18:39 will-the-ornn-h100-index-be-at-least-3pt25-on-november- NO  20@0.700 last_trade=0.39
@@ -42,60 +36,63 @@ fills: 451 (material 441)
   11-14 19:08 will-disclosure-day-be-nominated-for-best-sound-at-the- YES 20@0.330 last_trade=None
   11-14 19:55 will-the-next-gemini-model-family-be-named-gemini-helix YES 20@0.090 last_trade=0.08
   11-14 20:55 will-the-7-day-average-ship-traffic-through-the-panama- YES 20@0.510 last_trade=None (alone in the zone)
+  11-14 21:21 will-300-ships-transit-the-suez-canal-week-of-november- NO  16.2051@0.370 last_trade=0.78 (alone in the zone)
+  11-14 21:31 will-golden-hour-part-6-ateez-first-week-album-sales-be YES 20@0.300 last_trade=0.33999999999999997 (alone in the zone)
+  11-14 21:34 will-300-ships-transit-the-suez-canal-week-of-november- YES 16.21@0.690 last_trade=0.78 (alone in the zone)
+  11-14 21:49 will-newjeans-release-a-song-in-2026                    NO  20@0.650 last_trade=None
+  11-14 21:49 will-1650-ships-transit-the-malacca-strait-week-of-nove NO  20@0.750 last_trade=None (alone in the zone)
+  11-14 21:51 will-300-ships-transit-the-suez-canal-week-of-november- NO  16.21@0.360 last_trade=0.65
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    737 markets  rewards $ 1078.58  trading $ -357.95  net $ +720.63  fills 188  quoted 1221.0 market-hours
-  mostly alone in the zone               218 markets  rewards $  853.63  trading $ -113.50  net $ +740.13  fills  64  quoted  528.1 market-hours
-  with other makers in the zone          519 markets  rewards $  224.94  trading $ -244.45  net $  -19.50  fills 124  quoted  692.9 market-hours
-  never filled                           580 markets  rewards $  759.11  trading $ -125.64  net $ +633.47  fills   0  quoted  751.9 market-hours
-  filled                                 157 markets  rewards $  319.47  trading $ -232.31  net $  +87.16  fills 188  quoted  469.1 market-hours
+  all                                    751 markets  rewards $ 1113.39  trading $ -367.93  net $ +745.47  fills 198  quoted 1273.3 market-hours
+  mostly alone in the zone               216 markets  rewards $  874.29  trading $ -117.68  net $ +756.60  fills  71  quoted  542.2 market-hours
+  with other makers in the zone          535 markets  rewards $  239.10  trading $ -250.24  net $  -11.14  fills 127  quoted  731.1 market-hours
+  never filled                           588 markets  rewards $  786.80  trading $ -129.73  net $ +657.07  fills   0  quoted  798.0 market-hours
+  filled                                 163 markets  rewards $  326.59  trading $ -238.19  net $  +88.40  fills 198  quoted  475.4 market-hours
 
 by kind of market at selection (journals since 14 Nov; $/h = per quoted market-hour):
   competitiveness (others' score per $1 of pool):
-    0              375 markets   409.9 h  rewards $  268.25 (alone $  180.00)  trading $ -137.34  fills  43 = 0.10/h  not alone $+0.22/h  trading $-0.34/h
-    0..0.1          50 markets    41.8 h  rewards $   15.82 (alone $    4.32)  trading $   -9.91  fills   6 = 0.14/h  not alone $+0.27/h  trading $-0.24/h
-    0.1..0.3        17 markets     6.1 h  rewards $    1.07 (alone $    0.00)  trading $   -5.14  fills   4 = 0.66/h  not alone $+0.18/h  trading $-0.85/h
-    0.3..1          18 markets    15.1 h  rewards $    2.05 (alone $    0.17)  trading $  -10.19  fills   1 = 0.07/h  not alone $+0.12/h  trading $-0.68/h
+    0              384 markets   455.0 h  rewards $  298.19 (alone $  201.28)  trading $ -144.95  fills  51 = 0.11/h  not alone $+0.21/h  trading $-0.32/h
+    0..0.1          52 markets    45.4 h  rewards $   16.71 (alone $    4.32)  trading $  -12.27  fills   8 = 0.18/h  not alone $+0.27/h  trading $-0.27/h
+    0.1..0.3        20 markets     8.8 h  rewards $    5.03 (alone $    1.19)  trading $   -5.14  fills   4 = 0.46/h  not alone $+0.44/h  trading $-0.59/h
+    0.3..1          18 markets    16.0 h  rewards $    2.06 (alone $    0.17)  trading $  -10.19  fills   1 = 0.06/h  not alone $+0.12/h  trading $-0.63/h
   24 h volume, $:
-    0..1           123 markets   144.9 h  rewards $   27.60 (alone $   13.41)  trading $  -78.93  fills  11 = 0.08/h  not alone $+0.10/h  trading $-0.54/h
-    1..50           92 markets   101.9 h  rewards $   91.06 (alone $   70.55)  trading $   -3.13  fills   9 = 0.09/h  not alone $+0.20/h  trading $-0.03/h
-    50..200        153 markets   162.5 h  rewards $  130.32 (alone $   78.11)  trading $  -64.73  fills  19 = 0.12/h  not alone $+0.32/h  trading $-0.40/h
-    200..500        92 markets    63.5 h  rewards $   38.21 (alone $   22.43)  trading $  -15.78  fills  15 = 0.24/h  not alone $+0.25/h  trading $-0.25/h
+    0..1           124 markets   155.8 h  rewards $   28.25 (alone $   13.41)  trading $  -86.75  fills  11 = 0.07/h  not alone $+0.10/h  trading $-0.56/h
+    1..50           94 markets   114.0 h  rewards $  104.00 (alone $   78.38)  trading $   -3.73  fills   9 = 0.08/h  not alone $+0.22/h  trading $-0.03/h
+    50..200        163 markets   186.2 h  rewards $  151.58 (alone $   93.69)  trading $  -64.74  fills  29 = 0.16/h  not alone $+0.31/h  trading $-0.35/h
+    200..500        93 markets    69.2 h  rewards $   38.17 (alone $   21.49)  trading $  -17.33  fills  15 = 0.22/h  not alone $+0.24/h  trading $-0.25/h
   days to the end:
-    0..4            22 markets    11.8 h  rewards $    3.68 (alone $    2.69)  trading $   +0.00  fills   0 = 0.00/h  not alone $+0.08/h  trading $+0.00/h
-    4..8            25 markets    15.6 h  rewards $   14.04 (alone $    9.19)  trading $   -0.18  fills   1 = 0.06/h  not alone $+0.31/h  trading $-0.01/h
-    8..20          134 markets   108.1 h  rewards $  114.81 (alone $   81.85)  trading $  -16.41  fills  17 = 0.16/h  not alone $+0.30/h  trading $-0.15/h
-    20..60          76 markets    75.7 h  rewards $   87.75 (alone $   73.97)  trading $   -6.36  fills  13 = 0.17/h  not alone $+0.18/h  trading $-0.08/h
-    60..400         61 markets    33.4 h  rewards $   16.21 (alone $    4.35)  trading $   -0.15  fills   5 = 0.15/h  not alone $+0.36/h  trading $-0.00/h
-    400+            17 markets    18.6 h  rewards $   19.90 (alone $    1.08)  trading $   -2.60  fills   2 = 0.11/h  not alone $+1.01/h  trading $-0.14/h
+    0..4            23 markets    12.2 h  rewards $    3.68 (alone $    2.69)  trading $   +0.00  fills   0 = 0.00/h  not alone $+0.08/h  trading $+0.00/h
+    4..8            27 markets    18.8 h  rewards $   16.33 (alone $   11.26)  trading $   -1.00  fills   3 = 0.16/h  not alone $+0.27/h  trading $-0.05/h
+    8..20          144 markets   121.0 h  rewards $  130.75 (alone $   92.51)  trading $  -20.59  fills  24 = 0.20/h  not alone $+0.32/h  trading $-0.17/h
+    20..60          76 markets    85.1 h  rewards $   99.21 (alone $   82.25)  trading $   -7.26  fills  14 = 0.16/h  not alone $+0.20/h  trading $-0.09/h
+    60..400         60 markets    34.0 h  rewards $   16.30 (alone $    4.35)  trading $   -0.15  fills   5 = 0.15/h  not alone $+0.35/h  trading $-0.00/h
+    400+            17 markets    20.6 h  rewards $   21.55 (alone $    1.08)  trading $   -2.60  fills   2 = 0.10/h  not alone $+0.99/h  trading $-0.13/h
   price of YES:
-    0..0.2          57 markets    39.8 h  rewards $    6.79 (alone $    2.93)  trading $  -14.29  fills   3 = 0.08/h  not alone $+0.10/h  trading $-0.36/h
-    0.2..0.4       190 markets   198.2 h  rewards $  125.88 (alone $   67.72)  trading $  -67.00  fills  26 = 0.13/h  not alone $+0.29/h  trading $-0.34/h
-    0.4..0.6       126 markets   169.8 h  rewards $  113.15 (alone $   80.12)  trading $  -52.00  fills  14 = 0.08/h  not alone $+0.19/h  trading $-0.31/h
-    0.6..0.8        62 markets    54.3 h  rewards $   37.94 (alone $   32.36)  trading $  -26.78  fills   7 = 0.13/h  not alone $+0.10/h  trading $-0.49/h
-    0.8..1.01       25 markets    10.8 h  rewards $    3.42 (alone $    1.38)  trading $   -2.50  fills   4 = 0.37/h  not alone $+0.19/h  trading $-0.23/h
+    0..0.2          60 markets    45.0 h  rewards $    9.95 (alone $    4.93)  trading $  -21.88  fills   3 = 0.07/h  not alone $+0.11/h  trading $-0.49/h
+    0.2..0.4       192 markets   215.4 h  rewards $  135.42 (alone $   70.54)  trading $  -71.22  fills  30 = 0.14/h  not alone $+0.30/h  trading $-0.33/h
+    0.4..0.6       134 markets   191.5 h  rewards $  129.32 (alone $   94.04)  trading $  -54.85  fills  20 = 0.10/h  not alone $+0.18/h  trading $-0.29/h
+    0.6..0.8        62 markets    61.0 h  rewards $   43.49 (alone $   36.09)  trading $  -20.36  fills   7 = 0.11/h  not alone $+0.12/h  trading $-0.33/h
+    0.8..1.01       26 markets    12.2 h  rewards $    3.83 (alone $    1.38)  trading $   -4.25  fills   4 = 0.33/h  not alone $+0.20/h  trading $-0.35/h
   pool, $ a day:
-    0..20           37 markets    25.9 h  rewards $   11.30 (alone $    5.20)  trading $   -3.59  fills   3 = 0.12/h  not alone $+0.24/h  trading $-0.14/h
-    20..40         126 markets    95.4 h  rewards $   40.31 (alone $   29.54)  trading $  -25.63  fills  10 = 0.10/h  not alone $+0.11/h  trading $-0.27/h
-    40..80         273 markets   319.1 h  rewards $  226.24 (alone $  145.19)  trading $ -111.66  fills  38 = 0.12/h  not alone $+0.25/h  trading $-0.35/h
-    80+             24 markets    32.5 h  rewards $    9.34 (alone $    4.57)  trading $  -21.69  fills   3 = 0.09/h  not alone $+0.15/h  trading $-0.67/h
+    0..20           40 markets    28.2 h  rewards $   13.05 (alone $    5.75)  trading $   -4.40  fills   5 = 0.18/h  not alone $+0.26/h  trading $-0.16/h
+    20..40         122 markets   102.1 h  rewards $   41.61 (alone $   30.46)  trading $  -25.86  fills  10 = 0.10/h  not alone $+0.11/h  trading $-0.25/h
+    40..80         285 markets   357.6 h  rewards $  254.48 (alone $  165.59)  trading $ -119.25  fills  46 = 0.13/h  not alone $+0.25/h  trading $-0.33/h
+    80+             27 markets    37.3 h  rewards $   12.86 (alone $    5.16)  trading $  -23.04  fills   3 = 0.08/h  not alone $+0.21/h  trading $-0.62/h
   rewards min size, shares:
-    0..21          457 markets   472.1 h  rewards $  286.81 (alone $  184.50)  trading $ -162.58  fills  54 = 0.11/h  not alone $+0.22/h  trading $-0.34/h
+    0..21          471 markets   524.4 h  rewards $  321.62 (alone $  206.97)  trading $ -172.55  fills  64 = 0.12/h  not alone $+0.22/h  trading $-0.33/h
     21..51           3 markets     0.8 h  rewards $    0.38 (alone $    0.00)  trading $   +0.00  fills   0 = 0.00/h  not alone $+0.49/h  trading $+0.00/h
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $ -12.50  rewards $  1.49  fills 2  pool $50/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
-    $ -11.30  rewards $  0.00  fills 0  pool $40/d  Will the 2-year Treasury yield hit 4.92% in November?
     $ -11.28  rewards $  0.46  fills 0  pool $40/d  Will the 2-year Treasury yield hit 4.92% in November?
     $  -8.40  rewards $  6.31  fills 1  pool $50/d  Will Ukraine target Moscow on November 14, 2026?
     $  -7.60  rewards $  0.23  fills 0  pool $39/d  Will 170-189 ships transit the Bab el-Mandeb Strait between 
     $  -7.01  rewards $  0.32  fills 0  pool $50/d  Will "Ebenezer" score at least 55 on the Rotten Tomatoes Tom
     $  -7.00  rewards $  6.54  fills 1  pool $50/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
+    $  -7.00  rewards $  0.12  fills 1  pool $50/d  Will Trump's approval rating be at least 37.0 on November 20
 
-hedges: 234, 4204.04 shares, cost $134.78 = 3.21c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-14 16:14 will-nvidia-nvda-q3-data-center-revenue-be-above-202610 bought NO  5@0.790 held@0.240 cost/share +0.0366
-  11-14 16:16 will-strait-of-hormuz-traffic-not-return-to-normal-in-2 bought NO  20@0.840 held@0.190 cost/share +0.0367
-  11-14 16:17 will-canadas-november-2026-unemployment-rate-be-6pt9    bought NO  20@0.870 held@0.180 cost/share +0.0557
+hedges: 237, 4260.24 shares, cost $136.37 = 3.20c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-14 16:49 will-the-5-year-treasury-yield-hit-5pt07-in-november    bought NO  20@0.720 held@0.310 cost/share +0.0401
   11-14 17:07 will-geraldo-alckmin-be-the-next-brazilian-minister-of- bought NO  20@0.730 held@0.280 cost/share +0.0179
   11-14 18:22 will-uk-gdp-growth-in-q4-2026-be-between-0pt4-and-0pt5  bought NO  20@0.710 held@0.300 cost/share +0.0203
@@ -103,10 +100,13 @@ hedges: 234, 4204.04 shares, cost $134.78 = 3.21c a share (the largest reward ea
   11-14 18:34 will-the-10-year-treasury-yield-hit-5pt17-in-november   bought YES 20@0.870 held@0.180 cost/share +0.0557
   11-14 19:01 will-mike-malott-fight-uros-medic-next                  bought NO  20@0.730 held@0.310 cost/share +0.0499
   11-14 19:55 will-the-next-gemini-model-family-be-named-gemini-helix bought NO  20@0.925 held@0.090 cost/share +0.0178
+  11-14 21:28 will-the-10-year-treasury-yield-hit-5pt17-in-november   bought NO  20@0.180 held@0.870 cost/share +0.0574
+  11-14 21:34 will-300-ships-transit-the-suez-canal-week-of-november- bought YES 16.2051@0.620 held@0.370 cost/share +0.0018
+  11-14 21:55 will-golden-hour-part-6-ateez-first-week-album-sales-be bought NO  20@0.710 held@0.300 cost/share +0.0203
 
 pairs closed by our own bids (no taker fee), by the time since the fill:
-  all                                 70 for  1096.8 pairs  $ -149.56 = -13.6c a pair
-  within 30 min                        1 for    20.0 pairs  $   -1.20 = -6.0c a pair
+  all                                 71 for  1113.0 pairs  $ -150.37 = -13.5c a pair
+  within 30 min                        2 for    36.2 pairs  $   -2.01 = -5.6c a pair
   30 min - 3 h                         3 for    45.0 pairs  $   -1.60 = -3.6c a pair
   after 3 h (the bid follows the price)   1 for    20.0 pairs  $   -4.20 = -21.0c a pair
 
