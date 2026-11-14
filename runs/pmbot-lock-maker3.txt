@@ -1,19 +1,19 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-maker3/20261113-093544
-mode: paper  duration: 1106.2 min  events: {'start': 1, 'status': 2211, 'lock_state': 10677, 'strike': 855, 'maker_bid': 1718, 'maker_cancel': 1709, 'fill': 11, 'lock_entry': 11, 'provisional': 9, 'settle': 10}
+mode: paper  duration: 1166.7 min  events: {'start': 1, 'status': 2332, 'lock_state': 11628, 'strike': 903, 'maker_bid': 2287, 'maker_cancel': 2278, 'fill': 12, 'lock_entry': 12, 'provisional': 10, 'settle': 11}
 
-fills: 11  shares: 50  notional: $45.40
+fills: 12  shares: 50  notional: $45.41
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        8    35.0      31.8      0.908  257.044
-eth        1     5.0       4.5      0.900  243.776
-xrp        2    10.0       9.1      0.910  259.905
+btc        9   35.01    31.809      0.908  264.433
+eth        1    5.00     4.500      0.900  243.776
+xrp        2   10.00     9.100      0.910  259.905
 
 settled windows:
-       windows  cost  pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
-asset                                                                         
-btc          7  31.8  3.2            3.2     0.0       1.0   0.35  0.50  0.101
-eth          1   4.5  0.5            0.5     0.0       1.0   0.50  0.50  0.111
-xrp          2   9.1 -4.1           -4.1     0.0       0.5  -4.55  0.45 -0.451
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
+asset                                                                             
+btc          8  31.809  3.201          3.201     0.0       1.0  0.001  0.50  0.101
+eth          1   4.500  0.500          0.500     0.0       1.0  0.500  0.50  0.111
+xrp          2   9.100 -4.100         -4.100     0.0       0.5 -4.550  0.45 -0.451
 
-TOTAL pnl $-0.40 (ex-rebate $-0.40) on cost $45.40 -> ROI -0.88%; windows 10, t-stat -0.08
+TOTAL pnl $-0.40 (ex-rebate $-0.40) on cost $45.41 -> ROI -0.88%; windows 11, t-stat -0.08
 max drawdown $-4.55; hedged windows (both sides filled): 0
