@@ -1,26 +1,13 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261114-130045
-mode: paper  duration: 181.2 min  events: {'start': 1, 'status': 362, 'lock_state': 3428, 'strike': 128, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'settle': 19, 'lock_miss': 6}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261114-163026
+mode: paper  duration: 30.5 min  events: {'start': 1, 'status': 61, 'lock_state': 361, 'strike': 16, 'lock_miss': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1}
 
-lock orders: sent 25  filled 19  ask gone 6  errors 0
-  signal -> exchange answer, ms: median 313  p90 482  max 1518
-  fill price minus the ask we saw, cents: mean -0.74  worst +5.0
-  misses came 20-52 s before the end; model p 0.916-0.987
+lock orders: sent 2  filled 1  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 495  p90 495  max 495
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+  misses came 51-51 s before the end; model p 0.943-0.943
 
-fills: 19  shares: 95  notional: $83.90
+fills: 1  shares: 5  notional: $4.55
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        7    35.0     31.20      0.891  247.621
-eth        5    25.0     21.85      0.874  250.407
-sol        3    15.0     13.50      0.900  257.347
-xrp        4    20.0     17.35      0.867  249.185
-
-settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          7  31.436 -1.436         -1.436     0.0     0.857 -4.484  0.610 -0.046
-eth          5  22.037  2.963          2.963     0.0     1.000  0.327  1.088  0.134
-sol          3  13.594  1.406          1.406     0.0     1.000  0.374  0.516  0.103
-xrp          4  17.510 -2.510         -2.510     0.0     0.750 -4.199  0.705 -0.143
-
-TOTAL pnl $+0.42 (ex-rebate $+0.42) on cost $84.58 -> ROI +0.50%; windows 19, t-stat +0.06
-max drawdown $-4.48; hedged windows (both sides filled): 0
+xrp        1     5.0      4.55       0.91  261.565
+no settled windows yet
