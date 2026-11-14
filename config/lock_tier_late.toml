@@ -30,7 +30,8 @@ floor_free_p = 0.99   # reports/55: when the unfloored model gives >= 0.99 it de
 shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move > 2.5 bp either way (stale sigma, snap-backs)
 shock_s = 10.0
 shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
-late_tier_rel = 260.0 # reports/60: tiers below p 0.95 count only from window second 260 (the ONLY rule difference from lock_tier.toml)
+late_tier_rel = 260.0 # reports/60 + reports/71: tiers below late_tier_p count only from window second 260; with the fourth tier above
+late_tier_p = 0.97    # this is the twin's rule (lock_tier.toml) + the p 0.90-0.95 tier late in the window (the ONLY rule difference)
 hedge_p = 0.65        # reports/64: insurance on a reversal. After an entry, when the model favours the OTHER side with p >= 0.65
                       # and that side sells at <= p - 0.20, buy as many shares of it (once per window): the window then ends at
                       # about -$1..-3 whatever happens, instead of -$4.7. Replay 7-11 Nov: +$16.81 -> +$18.22, losses < -$3: 3 -> 2
@@ -38,6 +39,8 @@ hedge_margin = 0.20   # right after a reversal the model is over-sure (0.80 on a
 hedge_slip = 0.02     # the order cap is at most the seen ask + 2 c (a live FAK is a dollar budget: no over-buying)
 big_shares = 10       # reports/67 (owner 11 Nov: "давай 10"): 10 shares when the model is >= 0.97 (the 0.97 / 0.99 tiers), `shares` (2) below.
 big_shares_p = 0.97   # Replay 7-11 Nov with the insurance and live limits: +$18.22 -> +$28.12, every day positive, worst trade -$4.44
+big_calm_s = 3.0      # reports/71: 10 shares only if no Binance guard (binance_against / jump / shock) blocked this window in the
+                      # last 3 s, else 2: both 10-share losses (10 Nov 23:49, 13 Nov 20:49 -$9.54) came 1.2-1.3 s after such a block
 
 [risk]
 max_usd_per_entry = 10.0     # = live (reports/67): 10 shares from p 0.97

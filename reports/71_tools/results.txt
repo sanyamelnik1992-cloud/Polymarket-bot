@@ -1,0 +1,159 @@
+=== variants.py on the tapes of 7-11 Nov (Gamma outcomes)
+rows 410256, windows with a signal 218, gamma differs from our rule in 1
+== A. the rule as live now (2 shares below p 0.97, 10 from 0.97; no insurance, no day stop)
+as live now                                  n=130 lost= 3 ( 2.3%) px=0.940 per-share=+3.29c pnl= +24.60 worst= -9.53 days={'11-07': 9.6, '11-08': 9.0, '11-09': 3.6, '11-10': -0.0, '11-11': 2.3}
+== B. its entries by tier and entry second
+  p 0.95-0.97, second [240,250)              n= 20 lost= 1 ( 5.0%) px=0.921 per-share=+2.44c pnl=  +0.98 worst= -1.77 days={'11-07': 0.3, '11-09': 0.6, '11-10': 1.1, '11-11': -1.0}
+  p 0.95-0.97, second [250,260)              n= 13 lost= 1 ( 7.7%) px=0.919 per-share=-0.13c pnl=  -0.03 worst= -1.87 days={'11-09': 0.9, '11-10': 0.6, '11-11': -1.6}
+  p 0.95-0.97, second [260,270)              n= 11 lost= 0 ( 0.0%) px=0.924 per-share=+7.10c pnl=  +1.56 worst= +0.13 days={'11-09': 0.4, '11-10': 0.6, '11-11': 0.6}
+  p 0.95-0.97, second [270,300)              n= 11 lost= 0 ( 0.0%) px=0.922 per-share=+7.30c pnl=  +1.61 worst= +0.13 days={'11-07': 0.1, '11-09': 0.3, '11-10': 0.4, '11-11': 0.7}
+  p 0.97-0.99, second [240,250)              n= 12 lost= 1 ( 8.3%) px=0.944 per-share=-3.12c pnl=  -4.44 worst= -9.53 days={'11-08': 0.2, '11-09': 0.9, '11-10': -7.0, '11-11': 1.4}
+  p 0.97-0.99, second [250,260)              n=  3 lost= 0 ( 0.0%) px=0.905 per-share=+8.90c pnl=  +2.67 worst= +0.61 days={'11-10': 2.7}
+  p 0.97-0.99, second [260,270)              n=  2 lost= 0 ( 0.0%) px=0.940 per-share=+5.64c pnl=  +1.13 worst= +0.47 days={'11-11': 1.1}
+  p 0.97-0.99, second [270,300)              n=  4 lost= 0 ( 0.0%) px=0.942 per-share=+5.37c pnl=  +1.87 worst= +0.28 days={'11-07': 0.3, '11-09': 0.5, '11-10': 1.1}
+  p >= 0.99, second [240,250)                n= 23 lost= 0 ( 0.0%) px=0.970 per-share=+2.76c pnl=  +5.96 worst= +0.07 days={'11-07': 2.2, '11-08': 3.3, '11-10': 0.2, '11-11': 0.2}
+  p >= 0.99, second [250,260)                n= 12 lost= 0 ( 0.0%) px=0.949 per-share=+4.75c pnl=  +5.60 worst= +0.09 days={'11-07': 3.9, '11-08': 1.5, '11-10': 0.2}
+  p >= 0.99, second [260,270)                n= 10 lost= 0 ( 0.0%) px=0.967 per-share=+3.08c pnl=  +3.08 worst= +0.19 days={'11-07': 1.2, '11-08': 1.3, '11-11': 0.6}
+  p >= 0.99, second [270,300)                n=  9 lost= 0 ( 0.0%) px=0.942 per-share=+5.47c pnl=  +4.63 worst= +0.07 days={'11-07': 1.5, '11-08': 2.7, '11-11': 0.5}
+== C. its entries by time since the last guard block in the window
+  guard block <= 2 s before                  n= 39 lost= 1 ( 2.6%) px=0.936 per-share=+3.40c pnl=  +2.05 worst= -9.53 days={'11-07': 1.3, '11-08': 0.6, '11-09': 0.9, '11-10': -3.9, '11-11': 3.1}
+     of them p >= 0.97                       n= 21 lost= 1 ( 4.8%) px=0.949 per-share=-0.02c pnl=  -0.60 worst= -9.53 days={'11-07': 1.3, '11-08': 0.6, '11-10': -5.1, '11-11': 2.6}
+  guard block 2-5 s before                   n=  6 lost= 0 ( 0.0%) px=0.925 per-share=+7.02c pnl=  +2.33 worst= +0.13 days={'11-08': 0.8, '11-09': 0.1, '11-10': 1.4}
+     of them p >= 0.97                       n=  3 lost= 0 ( 0.0%) px=0.923 per-share=+7.17c pnl=  +1.92 worst= +0.23 days={'11-08': 0.8, '11-10': 1.1}
+  guard block 5-15 s before                  n=  4 lost= 0 ( 0.0%) px=0.950 per-share=+4.67c pnl=  +0.58 worst= +0.09 days={'11-08': 0.1, '11-09': 0.2, '11-10': 0.3}
+     of them p >= 0.97                       n=  2 lost= 0 ( 0.0%) px=0.980 per-share=+1.86c pnl=  +0.28 worst= +0.09 days={'11-08': 0.1, '11-10': 0.2}
+  no block / older                           n= 81 lost= 2 ( 2.5%) px=0.943 per-share=+2.90c pnl= +19.63 worst= -1.87 days={'11-07': 8.3, '11-08': 7.5, '11-09': 2.4, '11-10': 2.2, '11-11': -0.8}
+     of them p >= 0.97                       n= 49 lost= 0 ( 0.0%) px=0.957 per-share=+4.03c pnl= +18.89 worst= +0.07 days={'11-07': 7.8, '11-08': 7.5, '11-09': 1.4, '11-10': 1.0, '11-11': 1.1}
+== D. weak tier (p < 0.97) only from second X
+  from 250                                   n=117 lost= 2 ( 1.7%) px=0.942 per-share=+3.70c pnl= +28.46 worst= -9.53 days={'11-07': 9.3, '11-08': 9.0, '11-09': 3.1, '11-10': 1.9, '11-11': 5.2}
+  from 255                                   n=109 lost= 2 ( 1.8%) px=0.944 per-share=+3.43c pnl= +27.26 worst= -9.53 days={'11-07': 9.3, '11-08': 9.0, '11-09': 2.5, '11-10': 1.6, '11-11': 4.9}
+  from 260                                   n=108 lost= 2 ( 1.9%) px=0.944 per-share=+3.35c pnl= +27.68 worst= -9.53 days={'11-07': 9.3, '11-08': 9.0, '11-09': 3.0, '11-10': 1.4, '11-11': 4.9}
+  from 265                                   n=103 lost= 1 ( 1.0%) px=0.946 per-share=+4.08c pnl= +29.29 worst= -9.53 days={'11-07': 9.3, '11-08': 9.0, '11-09': 2.9, '11-10': 1.2, '11-11': 6.9}
+  from 270                                   n= 98 lost= 1 ( 1.0%) px=0.947 per-share=+3.95c pnl= +29.14 worst= -9.53 days={'11-07': 9.3, '11-08': 9.0, '11-09': 2.7, '11-10': 1.4, '11-11': 6.7}
+  no weak tier at all                        n= 86 lost= 1 ( 1.2%) px=0.951 per-share=+3.42c pnl= +27.66 worst= -9.53 days={'11-07': 9.2, '11-08': 9.0, '11-09': 2.3, '11-10': 0.7, '11-11': 6.5}
+== E. cool-down after a guard block (all tiers)
+  cool 1 s                                   n=108 lost= 2 ( 1.9%) px=0.939 per-share=+3.82c pnl= +27.04 worst= -1.87 days={'11-07': 9.6, '11-08': 9.0, '11-09': 3.4, '11-10': 5.0, '11-11': 0.1}
+  cool 2 s                                   n= 99 lost= 2 ( 2.0%) px=0.940 per-share=+3.56c pnl= +25.40 worst= -1.87 days={'11-07': 9.1, '11-08': 8.4, '11-09': 3.8, '11-10': 4.4, '11-11': -0.3}
+  cool 3 s                                   n= 95 lost= 2 ( 2.1%) px=0.941 per-share=+3.45c pnl= +23.18 worst= -1.87 days={'11-07': 8.7, '11-08': 8.4, '11-09': 3.0, '11-10': 3.9, '11-11': -0.8}
+  cool 5 s                                   n= 91 lost= 2 ( 2.2%) px=0.943 per-share=+3.11c pnl= +21.77 worst= -1.87 days={'11-07': 8.6, '11-08': 7.9, '11-09': 3.0, '11-10': 3.1, '11-11': -0.8}
+  cool 8 s                                   n= 85 lost= 2 ( 2.4%) px=0.943 per-share=+2.94c pnl= +20.28 worst= -1.87 days={'11-07': 8.3, '11-08': 7.6, '11-09': 2.7, '11-10': 2.5, '11-11': -0.8}
+== F. both
+  weak from 260 + cool 2 s                   n= 80 lost= 1 ( 1.2%) px=0.945 per-share=+3.86c pnl= +26.99 worst= -1.87 days={'11-07': 8.8, '11-08': 8.4, '11-09': 2.9, '11-10': 4.5, '11-11': 2.4}
+  weak from 260 + cool 3 s                   n= 76 lost= 1 ( 1.3%) px=0.947 per-share=+3.65c pnl= +24.65 worst= -1.87 days={'11-07': 8.3, '11-08': 8.4, '11-09': 2.2, '11-10': 3.8, '11-11': 1.9}
+  weak from 260 + cool 5 s                   n= 76 lost= 1 ( 1.3%) px=0.948 per-share=+3.57c pnl= +24.00 worst= -1.87 days={'11-07': 8.3, '11-08': 7.9, '11-09': 2.2, '11-10': 3.8, '11-11': 1.9}
+  weak from 260 + cool 2 s = small size      n=108 lost= 2 ( 1.9%) px=0.944 per-share=+3.35c pnl= +26.87 worst= -1.91 days={'11-07': 8.2, '11-08': 8.6, '11-09': 3.0, '11-10': 4.1, '11-11': 2.9}
+  weak from 260 + cool 3 s = small size      n=108 lost= 2 ( 1.9%) px=0.944 per-share=+3.35c pnl= +25.67 worst= -1.91 days={'11-07': 8.2, '11-08': 8.6, '11-09': 2.5, '11-10': 3.4, '11-11': 2.9}
+  weak from 260 + cool 5 s = small size      n=108 lost= 2 ( 1.9%) px=0.944 per-share=+3.35c pnl= +25.00 worst= -1.91 days={'11-07': 8.2, '11-08': 7.9, '11-09': 2.5, '11-10': 3.4, '11-11': 2.9}
+== G. other ideas
+  everything only from second 250            n= 83 lost= 1 ( 1.2%) px=0.936 per-share=+4.82c pnl= +24.98 worst= -1.87 days={'11-07': 7.3, '11-08': 5.5, '11-09': 2.1, '11-10': 7.1, '11-11': 3.0}
+  weak from 260, all 2 shares                n=108 lost= 2 ( 1.9%) px=0.944 per-share=+3.38c pnl=  +7.29 worst= -1.91 days={'11-07': 2.1, '11-08': 1.9, '11-09': 1.2, '11-10': 1.4, '11-11': 0.6}
+  as now, all 2 shares                       n=130 lost= 3 ( 2.3%) px=0.940 per-share=+3.32c pnl=  +8.62 worst= -1.91 days={'11-07': 2.5, '11-08': 1.9, '11-09': 2.5, '11-10': 2.3, '11-11': -0.6}
+
+=== the same, before / inside the live sample
+7 Nov - 10 Nov 18:52 | as live now                                  n=101 lost= 0 ( 0.0%) px=0.943 per-share=+5.33c pnl= +31.03 worst= +0.07 days={'11-07': 9.6, '11-08': 9.0, '11-09': 3.6, '11-10': 8.7}
+10 Nov 18:52 - 11 Nov  | as live now                                  n= 29 lost= 3 (10.3%) px=0.930 per-share=-3.80c pnl=  -6.43 worst= -9.53 days={'11-10': -8.8, '11-11': 2.3}
+7 Nov - 10 Nov 18:52 | weak from 260                                n= 86 lost= 0 ( 0.0%) px=0.947 per-share=+4.92c pnl= +31.72 worst= +0.07 days={'11-07': 9.3, '11-08': 9.0, '11-09': 3.0, '11-10': 10.4}
+10 Nov 18:52 - 11 Nov  | weak from 260                                n= 22 lost= 2 ( 9.1%) px=0.933 per-share=-2.80c pnl=  -4.04 worst= -9.53 days={'11-10': -8.9, '11-11': 4.9}
+7 Nov - 10 Nov 18:52 | weak from 260 + 3 s calm for 10 shares       n= 86 lost= 0 ( 0.0%) px=0.947 per-share=+4.92c pnl= +24.57 worst= +0.04 days={'11-07': 8.2, '11-08': 8.6, '11-09': 2.5, '11-10': 5.2}
+10 Nov 18:52 - 11 Nov  | weak from 260 + 3 s calm for 10 shares       n= 22 lost= 2 ( 9.1%) px=0.932 per-share=-2.76c pnl=  +1.11 worst= -1.91 days={'11-10': -1.8, '11-11': 2.9}
+7 Nov - 10 Nov 18:52 | weak from 260 + cool 3 s skip                n= 65 lost= 0 ( 0.0%) px=0.951 per-share=+4.59c pnl= +22.75 worst= +0.07 days={'11-07': 8.3, '11-08': 8.4, '11-09': 2.2, '11-10': 3.8}
+10 Nov 18:52 - 11 Nov  | weak from 260 + cool 3 s skip                n= 11 lost= 1 ( 9.1%) px=0.923 per-share=-1.90c pnl=  +1.90 worst= -1.87 days={'11-11': 1.9}
+
+=== journal_split.py: live 5m + twins, 10 Nov 18:52 - 14 Nov 08:00 UTC
+===== LIVE
+all                                        n= 99 lost= 8 ( 8.1%) avg_price=0.926 per-share sum=-0.70 real pnl=-5.30
+p>=0.97                                    n= 33 lost= 1 ( 3.0%) avg_price=0.949 per-share sum=+0.67 real pnl=+3.59
+p<0.97                                     n= 66 lost= 7 (10.6%) avg_price=0.915 per-share sum=-1.37 real pnl=-8.89
+blocked earlier in window                  n= 42 lost= 4 ( 9.5%) avg_price=0.924 per-share sum=-0.82 real pnl=-6.83
+never blocked                              n= 57 lost= 4 ( 7.0%) avg_price=0.928 per-share sum=+0.12 real pnl=+1.53
+  block within 2s before entry             n= 25 lost= 4 (16.0%) avg_price=0.923 per-share sum=-2.07 real pnl=-12.75
+  block within 5s before entry             n= 35 lost= 4 (11.4%) avg_price=0.923 per-share sum=-1.31 real pnl=-9.71
+  block within 10s before entry            n= 39 lost= 4 (10.3%) avg_price=0.926 per-share sum=-1.11 real pnl=-8.26
+dist dropped >= 0.5 bp since window start  n= 36 lost= 3 ( 8.3%) avg_price=0.920 per-share sum=-0.11 real pnl=-3.90
+dist dropped >= 1 bp since window start    n= 25 lost= 2 ( 8.0%) avg_price=0.924 per-share sum=-0.10 real pnl=-2.87
+dist dropped >= 1.5 bp since window start  n= 21 lost= 2 ( 9.5%) avg_price=0.923 per-share sum=-0.38 real pnl=-4.52
+dist dropped >= 2 bp since window start    n= 15 lost= 1 ( 6.7%) avg_price=0.917 per-share sum=+0.24 real pnl=+3.28
+dist drop < 1                              n= 74 lost= 6 ( 8.1%) avg_price=0.927 per-share sum=-0.60 real pnl=-2.43
+adv3 >= 1.0                                n= 39 lost= 4 (10.3%) avg_price=0.921 per-share sum=-0.92 real pnl=-7.22
+adv3 >= 0.5                                n= 58 lost= 6 (10.3%) avg_price=0.923 per-share sum=-1.51 real pnl=-10.90
+adv3 < 0.5                                 n= 41 lost= 2 ( 4.9%) avg_price=0.931 per-share sum=+0.81 real pnl=+5.60
+shock >= 0.8 lim                           n= 26 lost= 4 (15.4%) avg_price=0.931 per-share sum=-2.20 real pnl=-9.13
+shock < 0.8 lim                            n= 73 lost= 4 ( 5.5%) avg_price=0.925 per-share sum=+1.50 real pnl=+3.82
+rel < 250                                  n= 39 lost= 4 (10.3%) avg_price=0.933 per-share sum=-1.40 real pnl=-6.32
+rel 250-270                                n= 43 lost= 4 ( 9.3%) avg_price=0.920 per-share sum=-0.56 real pnl=-5.33
+rel >= 270                                 n= 17 lost= 0 ( 0.0%) avg_price=0.926 per-share sum=+1.26 real pnl=+6.35
+===== TWIN-PB
+all                                        n= 88 lost= 7 ( 8.0%) avg_price=0.919 per-share sum=+0.10 real pnl=+1.11
+p>=0.97                                    n= 27 lost= 1 ( 3.7%) avg_price=0.944 per-share sum=+0.50 real pnl=+1.20
+p<0.97                                     n= 61 lost= 6 ( 9.8%) avg_price=0.908 per-share sum=-0.40 real pnl=-0.09
+blocked earlier in window                  n= 34 lost= 4 (11.8%) avg_price=0.910 per-share sum=-0.96 real pnl=-5.61
+never blocked                              n= 54 lost= 3 ( 5.6%) avg_price=0.925 per-share sum=+1.06 real pnl=+6.71
+  block within 2s before entry             n= 25 lost= 2 ( 8.0%) avg_price=0.918 per-share sum=+0.05 real pnl=-3.32
+  block within 5s before entry             n= 31 lost= 4 (12.9%) avg_price=0.908 per-share sum=-1.15 real pnl=-6.77
+  block within 10s before entry            n= 33 lost= 4 (12.1%) avg_price=0.910 per-share sum=-1.03 real pnl=-5.93
+dist dropped >= 0.5 bp since window start  n= 32 lost= 3 ( 9.4%) avg_price=0.914 per-share sum=-0.24 real pnl=-4.72
+dist dropped >= 1 bp since window start    n= 25 lost= 3 (12.0%) avg_price=0.915 per-share sum=-0.89 real pnl=-7.57
+dist dropped >= 1.5 bp since window start  n= 20 lost= 2 (10.0%) avg_price=0.927 per-share sum=-0.55 real pnl=-5.41
+dist dropped >= 2 bp since window start    n= 15 lost= 1 ( 6.7%) avg_price=0.925 per-share sum=+0.12 real pnl=+2.55
+dist drop < 1                              n= 63 lost= 4 ( 6.3%) avg_price=0.921 per-share sum=+0.99 real pnl=+8.67
+adv3 >= 1.0                                n= 32 lost= 3 ( 9.4%) avg_price=0.905 per-share sum=+0.05 real pnl=-2.27
+adv3 >= 0.5                                n= 46 lost= 4 ( 8.7%) avg_price=0.912 per-share sum=+0.06 real pnl=-2.19
+adv3 < 0.5                                 n= 42 lost= 3 ( 7.1%) avg_price=0.928 per-share sum=+0.04 real pnl=+3.30
+shock >= 0.8 lim                           n= 26 lost= 4 (15.4%) avg_price=0.920 per-share sum=-1.93 real pnl=-9.20
+shock < 0.8 lim                            n= 62 lost= 3 ( 4.8%) avg_price=0.919 per-share sum=+2.03 real pnl=+10.31
+rel < 250                                  n= 35 lost= 4 (11.4%) avg_price=0.932 per-share sum=-1.61 real pnl=-7.41
+rel 250-270                                n= 38 lost= 3 ( 7.9%) avg_price=0.911 per-share sum=+0.37 real pnl=+2.74
+rel >= 270                                 n= 15 lost= 0 ( 0.0%) avg_price=0.911 per-share sum=+1.34 real pnl=+5.79
+===== TWIN-RTDS
+all                                        n= 79 lost= 7 ( 8.9%) avg_price=0.922 per-share sum=-0.87 real pnl=-3.06
+p>=0.97                                    n= 24 lost= 2 ( 8.3%) avg_price=0.944 per-share sum=-0.65 real pnl=-4.69
+p<0.97                                     n= 55 lost= 5 ( 9.1%) avg_price=0.913 per-share sum=-0.22 real pnl=+1.63
+blocked earlier in window                  n= 37 lost= 4 (10.8%) avg_price=0.923 per-share sum=-1.14 real pnl=-6.40
+never blocked                              n= 42 lost= 3 ( 7.1%) avg_price=0.922 per-share sum=+0.27 real pnl=+3.34
+  block within 2s before entry             n= 31 lost= 4 (12.9%) avg_price=0.921 per-share sum=-1.56 real pnl=-8.14
+  block within 5s before entry             n= 35 lost= 4 (11.4%) avg_price=0.923 per-share sum=-1.29 real pnl=-7.10
+  block within 10s before entry            n= 36 lost= 4 (11.1%) avg_price=0.923 per-share sum=-1.21 real pnl=-6.73
+dist dropped >= 0.5 bp since window start  n= 24 lost= 2 ( 8.3%) avg_price=0.925 per-share sum=-0.19 real pnl=-4.39
+dist dropped >= 1 bp since window start    n= 18 lost= 2 (11.1%) avg_price=0.929 per-share sum=-0.73 real pnl=-6.84
+dist dropped >= 1.5 bp since window start  n= 16 lost= 2 (12.5%) avg_price=0.929 per-share sum=-0.86 real pnl=-7.45
+dist dropped >= 2 bp since window start    n= 12 lost= 1 ( 8.3%) avg_price=0.927 per-share sum=-0.13 real pnl=+1.23
+dist drop < 1                              n= 61 lost= 5 ( 8.2%) avg_price=0.920 per-share sum=-0.14 real pnl=+3.78
+adv3 >= 1.0                                n= 29 lost= 3 (10.3%) avg_price=0.916 per-share sum=-0.57 real pnl=-5.61
+adv3 >= 0.5                                n= 46 lost= 4 ( 8.7%) avg_price=0.919 per-share sum=-0.28 real pnl=-4.86
+adv3 < 0.5                                 n= 33 lost= 3 ( 9.1%) avg_price=0.927 per-share sum=-0.59 real pnl=+1.80
+shock >= 0.8 lim                           n= 29 lost= 4 (13.8%) avg_price=0.925 per-share sum=-1.83 real pnl=-8.08
+shock < 0.8 lim                            n= 50 lost= 3 ( 6.0%) avg_price=0.921 per-share sum=+0.96 real pnl=+5.02
+rel < 250                                  n= 29 lost= 5 (17.2%) avg_price=0.928 per-share sum=-2.93 real pnl=-13.89
+rel 250-270                                n= 36 lost= 2 ( 5.6%) avg_price=0.923 per-share sum=+0.79 real pnl=+5.28
+rel >= 270                                 n= 14 lost= 0 ( 0.0%) avg_price=0.909 per-share sum=+1.27 real pnl=+5.55
+===== UNIQUE WINDOWS
+all                                        n=120 lost= 9 ( 7.5%) avg_price=0.925 per-share sum=-0.00 real pnl=-3.06
+p>=0.97                                    n= 41 lost= 2 ( 4.9%) avg_price=0.948 per-share sum=+0.14 real pnl=+1.27
+p<0.97                                     n= 79 lost= 7 ( 8.9%) avg_price=0.913 per-share sum=-0.14 real pnl=-4.34
+blocked earlier in window                  n= 55 lost= 5 ( 9.1%) avg_price=0.923 per-share sum=-0.74 real pnl=-7.70
+never blocked                              n= 65 lost= 4 ( 6.2%) avg_price=0.927 per-share sum=+0.74 real pnl=+4.64
+  block within 2s before entry             n= 37 lost= 5 (13.5%) avg_price=0.921 per-share sum=-2.07 real pnl=-13.94
+  block within 5s before entry             n= 48 lost= 5 (10.4%) avg_price=0.922 per-share sum=-1.23 real pnl=-10.58
+  block within 10s before entry            n= 52 lost= 5 ( 9.6%) avg_price=0.924 per-share sum=-1.03 real pnl=-9.13
+dist dropped >= 0.5 bp since window start  n= 41 lost= 3 ( 7.3%) avg_price=0.920 per-share sum=+0.27 real pnl=-2.60
+dist dropped >= 1 bp since window start    n= 30 lost= 2 ( 6.7%) avg_price=0.924 per-share sum=+0.28 real pnl=-1.57
+dist dropped >= 1.5 bp since window start  n= 25 lost= 2 ( 8.0%) avg_price=0.924 per-share sum=-0.10 real pnl=-3.41
+dist dropped >= 2 bp since window start    n= 19 lost= 1 ( 5.3%) avg_price=0.920 per-share sum=+0.52 real pnl=+4.39
+dist drop < 1                              n= 90 lost= 7 ( 7.8%) avg_price=0.925 per-share sum=-0.28 real pnl=-1.49
+adv3 >= 1.0                                n= 47 lost= 5 (10.6%) avg_price=0.919 per-share sum=-1.17 real pnl=-9.06
+adv3 >= 0.5                                n= 69 lost= 7 (10.1%) avg_price=0.921 per-share sum=-1.57 real pnl=-12.04
+adv3 < 0.5                                 n= 51 lost= 2 ( 3.9%) avg_price=0.930 per-share sum=+1.57 real pnl=+8.98
+shock >= 0.8 lim                           n= 38 lost= 4 (10.5%) avg_price=0.924 per-share sum=-1.11 real pnl=-5.04
+shock < 0.8 lim                            n= 82 lost= 5 ( 6.1%) avg_price=0.926 per-share sum=+1.11 real pnl=+1.98
+rel < 250                                  n= 47 lost= 5 (10.6%) avg_price=0.933 per-share sum=-1.86 real pnl=-9.37
+rel 250-270                                n= 51 lost= 4 ( 7.8%) avg_price=0.920 per-share sum=+0.08 real pnl=-2.01
+rel >= 270                                 n= 22 lost= 0 ( 0.0%) avg_price=0.919 per-share sum=+1.78 real pnl=+8.32
+===== LIVE losses
+11 01:14 btc rel 252.02 p 0.952 price 0.93 sh 5.0 pnl -4.6728 adv1 -0.0 adv3 0.55 shock 1.321 2.598 since_block None nb 0 drop 0.156 hedged False
+11 16:09 eth rel 253.52 p 0.954 price 0.9 sh 5.1667 pnl -4.6825 adv1 0.87 adv3 1.88 shock 2.749 5.812 since_block 0.37 nb 1 drop 0.0 hedged False
+12 07:24 sol rel 253.68 p 0.954 price 0.9201 sh 5.0538 pnl -4.676 adv1 0.0 adv3 1.21 shock 1.207 2.598 since_block 0.77 nb 1 drop 0.077 hedged False
+12 09:19 eth rel 249.01 p 0.952 price 0.91 sh 5.1099 pnl -4.6793 adv1 0.05 adv3 0.05 shock 2.252 2.598 since_block None nb 0 drop 0.0 hedged False
+12 19:34 xrp rel 250.06 p 0.952 price 0.91 sh 5.1099 pnl -4.6793 adv1 0.97 adv3 0.97 shock 0.974 3.46 since_block None nb 0 drop 0.975 hedged False
+13 12:49 eth rel 244.4 p 0.953 price 0.93 sh 2.0 pnl -1.8691 adv1 -0.0 adv3 0.2 shock 2.446 2.598 since_block None nb 0 drop 0.113 hedged False
+13 13:04 sol rel 248.6 p 0.954 price 0.91 sh 2.044 pnl -1.8717 adv1 0.0 adv3 1.24 shock 2.481 2.798 since_block 1.34 nb 7 drop 3.363 hedged False
+13 20:49 eth rel 242.08 p 0.978 price 0.94 sh 10.1064 pnl -9.5399 adv1 0.87 adv3 1.7 shock 2.364 2.628 since_block 1.23 nb 1 drop 1.527 hedged False

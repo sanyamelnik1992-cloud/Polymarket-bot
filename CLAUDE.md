@@ -131,6 +131,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   read Chainlink from PolyBolt + RTDS (`cl_feed = "both"`; RTDS alone timed out ~10 times that night); `pmbot-lock-tier` stays on
   RTDS as the A/B reference. Binance had no outage. Live since 11 Nov 20:50: 5m 24 / 2 lost / +$0.27 (10-share 10 / 0 / +$4.71,
   bottom tier 14 / 2 / -$4.00), 15m 9 / 0 / +$17.28.
+  **`reports/71_early_entries_calm_size.md` (14 Nov, owner: "можем как-то исправить ... на сервер заливай")**: 13 Nov 5m live
+  26 / 3 lost / -$7.71. Every lost window of live + twins since 10 Nov 18:52 (9 of 120) was bought before second 254. Live 5m
+  and its twins (`lock_live`, `lock_tier`, `lock_tier_pb`, `lock_tier_late`) now run `late_tier_rel = 260` with `late_tier_p = 0.97`
+  (the p 0.95-0.97 tier only from second 260: 47 windows / 7 lost before, 32 / 0 after) and `lock.big_calm_s = 3` (10 shares only
+  if no Binance guard, `GUARD_WHYS`, blocked the window in the last 3 s, else 2; `lock_entry` gets `calm: false`: both 10-share
+  losses came 1.2-1.3 s after a `binance_against` block; evidence thin, 2 of 12 vs 0 of 29, hence smaller size, not a ban).
+  Tapes 7-11 Nov: +$24.60 -> +$25.67, worst trade -$9.53 -> -$1.91, 130 -> 108 entries; costs ~$2 a day in a loss-free period.
+  The insurance has never filled live (FAK 250-330 ms behind the reversal). 15m unchanged (32 entries / 1 lost / +$22.86 since 12 Nov). Tools:
+  `reports/71_tools` (`paths.py` state paths of the live rule, `variants.py`, `journal_feat.py` for the bots' journals).
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
