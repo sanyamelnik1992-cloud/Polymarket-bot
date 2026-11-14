@@ -1,0 +1,21 @@
+[Unit]
+Description=pmbot liquidity-rewards LIVE TEST (config/rewards_live.toml: REAL MONEY, one market, ~$20 in bids, 1 hour; reports/68 section 12)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=2
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY (reports/68 section 12, owner's word 14 Nov). Installed but NOT enabled/started: the owner starts each test
+# (Telegram: /restart pmbot-rewards-live). It ends by itself (time, first fill, STOP) and is never restarted: a test
+# that ended or was refused must not begin again on its own. Not in the auto-update restart list for the same reason.
+ExecStart=__REPO__/.venv/bin/python scripts/run_rewards_live.py --config config/rewards_live.toml --live
+Restart=no
+KillSignal=SIGINT
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

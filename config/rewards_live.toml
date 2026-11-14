@@ -1,0 +1,49 @@
+# LIVE TEST of the liquidity-rewards rule: REAL MONEY, deliberately tiny (unit pmbot-rewards-live, reports/68 section 12).
+# Owner's word 14 Nov: "давай все делай под реальные деньги, будем тестировать".
+# One market, the paper bot's quotes (the market's minimum size on both outcomes, about $20 resting), for one hour.
+# It does not try to earn: it reads from the exchange what paper cannot know (how fast other makers come to a pool we
+# quote alone, what share is left, how much the exchange accrues against the paper estimate). First probe: reports/72. No hedge, no merge. The first fill ends the
+# test and the shares stay in the wallet. NOT enabled at boot: the owner starts it (Telegram: /restart pmbot-rewards-live).
+journal_dir = "data/journal-rewards-live"
+
+[rewards]
+mode = "live"
+state_file = ""               # nothing is carried from one test to the next: the wallet itself is the record
+# selection and quoting: the paper bot's numbers (config/rewards.toml), so the test measures the same rule
+min_rate = 5
+min_expected_reward = 2.0
+max_volume_24h = 500
+min_days_left = 7             # the paper bot takes markets from 2 days; the test wants a calm one (no daily news market)
+price_lo = 0.10
+price_hi = 0.90
+max_candidates = 400
+max_competitiveness = 1.0
+dist_cents = 2.0
+alone_frac = 0.85
+size_mult = 1.0
+requote_min_s = 30
+requote_ticks = 1
+min_order_age_s = 30
+min_fill_shares = 1
+feed_stale_s = 45
+max_ref_disagree = 0.03
+daily_loss_limit = 12         # a mark-to-market loss of the day worse than this also ends the test
+
+[live]
+kind = "alone"                # "alone": a pool nobody else scores in (the main question); "shared": next to other makers
+minutes = 60                  # one hour: long enough to see other makers arrive and what share is left (reports/72: ~6 min)
+fresh_hours = 48              # a market quoted by a test in the last 48 h is skipped: every run is a new sample
+earn_every = 5                # every 5th reading also asks what the exchange has accrued for the market
+max_open_usd = 20             # both resting bids together
+max_shares = 20               # one order = the usual rewards minimum size
+price_lo = 0.30               # the market's price: a filled bid is then at most 20 shares at ~0.66 = $13 in the wallet
+price_hi = 0.70
+min_rate = 20
+calm_days = 7                 # no question about a date in the next 7 days ("... on November 16?"): a calm market for the test
+reserve_usd = 40              # collateral that must stay free on top: the lock bots trade from the same wallet
+order_ttl_s = 1200            # every order expires by itself after 20 min; a fresh one replaces it 5 min earlier
+refresh_before_s = 300
+heartbeat_s = 4               # the exchange cancels our orders ~10 s after the last heartbeat (dead-man switch)
+max_orders = 300
+poll_s = 60
+stop_on_fill = true
