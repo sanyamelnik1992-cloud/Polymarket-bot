@@ -1,18 +1,18 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261113-093538
-mode: paper  duration: 865.7 min  events: {'start': 1, 'status': 1730, 'lock_state': 8543, 'strike': 671, 'fill': 28, 'lock_entry': 28, 'provisional': 25, 'settle': 28, 'lock_miss': 28, 'kill': 1}
+mode: paper  duration: 925.2 min  events: {'start': 1, 'status': 1849, 'lock_state': 8925, 'strike': 719, 'fill': 31, 'lock_entry': 31, 'provisional': 28, 'settle': 29, 'lock_miss': 29, 'kill': 1}
 
-lock orders: sent 56  filled 28  ask gone 28  errors 0
+lock orders: sent 60  filled 31  ask gone 29  errors 0
   signal -> exchange answer, ms: median 304  p90 548  max 983
-  fill price minus the ask we saw, cents: mean -0.12  worst +26.0
+  fill price minus the ask we saw, cents: mean -0.08  worst +26.0
   misses came 31-60 s before the end; model p 0.903-0.995
 
-fills: 28  shares: 140  notional: $122.57
+fills: 31  shares: 155  notional: $136.17
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       12    60.0    51.000      0.850  253.176
+btc       13    65.0    55.550      0.855  251.679
 eth        5    25.0    22.500      0.900  246.207
 sol        4    20.0    18.000      0.900  244.980
-xrp        7    35.0    31.075      0.888  255.158
+xrp        9    45.0    40.125      0.892  250.287
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
@@ -20,7 +20,7 @@ asset
 btc         12  51.525 -6.525         -6.525     0.0     0.750 -4.437  1.233 -0.127
 eth          5  22.655 -2.655         -2.655     0.0     0.800 -4.673  0.753 -0.117
 sol          4  18.125 -3.125         -3.125     0.0     0.750 -4.673  0.705 -0.172
-xrp          7  31.316 -1.316         -1.316     0.0     0.857 -4.104  0.610 -0.042
+xrp          8  35.895 -0.895         -0.895     0.0     0.875 -4.104  0.610 -0.025
 
-TOTAL pnl $-13.62 (ex-rebate $-13.62) on cost $123.62 -> ROI -11.02%; windows 28, t-stat -1.22
+TOTAL pnl $-13.20 (ex-rebate $-13.20) on cost $128.20 -> ROI -10.30%; windows 29, t-stat -1.18
 max drawdown $-21.33; hedged windows (both sides filled): 0
