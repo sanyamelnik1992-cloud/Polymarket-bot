@@ -1740,3 +1740,8 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-14 02:25:15,pmbot-lock-tier,paper,sol-1794622500,Down,0,2.0,1.8503,2.0,0.0,0.1497
 2026-11-14 02:25:17,pmbot-lock-live,live,sol-1794622500,Down,0,2.0217,1.8704,2.0217,0.0,0.1513
 2026-11-14 02:25:19,pmbot-lock-tier-wide,paper,sol-1794622500,Down,0,5.0,4.6258,5.0,0.0,0.3742
+2026-11-14 03:15:58,pmbot-lock-maker3,paper,btc-1794625500,Down,0,5.0,4.55,5.0,0.0,0.45
+2026-11-14 03:16:02,pmbot-lock-tier-wide,paper,btc-1794625500,Down,0,5.0,4.5787,5.0,0.0,0.4213
+2026-11-14 03:31:09,pmbot-lock-maker3,paper,btc-1794626400,Down,0,5.0,4.5,5.0,0.0,0.5
+2026-11-14 03:31:14,pmbot-lock-tier-wide,paper,btc-1794626400,Down,0,5.0,4.4843,5.0,0.0,0.5157
+2026-11-14 03:50:02,pmbot-lock-maker3,paper,btc-1794627600,Down,0,5.0,4.5,5.0,0.0,0.5
