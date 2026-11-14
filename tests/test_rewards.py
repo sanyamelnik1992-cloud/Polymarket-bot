@@ -716,6 +716,54 @@ def test_exit_bid_survives_a_restart_and_ignores_the_budget(tmp_path):
     assert set(g.targets(g.markets["m"], g.clock())) == {"N"}
 
 
+def test_exit_bid_does_not_chase_the_price_right_after_a_fill(tmp_path):
+    """exit_patience_h: for 3 h after the fill the exit bid pays at most what makes the pair cost 1 + max_hedge_cost;
+    then it follows the price. On the server the exits that followed the price at once bought the top of the spike."""
+    f = farmer_with_market(tmp_path, hedge=False)
+    ms = f.markets["m"]
+    f.on_fill({"order_id": "x", "key": "m", "side": "Y", "price": 0.46, "size": 20})      # we hold 20 YES at 0.46
+    f.feed.books["Y"].bids = {0.20: 100.0}
+    ms.last_trade, ms.last_trade_t = 0.30, f.clock()                  # a sweep printed at 0.30: the reference drops
+    tg = f.targets(ms, f.clock())
+    assert set(tg) == {"N"} and tg["N"] == (pytest.approx(0.60), 20)  # not 0.66: 0.46 + 0.60 = 1.06 at most
+    f.clock.t += 3 * 3600 + 1
+    f.feed.last_msg = f.clock()
+    assert f.targets(ms, f.clock())["N"][0] == pytest.approx(0.66)    # an old position follows the price
+    ms.last_trade = 0.50                                              # the price came back: the usual quote is cheaper
+    f.pos["m"].t = f.clock()
+    assert f.targets(ms, f.clock())["N"][0] == pytest.approx(0.46)    # the cap only ever lowers the bid
+    g = farmer_with_market(tmp_path / "off", hedge=False, exit_patience_h=0)
+    g.on_fill({"order_id": "x", "key": "m", "side": "Y", "price": 0.46, "size": 20})
+    g.feed.books["Y"].bids = {0.20: 100.0}
+    g.markets["m"].last_trade, g.markets["m"].last_trade_t = 0.30, g.clock()
+    assert g.targets(g.markets["m"], g.clock())["N"][0] == pytest.approx(0.66)             # 0 = as before
+
+
+def test_fill_time_of_a_position_survives_a_restart(tmp_path):
+    f = farmer_with_market(tmp_path, hedge=False)
+    f.on_fill({"order_id": "x", "key": "m", "side": "Y", "price": 0.46, "size": 20})
+    t = f.pos["m"].t
+    assert t == f.clock()
+    f.clock.t += 60
+    f.on_fill({"order_id": "y", "key": "m", "side": "N", "price": 0.40, "size": 5})        # a partial exit: not a new fill
+    assert f.pos["m"].t == t
+    g = Farmer(f.rc, J(), clock=f.clock)
+    assert g.pos["m"].t == t
+    assert Position(yes=20, no=0, cost=9.2).t == 0                    # positions from older state files: no patience left
+    assert g.exit_cap(g.markets["m"], Position(yes=20, no=0, cost=9.2), g.clock()) is None
+
+
+def test_totals_of_a_dropped_market_are_journalled_once(tmp_path):
+    f = farmer_with_market(tmp_path)
+    f.markets["m"].fills, f.markets["m"].reward_total, f.markets["m"].quoted_s = 2, 1.5, 3600.0
+    f.apply_selection([])
+    row = f.journal.of("rmk")[0]
+    assert "m" not in f.markets and row["slug"] == "m" and row["fills"] == 2 and row["quoted_min"] == 60
+    assert row["days"] == pytest.approx(10) and row["price"] == 0.5 and "vol" in row and "comp" in row
+    f.apply_selection([])
+    assert len(f.journal.of("rmk")) == 1
+
+
 def test_competitiveness_cap():
     raw = [raw_market("a", rate=50, comp=0.5), raw_market("b", rate=50, comp=1.5)]
     assert [c.slug for c in mk.candidates(raw, RewardsCfg())] == ["a"]
@@ -918,6 +966,8 @@ def test_report_script_reads_a_journal(tmp_path, capsys):
     f.feed.books["N"].asks = {0.53: 100.0}
     asyncio.run(f.quote_once())
     f.journal.log("rstatus", **f.status())
+    f.journal.log("rmk", **f.market_row("m", f.markets["m"]))        # a market the bot stopped following
+    f.journal.log("rmerge", key="m", pairs=20, pnl=-0.4, age_s=600)
     run = tmp_path / "journal" / "20261111-000000"
     run.mkdir(parents=True)
     with open(run / "events.jsonl", "w") as out:
@@ -929,3 +979,5 @@ def test_report_script_reads_a_journal(tmp_path, capsys):
     mod.main(str(tmp_path / "journal"))
     txt = capsys.readouterr().out
     assert "hedges: 1, 20 shares" in txt and "CAUTIOUS" in txt and "fills: 1" in txt and "official $" in txt
+    assert "by kind of market at selection" in txt and "24 h volume" in txt
+    assert "pairs closed by our own bids" in txt and "within 30 min" in txt

@@ -43,6 +43,7 @@ cooldown_min = 10             # after a material fill: no quotes in that market 
 max_fills_per_market_day = 2  # in any 24 hours
 max_inventory_usd_per_market = 40
 reduce_only = true            # with unpaired inventory only the bid that pairs it rests (also in the cooldown, after deselection)
+exit_patience_h = 3.0         # ... and for 3 h after the fill it pays at most what makes the pair cost $1.06: no chasing a spike (reports/68, 11)
 daily_loss_limit = 50         # the day's cautious result (trading + rewards where others score too) -> quotes off until 00:00 UTC
 stop_counts_rewards = true    # trading alone stopped the paper day twice on 12 Nov while the rewards were not counted (reports/68, 9)
 feed_stale_s = 45             # no market-websocket message for this long -> no quotes

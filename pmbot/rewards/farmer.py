@@ -33,6 +33,7 @@ The rule follows what the largest reward earners do (reports/68: public wallet d
 import asyncio
 import json
 import logging
+import math
 import os
 import random
 import time
@@ -47,7 +48,7 @@ from .scoring import adjusted_mid, official_share, our_share, plan_quotes, walk_
 
 log = logging.getLogger("pmbot.rewards")
 RM_KEYS = ("slug", "question", "condition_id", "yes", "no", "rate", "v", "min_size", "end_ts", "tick", "min_order",
-           "price", "last_trade", "comp", "size", "fee_rate", "min_age")       # enough of a market to quote its exit
+           "price", "last_trade", "comp", "size", "fee_rate", "min_age", "vol")   # enough of a market to quote its exit
 SETTLE_GRACE_S = 3600          # look for a resolution at most this long after the market's end (then keep polling)
 ZONE_MARGIN = 0.25             # cents: a resting order closer than this to the edge of the zone is moved in
 
@@ -63,8 +64,9 @@ def next_midnight(ts):
 class Position:
     """Shares of both outcomes of one market and what each side cost (taker fees of hedges included)."""
 
-    def __init__(self, yes=0.0, no=0.0, cost=0.0, cy=None, cn=None):
+    def __init__(self, yes=0.0, no=0.0, cost=0.0, cy=None, cn=None, t=0.0):
         self.yes, self.no = yes, no
+        self.t = t                                 # when a fill last made the unpaired part bigger (0 = long ago)
         if cy is None and cn is None:              # one total (older state files, tests): split by shares
             tot = yes + no
             cy = cost * yes / tot if tot else 0.0
@@ -124,6 +126,7 @@ class MState:
         self.fills = 0                   # fills since this market was first selected (journal `rmarkets`)
         self.hedge_pnl = 0.0             # realised by hedges here (negative = what the exits cost)
         self.quoted_s = 0.0              # seconds with at least one order old enough to score
+        self.t0 = None                   # when the market was first selected (clock seconds)
 
 
 class Farmer:
@@ -174,7 +177,7 @@ class Farmer:
         self.realized = float(s.get("realized", 0.0))
         self.realized_by_day = s.get("realized_by_day", {})
         for slug, d in (s.get("positions") or {}).items():
-            self.pos[slug] = (Position(d["yes"], d["no"], cy=d["cy"], cn=d["cn"]) if "cy" in d
+            self.pos[slug] = (Position(d["yes"], d["no"], cy=d["cy"], cn=d["cn"], t=float(d.get("t") or 0.0)) if "cy" in d
                               else Position(d["yes"], d["no"], d["cost"]))
             self.meta[slug] = {"yes": d.get("yes_token"), "no": d.get("no_token"), "mid": d.get("mid"),
                                "end": d.get("end"), "fee": d.get("fee"), "rm": d.get("rm")}
@@ -212,7 +215,7 @@ class Farmer:
             if ps.yes or ps.no:
                 m = self.meta.get(slug, {})
                 ms = self.markets.get(slug)
-                positions[slug] = {"yes": ps.yes, "no": ps.no, "cost": ps.cost, "cy": ps.cy, "cn": ps.cn,
+                positions[slug] = {"yes": ps.yes, "no": ps.no, "cost": ps.cost, "cy": ps.cy, "cn": ps.cn, "t": ps.t,
                                    "yes_token": m.get("yes"), "no_token": m.get("no"), "mid": self.mid_of(slug),
                                    "end": m.get("end"), "fee": m.get("fee"),
                                    "rm": {k: getattr(ms.rm, k) for k in RM_KEYS} if ms else m.get("rm")}
@@ -321,8 +324,11 @@ class Farmer:
             return
         slug = fill["key"]
         ps = self.pos.setdefault(slug, Position())
-        ps.add(fill["side"], size, fill["price"] * size)
         now = self.clock()
+        before = abs(ps.yes - ps.no)
+        ps.add(fill["side"], size, fill["price"] * size)
+        if abs(ps.yes - ps.no) > before + 1e-9:
+            ps.t = now                             # a fresh (or bigger) position: the exit bid is patient from now
         day = utc_day(now)
         self.fills_by_day[day] = self.fills_by_day.get(day, 0) + 1
         ms = self.markets.get(slug)
@@ -355,6 +361,7 @@ class Farmer:
             ms = self.markets.get(p.slug)
             if ms is None:
                 ms = self.markets[p.slug] = MState(p)
+                ms.t0 = now
             else:
                 ms.rm, ms.active = p, True
             self.token_slug[p.yes] = p.slug
@@ -382,6 +389,8 @@ class Farmer:
         for slug in list(self.markets):
             ms, ps = self.markets[slug], self.pos.get(slug)
             if not ms.active and not ms.orders and not (ps and (ps.yes or ps.no)):
+                if ms.reward_total or ms.fills or ms.quoted_s:
+                    self.journal.log("rmk", **self.market_row(slug, ms))     # its totals, once (the report sums them)
                 del self.markets[slug]
         for slug in list(self.meta):
             ps = self.pos.get(slug)
@@ -470,7 +479,8 @@ class Farmer:
             ms = self.markets.get(slug)
             if ms is not None:
                 ms.hedge_pnl += pnl
-            self.journal.log("rmerge", key=slug, pairs=round(pairs, 4), pnl=round(pnl, 4))
+            self.journal.log("rmerge", key=slug, pairs=round(pairs, 4), pnl=round(pnl, 4),
+                             age_s=round(now - ps.t) if ps.t else None)      # how long after the fill the pair closed
             if not (ps.yes or ps.no):
                 del self.pos[slug]
             n += 1
@@ -521,6 +531,19 @@ class Farmer:
             return "Y"
         return None
 
+    def exit_cap(self, ms, ps, now):
+        """The most the exit bid may pay while the position is fresh (rc.exit_patience_h): the pair then costs at most
+        1 + max_hedge_cost, like a taker hedge. None = no cap (an old position follows the price).
+        Why: right after a fill the reference price is the sweep that filled us. An exit bid that follows it buys the
+        other outcome at the top of the spike: 12-14 Nov, 33 positions closed that way at -11c a share, held instead
+        they were -3.5c; the exits within 30 minutes were -12c against +2c (reports/68, 11)."""
+        rc = self.rc
+        if rc.exit_patience_h <= 0 or now - ps.t >= rc.exit_patience_h * 3600:
+            return None
+        held = (ps.cy / ps.yes) if ps.yes > ps.no else (ps.cn / ps.no)
+        tick = ms.rm.tick
+        return round(math.floor((1.0 + rc.max_hedge_cost - held) / tick + 1e-9) * tick, 6)
+
     def targets(self, ms, now):
         """{"Y": (price, size), "N": (price, size)} we want resting now (sides may be missing).
         With unpaired inventory (reduce_only) only the bid that pairs it rests -- also during the cooldown and after
@@ -566,6 +589,11 @@ class Farmer:
             ps = self.pos[ms.rm.slug]
             need = abs(ps.yes - ps.no)                 # the exit bid is just big enough to pair what we hold
             p = out[reduce][0]
+            cap = self.exit_cap(ms, ps, now)
+            if cap is not None and cap < p:
+                p = cap
+                if p < ms.rm.tick - 1e-9:
+                    return {}
             return {reduce: (p, max(round(need, 2), ms.rm.min_order))}
         ps = self.pos.get(ms.rm.slug)
         if ps:
@@ -651,7 +679,8 @@ class Farmer:
                 oid = await self.broker.place(token, ms.rm.slug, side, price, size, now_ms, queue_ahead=ahead)
                 ms.orders[side] = {"oid": oid, "price": price, "size": size, "t": now}
                 self.journal.log("rquote", key=ms.rm.slug, side=side, price=price, size=size, crossing=crossing,
-                                 alone=ms.alone, ref=round(ms.ref, 4) if ms.ref is not None else None)
+                                 alone=ms.alone, ref=round(ms.ref, 4) if ms.ref is not None else None,
+                                 exit=bool(exit_bid))
         self.broker.gc(now_ms)
 
     # ------------------------------------------------------------ rewards
@@ -827,21 +856,26 @@ class Farmer:
 
     def market_stats(self):
         """Per-market totals since each market was first selected (for the report: where the money came from)."""
-        out = []
-        for slug, ms in self.markets.items():
-            if not (ms.reward_total or ms.fills or ms.quoted_s):
-                continue
-            ps = self.pos.get(slug)
-            open_pnl = 0.0
-            if ps and (ps.yes or ps.no):
-                y, n = self.mark_prices(slug)
-                pairs = min(ps.yes, ps.no)
-                open_pnl = pairs + (ps.yes - pairs) * y + (ps.no - pairs) * n - ps.cost
-            out.append({"slug": slug[:70], "q": ms.rm.question[:70], "rate": ms.rm.rate, "comp": round(ms.rm.comp, 3),
-                        "reward": round(ms.reward_total, 3), "alone": round(ms.alone_total, 3),
-                        "quoted_min": round(ms.quoted_s / 60, 1), "fills": ms.fills,
-                        "hedge_pnl": round(ms.hedge_pnl, 3), "open_pnl": round(open_pnl, 3), "active": ms.active})
-        return out
+        return [self.market_row(slug, ms) for slug, ms in self.markets.items()
+                if ms.reward_total or ms.fills or ms.quoted_s]
+
+    def market_row(self, slug, ms):
+        """Totals of one market since it was selected, with what the report groups by (pool, competition, volume,
+        price and days to the end at selection)."""
+        ps = self.pos.get(slug)
+        open_pnl = 0.0
+        if ps and (ps.yes or ps.no):
+            y, n = self.mark_prices(slug)
+            pairs = min(ps.yes, ps.no)
+            open_pnl = pairs + (ps.yes - pairs) * y + (ps.no - pairs) * n - ps.cost
+        rm = ms.rm
+        days = (rm.end_ts - ms.t0) / 86400 if ms.t0 and rm.end_ts == rm.end_ts else None
+        return {"slug": slug[:70], "q": rm.question[:70], "rate": rm.rate, "comp": round(rm.comp, 3),
+                "reward": round(ms.reward_total, 3), "alone": round(ms.alone_total, 3),
+                "quoted_min": round(ms.quoted_s / 60, 1), "fills": ms.fills,
+                "hedge_pnl": round(ms.hedge_pnl, 3), "open_pnl": round(open_pnl, 3), "active": ms.active,
+                "vol": round(rm.vol, 1), "price": round(rm.price, 3), "v": rm.v, "min_size": rm.min_size,
+                "days": round(days, 1) if days is not None else None, "empty": rm.empty}
 
     def day_loss(self, st):
         """What the daily stop compares with the limit. stop_counts_rewards: the cautious result of the day (trading +

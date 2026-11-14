@@ -35,7 +35,7 @@ class RewardsCfg:
                                          # pool. 12-13 Nov on the server: such markets paid $1.28 an hour and cost $1.50 in
                                          # fills (41 fills in 45 market-hours); markets nobody or almost nobody scores in
                                          # paid $2.33 and cost $0.33 (36 fills in 207 market-hours). Replay of 7 days:
-                                         # competitiveness 1-5 kept 11 % of the rewards, above 5 lost (reports/68, 12). 0 = off
+                                         # competitiveness 1-5 kept 11 % of the rewards, above 5 lost (reports/68, 4 and 10). 0 = off
     hold_bonus: float = 1.5              # a market we already quote ranks as if it paid this much more: without it the
                                          # 45 picks were 163 different markets in 1.9 hours and orders rarely got old
                                          # enough to score (first paper run, reports/68)
@@ -61,6 +61,12 @@ class RewardsCfg:
     max_fills_per_market_day: int = 2    # ... in any 24 hours: markets that filled us twice a day lost in the replay
     max_inventory_usd_per_market: float = 40.0   # stop bidding a side once its unhedged inventory costs this much
     reduce_only: bool = True             # with unpaired inventory quote only the bid that pairs it (see Farmer.targets)
+    exit_patience_h: float = 3.0         # for this long after a fill the exit bid pays at most what makes the pair cost
+                                         # 1 + max_hedge_cost; later it follows the price. 12-14 Nov on the server: exit
+                                         # bids that followed the price closed 33 positions at -11c a share, the same
+                                         # positions simply held were -3.5c (exits within 30 min: -12c against +2c held;
+                                         # after 3 h: -9c against -8c). Right after a fill the reference price is the
+                                         # sweep that filled us, and it comes back (reports/68, 11). 0 = off
     feed_stale_s: float = 45.0           # no websocket message for this long -> quote nothing
     max_ref_disagree: float = 0.03       # no quotes while the last trade (<= trade_fresh_s old) is this far off the book
     trade_fresh_s: float = 600.0
@@ -91,6 +97,6 @@ def load_rewards_config(path, overrides=None):
         raise ValueError("the rewards farmer is paper-only for now (live needs a separate, reviewed step)")
     if not 0 < cfg.alone_frac < 1:
         raise ValueError("rewards.alone_frac must be in (0, 1): the lone-maker distance as a share of the max spread")
-    if cfg.dist_cents <= 0 or cfg.max_hedge_cost < 0 or cfg.min_order_age_s < 0:
-        raise ValueError("rewards: dist_cents > 0, max_hedge_cost >= 0, min_order_age_s >= 0")
+    if cfg.dist_cents <= 0 or cfg.max_hedge_cost < 0 or cfg.min_order_age_s < 0 or cfg.exit_patience_h < 0:
+        raise ValueError("rewards: dist_cents > 0, max_hedge_cost >= 0, min_order_age_s >= 0, exit_patience_h >= 0")
     return cfg
