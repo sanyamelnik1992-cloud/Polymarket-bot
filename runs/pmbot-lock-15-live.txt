@@ -1,13 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261114-113520
-mode: live  duration: 26.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 53, 'prewarm': 8, 'lock_state': 35, 'strike': 4, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1}
-
-lock orders: sent 1  filled 1  ask gone 0  errors 0
-  signal -> exchange answer, ms: median 274  p90 274  max 274
-  market prewarm (2 lookups + signing), ms: median 280  max 392  n 8
-  fill price minus the ask we saw, cents: mean -1.00  worst -1.0
-
-fills: 1  shares: 5  notional: $4.55
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-sol        1   5.112      4.55       0.89  849.184
-no settled windows yet
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261114-130111
+mode: live  duration: 0.0 min  events: {'geoblock_ok': 1, 'start': 1}
+no fills
