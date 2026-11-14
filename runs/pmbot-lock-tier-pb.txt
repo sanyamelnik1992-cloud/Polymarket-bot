@@ -1,24 +1,26 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-pb/20261113-093556
-mode: paper  duration: 1404.8 min  events: {'start': 1, 'status': 2808, 'lock_state': 18041, 'strike': 1120, 'lock_miss': 14, 'fill': 17, 'lock_entry': 17, 'provisional': 17, 'settle': 17, 'kill': 1}
+mode: paper  duration: 1466.4 min  events: {'start': 1, 'status': 2931, 'lock_state': 18689, 'strike': 1168, 'lock_miss': 15, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'settle': 19, 'kill': 1}
 
-lock orders: sent 31  filled 17  ask gone 14  errors 0
+lock orders: sent 34  filled 19  ask gone 15  errors 0
   signal -> exchange answer, ms: median 304  p90 336  max 822
-  fill price minus the ask we saw, cents: mean -0.71  worst +1.0
+  fill price minus the ask we saw, cents: mean -0.68  worst +1.0
   misses came 16-60 s before the end; model p 0.952-0.992
 
-fills: 17  shares: 56  notional: $52.49
+fills: 19  shares: 60  notional: $56.15
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        3    6.00      5.50      0.917  257.345
 eth        9   42.00     39.46      0.930  247.451
-sol        5    8.29      7.53      0.912  249.647
+sol        6   10.29      9.37      0.913  258.350
+xrp        1    2.00      1.82      0.910  262.334
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
 btc          3   5.532  0.468          0.468     0.0     1.000  0.131  0.187  0.085
 eth          9  39.627 -9.627         -9.627     0.0     0.778 -9.440  0.467 -0.243
-sol          5   7.578 -1.288         -1.288     0.0     0.800 -1.850  0.263 -0.170
+sol          6   9.428 -1.138         -1.138     0.0     0.833 -1.850  0.263 -0.121
+xrp          1   1.832  0.168          0.168     0.0     1.000  0.168  0.168  0.092
 
-TOTAL pnl $-10.45 (ex-rebate $-10.45) on cost $52.74 -> ROI -19.81%; windows 17, t-stat -1.07
+TOTAL pnl $-10.13 (ex-rebate $-10.13) on cost $56.42 -> ROI -17.95%; windows 19, t-stat -1.03
 max drawdown $-11.36; hedged windows (both sides filled): 0
