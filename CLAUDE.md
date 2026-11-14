@@ -217,6 +217,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   kinds, the competitiveness cap. In a selection of 14 Nov 41 of 45 markets had official competitiveness 0: the "cautious" part
   also rests on nearly empty pools, so the live $20 test (report 68 section 8, step 2) is the next real step; REWARD payouts in
   the public Data API are one sum per wallet per day, no per-market breakdown, so public data cannot answer it.
+  **`reports/72_rewards_live_probe.md` (14 Nov, owner: "запускай тест")**: first REAL-MONEY probe of R, `reports/72_tools/rewards_probe.py`
+  (`plan` / `run --real-money` / `payout --date`; one pair of post-only minimum-size bids, <= $25, <= 30 min, exchange-side
+  expiration). Malacca-ships market, pool $40 a day, $17.60 in bids for 10 min: no fill, the exchange accrued $0.052
+  (`list_user_earnings_for_day`: accrual is by time, not the whole pool for presence); our share (`get_reward_percentages`) was
+  75 % for ~5 min, then 1.7 %: other makers posted tighter and larger within ~6 min, competitiveness 0 -> 1.0. The paper bot
+  would have booked $0.24-0.28 there ("alone" for hours): its "alone" rewards are overstated, one sample. Next: payout check on
+  15 Nov, 3-5 more 30-min probes to time the arrival of other makers, then fix the paper reward estimate.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
