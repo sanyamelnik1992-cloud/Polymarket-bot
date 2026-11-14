@@ -1,20 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99/20261113-093547
-mode: paper  duration: 1526.5 min  events: {'start': 1, 'status': 3051, 'lock_state': 16906, 'strike': 1216, 'lock_miss': 5, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
-
-lock orders: sent 6  filled 1  ask gone 5  errors 0
-  signal -> exchange answer, ms: median 302  p90 313  max 313
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 26-60 s before the end; model p 0.991-0.995
-
-fills: 1  shares: 5  notional: $4.95
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-xrp        1     5.0      4.95       0.99  253.355
-
-settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-xrp          1  4.954  0.046          0.046     0.0       1.0  0.046  0.046  0.009
-
-TOTAL pnl $+0.05 (ex-rebate $+0.05) on cost $4.95 -> ROI +0.94%; windows 1, t-stat +nan
-max drawdown $0.00; hedged windows (both sides filled): 0
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99/20261114-113406
+mode: paper  duration: 27.6 min  events: {'start': 1, 'lock_state': 132, 'status': 55, 'strike': 16}
+no fills
