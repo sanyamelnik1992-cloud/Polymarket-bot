@@ -1,3 +1,19 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-maker3/20261114-130054
-mode: paper  duration: 0.0 min  events: {'start': 1}
-no fills
+mode: paper  duration: 60.0 min  events: {'start': 1, 'status': 120, 'lock_state': 594, 'strike': 44, 'maker_bid': 383, 'maker_cancel': 376, 'fill': 11, 'lock_entry': 11, 'provisional': 10, 'settle': 10}
+
+fills: 11  shares: 45  notional: $41.14
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        4   20.00    18.200       0.91  254.248
+eth        4   10.04     9.138       0.93  243.848
+sol        3   15.00    13.800       0.92  258.838
+
+settled windows:
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
+asset                                                                             
+btc          4  18.200 -3.200         -3.200     0.0      0.75 -4.550  0.45 -0.176
+eth          3   9.138  0.902          0.902     0.0      1.00  0.002  0.45  0.099
+sol          3  13.800  1.200          1.200     0.0      1.00  0.250  0.50  0.087
+
+TOTAL pnl $-1.10 (ex-rebate $-1.10) on cost $41.14 -> ROI -2.67%; windows 10, t-stat -0.22
+max drawdown $-4.55; hedged windows (both sides filled): 0
