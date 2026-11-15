@@ -1,22 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-tier/20261114-203704
-mode: paper  duration: 805.1 min  events: {'start': 1, 'status': 1609, 'lock_state': 6606, 'strike': 212, 'lock_miss': 2, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4}
+mode: paper  duration: 864.6 min  events: {'start': 1, 'status': 1728, 'lock_state': 6834, 'strike': 228, 'lock_miss': 2, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 5, 'kill': 1}
 
-lock orders: sent 6  filled 4  ask gone 2  errors 0
+lock orders: sent 7  filled 5  ask gone 2  errors 0
   signal -> exchange answer, ms: median 317  p90 427  max 427
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+  fill price minus the ask we saw, cents: mean -2.80  worst +0.0
   misses came 30-33 s before the end; model p 0.907-0.915
 
-fills: 4  shares: 20  notional: $18.25
+fills: 5  shares: 25  notional: $22.15
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        2    10.0      9.10      0.910  856.730
-eth        2    10.0      9.15      0.915  852.812
+btc        2    10.0      9.10       0.91  856.730
+eth        3    15.0     13.05       0.87  850.465
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-btc          2  9.157  0.843          0.843     0.0       1.0  0.421  0.421  0.092
-eth          2  9.204 -4.204         -4.204     0.0       0.5 -4.626  0.421 -0.457
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+btc          2   9.157  0.843          0.843     0.0     1.000  0.421  0.421  0.092
+eth          3  13.165 -8.165         -8.165     0.0     0.333 -4.626  0.421 -0.620
 
-TOTAL pnl $-3.36 (ex-rebate $-3.36) on cost $18.36 -> ROI -18.31%; windows 4, t-stat -0.67
-max drawdown $-4.63; hedged windows (both sides filled): 0
+TOTAL pnl $-7.32 (ex-rebate $-7.32) on cost $22.32 -> ROI -32.80%; windows 5, t-stat -1.26
+max drawdown $-8.16; hedged windows (both sides filled): 0
