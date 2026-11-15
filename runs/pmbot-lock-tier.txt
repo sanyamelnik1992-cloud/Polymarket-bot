@@ -1,3 +1,7 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier/20261115-185101
-mode: paper  duration: 71.6 min  events: {'start': 1, 'status': 143, 'lock_state': 562, 'strike': 44}
+mode: paper  duration: 130.1 min  events: {'start': 1, 'status': 260, 'lock_state': 1108, 'strike': 92, 'lock_miss': 1}
+
+lock orders: sent 1  filled 0  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 301  p90 301  max 301
+  misses came 26-26 s before the end; model p 0.954-0.954
 no fills

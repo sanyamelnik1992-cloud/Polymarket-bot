@@ -1,3 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-hourly-last/20261115-185147
-mode: paper  duration: 68.4 min  events: {'start': 1, 'hour_window': 6, 'hour_open': 6, 'signal': 1, 'missed': 1}
-no fills
+mode: paper  duration: 128.6 min  events: {'start': 1, 'hour_window': 8, 'hour_open': 8, 'signal': 2, 'missed': 1, 'fill': 1, 'settle': 1}
+Traceback (most recent call last):
+  File "/home/pmbot/Polymarket-bot/scripts/report_journal.py", line 102, in <module>
+    main(sys.argv[1])
+  File "/home/pmbot/Polymarket-bot/scripts/report_journal.py", line 73, in main
+    fills["notional"] = fills.price * fills["size"]
+                        ^^^^^^^^^^^
+  File "/home/pmbot/Polymarket-bot/.venv/lib/python3.12/site-packages/pandas/core/generic.py", line 6434, in __getattr__
+    return object.__getattribute__(self, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DataFrame' object has no attribute 'price'. Did you mean: 'pipe'?
