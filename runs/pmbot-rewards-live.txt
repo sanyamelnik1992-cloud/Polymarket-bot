@@ -37,6 +37,11 @@ by market (rewards = estimate by the book; trading = hedges + open positions at 
   with other makers in the zone            1 markets  rewards $    0.00  trading $   +0.00  net $   +0.00  fills   1  quoted    0.0 market-hours
   filled                                   2 markets  rewards $    0.03  trading $   +0.00  net $   +0.03  fills   2  quoted    0.0 market-hours
 
+RECOUNT by our mean share of the pool in each market (reward / (pool x quoted time); trading = hedges + open marks of the market, inherited positions included):
+  others held >= half (share <= 50 %)             1 markets     0.0 h  rewards $    0.00  trading $   +0.00  net $   +0.00  fills 1
+  mostly ours (share > 50 %, others present)      0 markets     0.0 h  rewards $    0.00  trading $   +0.00  net $   +0.00  fills 0
+  alone most of the time                          1 markets     0.0 h  rewards $    0.03  trading $   +0.00  net $   +0.03 = $+1.68/h  fills 1
+
 by kind of market at selection (journals since 14 Nov; $/h = per quoted market-hour):
   competitiveness (others' score per $1 of pool):
     0                2 markets     0.0 h  rewards $    0.03 (alone $    0.03)  trading $   +0.00  fills   2 = 120.00/h  not alone $+0.00/h  trading $+0.00/h

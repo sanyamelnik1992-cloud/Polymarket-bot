@@ -1,3 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-tier/20261115-173307
-mode: paper  duration: 28.6 min  events: {'start': 1, 'status': 57, 'lock_state': 64, 'strike': 4}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-tier/20261115-185109
+mode: paper  duration: 9.5 min  events: {'start': 1, 'status': 19, 'lock_state': 4}
 no fills
