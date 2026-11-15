@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-alt/20261115-185115
-mode: paper  duration: 190.1 min  events: {'start': 1, 'status': 380, 'lock_state': 405, 'strike': 36, 'lock_miss': 2}
+mode: paper  duration: 250.1 min  events: {'start': 1, 'status': 500, 'lock_state': 519, 'strike': 48, 'lock_miss': 2}
 
 lock orders: sent 2  filled 0  ask gone 2  errors 0
   signal -> exchange answer, ms: median 348  p90 348  max 348
