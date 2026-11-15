@@ -397,6 +397,9 @@ def format_rewards():
                    f"осторожно (меньшая оценка, без рынков, где мы одни): {fmt_money(st.get('cautious_pnl'))}"
                    + ("  ⛔ котировки выключены до 00:00 UTC" if st.get("halted") else "")
                    + ("  ⚠️ фид молчит, котировок нет" if st.get("feed") is False else ""))
+        if "honest_pnl" in st:
+            out.append(f"  ЧЕСТНО (награды только там, где другие держат половину пула, с 15 ноября, + вся торговля): "
+                       f"сегодня {fmt_money(st.get('honest_today'))}, всего {fmt_money(st['honest_pnl'])}")
     return "\n".join(out)
 
 

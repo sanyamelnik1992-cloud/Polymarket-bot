@@ -122,6 +122,7 @@ class MState:
         self.reward_total = 0.0
         self.stress_total = 0.0
         self.alone_total = 0.0           # the part of reward_total earned while nobody else scored
+        self.shared_total = 0.0          # the part earned while others held >= half the pool (rc.honest_max_share)
         self.last_share = 0.0
         self.fills = 0                   # fills since this market was first selected (journal `rmarkets`)
         self.hedge_pnl = 0.0             # realised by hedges here (negative = what the exits cost)
@@ -146,6 +147,7 @@ class Farmer:
         self.official_by_day = {}        # the same accrual with the share from Polymarket's competitiveness number
         self.alone_by_day = {}           # the part of rewards_by_day earned while nobody else scored in the zone
         self.stress_by_day = {}
+        self.shared_by_day = {}          # the part of rewards_by_day earned where others held >= half the pool (honest)
         self.fills_by_day = {}
         self.hedges_by_day = {}          # day -> [hedged fills, shares, loss $]
         self.realized = 0.0
@@ -172,6 +174,7 @@ class Farmer:
         self.official_by_day = s.get("official_by_day", {})
         self.alone_by_day = s.get("alone_by_day", {})
         self.stress_by_day = s.get("stress_by_day", {})
+        self.shared_by_day = s.get("shared_by_day", {})
         self.fills_by_day = s.get("fills_by_day", {})
         self.hedges_by_day = s.get("hedges_by_day", {})
         self.realized = float(s.get("realized", 0.0))
@@ -225,7 +228,8 @@ class Farmer:
                        "day_bases": {self.day: self.day_base}, "halts": {self.day: self.halted_until},
                        "mfills": self.mfills, "fill_ts": self.fill_ts, "rewards_by_day": self.rewards_by_day,
                        "official_by_day": self.official_by_day, "alone_by_day": self.alone_by_day,
-                       "stress_by_day": self.stress_by_day, "fills_by_day": self.fills_by_day,
+                       "stress_by_day": self.stress_by_day, "shared_by_day": self.shared_by_day,
+                       "fills_by_day": self.fills_by_day,
                        "hedges_by_day": self.hedges_by_day, "realized": self.realized,
                        "realized_by_day": self.realized_by_day, "positions": positions}, f)
         os.replace(tmp, p)
@@ -697,7 +701,7 @@ class Farmer:
         self._last_sample = now
         dt = min(max(dt, 0.0), 3 * self.rc.sample_s)         # a long pause (restart, suspend) is not one big sample
         feed_up = self.feed_ok(now)
-        inc_total = stress_total = off_total = alone_total = 0.0
+        inc_total = stress_total = off_total = alone_total = shared_total = 0.0
         n_live = n_score = n_young = 0
         for ms in self.markets.values():
             live = {}
@@ -735,11 +739,16 @@ class Farmer:
             if q_comp <= 1e-9:
                 alone_total += inc
                 ms.alone_total += inc
+            elif share <= self.rc.honest_max_share + 1e-9:
+                shared_total += inc
+                ms.shared_total += inc
         for book, x in ((self.rewards_by_day, inc_total), (self.stress_by_day, stress_total),
-                        (self.official_by_day, off_total), (self.alone_by_day, alone_total)):
+                        (self.official_by_day, off_total), (self.alone_by_day, alone_total),
+                        (self.shared_by_day, shared_total)):
             book[day] = book.get(day, 0.0) + x
         self.journal.log("rsample", live=n_live, scoring=n_score, young=n_young, dt=round(dt, 1), feed=feed_up,
                          inc=round(inc_total, 5), official=round(off_total, 5), alone=round(alone_total, 5),
+                         shared=round(shared_total, 5),
                          today=round(self.rewards_by_day[day], 3))
         return inc_total
 
@@ -833,6 +842,8 @@ class Farmer:
               "alone_total": round(sum(self.alone_by_day.values()), 3),
               "stress_today": round(self.stress_by_day.get(day, 0.0), 3),
               "stress_total": round(sum(self.stress_by_day.values()), 3),
+              "shared_today": round(self.shared_by_day.get(day, 0.0), 3),
+              "shared_total": round(sum(self.shared_by_day.values()), 3),
               "inv_value": round(val, 2), "inv_cost": round(cost, 2), "unhedged_usd": round(self.unhedged_usd(), 2),
               "open_pnl": round(open_pnl, 2), "realized": round(self.realized, 2),
               "realized_today": round(self.realized_by_day.get(day, 0.0), 2),
@@ -853,6 +864,9 @@ class Farmer:
         st["cautious_pnl"] = round(max(low, 0.0) + trading, 2)
         low_today = min(st["rewards_today"], st["official_today"]) - st["alone_today"]
         st["cautious_today"] = round(max(low_today, 0.0) + st["trading_pnl_today"], 2)
+        # the honest figure (reports/68, 14): rewards only where others held at least half the pool, plus ALL trading
+        st["honest_pnl"] = round(st["shared_total"] + trading, 2)
+        st["honest_today"] = round(st["shared_today"] + st["trading_pnl_today"], 2)
         top = sorted(self.markets.values(), key=lambda m: -m.reward_total)[:12]
         st["top"] = [{"slug": m.rm.slug[:60], "reward": round(m.reward_total, 3), "share": round(m.last_share, 3),
                       "rate": m.rm.rate, "empty": m.alone} for m in top if m.reward_total > 0]
@@ -875,7 +889,7 @@ class Farmer:
         rm = ms.rm
         days = (rm.end_ts - ms.t0) / 86400 if ms.t0 and rm.end_ts == rm.end_ts else None
         return {"slug": slug[:70], "q": rm.question[:70], "rate": rm.rate, "comp": round(rm.comp, 3),
-                "reward": round(ms.reward_total, 3), "alone": round(ms.alone_total, 3),
+                "reward": round(ms.reward_total, 3), "alone": round(ms.alone_total, 3), "shared": round(ms.shared_total, 3),
                 "quoted_min": round(ms.quoted_s / 60, 1), "fills": ms.fills,
                 "hedge_pnl": round(ms.hedge_pnl, 3), "open_pnl": round(open_pnl, 3), "active": ms.active,
                 "vol": round(rm.vol, 1), "price": round(rm.price, 3), "v": rm.v, "min_size": rm.min_size,
@@ -909,6 +923,7 @@ class Farmer:
         self.journal.log("rday", day=self.day, rewards=round(self.rewards_by_day.get(self.day, 0.0), 3),
                          official=round(self.official_by_day.get(self.day, 0.0), 3),
                          alone=round(self.alone_by_day.get(self.day, 0.0), 3),
+                         shared=round(self.shared_by_day.get(self.day, 0.0), 3),
                          trading_pnl_day=round(trading - (self.day_base or 0.0), 2),
                          fills=self.fills_by_day.get(self.day, 0), hedges=h[0], hedge_loss=round(h[2], 2))
         self.day, self.day_base = day, trading

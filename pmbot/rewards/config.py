@@ -75,6 +75,11 @@ class RewardsCfg:
                                          # where others score too) with the limit, not the trading alone: on 12 Nov the
                                          # fills cost $93 against $79 of such rewards (+$280 more where we were alone), and a
                                          # trading-only stop cut the paper day twice. Rewards earned alone never count
+    honest_max_share: float = 0.5        # the honest result counts rewards only from samples where our share of the pool
+                                         # was at most this (others hold the rest). Live probes of 14-15 Nov (reports/72):
+                                         # a quote alone or almost alone was credited ~1/5 of the paper estimate, other
+                                         # makers came within minutes and a lone bid was hit within 0.1 s - 70 s
+                                         # (reports/68, 14)
     # bookkeeping
     sample_s: float = 60.0               # reward scoring sample period (Polymarket samples once a minute)
     settle_s: float = 300.0              # how often to look for resolved markets (Gamma)

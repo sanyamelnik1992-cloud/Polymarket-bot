@@ -39,6 +39,8 @@ def main(path):
     rew = defaultdict(float)
     off = defaultdict(float)
     alone = defaultdict(float)
+    shared = defaultdict(float)              # rewards where others held >= half the pool (samples since 15 Nov)
+    has_shared = set()
     samples = defaultdict(lambda: [0, 0])
     fills, settles, hedges, days, merges, gone = [], [], [], [], [], []
     live = []                            # events of the live test (pmbot/rewards/live.py), real money
@@ -58,6 +60,9 @@ def main(path):
             rew[day(e["t"])] += e.get("inc", 0)
             off[day(e["t"])] += e.get("official", 0)
             alone[day(e["t"])] += e.get("alone", 0)
+            if "shared" in e:
+                shared[day(e["t"])] += e["shared"]
+                has_shared.add(day(e["t"]))
             samples[day(e["t"])][0] += 1
             samples[day(e["t"])][1] += e.get("scoring", 0)
         elif k == "rfill":
@@ -102,6 +107,10 @@ def main(path):
               f"realised ${s.get('realized', 0)}; trading ${trading} (today {s.get('trading_pnl_today', s.get('mtm_pnl_today'))})")
         print(f"TOTAL (rewards estimate + trading): ${s['total_pnl']}; CAUTIOUS (lower estimate, without the part "
               f"earned alone, + trading): ${s.get('cautious_pnl', 'n/a')}; fills total {s['fills_total']}")
+        if "honest_pnl" in s:
+            print(f"HONEST (rewards only where others held >= half the pool, counted since 15 Nov, + all trading): "
+                  f"${s['honest_pnl']} (today ${s.get('honest_today')}; such rewards: today ${s.get('shared_today')}, "
+                  f"total ${s.get('shared_total')})")
         if s.get("top"):
             print("\ntop markets by estimated reward:")
             for m in s["top"]:
@@ -118,7 +127,10 @@ def main(path):
         tr = f"trading ${c['trading_pnl_day']:+.2f}" if c else "trading: day not closed"
         low = min(rew[d], off[d]) - alone[d]
         net = f", cautious net ${max(low, 0) + c['trading_pnl_day']:+.2f}" if c else ""
-        print(f"  {d}: book ${rew[d]:.2f}, official ${off[d]:.2f}, alone ${alone[d]:.2f} | hedges {hd[d][0]} "
+        hon = (f", honest net ${shared[d] + c['trading_pnl_day']:+.2f}" if c and d in has_shared else "")
+        net += hon
+        sh = f", others >= half ${shared[d]:.2f}" if d in has_shared else ""
+        print(f"  {d}: book ${rew[d]:.2f}, official ${off[d]:.2f}, alone ${alone[d]:.2f}{sh} | hedges {hd[d][0]} "
               f"(${hd[d][1]:.2f}) | {tr}{net} | samples {samples[d][0]}, avg markets scoring "
               f"{samples[d][1] / max(samples[d][0], 1):.1f}")
     if last_select:
@@ -143,6 +155,22 @@ def main(path):
         line("with other makers in the zone", [m for m in rows if not m["alone"] > 0.5 * m["reward"]])
         line("never filled", [m for m in rows if m["fills"] == 0])
         line("filled", [m for m in rows if m["fills"] > 0])
+        def mean_share(m):
+            hrs = m.get("quoted_min", 0) / 60
+            return m["reward"] / (m["rate"] * hrs / 24) if hrs > 0 and m.get("rate") else None
+        print("\nRECOUNT by our mean share of the pool in each market (reward / (pool x quoted time); trading = hedges + "
+              "open marks of the market, inherited positions included):")
+        for name, sel in (("others held >= half (share <= 50 %)", [m for m in rows if (mean_share(m) or 0) <= 0.5
+                                                                    and not m["alone"] > 0.5 * m["reward"] > 0]),
+                          ("mostly ours (share > 50 %, others present)", [m for m in rows if (mean_share(m) or 0) > 0.5
+                                                                         and not m["alone"] > 0.5 * m["reward"] > 0]),
+                          ("alone most of the time", [m for m in rows if m["alone"] > 0.5 * m["reward"] > 0])):
+            hrs = sum(m["quoted_min"] for m in sel) / 60
+            rw = sum(m["reward"] for m in sel)
+            tr = sum(m["hedge_pnl"] + m["open_pnl"] for m in sel)
+            print(f"  {name:44s} {len(sel):4d} markets {hrs:7.1f} h  rewards ${rw:8.2f}  trading ${tr:+8.2f}  "
+                  f"net ${rw + tr:+8.2f}" + (f" = ${(rw + tr) / hrs:+.2f}/h" if hrs else "")
+                  + f"  fills {sum(m['fills'] for m in sel)}")
         feat = [m for m in rows if "vol" in m]                # journals since 14 Nov carry what a market looked like
         if feat:
             print("\nby kind of market at selection (journals since 14 Nov; $/h = per quoted market-hour):")

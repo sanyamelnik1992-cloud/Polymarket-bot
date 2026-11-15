@@ -357,8 +357,10 @@ Polymarket каждый день платит тем, кто держит зая
 🏝 <b>где мы одни</b> — награды с рынков, где кроме нас никто не стоит. Самая ненадёжная часть: заплатит ли биржа
 за неё — проверит только живой тест.
 💸 <b>потери</b> — выходы из исполненных заявок и позиции, которые ещё не закрыты (по текущей цене).
-🛡 <b>осторожный итог</b> — награды без «где мы одни» минус потери. Если он в плюсе — стратегия работает даже в
-худшем случае.
+🛡 <b>осторожный итог</b> — награды без «где мы одни» минус потери.
+✅ <b>честный итог</b> — награды только с тех минут, когда другие мейкеры держали хотя бы половину пула, минус ВСЕ
+потери. Живые замеры 14–15 ноября: за пустой и почти пустой пул биржа платит в разы меньше расчёта, и такие заявки
+забирают первыми. Только честный итог можно сравнивать с реальными деньгами.
 
 Цифры подробно: /r"""
 
@@ -388,7 +390,10 @@ def _rewards_block(unit):
     rew, alone, loss, total, cautious = _rewards_parts(st)
     out.append(f"   💰 заработал сегодня (расчёт): {money(rew, True)}  · 🏝 из них где мы одни {money(alone)}")
     out.append(f"   💸 потерял на исполнениях: {money(loss, True)}  · исполнений {st.get('fills_today', 0)}")
-    out.append(f"   {dot(total)} итог дня: {money(total, True)}  · 🛡 осторожно {money(cautious, True)}")
+    out.append(f"   {dot(total)} итог дня по расчёту: {money(total, True)}  · 🛡 осторожно {money(cautious, True)}")
+    if "honest_today" in st:
+        out.append(f"   ✅ <b>честный итог дня: {money(st['honest_today'], True)}</b> (награды только там, где другие держат "
+                   f"половину пула: {money(st.get('shared_today'))})")
     if st.get("halted"):
         out.append("   ⛔ стоп до 00:00 UTC: итог дня хуже −$50, потом включится сам")
     out.append("   подробно: /r · как работает: /rhow")
@@ -504,14 +509,21 @@ def format_rewards(unit="pmbot-rewards"):
               f"💸 потери: {money(loss, True)}"]
     if real is not None:
         lines.append(f"   закрытые выходы: {money(real)} · незакрытые позиции по цене: {money(loss - real)}")
-    lines += [f"{dot(total)} итог дня: {money(total, True)}",
-              f"🛡 осторожный итог: {money(cautious, True)}", ""]
+    lines += [f"{dot(total)} итог дня по расчёту: {money(total, True)}",
+              f"🛡 осторожный итог: {money(cautious, True)}"]
+    if "honest_today" in st:
+        lines += [f"✅ <b>честный итог: {money(st['honest_today'], True)}</b>",
+                  f"   награды только там, где другие держат половину пула: {money(st.get('shared_today'))}"]
+    lines.append("")
     tot_rew = st.get("rewards_total") or 0.0
     tot_trade = st.get("trading_pnl") or 0.0
     lines += [f"<b>С начала</b>",
               f"💰 {money(tot_rew)} (🏝 {money(st.get('alone_total'))}) · 💸 {money(tot_trade)}",
               f"{dot(tot_rew + tot_trade)} итог {money(tot_rew + tot_trade, True)} · 🛡 осторожно "
-              f"{money(st.get('cautious_pnl'), True)}", ""]
+              f"{money(st.get('cautious_pnl'), True)}"]
+    if "honest_pnl" in st:
+        lines.append(f"✅ честно: {money(st['honest_pnl'], True)} (награды «другие держат половину» считаются с 15 ноября)")
+    lines.append("")
     days = (r.get("days") or [])[-5:]
     if days:
         lines.append("<b>По дням</b> (💰 награды · 🏝 одни · 💸 потери → 🛡 осторожно)")
@@ -531,7 +543,8 @@ def format_rewards(unit="pmbot-rewards"):
                  else f"стоп: если осторожный итог дня станет хуже −$50 (сейчас {money(cautious)})")
     if st.get("feed") is False:
         lines.append("⚠️ поток цен молчит: заявки сняты, пока он не вернётся")
-    lines += ["", "Награды — расчёт: что заплатит биржа на самом деле, проверит только живой тест. Как работает: /rhow"]
+    lines += ["", "Живые замеры 14–15 ноября: за пустой пул биржа начислила в ~5 раз меньше расчёта, чужие мейкеры пришли "
+                  "за минуты, одинокие заявки забирали за секунды. Поэтому верный итог — ✅ честный. Как работает: /rhow"]
     return "\n".join(lines)
 
 
@@ -542,8 +555,10 @@ def rewards_digest_line(unit="pmbot-rewards"):
         return None
     rew, alone, loss, total, cautious = _rewards_parts(r["status"])
     halted = " · ⛔ стоп до 00:00" if r["status"].get("halted") else ""
+    st = r["status"]
+    honest = f" · ✅ честно {money(st['honest_today'], True)}" if "honest_today" in st else ""
     return (f"🎁 <b>Награды · R</b> (бумага), сегодня: 💰 заработал {money(rew)} (🏝 где одни {money(alone)}) · "
-            f"💸 потерял {money(loss)} · итог {money(total, True)} · 🛡 осторожно {money(cautious)}{halted} · /r")
+            f"💸 потерял {money(loss)} · итог {money(total, True)} · 🛡 осторожно {money(cautious)}{honest}{halted} · /r")
 
 
 def format_status():
