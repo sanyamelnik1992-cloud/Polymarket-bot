@@ -127,7 +127,8 @@ def test_config_needs_the_live_mode_and_the_flag_and_is_one_market():
     rc, lc = load_rewards_live_config(CFG, live_flag=True)
     assert rc.mode == "live" and rc.max_markets == 1 and rc.quote_budget_usd == lc.max_open_usd == 20
     assert rc.hedge is False and rc.reduce_only is False and rc.state_file == ""
-    assert lc.kind == "alone" and lc.minutes == 60 and lc.max_shares == 20 and lc.reserve_usd == 40 and lc.stop_on_fill
+    assert lc.kind == "shared" and lc.minutes == 60     # reports/72 section 6: no lone quotes in empty pools
+    assert lc.minutes == 60 and lc.max_shares == 20 and lc.reserve_usd == 40 and lc.stop_on_fill
     paper = load_rewards_config(os.path.join(ops.REPO, "config", "rewards.toml"))
     for k in ("dist_cents", "alone_frac", "size_mult", "max_competitiveness", "max_volume_24h", "price_lo", "price_hi",
               "requote_min_s", "min_order_age_s", "max_ref_disagree"):       # the test measures the paper bot's rule
@@ -138,7 +139,7 @@ def test_config_needs_the_live_mode_and_the_flag_and_is_one_market():
 def test_config_limits_cannot_be_raised_into_a_bot(tmp_path):
     text = open(CFG).read()
     for old, new in (("max_open_usd = 20", "max_open_usd = 500"), ("max_shares = 20", "max_shares = 200"),
-                     ("minutes = 60", "minutes = 100000"), ('kind = "alone"', 'kind = "all"')):
+                     ("minutes = 60", "minutes = 100000"), ('kind = "shared"', 'kind = "all"')):
         p = tmp_path / "c.toml"
         p.write_text(text.replace(old, new))
         assert old in text
@@ -370,10 +371,27 @@ def test_markets_where_the_rule_was_filled_or_a_week_starts_soon_are_skipped(tmp
     assert choose_market(picks, LiveCfg(kind="alone"), now=now, skip=skip).slug == "quoted-only"
 
 
+def test_shared_means_other_makers_really_hold_the_pool(tmp_path):
+    """reports/72 section 6: three live samples in "alone" pools earned $0.05 and left $15.60 of filled bids. The config runs
+    "shared" now, and a market with only a trace of somebody else's score (our share 76-99 %) is an empty pool by another name."""
+    rc, lc = load_rewards_live_config(CFG, live_flag=True)
+    assert lc.kind == "shared" and lc.max_share == 0.5
+    crowd, trace = rmarket("crowd", empty=False), rmarket("trace", empty=False)
+    crowd.est_share, trace.est_share = 0.30, 0.988
+    assert choose_market([trace, crowd, rmarket("alone")], lc).slug == "crowd"
+    assert choose_market([trace, rmarket("alone")], lc) is None             # nothing fits: the test places nothing
+    assert choose_market([trace], LiveCfg(kind="shared", max_share=1.0)).slug == "trace"
+    assert choose_market([trace], LiveCfg(kind="any")).slug == "trace"       # the limit belongs to "shared" only
+    bad = tmp_path / "c.toml"
+    bad.write_text(open(CFG).read().replace("max_share = 0.5", "max_share = 1.5"))
+    with pytest.raises(ValueError):
+        load_rewards_live_config(str(bad), live_flag=True)
+
+
 # ---------------------------------------------------------------- the farmer on one market
 def live_farmer(tmp_path, picks=None, **lc):
     rc, base = load_rewards_live_config(CFG, live_flag=True)
-    lcfg = LiveCfg(**{**base.__dict__, **lc})
+    lcfg = LiveCfg(**{**base.__dict__, "kind": "alone", **lc})     # the mechanics below use an "alone" sample market
     j = J()
     b = broker(journal=j, **{k: getattr(lcfg, k) for k in ("max_open_usd", "max_shares", "max_orders")})
     picks = picks if picks is not None else [rmarket("alone")]

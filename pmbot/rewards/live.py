@@ -41,6 +41,9 @@ log = logging.getLogger("pmbot.rewards.live")
 class LiveCfg:
     kind: str = "alone"             # which market to pick: "alone" (nobody else in the reward zone), "shared", "any"
     slug: str = ""                  # exact market slug: skip the choice (it must still pass the limits below)
+    max_share: float = 0.5          # "shared" only: our estimated share of the pool must be at most this, i.e. other makers
+                                    # really hold the price (reports/72 section 6: markets with a trace of somebody else's
+                                    # score still gave us 76-99 % of the pool on a 12-20 c spread: empty pools by another name)
     minutes: float = 60.0           # the test ends by itself after this long
     fresh_hours: float = 48.0       # skip markets a live test or probe quoted in the last N hours (reports/72: other
                                     # makers came within ~6 min and stay for a while; a new market is a new sample)
@@ -81,6 +84,8 @@ def load_rewards_live_config(path, live_flag=False):
         raise ValueError("this is the live test: rewards.mode must be \"live\" (paper runs through run_rewards.py)")
     if not live_flag:
         raise LiveGateError("the config says live but the --live flag is missing: refusing to trade real money")
+    if not 0 < lc.max_share <= 1:
+        raise ValueError("live.max_share must be in (0, 1]")
     if lc.kind not in ("alone", "shared", "any"):
         raise ValueError("live.kind must be alone, shared or any")
     if not (0 < lc.max_open_usd <= 60 and 0 < lc.max_shares <= 60 and 0 < lc.minutes <= 24 * 60):
@@ -508,6 +513,8 @@ def choose_market(picks, lc, now=None, skip=()):
             continue
         if (lc.kind == "alone" and not c.empty) or (lc.kind == "shared" and c.empty):
             continue
+        if lc.kind == "shared" and c.est_share > lc.max_share + 1e-9:
+            continue                                       # almost alone: the price is ours to set, and to lose
         return c
     return None
 
@@ -591,7 +598,8 @@ class LiveFarmer(Farmer):
     async def selector(self):
         while not self._stop and self.market is None:
             try:
-                wide = replace(self.rc, max_markets=40, quote_budget_usd=1e9, max_empty_frac=1.0,
+                wide = replace(self.rc, max_markets=40, quote_budget_usd=1e9,
+                               max_empty_frac=0.0 if self.lc.kind == "shared" else 1.0,   # rank only what the test may take
                                min_rate=max(self.rc.min_rate, self.lc.min_rate))
                 picks = await asyncio.to_thread(self._select, wide, None)
                 skip = recent_markets([self.rc.journal_dir, PROBE_JOURNAL], self.lc.fresh_hours) if self.lc.fresh_hours else set()

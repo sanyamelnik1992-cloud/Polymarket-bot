@@ -260,6 +260,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   live) in `fresh_hours`, `markets.date_near` skips a date or a week START within `calm_days` (both samples were "week of
   November 16" markets). Two live samples: $0.05 accrued, $7.40 at risk. Next test: `kind = "shared"`, on the owner's word.
   Insurance (report 71 section 6): live 84 windows / 6 lost / 0 insured / 1 false alarm (-$1.27); unchanged, review after 10 tries.
+  Third live run (owner, Telegram, 15 Nov 08:17 UTC; report 72 section 6): Panama-canal market, NO bid 0.41 x 20 filled after 70 s
+  ($8.20), share 0 %. Three "alone" samples: $0.054 accrued, $15.60 of filled bids worth ~$8 by the last trades. A lone quote
+  in an empty pool loses real money; `config/rewards_live.toml` is now `kind = "shared"` with `max_share = 0.5` (other makers must hold
+  at least half of the pool; on 15 Nov no market of the paper rule fits, so the test ends "no market" and places nothing):
+  "alone" returns only by an explicit decision after the paper bot shows fewer fills with the brother's price fix
+  (report 68 section 13: wide books whose YES and NO last trades disagree are not quoted). The paper bot's "alone" rewards are not money; judge R by the markets with other makers only.
+  15 Nov 07:54 5m loss (BTC, second 287, lead 0.63 bp, -$1.87; our own TWAP said win, the exchange's window said loss): no rule
+  change, report 71 section 7 (lead 0.5-1 bp: 18 of 19 won on tapes + live; `reports/71_tools/dist_calib.py`).
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

@@ -30,7 +30,13 @@ max_ref_disagree = 0.03
 daily_loss_limit = 12         # a mark-to-market loss of the day worse than this also ends the test
 
 [live]
-kind = "alone"                # "alone": a pool nobody else scores in (the main question); "shared": next to other makers
+kind = "shared"               # next to other makers. Was "alone" (a pool nobody else scores in) until 15 Nov: three live samples there
+                              # (reports/72) earned $0.05 and left $15.60 of filled bids, two of them hit within 0.1 s and 70 s.
+                              # The cause (a wide book priced by a stale YES trade) is fixed in reports/68 section 13; "alone"
+                              # comes back only by an explicit decision after the paper bot shows fewer fills with that fix
+max_share = 0.5               # "shared" = other makers hold at least half of the pool's score. On 15 Nov no market of the paper
+                              # rule fits (the "not empty" ones still give us 76-99 %): the test then ends with "no market"
+                              # and places nothing, which is the intended state until the rule itself is changed
 minutes = 60                  # one hour: long enough to see other makers arrive and what share is left (reports/72: ~6 min)
 fresh_hours = 48              # a market quoted by a test in the last 48 h is skipped: every run is a new sample
 earn_every = 5                # every 5th reading also asks what the exchange has accrued for the market
