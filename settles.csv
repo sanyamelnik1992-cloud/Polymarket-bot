@@ -1981,3 +1981,6 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-15 02:31:21,pmbot-lock-tier-pb,paper,eth-1794709200,Down,0,2.0,1.9066,2.0,0.0,0.0934
 2026-11-15 02:40:13,pmbot-lock-maker3,paper,eth-1794709800,Up,3.0,0,2.73,3.0,0.0,0.27
 2026-11-15 02:55:05,pmbot-lock-maker3,paper,btc-1794710700,Down,0,5.0,4.55,5.0,0.0,0.45
+2026-11-15 04:21:11,pmbot-lock-15-tier,paper,eth-1794715200,Up,0,5.0,4.6258,0,0.0,-4.6258
+2026-11-15 04:26:04,pmbot-lock-maker3,paper,sol-1794716100,Up,2.0,0,1.82,2.0,0.0,0.18
+2026-11-15 04:39:06,pmbot-lock-maker3,paper,btc-1794717000,Up,5.0,0,4.55,5.0,0.0,0.45
