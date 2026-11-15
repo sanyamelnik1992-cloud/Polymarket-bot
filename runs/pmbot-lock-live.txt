@@ -1,9 +1,9 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261114-203715
-mode: live  duration: 384.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 768, 'prewarm': 308, 'lock_state': 12010, 'strike': 304, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'order_rejected': 7, 'lock_miss': 7, 'settle': 3, 'prewarm_error': 1}
+mode: live  duration: 444.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 889, 'prewarm': 356, 'lock_state': 13123, 'strike': 352, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'order_rejected': 7, 'lock_miss': 7, 'settle': 3, 'prewarm_error': 1}
 
 lock orders: sent 10  filled 3  ask gone 7  errors 0
   signal -> exchange answer, ms: median 618  p90 1606  max 1606
-  market prewarm (2 lookups + signing), ms: median 190  max 5217  n 308
+  market prewarm (2 lookups + signing), ms: median 187  max 5217  n 356
   fill price minus the ask we saw, cents: mean -1.00  worst +0.0
   misses came 11-39 s before the end; model p 0.951-0.976
   exchange rejections by code: {'fak_not_filled': 7}
