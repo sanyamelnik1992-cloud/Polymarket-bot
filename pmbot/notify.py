@@ -465,6 +465,22 @@ def format_rewards_live(unit="pmbot-rewards-live"):
         out.append("В счётчике биржи за последние дни этого рынка пока нет.")
     else:
         out.append("Начисления биржи ещё не прочитаны.")
+    hist = r.get("history") or []
+    if len(hist) > 1 or any((h.get("position") or {}).get("cost") for h in hist):
+        out += ["", "<b>Все тесты за 8 дней</b>"]
+        for h in hist:
+            when = datetime.fromtimestamp(h["t"] or 0, timezone.utc).strftime("%d.%m %H:%M")
+            if h["refused"]:
+                out.append(f"{when} · не запустился: {esc(str(h['refused'])[:80])}")
+                continue
+            p = h.get("position") or {}
+            left = (f" · осталось в кошельке: {'Да' if p.get('yes') else 'Нет'} {p.get('yes') or p.get('no'):.0f} за {p.get('cost', 0):.2f}$"
+                    if p.get("cost") else "")
+            out.append(f"{when} · {esc((h['question'] or 'рынок не выбран')[:60])} · {WHY_RU.get(h['why'], esc(h['why'] or 'идёт'))}"
+                       f" · {h.get('quoted_min') or 0:.0f} мин{left}")
+    if r.get("earn_all"):
+        out.append("Биржа начислила за наши заявки наград всего по дням: "
+                   + ", ".join(f"{d[5:]} {v:.3f}$" for d, v in sorted(r["earn_all"].items()) if v))
     return "\n".join(out)
 
 

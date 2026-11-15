@@ -306,13 +306,22 @@ def rewards_live_summary(unit="pmbot-rewards-live"):
            "refused": run[0].get("reason") if run[0]["type"] == "kill" else None, "start": run[0], "market": market,
            "done": last("rlive_done"), "no_market": last("rlive_no_market"), "check": last("rlive_check"),
            "samples": [e for e in run if e["type"] == "rlive"], "fills": [e for e in run if e["type"] == "rlive_fill"],
-           "earn": {}, "earn_days": [], "pct_now": None}
+           "earn": {}, "earn_days": [], "pct_now": None, "history": [], "earn_all": {}}
+    for k, i in enumerate(heads):                   # every test of the 8 days: its market, how it ended, what it left
+        seg = evs[i:heads[k + 1] if k + 1 < len(heads) else len(evs)]
+        mk_ = next((e for e in seg if e["type"] == "rlive_market"), None)
+        dn = next((e for e in reversed(seg) if e["type"] == "rlive_done"), None)
+        out["history"].append({"t": seg[0].get("t"), "question": (mk_ or {}).get("question"), "cid": (mk_ or {}).get("cid"),
+                               "refused": seg[0].get("reason") if seg[0]["type"] == "kill" else None,
+                               "why": (dn or {}).get("why"), "quoted_min": (dn or {}).get("quoted_min"),
+                               "position": (dn or {}).get("position"), "earned": (dn or {}).get("exch_earned")})
     try:
         rw = json.load(open(os.path.join(REPO, WALLET_FILE))).get("rewards") or {}
     except (OSError, ValueError):
         rw = {}
     cid = (market or {}).get("cid")
     out["earn_days"] = sorted(rw.get("earn") or {})
+    out["earn_all"] = {d: round(sum(m.values()), 4) for d, m in (rw.get("earn") or {}).items()}
     if cid:
         out["earn"] = {d: m[cid] for d, m in (rw.get("earn") or {}).items() if cid in m}
         out["pct_now"] = (rw.get("pct") or {}).get(cid)
