@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier-wide/20261114-203656
-mode: paper  duration: 264.2 min  events: {'start': 1, 'status': 528, 'lock_state': 6279, 'strike': 204, 'lock_miss': 5, 'fill': 17, 'lock_entry': 17, 'provisional': 17, 'settle': 16, 'kill': 1}
+mode: paper  duration: 324.8 min  events: {'start': 1, 'status': 649, 'lock_state': 8395, 'strike': 248, 'lock_miss': 5, 'fill': 17, 'lock_entry': 17, 'provisional': 17, 'settle': 17, 'kill': 1}
 
 lock orders: sent 22  filled 17  ask gone 5  errors 0
   signal -> exchange answer, ms: median 317  p90 371  max 516
@@ -15,12 +15,12 @@ sol        3    15.0     12.95      0.863  258.419
 xrp        1     5.0      4.65      0.930  275.582
 
 settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          6  26.001 -6.001         -6.001     0.0     0.667 -4.532  0.944 -0.231
-eth          6  26.430 -1.430         -1.430     0.0     0.833 -4.437  0.944 -0.054
-sol          3  13.073  1.928          1.928     0.0     1.000  0.516  0.896  0.147
-xrp          1   4.673  0.327          0.327     0.0     1.000  0.327  0.327  0.070
+       windows    cost     pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                               
+btc          7  30.201 -10.201        -10.201     0.0     0.571 -4.532  0.944 -0.338
+eth          6  26.430  -1.430         -1.430     0.0     0.833 -4.437  0.944 -0.054
+sol          3  13.073   1.928          1.928     0.0     1.000  0.516  0.896  0.147
+xrp          1   4.673   0.327          0.327     0.0     1.000  0.327  0.327  0.070
 
-TOTAL pnl $-5.18 (ex-rebate $-5.18) on cost $70.18 -> ROI -7.38%; windows 16, t-stat -0.64
-max drawdown $-9.55; hedged windows (both sides filled): 0
+TOTAL pnl $-9.38 (ex-rebate $-9.38) on cost $74.38 -> ROI -12.61%; windows 17, t-stat -1.04
+max drawdown $-13.75; hedged windows (both sides filled): 0
