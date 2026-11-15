@@ -95,6 +95,10 @@ class LockCfg:
                                          # purchases on 7-11 Nov): insure only at a fair price
     hedge_slip: float = 0.02             # the order's cap is at most the seen ask + this: a live FAK is a dollar budget, so a cap far above
                                          # the ask would buy more shares than the position holds (a bet, not insurance)
+    hedge_min_shares: float = 0.0        # > 0: no insurance for a position smaller than this (reports/74). The exchange minimum of a
+                                         # marketable BUY ($1) turns the insurance of a 2-share entry ($1.86) into 4-6 shares of the other
+                                         # side: a counter-bet 2-3x the position. Live 14-15 Nov: both fills were such bets on entries
+                                         # that WON (-$1.27, -$1.41); a 2-share loss is -$1.87 at worst, the size is its insurance
     big_shares: float = 0.0              # > 0: an entry whose model p >= big_shares_p buys this many shares instead of `shares` (reports/67:
                                          # where the bot buys, the 0.97 / 0.99 tiers earned +3.7 / +2.9 c a share in both halves of 7-11 Nov
                                          # and lost ~1 in 60; with the insurance their rare loss is the one most often cut). 0 = off
@@ -194,6 +198,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.entry must be 'taker' or 'maker'")
     if c.hedge_p and not (0.5 < c.hedge_p < 1 and 0 <= c.hedge_margin < 0.5 and 0 <= c.hedge_slip <= 0.1):
         raise ValueError("lock.hedge_p must be 0 (off) or in (0.5, 1), hedge_margin in [0, 0.5), hedge_slip in [0, 0.1]")
+    if c.hedge_min_shares < 0 or (c.hedge_min_shares and not c.hedge_p):
+        raise ValueError("lock.hedge_min_shares must be >= 0 and needs lock.hedge_p")
     if c.hedge_p and (c.entry != "taker" or c.max_entries_per_window != 1):
         raise ValueError("lock.hedge_p: the insurance is for the taker entry with one entry per window")
     if c.big_shares and not (c.big_shares >= c.shares and 0.5 < c.big_shares_p < 1 and float(c.big_shares).is_integer()):
@@ -863,7 +869,7 @@ class LockBot:
         mine = "U" if held["U"] >= held["D"] else "D"
         other = "D" if mine == "U" else "U"
         need = math.floor(held[mine] - held[other] + 1e-6)       # whole shares, like every live FAK of this bot
-        if need < 1:
+        if need < 1 or held[mine] < c.hedge_min_shares - 1e-9:
             return
         if now - self.st.feed_alive.get("binance", 0) > c.bn_max_age_ms:
             return

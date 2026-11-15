@@ -151,6 +151,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   HYPE (Chainlink already recorded, Binance lists them): paper unit `pmbot-lock-15-alt` = `config/lock15_alt.toml` (the twin's
   [lock] on `assets = ["doge", "bnb", "hype"]`; `lock.PAPER_ASSETS` are refused in a live config; no tails of their own, BTC's
   are used); to live after 50 paper entries with <= 5 % lost, on the owner's word. Tool: `reports/73_tools/feat15.py`.
+  **`reports/74_insurance_small_entries_and_dead_ends.md` (15 Nov 17:30)**: `lock.hedge_min_shares = 5` in `lock_live.toml` + twins:
+  no insurance for a position under 5 shares (the $1 exchange minimum made the insurance of a 2-share entry a 4-6 share counter-bet;
+  both live insurance fills, 14 Nov 14:29 and 15 Nov 14:09, were on entries that WON: -$1.27, -$1.41; 0 of 7 losses were ever insured;
+  fills are adversely selected: a true reversal runs away in 0.3 s, a false alarm fills). 5m since 14 Nov: 15 entries, 1 real loss.
+  Checked and rejected: paying up after a FAK miss (15m: 21 missed windows, 2 lost = 9.5 %, next asks 0.94-0.99), maker LM3 (145 /
+  18 lost / -$35 on paper), L4 (344 / 35 / +$13.98, uneven). Capacity: books hold 5-50 shares at our price, so the 15m rule is
+  worth roughly $5-20 a day at 10-20 shares, not a strategy that scales with capital. Next candidates: size stages (report 73),
+  alt coins after a paper day (DOGE / HYPE Binance ticks are 1.5-1.7 bp: the guards fire too often), last-minute entries on the
+  hourly Up/Down markets (needs hourly books recorded first). Tool: `reports/74_tools/misses_and_paper.py`.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,

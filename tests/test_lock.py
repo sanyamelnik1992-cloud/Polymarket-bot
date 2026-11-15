@@ -809,7 +809,7 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     l15 = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
     assert l15.execution.mode == "paper" and l15.lock.duration == 900 and l15.lock.entry == "taker"
     a, b = dict(vars(l3.lock)), dict(vars(l15.lock))
-    for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip",   # the insurance (reports/64) is 5m-only: measured on 5m books
+    for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip", "hedge_min_shares",   # the insurance (reports/64, 74) is 5m-only
               "big_shares", "big_shares_p", "shares",               # 10 shares (reports/67), 2 below p 0.97 (reports/70): 15m keeps 5
               "late_tier_rel", "late_tier_p", "big_calm_s",         # reports/71 (weak tier from second 260): 5m-only
               "big_late_rel"):                                      # reports/73: 15m buys 10 shares late in the window instead
@@ -1541,4 +1541,53 @@ def test_15m_paper_bot_on_more_coins_is_the_15m_rule_and_paper_only():
     for cfg in ("lock15_live.toml", "lock_live.toml", "lock_99_live.toml"):
         with pytest.raises(ValueError, match="paper-only"):
             load_lock_config(os.path.join(ROOT, "config", cfg), overrides={"lock": {"assets": ["btc", "doge"]}})
+
+
+def test_no_insurance_for_the_small_entries(tmp_path, monkeypatch):
+    """reports/74: a 2-share entry costs $1.86, the exchange minimum of the insurance order is $1: at 0.19-0.33 that is 4-6 shares of
+    the other side, a counter-bet 2-3x the position. Live 14-15 Nov both insurance fills were on entries that won (-$1.27, -$1.41)
+    and no loss was ever insured. lock.hedge_min_shares = 5: only the 10-share entries are insured."""
+    import glob
+    import time as _t
+    import pmbot.bot.lock as lockmod
+    from pmbot.bot.state import Window
+    on = ("lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml")
+    for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
+        assert load_lock_config(path).lock.hedge_min_shares == (5.0 if os.path.basename(path) in on else 0.0), path
+    for bad in ({"lock": {"hedge_min_shares": -1.0}}, {"lock": {"hedge_min_shares": 5.0, "hedge_p": 0.0}}):
+        with pytest.raises(ValueError):
+            load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"), overrides=bad)
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((token, side, limit, shares))
+            return limit, shares, 0.0
+
+    for i, (held, ask, want) in enumerate(((2.1628, 0.18, None),        # 14 Nov 14:29 BTC: it bought 6.3 Down, the entry won
+                                           (2.0, 0.32, None),           # 15 Nov 14:09 ETH: it bought 4.1 Down, the entry won
+                                           (10.1064, 0.32, 10),         # a 10-share entry is still insured, share for share
+                                           (5.0538, 0.09, 10))):        # ... and a cheap one still buys the $1.05 minimum (reports/69)
+        br = Br()
+        cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
+                               overrides={"risk": {"state_file": str(tmp_path / f"h{i}.json"), "kill_file": ""}})
+        bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+        now = int(_t.time() * 1000)
+        w = bot.st.add_window(Window(asset="btc", start=now // 1000 - 270, slug="b", condition_id="c", token_up="u", token_down="d"))
+        bot.entries[w.key] = [{"side": "U", "shares": held, "price": 0.9, "cost": 0.9 * held, "fee": 0.01, "t": now / 1000,
+                               "limit": 0.93, "p": 0.96}]
+        bot.st.feed_alive["binance"] = now
+        bot.st.feed_alive["clob"]["btc"] = now + 60_000
+        bot.st.books["d"] = Book(bids={0.05: 10}, asks={ask: 500.0})
+        monkeypatch.setattr(lockmod, "decide_state", lambda c, *a, **kw: ("D", 0.7338, {"rel": 277.3, "side": "D", "p": 0.7338}))
+
+        async def tick():
+            await bot.decide_once(now)
+            await asyncio.sleep(0.01)
+        asyncio.run(tick())
+        assert [c[3] for c in br.calls] == ([want] if want else []), (held, ask, br.calls)
 
