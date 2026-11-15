@@ -1,39 +1,33 @@
-journal data/journal-rewards: 79.4 h of events, 11-12 08:36 -> 11-15 16:02 UTC
-now: markets 45, quoting 46, bids $648.58, feed ok, pool rate at current shares $822.58/day
-rewards (estimate by the book): today $500.884, total $2954.143; by Polymarket's competitiveness: total $4099.348; earned alone in a zone: total $2057.468; stress (one more identical maker): total $1574.504
-hedges: 264 for 4707.5 shares, lost $154.54; inventory not hedged yet: $355.66
-positions: value $256.94 cost $355.66 -> open $-98.72; realised $-341.26; trading $-439.98 (today -45.44)
-TOTAL (rewards estimate + trading): $2514.16; CAUTIOUS (lower estimate, without the part earned alone, + trading): $456.69; fills total 508
+journal data/journal-rewards: 80.4 h of events, 11-12 08:36 -> 11-15 17:01 UTC
+now: markets 45, quoting 50, bids $610.62, feed ok, pool rate at current shares $847.11/day
+rewards (estimate by the book): today $534.434, total $2987.693; by Polymarket's competitiveness: total $4145.991; earned alone in a zone: total $2086.732; stress (one more identical maker): total $1591.898
+hedges: 266 for 4745.5 shares, lost $155.54; inventory not hedged yet: $385.96
+positions: value $284.48 cost $385.96 -> open $-101.48; realised $-342.37; trading $-443.85 (today -49.31)
+TOTAL (rewards estimate + trading): $2543.85; CAUTIOUS (lower estimate, without the part earned alone, + trading): $457.11; fills total 514
 
 top markets by estimated reward:
-  $   4.99  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
-  $   4.99  share 1.00  pool $40/d  empty will-310-ships-transit-the-suez-canal-week-of-november-16
-  $   4.99  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
-  $   4.99  share 1.00  pool $40/d  empty will-8-ships-transit-the-strait-of-hormuz-on-any-day-week-of
-  $   4.99  share 1.00  pool $40/d  empty will-1600-ships-transit-the-malacca-strait-week-of-november-
-  $   4.99  share 1.00  pool $40/d  empty will-320-ships-transit-the-suez-canal-week-of-november-16
-  $   4.99  share 1.00  pool $40/d  empty will-24-ships-transit-the-strait-of-hormuz-week-of-november-
-  $   4.99  share 1.00  pool $40/d  empty will-28-ships-transit-the-strait-of-hormuz-week-of-november-
-  $   4.99  share 1.00  pool $40/d  empty will-30-ships-transit-the-strait-of-hormuz-week-of-november-
-  $   4.99  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-bab-el-mande
-  $   4.99  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-bab-el-mande
-  $   4.99  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-panama-canal
+  $   6.64  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
+  $   6.64  share 1.00  pool $40/d  empty will-310-ships-transit-the-suez-canal-week-of-november-16
+  $   6.64  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-suez-canal-b
+  $   6.64  share 1.00  pool $40/d  empty will-8-ships-transit-the-strait-of-hormuz-on-any-day-week-of
+  $   6.64  share 1.00  pool $40/d  empty will-1600-ships-transit-the-malacca-strait-week-of-november-
+  $   6.64  share 1.00  pool $40/d  empty will-320-ships-transit-the-suez-canal-week-of-november-16
+  $   6.64  share 1.00  pool $40/d  empty will-24-ships-transit-the-strait-of-hormuz-week-of-november-
+  $   6.64  share 1.00  pool $40/d  empty will-28-ships-transit-the-strait-of-hormuz-week-of-november-
+  $   6.64  share 1.00  pool $40/d  empty will-30-ships-transit-the-strait-of-hormuz-week-of-november-
+  $   6.64  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-bab-el-mande
+  $   6.64  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-bab-el-mande
+  $   6.64  share 1.00  pool $40/d  empty will-the-7-day-average-ship-traffic-through-the-panama-canal
 
 by day (rewards from samples; trading = hedges, settlements and marks of the day, from the day close):
   2026-11-12: book $623.32, official $692.69, alone $490.95 | hedges 69 ($48.98) | trading $-45.68, cautious net $+86.69 | samples 918, avg markets scoring 23.2
   2026-11-13: book $1090.94, official $1428.76, alone $706.86 | hedges 103 ($49.44) | trading $-155.05, cautious net $+229.04 | samples 1432, avg markets scoring 31.8
   2026-11-14: book $739.00, official $1188.63, alone $482.13 | hedges 68 ($39.85) | trading $-101.92, cautious net $+154.95 | samples 1436, avg markets scoring 31.7
-  2026-11-15: book $502.09, official $790.85, alone $378.65 | hedges 24 ($16.29) | trading: day not closed | samples 959, avg markets scoring 30.7
+  2026-11-15: book $535.42, official $837.31, alone $407.59 | hedges 26 ($17.29) | trading: day not closed | samples 1020, avg markets scoring 30.8
 
-last selection: 45 markets of 107 priced, capital $856.78, est $1183.98/day, empty books 22
+last selection: 45 markets of 111 priced, capital $827.36, est $1490.17/day, empty books 22
 
-fills: 508 (material 498)
-  11-15 11:42 will-openrouter-process-between-210t-and-220t-tokens-th NO  12@0.710 last_trade=0.33999999999999997 (alone in the zone)
-  11-15 11:42 will-openrouter-process-between-210t-and-220t-tokens-th YES 12@0.320 last_trade=0.33999999999999997
-  11-15 11:43 will-the-7-day-average-ship-traffic-through-the-bab-el- YES 20@0.820 last_trade=0.84
-  11-15 11:44 will-openrouter-process-240t-or-more-tokens-the-week-of YES 20@0.220 last_trade=0.19999999999999996
-  11-15 12:13 will-the-next-claude-opus-model-5pt6-debut-with-an-hle- NO  18.54@0.140 last_trade=0.9
-  11-15 12:22 white-house-of-tweets-november-17-november-24-2026-180- NO  20@0.880 last_trade=None
+fills: 514 (material 504)
   11-15 12:36 white-house-of-tweets-november-17-november-24-2026-200p NO  20@0.390 last_trade=0.6
   11-15 12:37 will-anthropics-valuation-be-between-1pt00t-and-1pt25t- YES 20@0.088 last_trade=0.05900000000000005
   11-15 12:43 white-house-of-tweets-november-17-november-24-2026-180- YES 10@0.170 last_trade=0.17000000000000004
@@ -43,46 +37,52 @@ fills: 508 (material 498)
   11-15 14:36 will-black-doves-season-2-be-the-2-us-netflix-show-this YES 15@0.430 last_trade=0.07999999999999996
   11-15 15:26 will-morena-win-the-most-seats-in-the-2027-chiapas-cong NO  20@0.260 last_trade=None
   11-15 15:49 will-jesper-wallstedt-win-the-2026-27-vezina-trophy     NO  20@0.880 last_trade=None
+  11-15 16:09 will-ukraine-target-moscow-on-november-15-2026-2        YES 15.5@0.260 last_trade=0.21999999999999997
+  11-15 16:18 will-5-ships-transit-the-strait-of-hormuz-on-any-day-we YES 20@0.770 last_trade=None (alone in the zone)
+  11-15 16:20 will-the-median-home-value-in-nyc-be-between-458000-and YES 20@0.177 last_trade=0.17700000000000005
+  11-15 16:31 will-the-7-day-average-ship-traffic-through-the-strait- NO  5@0.760 last_trade=0.39
+  11-15 16:45 will-ukmto-publish-8-11-notices-between-november-16-nov NO  20@0.780 last_trade=None
+  11-15 16:59 will-ukmto-publish-8-11-notices-between-november-16-nov YES 5@0.240 last_trade=0.20999999999999996
 
 by market (rewards = estimate by the book; trading = hedges + open positions at the mark):
-  all                                    1307 markets  rewards $ 1667.27  trading $ -467.45  net $+1199.82  fills 245  quoted 2153.0 market-hours
-  mostly alone in the zone               350 markets  rewards $ 1290.72  trading $ -124.54  net $+1166.17  fills  82  quoted  841.9 market-hours
-  with other makers in the zone          957 markets  rewards $  376.55  trading $ -342.90  net $  +33.64  fills 163  quoted 1311.1 market-hours
-  never filled                           1104 markets  rewards $ 1193.62  trading $ -160.82  net $+1032.80  fills   0  quoted 1440.0 market-hours
-  filled                                 203 markets  rewards $  473.65  trading $ -306.62  net $ +167.02  fills 245  quoted  712.9 market-hours
+  all                                    1343 markets  rewards $ 1700.81  trading $ -471.70  net $+1229.11  fills 251  quoted 2199.5 market-hours
+  mostly alone in the zone               352 markets  rewards $ 1320.69  trading $ -129.09  net $+1191.60  fills  83  quoted  864.5 market-hours
+  with other makers in the zone          991 markets  rewards $  380.12  trading $ -342.61  net $  +37.51  fills 168  quoted 1335.0 market-hours
+  never filled                           1135 markets  rewards $ 1219.50  trading $ -160.62  net $+1058.87  fills   0  quoted 1475.8 market-hours
+  filled                                 208 markets  rewards $  481.31  trading $ -311.08  net $ +170.23  fills 251  quoted  723.7 market-hours
 
 by kind of market at selection (journals since 14 Nov; $/h = per quoted market-hour):
   competitiveness (others' score per $1 of pool):
-    0              836 markets  1240.7 h  rewards $  831.49 (alone $  616.16)  trading $ -221.82  fills  87 = 0.07/h  not alone $+0.17/h  trading $-0.18/h
-    0..0.1          97 markets   104.1 h  rewards $   34.59 (alone $    4.99)  trading $  -20.65  fills  13 = 0.12/h  not alone $+0.28/h  trading $-0.20/h
-    0.1..0.3        42 markets    12.8 h  rewards $    4.15 (alone $    0.83)  trading $   -5.40  fills   5 = 0.39/h  not alone $+0.26/h  trading $-0.42/h
-    0.3..1          55 markets    47.2 h  rewards $    5.64 (alone $    0.18)  trading $  -24.20  fills   6 = 0.13/h  not alone $+0.12/h  trading $-0.51/h
+    0              858 markets  1279.6 h  rewards $  861.36 (alone $  643.11)  trading $ -226.08  fills  93 = 0.07/h  not alone $+0.17/h  trading $-0.18/h
+    0..0.1         102 markets   107.4 h  rewards $   37.19 (alone $    7.30)  trading $  -20.65  fills  13 = 0.12/h  not alone $+0.28/h  trading $-0.19/h
+    0.1..0.3        47 markets    15.2 h  rewards $    4.74 (alone $    0.83)  trading $   -5.40  fills   5 = 0.33/h  not alone $+0.26/h  trading $-0.36/h
+    0.3..1          59 markets    49.2 h  rewards $    6.13 (alone $    0.18)  trading $  -24.20  fills   6 = 0.12/h  not alone $+0.12/h  trading $-0.49/h
   24 h volume, $:
-    0..1           293 markets   408.3 h  rewards $  111.06 (alone $   67.58)  trading $ -138.33  fills  19 = 0.05/h  not alone $+0.11/h  trading $-0.34/h
-    1..50          237 markets   364.6 h  rewards $  315.38 (alone $  250.44)  trading $   +0.57  fills  15 = 0.04/h  not alone $+0.18/h  trading $+0.00/h
-    50..200        310 markets   466.8 h  rewards $  344.79 (alone $  247.24)  trading $ -102.09  fills  48 = 0.10/h  not alone $+0.21/h  trading $-0.22/h
-    200..500       190 markets   165.1 h  rewards $  104.65 (alone $   56.90)  trading $  -32.23  fills  29 = 0.18/h  not alone $+0.29/h  trading $-0.20/h
+    0..1           303 markets   431.7 h  rewards $  137.40 (alone $   94.89)  trading $ -138.08  fills  19 = 0.04/h  not alone $+0.10/h  trading $-0.32/h
+    1..50          245 markets   379.2 h  rewards $  314.68 (alone $  245.83)  trading $   -9.93  fills  18 = 0.05/h  not alone $+0.18/h  trading $-0.03/h
+    50..200        322 markets   471.4 h  rewards $  349.27 (alone $  251.49)  trading $  -93.30  fills  50 = 0.11/h  not alone $+0.21/h  trading $-0.20/h
+    200..500       196 markets   169.1 h  rewards $  108.07 (alone $   59.21)  trading $  -35.03  fills  30 = 0.18/h  not alone $+0.29/h  trading $-0.21/h
   days to the end:
-    0..4            70 markets    35.9 h  rewards $   14.44 (alone $    4.32)  trading $   -2.53  fills   4 = 0.11/h  not alone $+0.28/h  trading $-0.07/h
-    4..8            98 markets   120.3 h  rewards $  146.41 (alone $  122.58)  trading $   -1.49  fills   3 = 0.02/h  not alone $+0.20/h  trading $-0.01/h
-    8..20          256 markets   313.1 h  rewards $  331.19 (alone $  261.05)  trading $  -34.82  fills  35 = 0.11/h  not alone $+0.22/h  trading $-0.11/h
-    20..60         162 markets   252.4 h  rewards $  251.93 (alone $  188.67)  trading $  -17.65  fills  30 = 0.12/h  not alone $+0.25/h  trading $-0.07/h
-    60..400        181 markets    88.8 h  rewards $   35.94 (alone $   15.47)  trading $   -5.36  fills  10 = 0.11/h  not alone $+0.23/h  trading $-0.06/h
+    0..4            71 markets    36.3 h  rewards $   14.56 (alone $    4.32)  trading $   -2.53  fills   4 = 0.11/h  not alone $+0.28/h  trading $-0.07/h
+    4..8           108 markets   132.6 h  rewards $  162.62 (alone $  136.88)  trading $   -4.24  fills   6 = 0.05/h  not alone $+0.19/h  trading $-0.03/h
+    8..20          268 markets   320.3 h  rewards $  339.85 (alone $  269.20)  trading $  -34.82  fills  35 = 0.11/h  not alone $+0.22/h  trading $-0.11/h
+    20..60         163 markets   257.4 h  rewards $  257.16 (alone $  193.64)  trading $  -18.55  fills  32 = 0.12/h  not alone $+0.25/h  trading $-0.07/h
+    60..400        191 markets    93.7 h  rewards $   37.34 (alone $   15.47)  trading $   -5.31  fills  10 = 0.11/h  not alone $+0.23/h  trading $-0.06/h
     400+            34 markets    30.1 h  rewards $   30.95 (alone $    3.65)  trading $   -3.77  fills   3 = 0.10/h  not alone $+0.91/h  trading $-0.13/h
   price of YES:
-    0..0.2         149 markets   156.2 h  rewards $   35.59 (alone $   13.05)  trading $  -43.18  fills   9 = 0.06/h  not alone $+0.14/h  trading $-0.28/h
-    0.2..0.4       380 markets   484.8 h  rewards $  258.97 (alone $  143.13)  trading $ -108.97  fills  48 = 0.10/h  not alone $+0.24/h  trading $-0.22/h
-    0.4..0.6       312 markets   548.3 h  rewards $  438.89 (alone $  362.82)  trading $  -81.80  fills  32 = 0.06/h  not alone $+0.14/h  trading $-0.15/h
-    0.6..0.8       136 markets   170.7 h  rewards $  123.74 (alone $   96.61)  trading $  -29.17  fills  17 = 0.10/h  not alone $+0.16/h  trading $-0.17/h
-    0.8..1.01       53 markets    44.7 h  rewards $   18.69 (alone $    6.55)  trading $   -8.96  fills   5 = 0.11/h  not alone $+0.27/h  trading $-0.20/h
+    0..0.2         154 markets   158.4 h  rewards $   35.60 (alone $   13.05)  trading $  -43.32  fills  10 = 0.06/h  not alone $+0.14/h  trading $-0.27/h
+    0.2..0.4       393 markets   495.7 h  rewards $  262.60 (alone $  145.72)  trading $ -109.53  fills  51 = 0.10/h  not alone $+0.24/h  trading $-0.22/h
+    0.4..0.6       325 markets   571.3 h  rewards $  461.82 (alone $  383.22)  trading $  -82.55  fills  33 = 0.06/h  not alone $+0.14/h  trading $-0.14/h
+    0.6..0.8       140 markets   180.1 h  rewards $  130.65 (alone $  102.89)  trading $  -31.97  fills  18 = 0.10/h  not alone $+0.15/h  trading $-0.18/h
+    0.8..1.01       54 markets    45.8 h  rewards $   18.75 (alone $    6.55)  trading $   -8.96  fills   5 = 0.11/h  not alone $+0.27/h  trading $-0.20/h
   pool, $ a day:
-    0..20          188 markets   109.7 h  rewards $   21.23 (alone $    5.61)  trading $  -21.46  fills  11 = 0.10/h  not alone $+0.14/h  trading $-0.20/h
-    20..40         232 markets   240.5 h  rewards $   80.83 (alone $   43.99)  trading $  -48.91  fills  20 = 0.08/h  not alone $+0.15/h  trading $-0.20/h
-    40..80         565 markets   980.9 h  rewards $  760.58 (alone $  567.73)  trading $ -164.47  fills  77 = 0.08/h  not alone $+0.20/h  trading $-0.17/h
-    80+             45 markets    73.7 h  rewards $   13.23 (alone $    4.83)  trading $  -37.23  fills   3 = 0.04/h  not alone $+0.11/h  trading $-0.51/h
+    0..20          197 markets   115.3 h  rewards $   22.00 (alone $    5.61)  trading $  -22.27  fills  12 = 0.10/h  not alone $+0.14/h  trading $-0.19/h
+    20..40         241 markets   246.0 h  rewards $   82.30 (alone $   44.16)  trading $  -48.80  fills  23 = 0.09/h  not alone $+0.16/h  trading $-0.20/h
+    40..80         581 markets  1013.9 h  rewards $  791.71 (alone $  596.82)  trading $ -168.02  fills  79 = 0.08/h  not alone $+0.19/h  trading $-0.17/h
+    80+             47 markets    76.1 h  rewards $   13.40 (alone $    4.83)  trading $  -37.23  fills   3 = 0.04/h  not alone $+0.11/h  trading $-0.49/h
   rewards min size, shares:
-    0..21         1023 markets  1402.0 h  rewards $  874.12 (alone $  622.11)  trading $ -272.08  fills 111 = 0.08/h  not alone $+0.18/h  trading $-0.19/h
-    21..51           7 markets     2.9 h  rewards $    1.75 (alone $    0.05)  trading $   +0.00  fills   0 = 0.00/h  not alone $+0.60/h  trading $+0.00/h
+    0..21         1059 markets  1448.2 h  rewards $  907.59 (alone $  651.37)  trading $ -276.33  fills 117 = 0.08/h  not alone $+0.18/h  trading $-0.19/h
+    21..51           7 markets     3.1 h  rewards $    1.83 (alone $    0.05)  trading $   +0.00  fills   0 = 0.00/h  not alone $+0.58/h  trading $+0.00/h
   worst by trading:
     $ -12.80  rewards $  2.87  fills 2  pool $18/d  Will the Republicans win Utah in the 2028 Presidential Elect
     $ -12.50  rewards $  1.49  fills 2  pool $50/d  Will "The Gospel of Christmas" be the #2 US Netflix movie th
@@ -93,9 +93,7 @@ by kind of market at selection (journals since 14 Nov; $/h = per quoted market-h
     $  -7.60  rewards $  0.23  fills 0  pool $39/d  Will 170-189 ships transit the Bab el-Mandeb Strait between 
     $  -7.01  rewards $  0.32  fills 0  pool $50/d  Will "Ebenezer" score at least 55 on the Rotten Tomatoes Tom
 
-hedges: 264, 4707.51 shares, cost $154.56 = 3.28c a share (the largest reward earners pay 1.3c + fee: reports/68)
-  11-15 11:44 will-openrouter-process-240t-or-more-tokens-the-week-of bought NO  20@0.800 held@0.220 cost/share +0.0264
-  11-15 12:02 will-openrouter-process-between-210t-and-220t-tokens-th bought NO  12@0.720 held@0.320 cost/share +0.0481
+hedges: 266, 4745.51 shares, cost $155.57 = 3.28c a share (the largest reward earners pay 1.3c + fee: reports/68)
   11-15 12:13 will-the-next-claude-opus-model-5pt6-debut-with-an-hle- bought YES 18.54@0.900 held@0.140 cost/share +0.0436
   11-15 12:29 white-house-of-tweets-november-17-november-24-2026-180- bought YES 20@0.170 held@0.880 cost/share +0.0571
   11-15 12:37 will-anthropics-valuation-be-between-1pt00t-and-1pt25t- bought NO  20@0.941 held@0.088 cost/share +0.0312
@@ -104,10 +102,12 @@ hedges: 264, 4707.51 shares, cost $154.56 = 3.28c a share (the largest reward ea
   11-15 13:42 will-pan-win-the-most-seats-in-the-2027-chihuahua-congr bought NO  20@0.570 held@0.480 cost/share +0.0598
   11-15 13:54 will-nyc-have-between-3pt5-and-4pt25-inches-of-precipit bought NO  20@0.780 held@0.270 cost/share +0.0586
   11-15 15:26 will-morena-win-the-most-seats-in-the-2027-chiapas-cong bought YES 20@0.750 held@0.260 cost/share +0.0175
+  11-15 16:10 will-ukraine-target-moscow-on-november-15-2026-2        bought NO  18@0.790 held@0.257 cost/share +0.0477
+  11-15 16:20 will-the-median-home-value-in-nyc-be-between-458000-and bought NO  20@0.823 held@0.177 cost/share +0.0073
 
 pairs closed by our own bids (no taker fee), by the time since the fill:
-  all                                 87 for  1363.0 pairs  $ -186.73 = -13.7c a pair
-  within 30 min                        4 for    76.2 pairs  $   -2.81 = -3.7c a pair
+  all                                 88 for  1368.0 pairs  $ -186.83 = -13.7c a pair
+  within 30 min                        5 for    81.2 pairs  $   -2.91 = -3.6c a pair
   30 min - 3 h                         4 for    65.0 pairs  $   -2.00 = -3.1c a pair
   after 3 h (the bid follows the price)  10 for   135.0 pairs  $  -22.70 = -16.8c a pair
 
