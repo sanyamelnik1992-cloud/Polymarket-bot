@@ -41,7 +41,7 @@ def quote(rm, rc, book=None):
     tick = float(raw.get("tick_size") or 0.01)
     bids, asks = mk.book_levels(raw)
     size = mk.order_size(rc, rm.min_size, float(raw.get("min_order_size") or 5))
-    ref = mk.reference_price(bids, asks, rc, rm.v, rm.min_size, rm.last_trade)
+    ref = mk.reference_price(bids, asks, rc, rm.v, rm.min_size, rm.last_trade, rm.last_trade_no)
     if ref is None or not rc.price_lo <= ref <= rc.price_hi:
         return None
     q1 = sum(order_score(rm.v, abs(p - ref) * 100, s) for p, s in bids)

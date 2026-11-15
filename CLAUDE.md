@@ -245,6 +245,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (`Journal.log(kind, **kw)`: the first version crashed in a test on that). The probe script of report 72 cancels EVERY open
   order of the wallet when it ends: do not run it while this unit is quoting. Next: 3-5 tests on different markets, then
   correct the paper bot's "alone" rewards by the measured share.
+  **Report 68 section 13 (15 Nov)**: both live test fills (Hormuz 14 Nov 20:30, Panama 15 Nov 08:19, 20 NO each, $15.60 held,
+  ~-$7 at the mark; rewards from all live runs $0.054) came from the reference price: in a wide book it was the YES token's
+  last trade only, while the NO token's last trade was up to a day newer and 16-37c away (the CLOB gives one last trade per
+  token and no time). On 15 Nov 124 of 178 wide books of the paper selection disagreed by > 3c. Fix: `mk.reference_price(...,
+  last_other)` returns None in a wide book when YES-last and 1 - NO-last differ by more than `max_ref_disagree`; the selection
+  fetches both tokens' last trades (`RMarket.last_trade_no`); a trade seen live on either token since subscribing is used
+  alone. The paper selection still fills 45 markets (96 of 200 candidates pass). A taker wallet sweeps every cheap quote on
+  those markets on both sides: the fix removes a wrong price, not that risk.
   Second live run, 14 Nov 20:30 UTC (`pmbot-rewards-live`, owner: "запусти на тесты стратегию"; report 72 section 5): Hormuz-ships
   market, book 0.35 / 0.93 priced by the last trade 0.57; the NO bid 0.37 x 20 was FILLED 0.1 s after it was placed, test over,
   20 NO shares ($7.40) stay in the wallet until 23 Nov, probably mostly lost. The paper bot had the same fill there at 18:42.

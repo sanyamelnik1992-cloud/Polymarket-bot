@@ -35,6 +35,8 @@ class RMarket:
     min_order: float = 5.0
     price: float = 0.5       # displayed price at selection: the MIDDLE of the book when it is wide (not a price!)
     last_trade: float | None = None  # YES price of the last trade at selection (CLOB /last-trades-prices)
+    last_trade_no: float | None = None  # ... and of the NO token's last trade, in YES terms (1 - its price). The two
+                                    # tokens trade apart: one of them can be days older than the other (reports/68, 13)
     comp: float = 0.0        # official competitiveness at selection (total score per $1 of the daily pool)
     vol: float = 0.0         # $ traded in 24 h at selection (the report groups fills by it)
     est_share: float = 0.0
@@ -265,16 +267,25 @@ def candidates(raw_markets, rc, now=None):
     return out
 
 
-def reference_price(bids, asks, rc, v, min_size, last_trade):
+def reference_price(bids, asks, rc, v, min_size, last_trade, last_other=None):
     """The price our quotes are centred on, or None when there is no price we can trust.
     * the book is tight (spread <= competitive_spread_mult x the max spread): its size-adjusted mid;
     * the book is wide: the last trade, if it lies inside the book. NOT the middle of the book: in a book of
       0.21 / 0.89 Polymarket shows 0.54 while the market trades at 0.88, and a quote around 0.54 sells YES 34 c
       too cheap (12 Nov: 5 such fills, -$31 of the day's -$93);
-    * a wide book and no usable last trade: None (do not quote)."""
+    * a wide book and no usable last trade: None (do not quote).
+    * a wide book where the last trade of YES and the last trade of NO (`last_other`, in YES terms) disagree by more
+      than rc.max_ref_disagree: None. The CLOB keeps a last trade per token and gives no time with it; in an empty book
+      one of them is often days old. Both live fills of 14-15 Nov came from a stale YES trade (Panama: YES 0.53 of the
+      day before, NO 0.31 = YES 0.69 of the evening; our NO bid sold YES at 0.59, the market then traded 0.75). On
+      15 Nov 124 of 178 wide books of the selection disagreed by more than 3c (reports/68, 13)."""
     if bids and asks and asks[0][0] - bids[0][0] <= rc.competitive_spread_mult * v / 100:
         return adjusted_mid(bids, asks, min_size) or (bids[0][0] + asks[0][0]) / 2
     if last_trade is None:
+        last_trade, last_other = last_other, None
+    if last_trade is None:
+        return None
+    if last_other is not None and abs(last_trade - last_other) > rc.max_ref_disagree:
         return None
     lo = bids[0][0] if bids else 0.0
     hi = asks[0][0] if asks else 1.0
@@ -289,7 +300,7 @@ def price_market(rm, raw_book, rc):
     rm.min_order = float(raw_book.get("min_order_size") or 5)
     bids, asks = book_levels(raw_book)
     size = order_size(rc, rm.min_size, rm.min_order)
-    ref = reference_price(bids, asks, rc, rm.v, rm.min_size, rm.last_trade)
+    ref = reference_price(bids, asks, rc, rm.v, rm.min_size, rm.last_trade, rm.last_trade_no)
     if ref is None or not rc.price_lo <= ref <= rc.price_hi:
         return False
     q1 = sum(order_score(rm.v, abs(p - ref) * 100, s) for p, s in bids)
@@ -334,9 +345,10 @@ def select(rc, journal=None, raw_markets=None, books=None, now=None, details=Non
     cands = candidates(raw_markets, rc, now)
     cands = sorted(cands, key=lambda x: -(x.est_reward / x.size))[: rc.max_candidates]
     books = books if books is not None else fetch_books([c.yes for c in cands])
-    lasts = lasts if lasts is not None else fetch_last_trades([c.yes for c in cands])
+    lasts = lasts if lasts is not None else fetch_last_trades([t for c in cands for t in (c.yes, c.no)])
     for c in cands:
         c.last_trade = lasts.get(c.yes)
+        c.last_trade_no = (1.0 - lasts[c.no]) if lasts.get(c.no) is not None else None
     priced = [c for c in cands if price_market(c, books.get(c.yes), rc) and c.est_reward >= rc.min_expected_reward]
     held = set(held)
     priced.sort(key=lambda c: -(c.est_reward / c.capital) * (rc.hold_bonus if c.condition_id in held else 1.0))

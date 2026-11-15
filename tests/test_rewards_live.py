@@ -546,6 +546,11 @@ def test_status_and_report_of_the_live_test(tmp_path, monkeypatch):
     assert "Счётчик биржи по этому рынку за день" in txt and "2026-11-14: <b>50.000$</b>" in txt
     assert "Бот на бумаге записал бы: 6.20$" in txt and "Биржа начислила за тест: <b>нет данных</b>" in txt
     assert "счётчик биржи по этому рынку за день" in ops.format_rewards_live()
+    evs[-1]["position"] = {"yes": 0.0, "no": 20.0, "cost": 8.2}
+    evs[-1]["why"] = "fill"
+    txt = notify.format_rewards_live()
+    assert "Все тесты за 8 дней" in txt and "осталось в кошельке: Нет 20 за 8.20$" in txt and "заявку исполнили" in txt
+    assert "начислила за наши заявки наград всего по дням: 11-14 50.000$" in txt
     evs[:] = [{"type": "kill", "t": now, "reason": "live gate: collateral 30.00 < 60.00"}]
     assert "запуск отклонён" in notify.format_rewards_live() and "collateral" in ops.format_rewards_live()
     evs[:] = []

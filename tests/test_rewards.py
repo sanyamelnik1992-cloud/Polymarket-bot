@@ -322,6 +322,29 @@ def test_wide_book_is_priced_by_the_last_trade_not_by_its_middle(tmp_path):
     assert mk.reference_price([(0.48, 50)], [(0.50, 50)], RewardsCfg(), 4.5, 20, 0.88) == pytest.approx(0.49)   # tight book: its mid
 
 
+def test_wide_book_with_disagreeing_yes_and_no_trades_is_not_quoted(tmp_path):
+    """The CLOB keeps a last trade per token, without a time. In a wide book the YES token's may be a day older than the
+    NO token's (Panama, 15 Nov: YES 0.53 of the day before, NO 0.31 = YES 0.69 of the evening; the live test sold YES
+    at 0.59 and the market then traded 0.75). When the two disagree there is no price to quote around."""
+    rc = RewardsCfg()
+    bids, asks = [(0.15, 20.0)], [(0.85, 20.0)]
+    assert mk.reference_price(bids, asks, rc, 4.5, 20, 0.53, 0.69) is None
+    assert mk.reference_price(bids, asks, rc, 4.5, 20, 0.53, 0.55) == 0.53         # they agree within 3c
+    assert mk.reference_price(bids, asks, rc, 4.5, 20, None, 0.69) == 0.69         # only the NO token ever traded
+    assert mk.reference_price([(0.49, 20.0)], [(0.51, 20.0)], rc, 4.5, 20, 0.30, 0.70) == pytest.approx(0.50)  # tight book
+    raw = [raw_market("a", price=0.5)]
+    books = {"a-Y": {"bids": [{"price": "0.15", "size": "20"}], "asks": [{"price": "0.85", "size": "20"}]}}
+    sel = RewardsCfg(max_competitiveness=0)
+    assert mk.select(sel, raw_markets=raw, books=books, details={}, lasts={"a-Y": 0.53, "a-N": 0.31}) == []
+    picks = mk.select(sel, raw_markets=raw, books=books, details={}, lasts={"a-Y": 0.53, "a-N": 0.46})
+    assert [p.slug for p in picks] == ["a"] and picks[0].last_trade_no == pytest.approx(0.54)
+    f = farmer_with_market(tmp_path)                                  # the farmer, before any trade is seen live
+    f.markets["m"].rm.last_trade, f.markets["m"].rm.last_trade_no = 0.50, 0.69
+    assert f.reference(f.markets["m"]) is None and f.targets(f.markets["m"], f.clock()) == {}
+    f.on_trade("N", "BUY", 0.52, 10, int(f.clock() * 1000))           # a fresh trade on the NO token: YES 0.48
+    assert f.reference(f.markets["m"]) == pytest.approx(0.48)
+
+
 def test_select_skips_wide_books_without_a_trade_inside():
     rc = RewardsCfg(max_empty_frac=1.0)
     books = {t: {"bids": [{"price": "0.21", "size": "6"}], "asks": [{"price": "0.89", "size": "30"}], "tick_size": "0.01"}

@@ -48,7 +48,7 @@ from .scoring import adjusted_mid, official_share, our_share, plan_quotes, walk_
 
 log = logging.getLogger("pmbot.rewards")
 RM_KEYS = ("slug", "question", "condition_id", "yes", "no", "rate", "v", "min_size", "end_ts", "tick", "min_order",
-           "price", "last_trade", "comp", "size", "fee_rate", "min_age", "vol")   # enough of a market to quote its exit
+           "price", "last_trade", "last_trade_no", "comp", "size", "fee_rate", "min_age", "vol")   # enough of a market to quote its exit
 SETTLE_GRACE_S = 3600          # look for a resolution at most this long after the market's end (then keep polling)
 ZONE_MARGIN = 0.25             # cents: a resting order closer than this to the edge of the zone is moved in
 
@@ -246,8 +246,10 @@ class Farmer:
         """Price our quotes are centred on (mk.reference_price): the size-adjusted mid of a tight book, the last trade
         in a wide one, None (no quotes) when a wide book has no trade inside it. Never the middle of a wide book."""
         bids, asks = self.levels(ms.rm.yes)
-        last = ms.last_trade if ms.last_trade is not None else ms.rm.last_trade
-        return mk.reference_price(bids, asks, self.rc, ms.rm.v, ms.rm.min_size, last)
+        if ms.last_trade is not None:                  # a trade seen live since we subscribed (either token): fresh
+            return mk.reference_price(bids, asks, self.rc, ms.rm.v, ms.rm.min_size, ms.last_trade)
+        return mk.reference_price(bids, asks, self.rc, ms.rm.v, ms.rm.min_size, ms.rm.last_trade,
+                                  getattr(ms.rm, "last_trade_no", None))
 
     def mid_of(self, slug):
         """Mark price of a market's YES token: book mid if the book is tight, else last trade, else the last known."""
