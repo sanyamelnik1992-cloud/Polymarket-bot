@@ -1,0 +1,24 @@
+[Unit]
+Description=pmbot hourly Up/Down, closing minute only (config/hourly_last.toml; paper; reports/74)
+After=network-online.target
+Wants=network-online.target
+# a crash-loop must not keep re-entering the market: give up after 5 restarts in 10 minutes
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER (reports/74): the hourly markets, entries in the closing minute only. Not for live as it is.
+ExecStart=__REPO__/.venv/bin/python scripts/run_hourly.py --config config/hourly_last.toml
+# CPU priority: paper yields to the live bots on the 2 vCPU
+Nice=10
+CPUWeight=20
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=1500
+
+[Install]
+WantedBy=multi-user.target

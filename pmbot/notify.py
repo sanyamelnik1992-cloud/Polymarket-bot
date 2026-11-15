@@ -42,6 +42,7 @@ BOTS = {
     "pmbot-rewards-live": ("🧪", "Награды · живой тест", "РЕАЛЬНЫЕ ДЕНЬГИ: один рынок, две заявки ≈$20, один час; читает долю и начисления с биржи"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
+    "pmbot-hourly-last": ("🕐", "Часовые · последняя минута", "часовые рынки BTC/ETH: вход в последнюю минуту, когда цена Binance далеко от открытия часа (paper)"),
     "pmbot-recorder": ("📼", "REC", "рекордер"),
     "pmbot-tg": ("🤖", "TG", "телеграм-бот"),
 }
@@ -144,7 +145,7 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
     """Text for one journal event, or None if this event should not be sent."""
     who = _who(unit, prefix)
     live = mode == "live" or rec.get("mode") == "live"
-    length = 3600 if unit == "pmbot-hourly" else 300
+    length = 3600 if unit.startswith("pmbot-hourly") else 300
     if kind == "settle":
         if not (live or per_window):
             return None                       # paper windows go into the hourly digest instead of 30 messages/hour
@@ -608,7 +609,7 @@ def format_trades(n=10):
         pnl = e.get("pnl", 0) or 0
         win = {"U": "Up", "D": "Down"}.get(e.get("winner"), e.get("winner"))
         pos = f"U{e.get('up', 0):.0f}/D{e.get('down', 0):.0f}" if "up" in e else esc(e.get("side", ""))
-        length = 3600 if unit == "pmbot-hourly" else 300
+        length = 3600 if unit.startswith("pmbot-hourly") else 300
         out.append(f"{dot(pnl)} {label(unit, False)} {window_name(e.get('key'), length)} → {esc(win)} "
                    f"{pos} {money(pnl, True)}")
     return "\n".join(out)

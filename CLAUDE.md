@@ -159,7 +159,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   18 lost / -$35 on paper), L4 (344 / 35 / +$13.98, uneven). Capacity: books hold 5-50 shares at our price, so the 15m rule is
   worth roughly $5-20 a day at 10-20 shares, not a strategy that scales with capital. Next candidates: size stages (report 73),
   alt coins after a paper day (DOGE / HYPE Binance ticks are 1.5-1.7 bp: the guards fire too often), last-minute entries on the
-  hourly Up/Down markets (needs hourly books recorded first). Tool: `reports/74_tools/misses_and_paper.py`.
+  hourly Up/Down markets. Hourly study (report 74 section 5, `reports/74_tools/hourly_lastmin.py`, public trades of 14 days, 672 BTC + ETH
+  windows): the winner is Binance 1 h close >= open in 672 of 672; in the closing minute, with Binance >= 3 sigma of the time
+  left from the open, the favoured side lost 0 of ~275 windows and still traded below 0.98 in ~4 windows a day (7300 shares,
+  ~$40 a day taken by other bots): a speed question. Paper unit `pmbot-hourly-last` = `config/hourly_last.toml` (the old
+  hourly engine, closing minute only, $10 an entry, ask <= 0.97, edge >= 2 c, paper fills on the live book 0.3 s later);
+  verdict after 30 paper fills (<= 1 lost, > +2 c a share) or < 5 fills in 3 days = close it.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,

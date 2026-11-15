@@ -60,3 +60,27 @@ def test_taker_live_broker_gates():
     env = {"PMBOT_LIVE_CONFIRM": CONFIRM_PHRASE, "PMBOT_PRIVATE_KEY": "0x1"}
     with pytest.raises(LiveGateError, match="collateral"):
         asyncio.run(TakerLiveBroker(20, client=C(), geoblock_get=ok_geo, env=env).start())
+
+
+def test_last_minute_hourly_config_is_paper_and_one_small_entry_per_hour():
+    """reports/74 section 5: pmbot-hourly-last = the hourly engine restricted to the closing minute, paper. At 3 sigma of the
+    time left the model must clear the edge at an ask of 0.95, at 1 sigma it must not."""
+    import os
+    from pmbot import notify, ops
+    from pmbot.bot.hourly import HourlyCfg
+    from pmbot.bot.state import Book
+    root = os.path.join(os.path.dirname(__file__), "..")
+    cfg = load_hourly_config(os.path.join(root, "config", "hourly_last.toml"))
+    assert cfg.mode == "paper" and cfg.window_s == 60 and cfg.min_ttc_s == 2 and cfg.assets == ["btc", "eth"]
+    assert cfg.size_usd == cfg.max_cost_per_market == 10 and cfg.max_price == 0.97 and cfg.min_price == 0.5
+    assert cfg.journal_dir != HourlyCfg().journal_dir and cfg.state_file
+    unit = open(os.path.join(root, "deploy", "pmbot-hourly-last.service")).read()
+    assert "--config config/hourly_last.toml" in unit and "--live" not in unit
+    assert "pmbot-hourly-last" in ops.BOT_UNITS and "pmbot-hourly-last" in notify.BOTS
+    sigma, left = 0.6e-4, 30.0
+    far = prob_up_hourly(100 * (1 + 3 * sigma * left ** 0.5), 100, sigma, left, cfg.vol_mult, cfg.t_df)
+    near = prob_up_hourly(100 * (1 + 1 * sigma * left ** 0.5), 100, sigma, left, cfg.vol_mult, cfg.t_df)
+    up, down = Book(bids={0.94: 50}, asks={0.95: 50}), Book(bids={0.04: 50}, asks={0.06: 50})
+    assert 0.97 < far < 0.995 and decide(far, up, down, cfg) and decide(far, up, down, cfg)[0] == "U"
+    assert decide(near, up, down, cfg) is None
+
