@@ -1,3 +1,20 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-live/20261115-125937
-mode: live  duration: 1.0 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 4, 'lock_state': 4, 'status': 2}
-no fills
+mode: live  duration: 62.5 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 52, 'lock_state': 743, 'status': 125, 'strike': 44, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+
+lock orders: sent 1  filled 1  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 507  p90 507  max 507
+  market prewarm (2 lookups + signing), ms: median 228  max 620  n 52
+  fill price minus the ask we saw, cents: mean +1.00  worst +1.0
+
+fills: 1  shares: 2  notional: $1.86
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+sol        1     2.0      1.86       0.93   263.79
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best   roi
+asset                                                                            
+sol          1  1.869  0.131          0.131     0.0       1.0  0.131  0.131  0.07
+
+TOTAL pnl $+0.13 (ex-rebate $+0.13) on cost $1.87 -> ROI +7.00%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
