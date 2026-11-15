@@ -1,5 +1,6 @@
 """Liquidity-rewards farmer: scoring formula, selection, quoting, fills, rewards, risk, settlement, state."""
 import asyncio
+import json
 
 import pytest
 
@@ -632,6 +633,42 @@ def test_accrual_is_time_weighted(tmp_path):
     assert inc == pytest.approx(144.0 * 30 / 86400)                   # the real 30 s, not a fixed minute
 
 
+def test_honest_result_counts_only_rewards_where_others_hold_half_the_pool(tmp_path):
+    """reports/68 section 14: the live probes paid a lone or almost lone quote ~1/5 of the paper estimate. The honest
+    result counts rewards only from samples where our share was <= honest_max_share, and ALL trading."""
+    f = farmer_with_market(tmp_path)
+    contested(f, bid=0.48, ask=0.52, size=100.0)                      # others rest 100 shares on both sides
+    asyncio.run(f.quote_once())
+    f.clock.t += 31
+    f.feed.last_msg = f.clock()
+    f._last_sample = f.clock() - 60
+    f.sample_once()
+    ms = f.markets["m"]
+    assert 0 < ms.last_share <= 0.5 and ms.reward_total > 0 and ms.shared_total == pytest.approx(ms.reward_total)
+    st = f.status()
+    assert st["shared_total"] == pytest.approx(st["rewards_total"], abs=1e-3) and st["alone_total"] == 0
+    assert st["honest_pnl"] == pytest.approx(st["shared_total"] + st["trading_pnl"], abs=0.01)
+    g = farmer_with_market(tmp_path / "alone")                         # nobody else: rewards, but none of them honest
+    asyncio.run(g.quote_once())
+    g.clock.t += 31
+    g.feed.last_msg = g.clock()
+    g._last_sample = g.clock() - 60
+    g.sample_once()
+    st = g.status()
+    assert st["rewards_total"] > 0 and st["alone_total"] == pytest.approx(st["rewards_total"], abs=1e-3)
+    assert st["shared_total"] == 0 and st["honest_pnl"] == st["trading_pnl"]
+    h = farmer_with_market(tmp_path / "mostly", honest_max_share=0.01)   # others present but we hold most: not honest
+    contested(h, bid=0.48, ask=0.52, size=100.0)
+    asyncio.run(h.quote_once())
+    h.clock.t += 31
+    h.feed.last_msg = h.clock()
+    h._last_sample = h.clock() - 60
+    h.sample_once()
+    assert h.status()["rewards_total"] > 0 and h.status()["shared_total"] == 0
+    g._save()
+    assert "shared_by_day" in json.load(open(g.rc.state_file))
+
+
 def test_stress_is_half_the_estimate_when_alone(tmp_path):
     """Alone in the zone the estimate is the whole pool; if one identical maker joined we would get half of it."""
     f = farmer_with_market(tmp_path)
@@ -1003,4 +1040,6 @@ def test_report_script_reads_a_journal(tmp_path, capsys):
     txt = capsys.readouterr().out
     assert "hedges: 1, 20 shares" in txt and "CAUTIOUS" in txt and "fills: 1" in txt and "official $" in txt
     assert "by kind of market at selection" in txt and "24 h volume" in txt
+    assert "HONEST (rewards only where others held" in txt and "RECOUNT by our mean share" in txt
+    assert "others held >= half" in txt
     assert "pairs closed by our own bids" in txt and "within 30 min" in txt

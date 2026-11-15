@@ -285,6 +285,16 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   live) in `fresh_hours`, `markets.date_near` skips a date or a week START within `calm_days` (both samples were "week of
   November 16" markets). Two live samples: $0.05 accrued, $7.40 at risk. Next test: `kind = "shared"`, on the owner's word.
   Insurance (report 71 section 6): live 84 windows / 6 lost / 0 insured / 1 false alarm (-$1.27); unchanged, review after 10 tries.
+  **Report 68 section 14 (15 Nov, owner: "сделай пересчёт и заливай в main")**: paper R over 81 h = +$2575 as booked, +$464
+  without the "alone" rewards, about -$5 on the markets where others already scored at selection (since 14 Nov, 178
+  market-hours); trading -$443 (~-$100 a day). 84 % of the "not alone" rewards came from markets with official
+  competitiveness 0 (our share 75-100 %), where the live probe was credited ~1/5 of paper. No proven plus without empty
+  pools. Added: `rewards.honest_max_share = 0.5`, `shared_by_day` / `MState.shared_total` (rewards of samples where our
+  share <= 0.5 and others score), status `shared_today` / `shared_total` / `honest_today` / `honest_pnl` (= those rewards +
+  ALL trading), `rsample.shared`, `rday.shared`; report lines `HONEST`, by-day "others >= half" / "honest net" and a
+  `RECOUNT` of all market rows by mean share; Telegram "✅ честный итог" in /status, /r, the digest, /rhow. Selection,
+  quoting and the stop are unchanged. Decide after 1-2 days of the honest figure: <= 0 -> no live R, the paper unit can be
+  switched off.
   Third live run (owner, Telegram, 15 Nov 08:17 UTC; report 72 section 6): Panama-canal market, NO bid 0.41 x 20 filled after 70 s
   ($8.20), share 0 %. Three "alone" samples: $0.054 accrued, $15.60 of filled bids worth ~$8 by the last trades. A lone quote
   in an empty pool loses real money; `config/rewards_live.toml` is now `kind = "shared"` with `max_share = 0.5` (other makers must hold
