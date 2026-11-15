@@ -2004,3 +2004,4 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-15 08:22:42,pmbot-lock-maker3,paper,xrp-1794730500,Up,5.0,0,4.55,5.0,0.0,0.45
 2026-11-15 08:25:23,pmbot-lock-maker3,paper,eth-1794730500,Down,0,5.0,4.65,5.0,0.0,0.35
 2026-11-15 08:37:36,pmbot-lock-maker3,paper,sol-1794731400,Up,5.0,0,4.55,5.0,0.0,0.45
+2026-11-15 09:50:10,pmbot-lock-maker3,paper,btc-1794735600,Up,5.0,0,4.55,5.0,0.0,0.45
