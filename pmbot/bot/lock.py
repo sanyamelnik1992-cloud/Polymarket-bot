@@ -34,6 +34,8 @@ log = logging.getLogger("pmbot.lock")
 
 # ------------------------------------------------------------------------------------------------ config
 DURATIONS = {300: "5m", 900: "15m"}     # window length -> slug tag (btc-updown-15m-<start>)
+PAPER_ASSETS = ("doge", "bnb", "hype")  # 15m / 5m Up/Down markets exist for them too; no model tables of their own yet
+                                        # (Tables.surv falls back to the first asset's tails): paper until measured (reports/73)
 PROV_MIN_BP = 0.5        # provisional result with forward-filled prints: |TWAP / strike - 1| must be at least this (bp)
 MIN_BUY_USD = 1.05       # the exchange refuses a marketable BUY under $1 ("invalid amount ... min size: 1"): the insurance of 12 Nov 07:24
                          # (5 shares at 0.11 = $0.55) was refused and the window lost -$4.68 instead of ~0 (reports/69)
@@ -221,9 +223,10 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("risk.max_usd_per_entry cannot exceed risk.max_open_usd")
     if e.mode == "live" and (not r.state_file or r.resume_next_day):
         raise ValueError("live: risk.state_file is required and risk.resume_next_day must be false")
-    bad = [a for a in c.assets if a not in ("btc", "eth", "sol", "xrp")]
+    ok = ("btc", "eth", "sol", "xrp") if e.mode == "live" else ("btc", "eth", "sol", "xrp") + PAPER_ASSETS
+    bad = [a for a in c.assets if a not in ok]
     if bad:
-        raise ValueError(f"unsupported assets: {bad}")
+        raise ValueError(f"unsupported assets: {bad} (doge / bnb / hype are paper-only: reports/73)")
     return cfg
 
 

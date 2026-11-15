@@ -189,6 +189,7 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-maker", "config/lock_maker.toml", False),
                             ("pmbot-lock-tier", "config/lock_tier.toml", False),
                             ("pmbot-lock-15-tier", "config/lock15_tier.toml", False),
+                            ("pmbot-lock-15-alt", "config/lock15_alt.toml", False),
                             ("pmbot-lock-maker3", "config/lock_maker_tier.toml", False),
                             ("pmbot-lock-tier-pb", "config/lock_tier_pb.toml", False),
                             ("pmbot-lock-tier-late", "config/lock_tier_late.toml", False),
@@ -1407,7 +1408,8 @@ def test_ten_shares_only_when_no_guard_blocked_a_moment_ago(tmp_path, monkeypatc
     import time as _t
     import pmbot.bot.lock as lockmod
     from pmbot.bot.state import Window
-    on = ("lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml", "lock15_live.toml", "lock15_tier.toml")
+    on = ("lock_live.toml", "lock_tier.toml", "lock_tier_pb.toml", "lock_tier_late.toml", "lock15_live.toml", "lock15_tier.toml",
+          "lock15_alt.toml")
     import glob
     for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
         assert load_lock_config(path).lock.big_calm_s == (3.0 if os.path.basename(path) in on else 0.0), path
@@ -1470,7 +1472,7 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
     import pmbot.bot.lock as lockmod
     from pmbot.bot.state import Window
     for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
-        on = os.path.basename(path) in ("lock15_live.toml", "lock15_tier.toml")
+        on = os.path.basename(path) in ("lock15_live.toml", "lock15_tier.toml", "lock15_alt.toml")
         assert load_lock_config(path).lock.big_late_rel == (260.0 if on else 0.0), path
     for bad in ({"lock": {"big_late_rel": 100.0}}, {"lock": {"big_late_rel": 260.0, "big_shares": 0, "big_calm_s": 0.0}},
                 {"risk": {"max_usd_per_entry": 9.0}}):
@@ -1519,4 +1521,24 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
             await asyncio.sleep(0.01)
         asyncio.run(go())
         assert len(br.calls) == 1 and br.calls[0][1] == want, (rel, p_model, guard, br.calls)
+
+
+def test_15m_paper_bot_on_more_coins_is_the_15m_rule_and_paper_only():
+    """reports/73 section 4: 15-minute Up/Down markets also exist for DOGE, BNB and HYPE. pmbot-lock-15-alt runs the 15m rule of
+    the twin there on paper; these coins cannot be put into a live config (no tails of their own, nothing measured yet)."""
+    import dataclasses as dc
+    from pmbot import notify, ops
+    from pmbot.config import BINANCE_SYMBOL, CHAINLINK_SYMBOL
+    twin = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"))
+    alt = load_lock_config(os.path.join(ROOT, "config", "lock15_alt.toml"))
+    assert alt.execution.mode == "paper" and alt.lock.assets == ["doge", "bnb", "hype"]
+    assert dc.replace(alt.lock, assets=twin.lock.assets) == twin.lock
+    assert dc.replace(alt.risk, state_file=twin.risk.state_file) == twin.risk
+    assert alt.risk.state_file != twin.risk.state_file and alt.journal_dir != twin.journal_dir
+    for a in alt.lock.assets:
+        assert a in BINANCE_SYMBOL and a in CHAINLINK_SYMBOL
+    assert "pmbot-lock-15-alt" in ops.BOT_UNITS and "pmbot-lock-15-alt" in notify.BOTS
+    for cfg in ("lock15_live.toml", "lock_live.toml", "lock_99_live.toml"):
+        with pytest.raises(ValueError, match="paper-only"):
+            load_lock_config(os.path.join(ROOT, "config", cfg), overrides={"lock": {"assets": ["btc", "doge"]}})
 

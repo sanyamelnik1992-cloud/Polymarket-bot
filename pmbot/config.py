@@ -9,8 +9,10 @@ WS_RTDS = "wss://ws-live-data.polymarket.com"  # legacy RTDS, still serves crypt
 WS_BINANCE = "wss://data-stream.binance.vision/stream"
 
 ASSETS = ["btc", "eth", "sol", "xrp"]
-BINANCE_SYMBOL = {"btc": "BTCUSDT", "eth": "ETHUSDT", "sol": "SOLUSDT", "xrp": "XRPUSDT"}
-CHAINLINK_SYMBOL = {"btc": "btc/usd", "eth": "eth/usd", "sol": "sol/usd", "xrp": "xrp/usd"}
+BINANCE_SYMBOL = {"btc": "BTCUSDT", "eth": "ETHUSDT", "sol": "SOLUSDT", "xrp": "XRPUSDT",
+                  "doge": "DOGEUSDT", "bnb": "BNBUSDT", "hype": "HYPEUSDT"}      # the last three: paper only (reports/73)
+CHAINLINK_SYMBOL = {"btc": "btc/usd", "eth": "eth/usd", "sol": "sol/usd", "xrp": "xrp/usd",
+                    "doge": "doge/usd", "bnb": "bnb/usd", "hype": "hype/usd"}
 
 WINDOW = 300          # 5-minute markets
 TWAP_LOOKBACK = 60    # since 2026-08-14 5m markets resolve on a 60s Chainlink TWAP

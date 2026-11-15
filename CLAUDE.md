@@ -148,7 +148,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `max_open_entries` 1, `daily_loss_limit` 10 (REAL MONEY, raised on the owner's word). The entry rule is unchanged (four tiers from
   second 240). Next: 20 shares on the strong ones after 30 strong live entries with <= 1 lost; back to 5 at >= 3. Entries are
   limited by sellers leaving the book (1300 of ~1400 windows) and FAK misses (21 windows); 15m markets also exist for DOGE, BNB,
-  HYPE (Chainlink already recorded, Binance lists them): paper bot first. Tool: `reports/73_tools/feat15.py`.
+  HYPE (Chainlink already recorded, Binance lists them): paper unit `pmbot-lock-15-alt` = `config/lock15_alt.toml` (the twin's
+  [lock] on `assets = ["doge", "bnb", "hype"]`; `lock.PAPER_ASSETS` are refused in a live config; no tails of their own, BTC's
+  are used); to live after 50 paper entries with <= 5 % lost, on the owner's word. Tool: `reports/73_tools/feat15.py`.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
