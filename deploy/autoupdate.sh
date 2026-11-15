@@ -42,7 +42,7 @@ fi
 CHANGED="$(g diff --name-only "$OLD" "$NEW")"
 LOG="$(g log --format='• %h %s' "$OLD..$NEW" | head -15)"
 
-if echo "$CHANGED" | grep -q '^requirements.txt$'; then
+if grep -q '^requirements.txt$' <<< "$CHANGED"; then
   as_owner "$REPO/.venv/bin/pip" install -q -r requirements.txt || {
     g reset -q --hard "$OLD"; echo "$NEW" > "$BAD"
     notify "🔴 обновление ${NEW:0:7} откатено: pip install упал"; exit 1; }
@@ -58,7 +58,9 @@ $(tail -n 15 "$TESTLOG")"
 fi
 rm -f "$BAD"
 
-if echo "$CHANGED" | grep -qE '^deploy/.*\.(service|timer)$|^deploy/install_units.sh$'; then
+# here-string, not `echo | grep -q`: with pipefail grep -q leaves at the first match, echo dies of SIGPIPE on a long list and
+# the test reads false, so the units were silently NOT installed (15 Nov, pmbot-lock-15-alt: "echo: write error: Broken pipe")
+if grep -qE '^deploy/.*\.(service|timer)$|^deploy/install_units.sh$' <<< "$CHANGED"; then
   bash deploy/install_units.sh "$OWNER"
 fi
 
@@ -72,7 +74,7 @@ if [ -n "$RUNTIME" ]; then
     if systemctl is-active -q "$u"; then systemctl restart --no-block "$u"; RESTARTED+=("$u"); sleep 3; fi
   done
 fi
-if echo "$CHANGED" | grep -qE '^(pmbot/recorder.py|scripts/record_live.py|deploy/pmbot-recorder.service)$' \
+if grep -qE '^(pmbot/recorder.py|scripts/record_live.py|deploy/pmbot-recorder.service)$' <<< "$CHANGED" \
    && systemctl is-active -q pmbot-recorder; then
   systemctl restart --no-block pmbot-recorder; RESTARTED+=("pmbot-recorder")
 fi
