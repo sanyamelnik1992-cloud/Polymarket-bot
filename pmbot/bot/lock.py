@@ -101,6 +101,9 @@ class LockCfg:
                                          # big_calm_s seconds, else `shares` (reports/71: both 10-share losses, 10 Nov 23:49 and 13 Nov
                                          # 20:49, were bought 1.2-1.3 s after a binance_against block, the move still 1.2-1.7 bp / 3 s
                                          # against; live + twins 10-13 Nov, p >= 0.97: 12 such windows, 2 lost, vs 29 / 0). 0 = off
+    big_late_rel: float = 0.0            # > 0: an entry at window second >= this buys big_shares whatever its tier (reports/73: late
+                                         # entries are the cleanest group in every sample: 15m live + twin 16 / 0 lost, 5m 59 / 1,
+                                         # tapes of 1-9 Nov 61 / 0, at ~0.90 where break-even is ~9 % lost). 0 = off
 
 
 @dataclass
@@ -193,6 +196,8 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock.hedge_p: the insurance is for the taker entry with one entry per window")
     if c.big_shares and not (c.big_shares >= c.shares and 0.5 < c.big_shares_p < 1 and float(c.big_shares).is_integer()):
         raise ValueError("lock.big_shares must be 0 (off) or a whole number >= lock.shares, big_shares_p in (0.5, 1)")
+    if c.big_late_rel and not (c.big_shares and c.rel_lo <= c.big_late_rel <= c.rel_hi):
+        raise ValueError("lock.big_late_rel must be 0 (off) or in [rel_lo, rel_hi], and needs lock.big_shares")
     if c.big_calm_s < 0 or (c.big_calm_s and not c.big_shares):
         raise ValueError("lock.big_calm_s must be >= 0 and needs lock.big_shares")
     if c.big_shares and r.max_usd_per_entry < c.big_shares * c.a_max:
@@ -820,7 +825,9 @@ class LockBot:
             if not ok:
                 self._why(key, "risk:" + why_risk, ctx)
                 continue
-            want = c.big_shares if c.big_shares and sig["p"] >= c.big_shares_p - 1e-12 else c.shares   # reports/67
+            big = c.big_shares and (sig["p"] >= c.big_shares_p - 1e-12                         # reports/67
+                                    or (c.big_late_rel and ctx.get("rel", 0.0) >= c.big_late_rel))    # reports/73
+            want = c.big_shares if big else c.shares
             if want > c.shares and c.big_calm_s and now - self.guard_t.get(key, -1e18) < c.big_calm_s * 1000:
                 want, ctx = c.shares, {**ctx, "calm": False}       # reports/71: an alarm a moment ago = the small size
             shares = min(want, math.floor(self.cfg.risk.max_usd_per_entry / sig["limit"] * 100) / 100)

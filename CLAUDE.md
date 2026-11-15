@@ -140,6 +140,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   Tapes 7-11 Nov: +$24.60 -> +$25.67, worst trade -$9.53 -> -$1.91, 130 -> 108 entries; costs ~$2 a day in a loss-free period.
   The insurance has never filled live (FAK 250-330 ms behind the reversal). 15m unchanged (32 entries / 1 lost / +$22.86 since 12 Nov). Tools:
   `reports/71_tools` (`paths.py` state paths of the live rule, `variants.py`, `journal_feat.py` for the bots' journals).
+  **`reports/73_15m_strong_entries_10_shares.md` (15 Nov, owner: "выберем 15 минутки ... может увеличить деньги")**: 15m is the only
+  live bot in profit (42 entries / 1 lost / +$27.49 in 3.6 days, ~$14 of it lucky fills far below the seen ask; twin 54 / 3 / +$8.44).
+  Live + twin, 64 unique windows: entries from second 260 or with p >= 0.97 lost 0 of 23, the early weak ones 3 of 41 (+1.7 c a
+  share). `lock15_live.toml` + twin `lock15_tier.toml`: `big_shares = 10` when p >= `big_shares_p` 0.97 OR the window second >=
+  new `lock.big_late_rel` 260, `big_calm_s = 3`, 5 shares otherwise; risk `max_usd_per_entry` 10, `max_open_usd` 10,
+  `max_open_entries` 1, `daily_loss_limit` 10 (REAL MONEY, raised on the owner's word). The entry rule is unchanged (four tiers from
+  second 240). Next: 20 shares on the strong ones after 30 strong live entries with <= 1 lost; back to 5 at >= 3. Entries are
+  limited by sellers leaving the book (1300 of ~1400 windows) and FAK misses (21 windows); 15m markets also exist for DOGE, BNB,
+  HYPE (Chainlink already recorded, Binance lists them): paper bot first. Tool: `reports/73_tools/feat15.py`.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
