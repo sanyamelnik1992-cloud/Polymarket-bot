@@ -170,7 +170,7 @@ def test_configs_load_and_live_is_the_twin():
     # L -> L3 changed the rule, not the money. reports/67, the owner's word on 11 Nov ("давай 10"): 10 shares from model p 0.97, so the
     # per-entry / open limits are $10 and one entry at a time is kept by max_open_entries; any further raise is the owner's call
     assert live.lock.shares <= 5 and live.lock.big_shares <= 10 and live.risk.max_usd_per_entry <= 10.0
-    assert live.risk.max_open_usd <= 10.0 and live.risk.max_open_entries == 1 and live.risk.daily_loss_limit <= 10.0
+    assert live.risk.max_open_usd <= 10.0 and live.risk.max_open_entries == 1 and live.risk.daily_loss_limit <= 5.0   # reports/76
     assert tier.risk.max_open_entries == live.risk.max_open_entries
     assert wide.lock.a_min < paper.lock.a_min
     raw = tomllib.load(open(os.path.join(ROOT, "config", "lock_live.toml"), "rb"))

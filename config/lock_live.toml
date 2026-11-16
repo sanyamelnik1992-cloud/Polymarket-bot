@@ -53,7 +53,8 @@ big_calm_s = 3.0      # reports/71: 10 shares only if no Binance guard (binance_
 max_usd_per_entry = 10.0     # reports/67: a 10-share entry at <= 0.98 + fee ($9.95); raised from 5 on the owner's word "давай 10"
 max_open_usd = 10.0
 max_open_entries = 1         # still one entry at a time (reports/51): a reversal often hits several coins in the same window
-daily_loss_limit = 10.0      # one 10-share loss is up to -$9.8: like before, a second loss (not the first) stops it until a human restarts it
+daily_loss_limit = 5.0       # reports/76 (16 Nov, owner: "не хочу чтобы мы теряли так много"): was 10. Three 2-share losses (-$1.9 each)
+                             # or one 10-share loss stop it until a human restarts it
 state_file = "data/state/lock_live.json"
 resume_next_day = false
 

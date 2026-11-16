@@ -51,7 +51,7 @@ big_calm_s = 3.0      # reports/71: 10 shares only if no Binance guard (binance_
 max_usd_per_entry = 10.0     # = live (reports/67): 10 shares from p 0.97
 max_open_usd = 10.0
 max_open_entries = 1         # = live: one entry at a time (reports/51)
-daily_loss_limit = 10.0
+daily_loss_limit = 5.0       # = live (reports/76)
 state_file = "data/state/lock_tier_pb_paper.json"
 resume_next_day = true
 

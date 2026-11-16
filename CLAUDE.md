@@ -182,7 +182,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   seller at <= 0.95 against a 0.97 model is adverse selection: 0.7 % lost on all states, 6-7 % where we can buy). Now
   `big_shares_p = 0.99` in the 5m live family and the 15m family, and 15m `shares = 2` (was 5): 10 shares only at p >= 0.99, 2
   below; the entry rules are unchanged. Do not raise a size anywhere without >= 100 real entries beating the price. Paper ideas
-  next: require the model to hold the tier for 1-2 s before buying; book depth at <= 0.98 for the 0.99 tier.
+  next: book depth at <= 0.98 for the 0.99 tier. Section 6 (14:00): 5m live + twins `daily_loss_limit = 5` (was 10; owner: "не
+  хочу чтобы мы теряли так много"); CHECKED AND REJECTED: "enter only on a fresh signal" - in the journals of 10-16 Nov entries on
+  the first tick at a tier were 96 / 3 lost vs 96 / 11 for older ones (`reports/76_tools/fresh.py`), but dense 100 ms paths of the
+  tapes 7-11 Nov (`fresh_paths.py build|sim`, tapes in /root/research on the server) show no difference by signal age (81 / 2 vs
+  49 / 1). On those tapes the p >= 0.99 tier is 54 / 0 (+3.4..4.3 c a share); the whole rule was 72 / 0 on 7-9 Nov and 58 / 3 on
+  10-11 Nov: the edge below 0.99 faded after 9 Nov. Never promise the owner "no losses".
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
