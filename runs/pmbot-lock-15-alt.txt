@@ -1,20 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-alt/20261116-125719
-mode: paper  duration: 304.7 min  events: {'start': 1, 'status': 609, 'lock_state': 1415, 'strike': 60, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1, 'lock_miss': 1}
+mode: paper  duration: 364.7 min  events: {'start': 1, 'status': 729, 'lock_state': 1604, 'strike': 72, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2, 'lock_miss': 1}
 
-lock orders: sent 2  filled 1  ask gone 1  errors 0
+lock orders: sent 3  filled 2  ask gone 1  errors 0
   signal -> exchange answer, ms: median 301  p90 301  max 301
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
   misses came 14-14 s before the end; model p 0.979-0.979
 
-fills: 1  shares: 2  notional: $1.84
+fills: 2  shares: 4  notional: $3.70
        fills  shares  notional  avg_price  med_rel
 asset                                             
+bnb        1     2.0      1.86       0.93  859.385
 hype       1     2.0      1.84       0.92  855.166
 
 settled windows:
-       windows  cost   pnl  pnl_ex_rebate  rebate  win_rate  worst  best  roi
-asset                                                                        
-hype         1  1.85 -1.85          -1.85     0.0       0.0  -1.85 -1.85 -1.0
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best   roi
+asset                                                                            
+bnb          1  1.869  0.131          0.131     0.0       1.0  0.131  0.131  0.07
+hype         1  1.850 -1.850         -1.850     0.0       0.0 -1.850 -1.850 -1.00
 
-TOTAL pnl $-1.85 (ex-rebate $-1.85) on cost $1.85 -> ROI -100.00%; windows 1, t-stat +nan
+TOTAL pnl $-1.72 (ex-rebate $-1.72) on cost $3.72 -> ROI -46.23%; windows 2, t-stat +nan
 max drawdown $0.00; hedged windows (both sides filled): 0
