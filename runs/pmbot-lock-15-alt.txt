@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-alt/20261115-185115
-mode: paper  duration: 611.2 min  events: {'start': 1, 'status': 1222, 'lock_state': 1941, 'strike': 120, 'lock_miss': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 2}
+mode: paper  duration: 670.2 min  events: {'start': 1, 'status': 1340, 'lock_state': 2128, 'strike': 132, 'lock_miss': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3}
 
 lock orders: sent 6  filled 3  ask gone 3  errors 0
   signal -> exchange answer, ms: median 301  p90 348  max 348
@@ -13,10 +13,10 @@ bnb        1     5.0      4.50      0.900  846.759
 doge       2    15.0     13.65      0.913  878.793
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-bnb          1  4.532  0.468          0.468     0.0       1.0  0.468  0.468  0.103
-doge         1  4.626  0.374          0.374     0.0       1.0  0.374  0.374  0.081
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+bnb          1   4.532  0.468          0.468     0.0       1.0  0.468  0.468  0.103
+doge         2  13.736  1.264          1.264     0.0       1.0  0.374  0.890  0.092
 
-TOTAL pnl $+0.84 (ex-rebate $+0.84) on cost $9.16 -> ROI +9.20%; windows 2, t-stat +nan
+TOTAL pnl $+1.73 (ex-rebate $+1.73) on cost $18.27 -> ROI +9.48%; windows 3, t-stat +3.64
 max drawdown $0.00; hedged windows (both sides filled): 0
