@@ -331,6 +331,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (report 68 section 13: wide books whose YES and NO last trades disagree are not quoted). The paper bot's "alone" rewards are not money; judge R by the markets with other makers only.
   15 Nov 07:54 5m loss (BTC, second 287, lead 0.63 bp, -$1.87; our own TWAP said win, the exchange's window said loss): no rule
   change, report 71 section 7 (lead 0.5-1 bp: 18 of 19 won on tapes + live; `reports/71_tools/dist_calib.py`).
+- **`reports/77_real_money_and_successful_wallets.md` (16 Nov, owner: "проверь ещё раз ... где ещё есть вариант заработать")**:
+  our real money from the exchange's own record of the wallet (`reports/77_tools/own_wallet.py`, wallet from `PMBOT_WALLET`,
+  never in the repo): all-time -$15.6 (-$12.7 of it the old maker on 8 Nov); since 9 Nov 5m lock 191 entries / 16 lost / -$15.96
+  (entries at 0.88-0.94: 144 / 16 / -$29.66; at >= 0.94: 38 / 0 / +$9.85), 15m 56 / 4 / +$15.66 (+$19.04 of it on 12 Nov).
+  Market-wide (600 windows, 48 h, all takers): a favourite bought in the last 20 % at 0.85-0.94 lost 10.8 % (our 11 %: no edge over
+  the market there), at 0.94-0.98 2.7 % (ours 0 of 38); 1 534 wallets buy late favourites. Proposal, NOT applied: no 5m entry
+  below ~0.94. Successful wallets (leaderboard `data-api /v2/leaderboard?time_period=&category=`, 3 489 wallets, 116 "systematic"):
+  5m/15m market makers with exchange maker rebates (not for us), sports (capital, data), "already decided" buys at >= 0.99, and
+  WEATHER (temperature markets resolved by public METAR, ~90 a day): the next direction (report 78).
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
