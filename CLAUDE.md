@@ -193,6 +193,17 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   guards, 5 max_open) and 35.5 a day at <= 0.99 (0 of 256; ~1 c a share). L99 skips 75 of 228 such windows on its fixed 2.5 bp
   shock pause (`shock_sigmas = 0`); not loosened on real money yet (75 / 0 cannot tell 0 % from 2 %, break-even at 0.99 is 1 in
   107): paper first. More plus trades = more markets with the 0.99 rule (15m alts, hourly, 4 h / daily not studied), not lower tiers.
+  **`reports/79_cross_venue_arbitrage.md` (16 Nov 23:10, owner: "одно и то же событие на разных площадках ... анализ сделаешь?")**:
+  analysis only. Kalshi (~76 % of prediction-market volume) is closed to Ukraine (restricted list; its API answers 403 "blocked
+  from your country"): do not route around it. Limitless (Base; ToS does not name Ukraine) mirrors Polymarket's 5m / 15m / hourly
+  Up/Down markets with the same Chainlink 60 s TWAP (`metadata.externalSlug`, `isPolyArbitrage`, its own maker, taker delay 250 /
+  500 ms, none on hourly; taker fee 5 % x (1 - p) of the USDC value): 25 min of paired books (649 samples, 18 windows,
+  `reports/79_tools/sample_books.py` + `cross_cost.py`) = Limitless spread 8.3 c vs 1 c, mids 0.5 c apart, both sides under $1
+  after fees in 2 samples (+4.3 / +4.9 c, 100-200 shares, one snapshot each: the mirror lagging a Polymarket jump), market
+  volume $1-10. Opinion (BNB chain): ~$16k a day on all 120 markets, four locked gaps worth $0.1-18 with money tied until
+  January. Open lead: the Limitless maker's lag; `record_gap.py` ran on the server for 10 h from 23:03 UTC
+  (`/root/research/gap_1117.jsonl`, public data only): if the lag outlasts the taker delay more than once an hour, a $20-30 test
+  on the owner's word (needs a Base wallet), else closed.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
