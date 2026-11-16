@@ -1,3 +1,3 @@
 run: /home/pmbot/Polymarket-bot/data/journal-hourly-last/20261116-065740
-mode: paper  duration: 182.5 min  events: {'start': 1, 'hour_window': 10, 'hour_open': 10}
+mode: paper  duration: 242.5 min  events: {'start': 1, 'hour_window': 12, 'hour_open': 12}
 no fills
