@@ -182,12 +182,17 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   seller at <= 0.95 against a 0.97 model is adverse selection: 0.7 % lost on all states, 6-7 % where we can buy). Now
   `big_shares_p = 0.99` in the 5m live family and the 15m family, and 15m `shares = 2` (was 5): 10 shares only at p >= 0.99, 2
   below; the entry rules are unchanged. Do not raise a size anywhere without >= 100 real entries beating the price. Paper ideas
-  next: book depth at <= 0.98 for the 0.99 tier. Section 6 (14:00): 5m live + twins `daily_loss_limit = 5` (was 10; owner: "не
+  next: book depth at <= 0.98 for the 0.99 tier. Section 6 (12:55): 5m live + twins `daily_loss_limit = 5` (was 10; owner: "не
   хочу чтобы мы теряли так много"); CHECKED AND REJECTED: "enter only on a fresh signal" - in the journals of 10-16 Nov entries on
   the first tick at a tier were 96 / 3 lost vs 96 / 11 for older ones (`reports/76_tools/fresh.py`), but dense 100 ms paths of the
   tapes 7-11 Nov (`fresh_paths.py build|sim`, tapes in /root/research on the server) show no difference by signal age (81 / 2 vs
   49 / 1). On those tapes the p >= 0.99 tier is 54 / 0 (+3.4..4.3 c a share); the whole rule was 72 / 0 on 7-9 Nov and 58 / 3 on
   10-11 Nov: the edge below 0.99 faded after 9 Nov. Never promise the owner "no losses".
+  Section 8 (owner: "нужно больше сделок ... много и плюсовых"; `reports/76_tools/opp99.py`): windows with p >= 0.99 and a seller
+  exist 8.6 a day at <= 0.98 on 5m (0 of 62 lost; live takes 2.2: 26 of the 46 others were FAK misses = a faster bot, 9 Binance
+  guards, 5 max_open) and 35.5 a day at <= 0.99 (0 of 256; ~1 c a share). L99 skips 75 of 228 such windows on its fixed 2.5 bp
+  shock pause (`shock_sigmas = 0`); not loosened on real money yet (75 / 0 cannot tell 0 % from 2 %, break-even at 0.99 is 1 in
+  107): paper first. More plus trades = more markets with the 0.99 rule (15m alts, hourly, 4 h / daily not studied), not lower tiers.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
