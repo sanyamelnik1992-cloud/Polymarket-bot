@@ -1,0 +1,19 @@
+[Unit]
+Description=pmbot weather recorder (temperature markets: METAR, books, forecasts; data only, no orders; reports/78)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+# No orders and no keys: public data only. Installed but not enabled at boot: /restart pmbot-weather-rec in Telegram.
+ExecStart=__REPO__/.venv/bin/python scripts/record_weather.py --out data/weather
+Nice=10
+CPUWeight=20
+Restart=always
+RestartSec=60
+KillSignal=SIGINT
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target
