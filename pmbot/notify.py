@@ -598,9 +598,12 @@ def format_status():
             lines += format_rewards_live(unit).split("\n")[:3] + ["   подробно: /rlive", ""]
     if not shown:
         lines.append("ни один бот не запущен\n")
-    st, since = ops.unit_state("pmbot-recorder")
-    if st not in ("inactive", "unknown", "n/a"):
-        lines.append(f"{label('pmbot-recorder')}: {ops.STATE_RU.get(st, esc(st))} {ops.fmt_age(since)}")
+    for unit in ["pmbot-recorder"] + ops.WEATHER_UNITS:
+        st, since = ops.unit_state(unit)
+        if st not in ("inactive", "unknown", "n/a"):
+            note = ops.weather_rec_note() if unit in ops.WEATHER_UNITS else ""
+            lines.append(f"{label(unit, full=unit not in ops.WEATHER_UNITS)}: {ops.STATE_RU.get(st, esc(st))} {ops.fmt_age(since)}"
+                         + (f" · {note}" if note else ""))
     if os.path.exists(ops.KILL_FILE):
         lines.append("⛔ <b>файл STOP есть</b>: торговля остановлена (/resume — снять)")
     g = ops.git_info()

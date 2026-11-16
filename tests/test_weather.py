@@ -119,3 +119,17 @@ def test_weather_unit_is_data_only_and_wired():
         assert " pmbot-weather-rec " in open(os.path.join(root, "deploy", f)).read(), f
     st = json.load(open(os.path.join(root, "config", "weather_stations.json")))
     assert st["KLGA"]["tz"] == "America/New_York" and st["RJTT"]["tz"] == "Asia/Tokyo" and len(st) >= 40
+
+
+def test_weather_rec_note_counts_todays_files(tmp_path, monkeypatch):
+    import os
+    from pmbot import ops
+    monkeypatch.setattr(ops, "REPO", str(tmp_path))
+    now = 1763300000                                                   # 2025-11-16 13:33 UTC
+    assert ops.weather_rec_note(now) == ""                             # nothing written yet today
+    d = tmp_path / "data" / "weather" / "2025-11-16"
+    d.mkdir(parents=True)
+    (d / "metar.jsonl.gz").write_bytes(b"x" * 1_500_000)
+    (d / "books.jsonl.gz").write_bytes(b"x" * 1_700_000)
+    assert ops.weather_rec_note(now) == "сегодня 3.2 МБ"
+    assert os.path.isdir(tmp_path / "data" / "weather")
