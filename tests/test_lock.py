@@ -819,7 +819,7 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     assert l15.lock.tiers == [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]] and l15.lock.theta == 0.90
     assert l15.risk.max_open_entries == 1 and l3.risk.max_open_entries == 1                            # one entry at a time
     assert (l15.lock.shares, l15.lock.big_shares, l15.lock.big_shares_p, l15.lock.big_late_rel, l15.lock.big_calm_s) == \
-        (5.0, 10.0, 0.97, 0.0, 3.0)                                                 # reports/73; late = 10 shares off (75)
+        (2.0, 10.0, 0.99, 0.0, 3.0)                              # reports/76: 2 shares below p 0.99; late = 10 shares off (75)
     assert l15.lock.late_tier_rel == 0.0                               # every 15m tier still enters from second 240
     assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
 
@@ -1353,13 +1353,15 @@ def test_l3_15_live_is_its_paper_twin_with_live_limits():
 
 
 def test_ten_shares_on_the_upper_tiers_one_entry_at_a_time(tmp_path, monkeypatch):
-    """reports/67 (owner 11 Nov: "давай 10"): live 5m buys 10 shares when the model is >= 0.97 and 5 below, still one window at a
-    time (max_open_entries = 1 even though $10 would fit two 5-share entries). Off in the 15m bot and the sniper."""
+    """reports/67 (owner 11 Nov: "давай 10"): live 5m buys 10 shares on its surest entries and the small size below, still one
+    window at a time (max_open_entries = 1). reports/76 (16 Nov, owner: "нужно что-то менять или мы весь баланс просрём"): "surest"
+    is p >= 0.99, not 0.97: on real fills (live + two twins) the 10-share entries at p 0.97-0.99 were 43 / 5 lost / -$24.07, the
+    p >= 0.99 ones 33 / 0 / +$9.91. Off in the old 15m bot and the sniper."""
     import time as _t
     import pmbot.bot.lock as lockmod
     from pmbot.bot.state import Window
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
-    assert (live.lock.shares, live.lock.big_shares, live.lock.big_shares_p) == (2.0, 10.0, 0.97)   # 2 below 0.97: reports/70
+    assert (live.lock.shares, live.lock.big_shares, live.lock.big_shares_p) == (2.0, 10.0, 0.99)   # 2 below 0.99: reports/70, 76
     assert live.risk.max_usd_per_entry >= 10 * live.lock.a_max and live.risk.max_open_entries == 1
     for name in ("lock_99_live.toml", "lock_99.toml", "lock_tier_wide.toml", "lock15.toml"):
         assert load_lock_config(os.path.join(ROOT, "config", name)).lock.big_shares == 0, name
@@ -1378,7 +1380,7 @@ def test_ten_shares_on_the_upper_tiers_one_entry_at_a_time(tmp_path, monkeypatch
             self.calls.append((key, shares, limit))
             return limit, shares, 0.0
 
-    for p_model, ask, want in ((0.985, 0.98, 10), (0.975, 0.95, 10), (0.96, 0.93, 2)):
+    for p_model, ask, want in ((0.995, 0.98, 10), (0.985, 0.95, 2), (0.975, 0.94, 2), (0.96, 0.93, 2)):
         br = Br()
         cfg = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml"),
                                overrides={"risk": {"state_file": str(tmp_path / f"s{want}{ask}.json"), "kill_file": ""}})
@@ -1431,10 +1433,11 @@ def test_ten_shares_only_when_no_guard_blocked_a_moment_ago(tmp_path, monkeypatc
             return limit, shares, 0.0
 
     # (guard reason seen first, ms between the block and the signal, model p, calm seconds) -> shares bought
-    cases = (("binance_against", 1200, 0.978, 3.0, 2), ("shock", 2900, 0.995, 3.0, 2), ("binance_jump", 500, 0.98, 3.0, 2),
-             ("binance_against", 3100, 0.978, 3.0, 10),          # three quiet seconds: the full size again
-             ("p", 1200, 0.978, 3.0, 10), ("ask_too_high", 300, 0.978, 3.0, 10),      # not a guard
-             ("binance_against", 1200, 0.978, 0.0, 10),          # off = reports/67
+    cases = (("binance_against", 1200, 0.992, 3.0, 2), ("shock", 2900, 0.995, 3.0, 2), ("binance_jump", 500, 0.993, 3.0, 2),
+             ("binance_against", 3100, 0.992, 3.0, 10),          # three quiet seconds: the full size again
+             ("p", 1200, 0.992, 3.0, 10), ("ask_too_high", 300, 0.992, 3.0, 10),      # not a guard
+             ("binance_against", 1200, 0.992, 0.0, 10),          # off = reports/67
+             ("p", 1200, 0.978, 3.0, 2),                         # reports/76: below 0.99 the entry is small anyway
              ("binance_against", 1200, 0.96, 3.0, 2))            # the weak tier is small anyway
     for i, (why, gap, p_model, calm, want) in enumerate(cases):
         br = Br()
@@ -1463,14 +1466,14 @@ def test_ten_shares_only_when_no_guard_blocked_a_moment_ago(tmp_path, monkeypatc
         asyncio.run(go())
         assert len(br.calls) == 1 and br.calls[0][1] == want, (why, gap, p_model, calm, br.calls)
         entry = [kw for kind, kw in bot.j.ev if kind == "lock_entry"]
-        assert len(entry) == 1 and (entry[0].get("calm") is False) == (want == 2 and p_model >= 0.97 and calm > 0)   # journalled
+        assert len(entry) == 1 and (entry[0].get("calm") is False) == (want == 2 and p_model >= 0.99 and calm > 0)   # journalled
 
 
 def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypatch):
     """reports/73: lock.big_late_rel buys big_shares from that window second on, as p >= big_shares_p does; within 3 s of a
     Binance guard block the entry stays small (reports/71). reports/75 (16 Nov): no config uses the late half any more (it stood on
     23 / 0; the next 5 such live entries lost one at 10 shares, and late p 0.90-0.93 states lose 8-10 % like the early ones).
-    15m live buys 10 shares only at p >= 0.97."""
+    15m live buys 10 shares only at p >= 0.99 and 2 below (reports/76)."""
     import glob
     import time as _t
     import pmbot.bot.lock as lockmod
@@ -1493,10 +1496,11 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
             return limit, shares, 0.0
 
     # (window second, model p, guard block 1 s before?, big_late_rel) -> shares
-    cases = ((244.0, 0.94, False, 260.0, 5), (259.9, 0.96, False, 260.0, 5), (260.0, 0.94, False, 260.0, 10),
-             (285.0, 0.955, False, 260.0, 10), (244.0, 0.975, False, 260.0, 10), (244.0, 0.995, False, 260.0, 10),
-             (270.0, 0.94, True, 260.0, 5), (244.0, 0.98, True, 260.0, 5),
-             (270.0, 0.94, False, 0.0, 5), (285.0, 0.96, False, 0.0, 5), (270.0, 0.975, False, 0.0, 10))   # the configs as they are
+    cases = ((244.0, 0.94, False, 260.0, 2), (259.9, 0.96, False, 260.0, 2), (260.0, 0.94, False, 260.0, 10),
+             (285.0, 0.955, False, 260.0, 10), (244.0, 0.992, False, 260.0, 10), (244.0, 0.995, False, 260.0, 10),
+             (270.0, 0.94, True, 260.0, 2), (244.0, 0.995, True, 260.0, 2),
+             (270.0, 0.94, False, 0.0, 2), (285.0, 0.96, False, 0.0, 2), (270.0, 0.975, False, 0.0, 2),    # the configs as they are
+             (270.0, 0.992, False, 0.0, 10))                                                              # (reports/76)
     for i, (rel, p_model, guard, late, want) in enumerate(cases):
         br = Br()
         cfg = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"),

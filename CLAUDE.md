@@ -175,6 +175,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   at the same p (adverse selection; 5m p 0.95-0.97: 1.8 % -> 6.3 %). Real money to date: 15m +$15.66 (56 / 4 lost), 5m -$7.17
   (183 / 16), L99 +$0.72 (8 / 0): about zero on 247 entries, not a proven profit - say so to the owner. Review: p 0.93-0.95 tier
   <= 2 lost of 30 live entries, else drop it. Tools: `reports/75_tools/` (entries_by_tier, state_calib, tier_replay).
+  **`reports/76_ten_shares_only_at_099.md` (16 Nov 12:45, owner: "нужно что-то менять или мы весь баланс просрём")**: 16 Nov real
+  money -$19.95 (15m -$11.98, 5m -$8.06 incl. SOL 12:24 -$9.54 at 10 shares, p 0.974 on a flickering Binance nowcast); all real
+  money to date +$0.69 on 252 entries = zero. On real fills (live + twins, `reports/76_tools/by_size.py`) only the p >= 0.99 tier
+  earns (33 / 0 lost / +$9.91; L99 20 / 0); 10-share entries at p 0.97-0.99 were 43 / 5 / -$24.07, negative in every bot (a
+  seller at <= 0.95 against a 0.97 model is adverse selection: 0.7 % lost on all states, 6-7 % where we can buy). Now
+  `big_shares_p = 0.99` in the 5m live family and the 15m family, and 15m `shares = 2` (was 5): 10 shares only at p >= 0.99, 2
+  below; the entry rules are unchanged. Do not raise a size anywhere without >= 100 real entries beating the price. Paper ideas
+  next: require the model to hold the tier for 1-2 s before buying; book depth at <= 0.98 for the 0.99 tier.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,

@@ -19,7 +19,8 @@ a_max = 0.98
 min_edge = 0.005
 rel_lo = 240.0
 rel_hi = 299.5
-shares = 5
+shares = 2            # reports/76 (16 Nov, owner: "нужно что-то менять или мы весь баланс просрём"): 2 shares below p 0.99 (was 5):
+                      # a loss is ~-$1.9, not -$4.6. No tier below 0.99 has a proven edge on real fills yet
 max_entries_per_window = 1
 tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]]   # reports/75 (16 Nov): the bottom tier needs p >= 0.93 (was 0.90). At p 0.90-0.93 the market
                       # price is the real odds: 527 window states 10-16 Nov, 8.0 % lost against a ~0.906 cost; live 39 entries / 4 lost
@@ -31,7 +32,7 @@ shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move >
 shock_s = 10.0
 shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
 big_shares = 10       # reports/73, 75: 10 shares only when the model is >= 0.97 (15m live + twin: 14 entries, 0 lost; 434 states at
-big_shares_p = 0.97   # p 0.97-0.99, 6 lost = 1.4 %), 5 on the rest. The "late = strong" half of reports/73 (10 shares from window
+big_shares_p = 0.99   # reports/76: 10 shares only at p >= 0.99 (was 0.97): the one tier that never lost on real fills. Before: p 0.97-0.99, 6 lost = 1.4 %), 5 on the rest. The "late = strong" half of reports/73 (10 shares from window
 big_late_rel = 0.0    # second 260 on) is OFF since 16 Nov: it stood on 23 / 0, the next 5 such live entries lost one at 10 shares
 big_calm_s = 3.0      # (-$9.16), and by states the late p 0.90-0.93 entries lose 8-10 % like the early ones (reports/75).
                       # Within 3 s of a Binance guard block the entry stays 5 (reports/71). Back to 5 everywhere: big_shares = 0
