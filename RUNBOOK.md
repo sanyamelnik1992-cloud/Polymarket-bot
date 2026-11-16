@@ -218,6 +218,16 @@ curl -fsSL https://raw.githubusercontent.com/sanyamelnik1992-cloud/Polymarket-bo
 - Не запускать одновременно с пробой `reports/72_tools/rewards_probe.py`: она в конце снимает все заявки кошелька.
 - Если в итоге теста написано «Осталось открытых заявок» — `/stop`, затем проверить заявки на сайте биржи.
 
+### Запись данных о погоде (`pmbot-weather-rec`, без заявок, отчёт 78)
+
+```bash
+/restart pmbot-weather-rec      # Telegram: начать запись (сама при загрузке не стартует)
+/off pmbot-weather-rec          # остановить
+```
+
+Пишет в `data/weather/ДАТА/`: `metar.jsonl.gz` (сводки станций), `books.jsonl.gz` (лучшие цены корзин на сегодня и
+завтра), `forecasts.jsonl.gz` (прогнозы ECMWF, GFS, ICON), `events.jsonl.gz` (события при изменении). 4–10 МБ в сутки.
+
 ## 6. Цикл улучшения стратегии
 
 1. **Эксперимент = бот-близнец.** Новый фильтр — отдельный paper-бот рядом с контрольным (как C рядом с A,

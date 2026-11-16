@@ -340,6 +340,17 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   below ~0.94. Successful wallets (leaderboard `data-api /v2/leaderboard?time_period=&category=`, 3 489 wallets, 116 "systematic"):
   5m/15m market makers with exchange maker rebates (not for us), sports (capital, data), "already decided" buys at >= 0.99, and
   WEATHER (temperature markets resolved by public METAR, ~90 a day): the next direction (report 78).
+- **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
+  "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
+  (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
+  rebuilt 639 of 640 winners of 3-16 Nov. `pmbot/weather/__init__.py` re-exports the old module (now `pmbot/weather/legacy.py`,
+  reports 19 and 35, used by scripts/collect_weather.py, analyze_weather.py, weather_forecast_*). Findings: market-wide prices
+  are calibrated (+-1-2c), the end of the day is fully priced (the running-max bucket trades at >= 0.98), an observations-only
+  model loses, the raw ECMWF + GFS ensemble was WORSE than the market (report 35); specialists earn on forecasting 6-24 h ahead.
+  So the strategy = a forecast model better than the market, not proven. Data recorder (no orders) `scripts/record_weather.py`,
+  unit `pmbot-weather-rec` (`ops.WEATHER_UNITS`, not enabled at boot, /restart pmbot-weather-rec): METAR + books every 10 min,
+  ECMWF/GFS/ICON forecasts (Open-Meteo) hourly, events on change -> `data/weather/DATE/*.jsonl.gz`; stations
+  `config/weather_stations.json`. Next: model v1 after ~7 days; go on only if its log loss beats the market on >= 300 events.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

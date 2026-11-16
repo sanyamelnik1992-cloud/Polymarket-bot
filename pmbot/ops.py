@@ -16,7 +16,8 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-15-alt", "pmbot-lock-maker3", "pmbot-lock-99", "pmbot-lock-99-live", "pmbot-lock-tier-pb", "pmbot-lock-tier-late", "pmbot-lock-live", "pmbot-lock-15-live", "pmbot-hourly", "pmbot-hourly-last"]
 REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/68), its own journal format
 REWARD_LIVE_UNITS = ["pmbot-rewards-live"]  # the live test of the rewards rule: REAL MONEY, one market (pmbot/rewards/live.py)
-ALL_UNITS = BOT_UNITS + REWARD_UNITS + REWARD_LIVE_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
+WEATHER_UNITS = ["pmbot-weather-rec"]       # weather recorder: public data only, no orders (reports/78)
+ALL_UNITS = BOT_UNITS + REWARD_UNITS + REWARD_LIVE_UNITS + WEATHER_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
 
