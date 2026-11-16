@@ -22,24 +22,27 @@ rel_lo = 240.0
 rel_hi = 299.5
 shares = 5
 max_entries_per_window = 1
-tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.90, 0.91]]
+tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]]   # reports/75 (16 Nov): the bottom tier needs p >= 0.93 (was 0.90). At p 0.90-0.93 the market
+                      # price is the real odds: 527 window states 10-16 Nov, 8.0 % lost against a ~0.906 cost; live 39 entries / 4 lost
+                      # (every live 15m loss). At p 0.93-0.95: 162 states / 4 lost (2.5 %). theta stays 0.90 so the journals keep the zone
 sigma_floor_bp = 0.5  # reports/52: sigma never below 0.5 bp -> no entry on a 1-2 bp lead in a calm market. Only stricter than plain L3
                       # (every entry is also an L3 entry): ~40 % of the entries, ~1/4 of the losses in the replay of 7-10 Nov
 floor_free_p = 0.99   # reports/55: when the unfloored model gives >= 0.99 it decides (the original L rule: 57 entries, 0 lost)
 shock_bp = 2.5        # reports/55: no entry within 10 s of a 3 s Binance move > 2.5 bp either way (stale sigma, snap-backs)
 shock_s = 10.0
 shock_sigmas = 3.0    # reports/58: the pause threshold is max(2.5 bp, 3 sigma of a 3 s move): in a volatile market 2.5 bp is not a shock
-big_shares = 10       # reports/73 (owner 15 Nov: "15 минутки ... может увеличить деньги ... чтобы зарабатывали нормально"): 10 shares on
-big_shares_p = 0.97   # the entries that did not lose so far, 5 on the rest. Strong = model >= 0.97 or window second >= 260:
-big_late_rel = 260.0  # live + twin 10-15 Nov, 64 unique windows: strong 23 / 0 lost (+7 c a share at the seen ask), the rest 41 / 3
-big_calm_s = 3.0      # (+1.7 c). Within 3 s of a Binance guard block the entry stays 5 (reports/71). Back to 5 everywhere:
-                      # big_shares = 0. Next step (20 on the strong ones) only after 30 more strong live entries with <= 1 lost
+big_shares = 10       # reports/73, 75: 10 shares only when the model is >= 0.97 (15m live + twin: 14 entries, 0 lost; 434 states at
+big_shares_p = 0.97   # p 0.97-0.99, 6 lost = 1.4 %), 5 on the rest. The "late = strong" half of reports/73 (10 shares from window
+big_late_rel = 0.0    # second 260 on) is OFF since 16 Nov: it stood on 23 / 0, the next 5 such live entries lost one at 10 shares
+big_calm_s = 3.0      # (-$9.16), and by states the late p 0.90-0.93 entries lose 8-10 % like the early ones (reports/75).
+                      # Within 3 s of a Binance guard block the entry stays 5 (reports/71). Back to 5 everywhere: big_shares = 0
 
 [risk]
 max_usd_per_entry = 10.0
 max_open_usd = 10.0
 max_open_entries = 1    # as live: one entry at a time
-daily_loss_limit = 10.0
+daily_loss_limit = 5.0  # reports/75: back to 5 (was 10 for one day): one 5-share loss (~-$4.6) keeps it running, the second loss
+                        # of a day or one 10-share loss stops it until a human restarts it
 state_file = "data/state/lock15_alt_paper.json"
 resume_next_day = true
 

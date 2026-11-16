@@ -812,12 +812,14 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     for k in ("duration", "hedge_p", "hedge_margin", "hedge_slip", "hedge_min_shares",   # the insurance (reports/64, 74) is 5m-only
               "big_shares", "big_shares_p", "shares",               # 10 shares (reports/67), 2 below p 0.97 (reports/70): 15m keeps 5
               "late_tier_rel", "late_tier_p", "big_calm_s",         # reports/71 (weak tier from second 260): 5m-only
-              "big_late_rel"):                                      # reports/73: 15m buys 10 shares late in the window instead
+              "big_late_rel", "tiers"):                             # reports/75: the 15m bottom tier needs p >= 0.93
         a.pop(k), b.pop(k)
     assert a == b, "L3-15 must keep the L3 rule"
+    # reports/75 (16 Nov): at p 0.90-0.93 the price was the real odds (527 states, 8.0 % lost; every live 15m loss was there)
+    assert l15.lock.tiers == [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]] and l15.lock.theta == 0.90
     assert l15.risk.max_open_entries == 1 and l3.risk.max_open_entries == 1                            # one entry at a time
     assert (l15.lock.shares, l15.lock.big_shares, l15.lock.big_shares_p, l15.lock.big_late_rel, l15.lock.big_calm_s) == \
-        (5.0, 10.0, 0.97, 260.0, 3.0)                                                                   # reports/73
+        (5.0, 10.0, 0.97, 0.0, 3.0)                                                 # reports/73; late = 10 shares off (75)
     assert l15.lock.late_tier_rel == 0.0                               # every 15m tier still enters from second 240
     assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
 
@@ -1339,7 +1341,8 @@ def test_l3_15_live_is_its_paper_twin_with_live_limits():
     # reports/73 (owner 15 Nov: "может увеличить деньги"): 10 shares on the strong entries, still one window at a time
     assert live.lock.shares <= 5 and live.lock.big_shares <= 10 and live.risk.max_usd_per_entry <= 10.0
     assert live.risk.max_open_usd <= 10.0 and live.risk.max_open_entries == 1
-    assert live.risk.daily_loss_limit <= 10.0 and live.risk.resume_next_day is False
+    assert live.risk.daily_loss_limit <= 5.0 and live.risk.resume_next_day is False            # reports/75: back to 5
+    assert live.lock.big_late_rel == 0.0 and min(t[0] for t in live.lock.tiers) >= 0.93         # reports/75
     assert dc.replace(paper.risk, state_file=live.risk.state_file, resume_next_day=False) == live.risk
     assert len({live.risk.state_file, paper.risk.state_file, l3.risk.state_file, l99.risk.state_file}) == 4
     assert len({live.journal_dir, paper.journal_dir, l3.journal_dir, l99.journal_dir}) == 4
@@ -1464,16 +1467,16 @@ def test_ten_shares_only_when_no_guard_blocked_a_moment_ago(tmp_path, monkeypatc
 
 
 def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypatch):
-    """reports/73 (owner 15 Nov: 15m is the bot that earns, "может увеличить деньги"): on the 15-minute markets an entry at window
-    second >= 260 or with the model >= 0.97 buys 10 shares, the rest 5. Live + twin 10-15 Nov, 64 unique windows: these strong
-    entries 23 / 0 lost, the others 41 / 3. Within 3 s of a Binance guard block the entry stays 5 (reports/71)."""
+    """reports/73: lock.big_late_rel buys big_shares from that window second on, as p >= big_shares_p does; within 3 s of a
+    Binance guard block the entry stays small (reports/71). reports/75 (16 Nov): no config uses the late half any more (it stood on
+    23 / 0; the next 5 such live entries lost one at 10 shares, and late p 0.90-0.93 states lose 8-10 % like the early ones).
+    15m live buys 10 shares only at p >= 0.97."""
     import glob
     import time as _t
     import pmbot.bot.lock as lockmod
     from pmbot.bot.state import Window
     for path in glob.glob(os.path.join(ROOT, "config", "lock*.toml")):
-        on = os.path.basename(path) in ("lock15_live.toml", "lock15_tier.toml", "lock15_alt.toml")
-        assert load_lock_config(path).lock.big_late_rel == (260.0 if on else 0.0), path
+        assert load_lock_config(path).lock.big_late_rel == 0.0, path
     for bad in ({"lock": {"big_late_rel": 100.0}}, {"lock": {"big_late_rel": 260.0, "big_shares": 0, "big_calm_s": 0.0}},
                 {"risk": {"max_usd_per_entry": 9.0}}):
         with pytest.raises(ValueError):
@@ -1489,13 +1492,16 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
             self.calls.append((key, shares, limit))
             return limit, shares, 0.0
 
-    # (window second, model p, guard block 1 s before?) -> shares
-    cases = ((244.0, 0.92, False, 5), (259.9, 0.96, False, 5), (260.0, 0.92, False, 10), (285.0, 0.955, False, 10),
-             (244.0, 0.975, False, 10), (244.0, 0.995, False, 10), (270.0, 0.92, True, 5), (244.0, 0.98, True, 5))
-    for i, (rel, p_model, guard, want) in enumerate(cases):
+    # (window second, model p, guard block 1 s before?, big_late_rel) -> shares
+    cases = ((244.0, 0.94, False, 260.0, 5), (259.9, 0.96, False, 260.0, 5), (260.0, 0.94, False, 260.0, 10),
+             (285.0, 0.955, False, 260.0, 10), (244.0, 0.975, False, 260.0, 10), (244.0, 0.995, False, 260.0, 10),
+             (270.0, 0.94, True, 260.0, 5), (244.0, 0.98, True, 260.0, 5),
+             (270.0, 0.94, False, 0.0, 5), (285.0, 0.96, False, 0.0, 5), (270.0, 0.975, False, 0.0, 10))   # the configs as they are
+    for i, (rel, p_model, guard, late, want) in enumerate(cases):
         br = Br()
         cfg = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"),
-                               overrides={"risk": {"state_file": str(tmp_path / f"s{i}.json"), "kill_file": ""}})
+                               overrides={"lock": {"big_late_rel": late},
+                                          "risk": {"state_file": str(tmp_path / f"s{i}.json"), "kill_file": ""}})
         bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
         now = int(_t.time() * 1000)
         for a in ("btc", "eth"):                                    # two coins qualify: still one entry at a time

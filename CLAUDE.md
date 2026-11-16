@@ -165,6 +165,16 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   ~$40 a day taken by other bots): a speed question. Paper unit `pmbot-hourly-last` = `config/hourly_last.toml` (the old
   hourly engine, closing minute only, $10 an entry, ask <= 0.97, edge >= 2 c, paper fills on the live book 0.3 s later);
   verdict after 30 paper fills (<= 1 lost, > +2 c a share) or < 5 fills in 3 days = close it.
+  **`reports/75_15m_bottom_tier_093.md` (16 Nov 06:50)**: 15m live lost 3 entries in 9 h (-$4.59, -$4.58, -$9.16 at 10 shares) and
+  stopped itself on the -$10 day stop (16 Nov 03:15 UTC; it stays stopped until the owner restarts it). Every 15m live loss (4 of 56
+  entries) was in the bottom tier, model p 0.90-0.93: by the journal states of 2503 windows (`reports/75_tools/state_calib.py`) that
+  zone loses 8.0 % against a ~0.906 cost = no edge (p 0.93-0.95: 2.5 %, 0.95-0.97: 2.6 %, 0.97-0.99: 1.4 %, >= 0.99: 1 of 5622); late
+  entries of that zone lose 8-10 % like early ones, so the "second >= 260 = strong" half of report 73 (23 / 0) was a small sample.
+  Now in `lock15_live.toml` + twin + alt: bottom tier `[0.93, 0.91]` (theta stays 0.90: the journals keep the zone),
+  `big_late_rel = 0` (10 shares only at p >= 0.97), `daily_loss_limit = 5`. States with a seller <= 0.95 lose more than all states
+  at the same p (adverse selection; 5m p 0.95-0.97: 1.8 % -> 6.3 %). Real money to date: 15m +$15.66 (56 / 4 lost), 5m -$7.17
+  (183 / 16), L99 +$0.72 (8 / 0): about zero on 247 entries, not a proven profit - say so to the owner. Review: p 0.93-0.95 tier
+  <= 2 lost of 30 live entries, else drop it. Tools: `reports/75_tools/` (entries_by_tier, state_calib, tier_replay).
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
