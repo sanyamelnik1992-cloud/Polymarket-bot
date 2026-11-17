@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261117-124225
-mode: paper  duration: 198.6 min  events: {'start': 1, 'lock_state': 1351, 'status': 397, 'strike': 52, 'fill': 7, 'lock_entry': 7, 'lock_miss': 5, 'provisional': 7, 'settle': 6}
+mode: paper  duration: 259.6 min  events: {'start': 1, 'lock_state': 1423, 'status': 519, 'strike': 68, 'fill': 7, 'lock_entry': 7, 'lock_miss': 5, 'provisional': 7, 'settle': 7}
 
 lock orders: sent 12  filled 7  ask gone 5  errors 0
   signal -> exchange answer, ms: median 301  p90 305  max 313
@@ -16,9 +16,9 @@ xrp        1    10.0      9.90      0.990  642.573
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc          2  19.767  0.233          0.233     0.0       1.0  0.112  0.121  0.012
+btc          3  29.665  0.335          0.335     0.0       1.0  0.102  0.121  0.011
 sol          3  19.795  0.205          0.205     0.0       1.0  0.046  0.112  0.010
 xrp          1   9.907  0.093          0.093     0.0       1.0  0.093  0.093  0.009
 
-TOTAL pnl $+0.53 (ex-rebate $+0.53) on cost $49.47 -> ROI +1.07%; windows 6, t-stat +6.42
+TOTAL pnl $+0.63 (ex-rebate $+0.63) on cost $59.37 -> ROI +1.07%; windows 7, t-stat +7.66
 max drawdown $0.00; hedged windows (both sides filled): 0
