@@ -353,6 +353,19 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   below ~0.94. Successful wallets (leaderboard `data-api /v2/leaderboard?time_period=&category=`, 3 489 wallets, 116 "systematic"):
   5m/15m market makers with exchange maker rebates (not for us), sports (capital, data), "already decided" buys at >= 0.99, and
   WEATHER (temperature markets resolved by public METAR, ~90 a day): the next direction (report 78).
+- **`reports/80_competitor_early_099.md` (17 Nov, owner's screenshot of another 5m/15m bot, "230 trades, 1 lost, +$161": "нужно
+  понять как так же сделать"; analysis only, nothing changed)**: his wallet found in public trades (13 Nov UTC+3 matches to the
+  cent; the address is not written to the repo). Exchange record 9-17 Nov: 292 entries, 2 lost (-$99 each, BTC 5m), +$89 after
+  $21.5 of fees on $23.4k (~0.4 % of turnover); his table starts right after his first loss and leaves out fees. He buys the
+  favourite at 0.98-0.99 (77 % at 0.99), ~$100 an entry, 1-5 min BEFORE the end (5m median 106 s, 15m 254 s, hourly 323 s), all
+  four coins, up to 4 at once: 15m 136 / 0 / +$145, 5m 102 / 2 / -$108, hourly 51 / 0 / +$46; signal ~ a fixed bp lead. His rule
+  on all 13 056 windows of 9-16 Nov (Binance 1 s from data.binance.vision, Gamma outcomes, fills = a public buy within 5 s):
+  5m 1.84 % lost, -0.2 c a share; 15m 1.15 %, +0.5 c (his 0 of 135 there was luck). Better on the same data: z = lead / (1 h
+  sigma x sqrt(s to the closing TWAP + 20)) >= 3, 5m at 120-62 s and 15m at 300-120 s before the end, asks 0.985-0.99 ONLY (at
+  0.97: 5 of 77 lost): 302 entries a day, 0.50 % lost, +0.4-0.5 c, +$13 a day at 10 shares, 7 of 8 days positive (break-even
+  0.93 % at 0.99). Sellers at 0.99 exist early, not in the last minute (decided 5m windows: 97 % vs 5 %), which is why L99 gets
+  1-2 a day. Proposed, NOT built: paper bot "Ранний снайпер" (a pre-TWAP z mode in `pmbot/bot/lock.py`), exam ~600 paper entries
+  <= 0.6 % lost, real money only on the owner's word at 5 shares. Tools: `reports/80_tools`.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
