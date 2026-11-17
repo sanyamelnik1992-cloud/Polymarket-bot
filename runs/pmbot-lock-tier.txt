@@ -1,22 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-tier/20261116-212323
-mode: paper  duration: 577.9 min  events: {'start': 1, 'status': 1155, 'lock_state': 5231, 'strike': 419, 'fill': 6, 'lock_entry': 6, 'provisional': 6, 'settle': 6, 'lock_miss': 9}
+mode: paper  duration: 639.0 min  events: {'start': 1, 'status': 1277, 'lock_state': 5569, 'strike': 459, 'fill': 7, 'lock_entry': 7, 'provisional': 7, 'settle': 7, 'lock_miss': 9}
 
-lock orders: sent 15  filled 6  ask gone 9  errors 0
-  signal -> exchange answer, ms: median 306  p90 366  max 568
-  fill price minus the ask we saw, cents: mean -3.50  worst +1.0
+lock orders: sent 16  filled 7  ask gone 9  errors 0
+  signal -> exchange answer, ms: median 306  p90 410  max 568
+  fill price minus the ask we saw, cents: mean -3.86  worst +1.0
   misses came 19-39 s before the end; model p 0.950-0.998
 
-fills: 6  shares: 20  notional: $17.88
+fills: 7  shares: 22  notional: $19.60
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        4    16.0     14.10      0.852  263.956
+btc        5    18.0     15.82      0.854  264.346
 eth        2     4.0      3.78      0.945  242.559
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc          4  14.211  1.789          1.789     0.0       1.0  0.168  0.843  0.126
+btc          5  15.948  2.052          2.052     0.0       1.0  0.168  0.843  0.129
 eth          2   3.794  0.206          0.206     0.0       1.0  0.093  0.112  0.054
 
-TOTAL pnl $+1.99 (ex-rebate $+1.99) on cost $18.01 -> ROI +11.08%; windows 6, t-stat +2.63
+TOTAL pnl $+2.26 (ex-rebate $+2.26) on cost $19.74 -> ROI +11.43%; windows 7, t-stat +3.00
 max drawdown $0.00; hedged windows (both sides filled): 0

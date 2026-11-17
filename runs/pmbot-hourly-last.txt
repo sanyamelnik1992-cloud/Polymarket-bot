@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-hourly-last/20261116-212410
-mode: paper  duration: 576.0 min  events: {'start': 1, 'hour_window': 22, 'hour_open': 22, 'signal': 4, 'fill': 4, 'settle': 4}
+mode: paper  duration: 636.0 min  events: {'start': 1, 'hour_window': 24, 'hour_open': 24, 'signal': 4, 'fill': 4, 'settle': 4}
 Traceback (most recent call last):
   File "/home/pmbot/Polymarket-bot/scripts/report_journal.py", line 102, in <module>
     main(sys.argv[1])
