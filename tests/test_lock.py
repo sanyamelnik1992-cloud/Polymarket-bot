@@ -162,8 +162,11 @@ def test_configs_load_and_live_is_the_twin():
     assert paper.execution.mode == "paper" and tier.execution.mode == "paper" and wide.execution.mode == "paper"
     assert live.execution.mode == "live"
     assert live.risk.resume_next_day is False and live.risk.state_file
-    # live runs L3 (price tiers) since reports/50: its paper twin is pmbot-lock-tier = config/lock_tier.toml
-    assert tier.lock == live.lock, "the live rule must stay identical to its paper twin pmbot-lock-tier (L3)"
+    # live runs L3 (price tiers) since reports/50: its paper twin is pmbot-lock-tier = config/lock_tier.toml. reports/81 (17 Nov):
+    # live keeps only the top tier (p >= 0.99 -> ask <= 0.98); everything else is still the twin's rule
+    import dataclasses
+    assert live.lock.tiers == [[0.99, 0.98]]
+    assert dataclasses.replace(tier.lock, tiers=live.lock.tiers) == live.lock, "apart from the tiers live is its paper twin (L3)"
     assert tier.lock.tiers and live.lock.theta < paper.lock.theta
     assert tier.risk.max_usd_per_entry == live.risk.max_usd_per_entry
     assert tier.risk.max_open_usd == live.risk.max_open_usd
@@ -196,7 +199,9 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-99", "config/lock_99.toml", False),
                             ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
                             ("pmbot-lock-live", "config/lock_live.toml", True),
-                            ("pmbot-lock-15-live", "config/lock15_live.toml", True)):
+                            ("pmbot-lock-15-live", "config/lock15_live.toml", True),
+                            ("pmbot-lock-early", "config/lock_early.toml", False),          # reports/81, paper
+                            ("pmbot-lock-15-early", "config/lock15_early.toml", False)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
         assert ("--live" in text) == live
@@ -1152,7 +1157,7 @@ def test_bottom_tier_only_late_in_the_window(tables):
     import dataclasses
     import glob
     from pmbot.bot.lock import tier_limit
-    live_rule = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml")).lock
+    live_rule = load_lock_config(os.path.join(ROOT, "config", "lock_tier.toml")).lock      # the three tiers (live: the top one, reports/81)
     assert (live_rule.late_tier_rel, live_rule.late_tier_p) == (260.0, 0.97)
     assert tier_limit(live_rule, 0.96, 244.0) is None and tier_limit(live_rule, 0.96, 260.0) == 0.93      # the weak tier waits
     assert tier_limit(live_rule, 0.975, 244.0) == 0.95 and tier_limit(live_rule, 0.995, 240.0) == 0.98    # the upper tiers do not
@@ -1196,7 +1201,7 @@ def test_bottom_tier_only_late_in_the_window(tables):
     assert dc.replace(exp.risk, daily_loss_limit=twin.risk.daily_loss_limit, state_file=twin.risk.state_file) == twin.risk
     assert exp.journal_dir != twin.journal_dir and exp.risk.state_file != twin.risk.state_file
     live = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml")).lock
-    assert live.theta == 0.95 and min(t[0] for t in live.tiers) == 0.95    # reports/59: live has no tier below 0.95
+    assert live.theta == 0.95 and min(t[0] for t in live.tiers) == 0.99    # reports/59: no tier below 0.95; reports/81: only p >= 0.99
 
 
 def test_insurance_configs_and_validation():

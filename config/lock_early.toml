@@ -1,0 +1,40 @@
+# Early sniper ("Ранний снайпер") on 5m windows — PAPER (reports/80, reports/81). The competitor's timing with a stricter
+# signal: decide 120-62 s before the end (window seconds 180-238, before the closing TWAP), when sellers at 0.99 still
+# stand; in the last minute they are gone (0.995+) and L99 gets 1-2 entries a day. Signal: the leader by
+# z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) >= 3 (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
+# returns of the last hour, tau0 = seconds to the first closing print), the same z on received prints >= 2.5, the Binance
+# guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. 10 shares, up to 4 windows at once (paper).
+# What is NOT known: the loss rate. A win is +0.93 c a share, a loss -99 c: break-even is 0.93 % lost. Report 80 (trades +
+# Binance, 9-16 Nov): 0.51 % lost; report 81 (books + Chainlink, 7-9 Nov): 1.5 % lost at z >= 3. Paper is the measurement.
+journal_dir = "data/journal-lock-early"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+zone = "early"
+rel_lo = 180.0        # 120 s before the end
+rel_hi = 238.0        # 62 s before the end: the closing TWAP starts here
+z_min = 3.0
+z_agree = 2.5
+sigma_window_s = 3600.0
+min_sigma_s = 1800.0
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.95
+a_max = 0.99
+ask_lo = 0.985
+shares = 10
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 10.0
+max_open_usd = 40.0
+max_open_entries = 4
+daily_loss_limit = 50.0      # paper: see the whole day
+state_file = "data/state/lock_early_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300
+cl_feed = "both"
