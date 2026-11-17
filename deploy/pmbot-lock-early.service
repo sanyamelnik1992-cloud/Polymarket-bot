@@ -1,0 +1,23 @@
+[Unit]
+Description=pmbot early sniper on 5m (config/lock_early.toml: the sure side at 0.99 120-62 s before the end, z >= 3; paper)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# PAPER. reports/80. The competitor's zone done our way: z >= 3 on the Chainlink nowcast, asks 0.985-0.99, up to 4 coins at once.
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_early.toml
+# CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
+Nice=10
+CPUWeight=20
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

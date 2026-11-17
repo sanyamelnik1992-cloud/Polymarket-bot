@@ -196,7 +196,9 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-99", "config/lock_99.toml", False),
                             ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
                             ("pmbot-lock-live", "config/lock_live.toml", True),
-                            ("pmbot-lock-15-live", "config/lock15_live.toml", True)):
+                            ("pmbot-lock-15-live", "config/lock15_live.toml", True),
+                            ("pmbot-lock-early", "config/lock_early.toml", False),
+                            ("pmbot-lock-15-early", "config/lock15_early.toml", False)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
         assert ("--live" in text) == live
@@ -1601,3 +1603,123 @@ def test_no_insurance_for_the_small_entries(tmp_path, monkeypatch):
         asyncio.run(tick())
         assert [c[3] for c in br.calls] == ([want] if want else []), (held, ask, br.calls)
 
+
+
+# ------------------------------------------------------------------------------------------------ early mode (reports/80)
+def test_block_sigma_uses_10_s_returns_and_forward_fills():
+    from pmbot.lockmodel import BlockSigma
+    o = BlockSigma(lookback=3600, block=10)
+    v = 100.0
+    for s in range(10_000, 10_000 + 1800):
+        if s % 10 == 9:
+            v *= math.exp(1e-4 * (1 if (s // 10) % 2 else -1))      # +-1 bp per 10 s block
+        if s % 10 in (3, 4):
+            continue                                                   # dropped seconds inside a block: forward-filled
+        o.on_second(s, v)
+    assert o.seconds() >= 1780 and o.sigma() * 1e4 == pytest.approx(1 / math.sqrt(10), rel=1e-6)
+    assert o.sigma(min_s=3600) is None                                 # not enough history yet
+    o.on_second(o.last_sec + 700, v)                                   # a long outage resets the history
+    assert o.seconds() == 0 and o.sigma() is None
+
+
+def test_early_configs_are_paper_early_only_and_validated():
+    from pmbot import notify, ops
+    for name, dur, zone in (("lock_early.toml", 300, (62.0, 120.0)), ("lock15_early.toml", 900, (120.0, 300.0))):
+        cfg = load_lock_config(os.path.join(ROOT, "config", name))
+        c, r = cfg.lock, cfg.risk
+        assert cfg.execution.mode == "paper" and c.duration == dur and (c.early_x_lo, c.early_x_hi) == zone
+        assert c.last_minute is False and c.early_z == 3.0 and (c.early_a_min, c.early_a_max) == (0.985, 0.99)
+        assert c.shares == 10 and r.max_open_entries == 4 and r.max_open_usd >= 4 * 10 * 0.99 and r.resume_next_day
+        unit = "pmbot-lock-" + ("early" if dur == 300 else "15-early")
+        assert unit in ops.BOT_UNITS and unit in notify.BOTS and unit not in notify.TWINS
+        for f in ("autoupdate.sh", "install_units.sh"):
+            assert f" {unit} " in open(os.path.join(ROOT, "deploy", f)).read(), f
+        for bad in ({"execution": {"mode": "live"}, "risk": {"resume_next_day": False}},     # paper only: the owner decides
+                    {"lock": {"early_x_lo": 50.0}}, {"lock": {"early_x_hi": float(dur)}}, {"lock": {"early_z": 1.0}},
+                    {"lock": {"early_a_min": 0.995}}, {"lock": {"early_min_sigma_s": 7200}},
+                    {"risk": {"max_usd_per_entry": 9.0}}, {"lock": {"early_x_hi": 0.0}}):     # last_minute = false needs it
+            with pytest.raises(ValueError):
+                load_lock_config(os.path.join(ROOT, "config", name), overrides=bad)
+    for name in ("lock_live.toml", "lock_99_live.toml", "lock15_live.toml", "lock_tier.toml", "lock_99.toml"):
+        c = load_lock_config(os.path.join(ROOT, "config", name)).lock
+        assert c.early_x_hi == 0 and c.last_minute, name                # nothing changes for the other bots
+
+
+def test_decide_early_rule():
+    from pmbot.bot.lock import decide_early
+    c = load_lock_config(os.path.join(ROOT, "config", "lock_early.toml")).lock
+    end, K = 1_800_000_000, 100.0
+    now = (end - 90) * 1000                                            # 90 s before the end: tau = 28 + 19.67 s
+    sigma = 1e-4                                                       # 1 bp per sqrt(s)
+    cl = (100.25, now - 1500, now - 400)                               # +25 bp: z = 24.97 / sqrt(47.67) = 3.62
+    ask = lambda a: (a, 300.0)                                         # noqa: E731
+    sig, ctx = decide_early(c, end, K, now, cl, 1.0, 1.0, sigma, ask(0.99), ask(0.02))
+    assert (sig["side"], sig["limit"], sig["ask"]) == ("U", 0.99, 0.99) and sig["p"] == pytest.approx(ctx["p"], abs=1e-6)
+    assert ctx["z"] == pytest.approx(3.617, abs=1e-3)                  # ln(1.0025) = 24.97 bp, sqrt(47.67) = 6.90
+    assert ctx["early"] and ctx["x"] == 90.0 and ctx["rel"] == 210.0 and ctx["lead_bp"] == pytest.approx(24.97, abs=0.01)
+    # the Binance nowcast moves the Chainlink print: Binance -10 bp since the print -> lead 15 bp, z 2.2 < 3
+    sig, ctx = decide_early(c, end, K, now, cl, 0.999, 1.0, sigma, ask(0.99), ask(0.02))
+    assert sig is None and ctx["why"] == "z"
+    # Down side, its own book
+    sig, ctx = decide_early(c, end, K, now, (99.75, now - 1500, now - 400), 1.0, 1.0, sigma, ask(0.02), ask(0.99))
+    assert sig["side"] == "D"
+    for args, why in ((dict(ask_up=ask(0.98)), "ask_too_low"), (dict(ask_up=ask(0.995)), "ask_too_high"),
+                      (dict(ask_up=None), "no_ask"), (dict(sigma=None), "no_sigma"), (dict(K=None), "no_strike"),
+                      (dict(now_ms_=(end - 130) * 1000), "time"), (dict(now_ms_=(end - 61) * 1000), "time"),
+                      (dict(cl_last=(100.25, now - 5000, now - 4000)), "cl_stale")):
+        kw = dict(end_s=end, K=K, now_ms_=now, cl_last=cl, bn_now=1.0, bn_at_last=1.0, sigma=sigma, ask_up=ask(0.99),
+                  ask_dn=ask(0.02))
+        kw.update(args)
+        sig, ctx = decide_early(c, **kw)
+        assert sig is None and ctx["why"] == why, (args, ctx)
+
+
+def test_early_bot_enters_before_the_closing_minute_and_never_in_it(tmp_path):
+    """reports/80: the early bot decides 120-62 s before the end (5m) with its own sigma and books from 140 s before the end,
+    several coins at once (max_open_entries 4), and makes no closing-minute entry (last_minute = false)."""
+    import time as _t
+    from pmbot.bot.state import Window
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((key, side, limit, shares))
+            return 0.99, shares, 0.0
+
+    br = Br()
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_early.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+    now = int(_t.time() * 1000)
+    end = now // 1000 + 90                                             # 90 s before the end
+    start = end - 300
+    for a in ("btc", "eth", "sol"):
+        bot.st.add_window(Window(asset=a, start=start, slug=a, condition_id=a, token_up=a + "u", token_down=a + "d"))
+        px = bot.st.prices[a]
+        for s in range(start - 70, start):                              # strike prints [T-62, T-3]: 100
+            px.cl_by_sec[s] = 100.0
+        px.cl_last = (100.25 if a != "sol" else 100.02, now - 1500, now - 400)    # sol: +2 bp only
+        px.bn_hist.append((now - 3000, 50.0))
+        bot.esig[a].r2.extend([1e-8 * 10] * 360)                         # 1 bp per sqrt(s), an hour of history
+        bot.esig[a].last_sec = now // 1000 - 2
+        bot.st.books[a + "u"] = type("B", (), {"asks": {0.99: 300.0}})()
+        bot.st.books[a + "d"] = type("B", (), {"asks": {0.02: 300.0}})()
+        bot.st.feed_alive["clob"][a] = now
+    bot.st.feed_alive["binance"] = now
+
+    async def go(t):
+        await bot.decide_once(t)
+        await asyncio.sleep(0.01)
+    asyncio.run(go(now))
+    assert sorted(k.split("-")[0] for k, *_ in br.calls) == ["btc", "eth"], br.calls     # sol: z too small
+    assert all(c[1] == "U" and c[2] == 0.99 and c[3] == 10 for c in br.calls)
+    entry = [kw for kind, kw in bot.j.ev if kind == "lock_entry"]
+    assert len(entry) == 2 and all(e["early"] and e["z"] >= 3 for e in entry)
+    # the closing minute: no entry for sol even with a huge lead (last_minute = false)
+    bot.st.prices["sol"].cl_last = (101.0, now + 40_000, now + 40_500)
+    asyncio.run(go(now + 41_000))
+    assert len(br.calls) == 2

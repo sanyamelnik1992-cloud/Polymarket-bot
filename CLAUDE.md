@@ -364,8 +364,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   sigma x sqrt(s to the closing TWAP + 20)) >= 3, 5m at 120-62 s and 15m at 300-120 s before the end, asks 0.985-0.99 ONLY (at
   0.97: 5 of 77 lost): 302 entries a day, 0.50 % lost, +0.4-0.5 c, +$13 a day at 10 shares, 7 of 8 days positive (break-even
   0.93 % at 0.99). Sellers at 0.99 exist early, not in the last minute (decided 5m windows: 97 % vs 5 %), which is why L99 gets
-  1-2 a day. Proposed, NOT built: paper bot "Ранний снайпер" (a pre-TWAP z mode in `pmbot/bot/lock.py`), exam ~600 paper entries
-  <= 0.6 % lost, real money only on the owner's word at 5 shares. Tools: `reports/80_tools`.
+  1-2 a day. Section 8 (owner: "у нас так и нету особо плюса за день стабильно"): paper bots "Ранний снайпер" BUILT, not started:
+  the early mode of `pmbot/bot/lock.py` (`lock.early_x_hi / early_x_lo / early_z / early_a_min / early_a_max / early_sigma_s /
+  early_min_sigma_s`, `lock.last_minute`, `decide_early`, sigma = `lockmodel.BlockSigma`: RMS of 10 s Binance mid returns over
+  1 h / sqrt(10), because 1 s returns understate the minute-scale moves, BTC 0.85 vs 0.96 bp); the config loader refuses it in
+  live. Units `pmbot-lock-early` = `config/lock_early.toml` (5m, 120-62 s before the end) and `pmbot-lock-15-early` =
+  `config/lock15_early.toml` (15m, 300-120 s): z >= 3, asks 0.985-0.99, 10 shares, max_open_entries 4, closing minute off; not
+  enabled at boot (/restart). Their exact rule on 9-16 Nov: 5m 150 a day, 0.59 % lost, +0.35 c; 15m 31 a day, 0 of 248; together
+  +$8.2 a day at 10 shares, 6 of 8 days positive (ETH 5m -$30). Exam ~400-550 paper entries, <= 0.6 % lost, >= +0.3 c a share,
+  then real money only on the owner's word at 5 shares. Tools: `reports/80_tools`.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

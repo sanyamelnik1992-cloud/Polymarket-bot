@@ -3,6 +3,7 @@ import json, numpy as np
 B = np.load("bn1s.npz"); T0 = int(B["t0"])
 PX = {a: B[s] for a, s in (("btc", "BTCUSDT"), ("eth", "ETHUSDT"), ("sol", "SOLUSDT"), ("xrp", "XRPUSDT"))}
 LR = {a: np.diff(np.log(p), prepend=np.log(p[0])) * 1e4 for a, p in PX.items()}      # 1 s log returns, bp
+LP = {a: np.log(p) for a, p in PX.items()}
 def px(a, t): return PX[a][int(t) - T0]
 def strike(w):
     p = PX[w["asset"]]
@@ -12,9 +13,14 @@ def final(w):
     p = PX[w["asset"]]
     if w["kind"] == "1h": return p[w["end"] - 1 - T0]
     return p[w["end"] - 62 - T0: w["end"] - 2 - T0].mean()
+STEP = 1          # 1: RMS of 1 s returns; 10: RMS of 10 s returns / sqrt(10) (what the paper bot computes from Binance mids)
 def sigma(a, t, n=300):
-    r = LR[a][int(t) - n - T0: int(t) - T0]
-    return float(np.sqrt(np.mean(r * r)))
+    if STEP == 1:
+        r = LR[a][int(t) - n - T0: int(t) - T0]
+        return float(np.sqrt(np.mean(r * r)))
+    lp = LP[a][int(t) - n - T0: int(t) + 1 - T0: STEP]
+    r = np.diff(lp) * 1e4
+    return float(np.sqrt(np.mean(r * r) / STEP))
 def tau(w, t):
     if w["kind"] == "1h": return max(1.0, w["end"] - t)
     ws = w["end"] - 62

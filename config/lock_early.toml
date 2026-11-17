@@ -1,0 +1,36 @@
+# Ранний снайпер, 5-minute markets — PAPER (unit pmbot-lock-early, reports/80; owner 17 Nov: "у нас так и нету особо плюса за
+# день стабильно"). The competitor of the owner's screenshot buys the sure side at 0.98-0.99 1-5 minutes BEFORE the end, not in
+# the closing minute where our L3 / L99 wait: sellers at 0.99 sit there (decided 5m windows: a public buy at 0.985-0.99 at
+# 180-62 s before the end in 97 %, in the closing minute in 5 %). Our version of his rule (lockmodel.BlockSigma + decide_early):
+# z = lead / (sigma * sqrt(tau)) >= 3, sigma from 10 s Binance returns over the last hour, 120-62 s before the end, asks 0.985-0.99
+# only. Replay 9-16 Nov, all 4 coins, a public buy within 5 s = our fill: 150 entries a day, 0.6 % lost, +0.35 c a share,
+# ~+$5 a day at 10 shares (ETH -$30 of it, the other coins +$19..+$32). His own rule on the same 5m data: 1.84 % lost, -0.2 c.
+# Exam (reports/80 section 8): >= 600 paper entries with <= 0.6 % lost and >= +0.3 c a share; real money only on the owner's word.
+journal_dir = "data/journal-lock-early"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+duration = 300
+early_x_hi = 120.0     # seconds before the window end: the early zone 120-62 s
+early_x_lo = 62.0      # the closing TWAP starts 62 s before the end
+early_z = 3.0
+early_a_min = 0.985    # only the 0.99 sellers (at 0.97: 5 of 77 lost)
+early_a_max = 0.99
+early_sigma_s = 3600
+early_min_sigma_s = 1800
+last_minute = false    # the early rule alone: no closing-minute entries in this bot
+shares = 10
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 10.0
+max_open_usd = 40.0    # all four coins of one window at once (the competitor holds up to 4)
+max_open_entries = 4
+daily_loss_limit = 30.0   # paper: three losses end the day, it resumes at 00:00 UTC
+state_file = "data/state/lock_early_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+cl_feed = "both"       # PolyBolt + RTDS, first arrival wins (reports/69)
+paper_exec_ms = 300

@@ -13,6 +13,7 @@ probability comes from an EMPIRICAL table of Y_m = X_m / (sigma * sqrt(v_m)) bui
 """
 import math
 import os
+from collections import deque
 
 import numpy as np
 
@@ -79,6 +80,49 @@ def build_tables(series_by_asset, halflife=900, y_grid=None):
             surv[m - 1] = k / len(Y)
         out[f"s_{a}"] = surv
     return out
+
+
+class BlockSigma:
+    """1 s sigma for a look minutes ahead (the early rule, reports/80): RMS of `block`-second log returns over the last
+    `lookback` seconds, divided by sqrt(block). Fed with one price per second; skipped seconds are forward-filled.
+    1 s returns understate the minute-scale moves (Binance 9-16 Nov, bp per sqrt(s): BTC 0.85 from 1 s returns, 0.96 from
+    10 s, 0.97 from 60 s; ETH 1.18 / 1.31 / 1.30), and the early rule looks 1-5 minutes ahead."""
+
+    def __init__(self, lookback=3600, block=10):
+        self.block = int(block)
+        self.r2 = deque(maxlen=max(1, int(lookback) // self.block))
+        self.last_sec = None
+        self.last_v = None
+        self.block_v = None           # price at the end of the previous block
+
+    def on_second(self, sec, v):
+        if v is None or v <= 0:
+            return
+        if self.last_sec is not None:
+            if sec <= self.last_sec:
+                return
+            if sec - self.last_sec > 600:     # a long outage: the old history describes another market
+                self.r2.clear()
+                self.block_v = None
+            else:
+                for s in range(self.last_sec + 1, sec):
+                    self._close(s, self.last_v)
+        self._close(sec, v)
+
+    def _close(self, sec, v):
+        self.last_sec, self.last_v = sec, v
+        if sec % self.block == self.block - 1:          # the last second of a block
+            if self.block_v:
+                self.r2.append(math.log(v / self.block_v) ** 2)
+            self.block_v = v
+
+    def seconds(self):
+        return len(self.r2) * self.block
+
+    def sigma(self, min_s=0):
+        if not self.r2 or self.seconds() < min_s:
+            return None
+        return math.sqrt(sum(self.r2) / len(self.r2) / self.block)
 
 
 class ClSigma:
