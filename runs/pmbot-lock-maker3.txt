@@ -1,21 +1,21 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-maker3/20261116-212342
-mode: paper  duration: 337.7 min  events: {'start': 1, 'lock_state': 2359, 'status': 675, 'strike': 248, 'maker_bid': 1594, 'maker_cancel': 1583, 'fill': 20, 'lock_entry': 20, 'provisional': 19, 'settle': 20}
+mode: paper  duration: 397.3 min  events: {'start': 1, 'lock_state': 2782, 'status': 794, 'strike': 288, 'maker_bid': 1880, 'maker_cancel': 1867, 'fill': 25, 'lock_entry': 25, 'provisional': 23, 'settle': 25}
 
-fills: 20  shares: 100  notional: $92.50
+fills: 25  shares: 125  notional: $115.30
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       13    65.0     60.20      0.926  251.527
+btc       15    75.0     69.35      0.925  251.527
 eth        4    20.0     18.50      0.925  245.469
-sol        2    10.0      9.15      0.915  253.964
-xrp        1     5.0      4.65      0.930  265.503
+sol        3    15.0     13.70      0.913  264.181
+xrp        3    15.0     13.75      0.917  252.835
 
 settled windows:
        windows   cost   pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
 asset                                                                           
-btc         13  60.20 -0.20          -0.20     0.0     0.923  -4.50  0.50 -0.003
+btc         15  69.35  0.65           0.65     0.0     0.933  -4.50  0.50  0.009
 eth          4  18.50  1.50           1.50     0.0     1.000   0.25  0.45  0.081
-sol          2   9.15 -4.15          -4.15     0.0     0.500  -4.65  0.50 -0.454
-xrp          1   4.65  0.35           0.35     0.0     1.000   0.35  0.35  0.075
+sol          3  13.70 -3.70          -3.70     0.0     0.667  -4.65  0.50 -0.270
+xrp          3  13.75  1.25           1.25     0.0     1.000   0.35  0.45  0.091
 
-TOTAL pnl $-2.50 (ex-rebate $-2.50) on cost $92.50 -> ROI -2.70%; windows 20, t-stat -0.37
+TOTAL pnl $-0.30 (ex-rebate $-0.30) on cost $115.30 -> ROI -0.26%; windows 25, t-stat -0.04
 max drawdown $-5.35; hedged windows (both sides filled): 0
