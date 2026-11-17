@@ -201,9 +201,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `reports/79_tools/sample_books.py` + `cross_cost.py`) = Limitless spread 8.3 c vs 1 c, mids 0.5 c apart, both sides under $1
   after fees in 2 samples (+4.3 / +4.9 c, 100-200 shares, one snapshot each: the mirror lagging a Polymarket jump), market
   volume $1-10. Opinion (BNB chain): ~$16k a day on all 120 markets, four locked gaps worth $0.1-18 with money tied until
-  January. Open lead: the Limitless maker's lag; `record_gap.py` ran on the server for 10 h from 23:03 UTC
-  (`/root/research/gap_1117.jsonl`, public data only): if the lag outlasts the taker delay more than once an hour, a $20-30 test
-  on the owner's word (needs a Base wallet), else closed.
+  January. The one lead (the Limitless maker lagging Polymarket) is CLOSED (17 Nov 07:30, section 6): `record_gap.py` on the server,
+  8.2 h, 68 978 paired samples with ~25 ms between the two requests (`reports/79_tools/gap_episodes.py`): on 20 shares the pair
+  was under $1 after fees once (+0.4 c), never on hourly markets; any size = 24 one-sample cases of 1-12 shares, $0.41 in
+  total; the two +4 c cases of the first sample never came back (most likely request skew of that slower sampler). No money
+  test, no Base wallet; cross-venue stays closed until Kalshi opens to us or Limitless / Opinion get volume.
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
