@@ -184,3 +184,14 @@ def test_early_bot_subscribes_books_early_and_enters_once(tmp_path):
     bot._save_state()
     bot2 = LockBot(cfg, _J(), broker=PaperTaker(State(["btc"])))
     assert bot2.hsig["btc"].n == 3600 and bot2.hsig["btc"].sigma(cfg.lock.min_sigma_s) == pytest.approx(1e-4)
+
+
+def test_every_bot_unit_is_restarted_by_autoupdate():
+    """17 Nov: the two early paper bots were missing from deploy/autoupdate.sh and kept the old config after an update."""
+    import re
+    from pmbot import ops
+    s = open(os.path.join(ROOT, "deploy", "autoupdate.sh")).read()
+    loop = re.search(r"for u in (pmbot-5m [^;]+); do", s).group(1).split()
+    assert [u for u in ops.BOT_UNITS + ops.REWARD_UNITS + ops.WEATHER_UNITS if u not in loop] == []
+    assert "pmbot-lock-early" in loop and "pmbot-lock-15-early" in loop
+    assert not [u for u in ops.REWARD_LIVE_UNITS if u in loop]      # the live rewards test is never restarted by an update
