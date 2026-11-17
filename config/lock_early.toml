@@ -1,20 +1,23 @@
 # Early sniper ("Ранний снайпер") on 5m windows — PAPER (reports/80, reports/81). The competitor's timing with a stricter
-# signal: decide 120-62 s before the end (window seconds 180-238, before the closing TWAP), when sellers at 0.99 still
+# signal: decide 180-62 s before the end (window seconds 120-238, before the closing TWAP), when sellers at 0.99 still
 # stand; in the last minute they are gone (0.995+) and L99 gets 1-2 entries a day. Signal: the leader by
-# z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) >= 3 (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
-# returns of the last hour, tau0 = seconds to the first closing print), the same z on received prints >= 2.5, the Binance
+# z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
+# returns of the last hour, tau0 = seconds to the first closing print) >= 3.5, the same z on received prints >= 3, the Binance
 # guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. 10 shares, up to 4 windows at once (paper).
 # What is NOT known: the loss rate. A win is +0.93 c a share, a loss -99 c: break-even is 0.93 % lost. Report 80 (trades +
-# Binance, 9-16 Nov): 0.51 % lost; report 81 (books + Chainlink, 7-9 Nov): 1.5 % lost at z >= 3. Paper is the measurement.
+# Binance, 9-16 Nov): 0.51 % lost; report 81: trades 1-8 Nov 0.6 %, books + Chainlink 7-9 Nov (the worst days) 0.85 % at z >= 3.5.
+# Paper measures the fills at 0.99 and the loss rate of exactly this code.
 journal_dir = "data/journal-lock-early"
 
 [lock]
-assets = ["btc", "eth", "sol", "xrp"]
+assets = ["btc", "sol", "xrp"]   # no ETH on 5m: it lost in every sample (trades 1-8 Nov 772 / 9 lost, 9-16 Nov 658 / 7,
+                                 # books 7-9 Nov 216 / 5; the other coins 0.4 %). 15m keeps ETH (positive in both halves)
 zone = "early"
-rel_lo = 180.0        # 120 s before the end
+rel_lo = 120.0        # 180 s before the end (trades 1-16 Nov: 180-62 s gives 24 % more entries than 120-62 s, the same c a share)
 rel_hi = 238.0        # 62 s before the end: the closing TWAP starts here
-z_min = 3.0
-z_agree = 2.5
+z_min = 3.5           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's (tapes 7-9 Nov), so 3.5 here ~ report 80's
+                      # Binance z >= 3. Tapes 7-9 Nov (books): Chainlink z >= 3 lost 1.5 %, >= 3.5 0.85 %; trades 1-16 Nov (Binance z >= 3): 0.57 %
+z_agree = 3.0
 sigma_window_s = 3600.0
 min_sigma_s = 1800.0
 adv1_bp = 1.0

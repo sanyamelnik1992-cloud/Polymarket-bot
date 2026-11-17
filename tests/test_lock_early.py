@@ -67,14 +67,15 @@ def _inputs(lead_bp=30.0, sigma=1e-4, rel=200.0, Tc=T, ask_up=(0.99, 500.0), ask
 
 
 def test_configs_are_paper_and_early():
-    for path, dur, lo, hi in ((EARLY5, 300, 180.0, 238.0), (EARLY15, 900, 0.0, 180.0)):
+    for path, dur, lo, hi in ((EARLY5, 300, 120.0, 238.0), (EARLY15, 900, 0.0, 180.0)):
         cfg = load_lock_config(path)
         c = cfg.lock
         assert cfg.execution.mode == "paper" and c.zone == "early" and c.duration == dur
-        assert (c.rel_lo, c.rel_hi) == (lo, hi)               # 5m: 120-62 s before the end; 15m: 300-120 s (reports/80)
-        assert c.z_min == 3.0 and c.ask_lo == 0.985 and c.a_max == 0.99 and c.sigma_window_s == 3600
+        assert (c.rel_lo, c.rel_hi) == (lo, hi)               # 5m: 180-62 s before the end; 15m: 300-120 s (reports/80-81)
+        assert c.z_min == 3.5 and c.z_agree == 3.0 and c.ask_lo == 0.985 and c.a_max == 0.99 and c.sigma_window_s == 3600
         assert not c.tiers and not c.hedge_p and not c.big_shares
     a, b = load_lock_config(EARLY5), load_lock_config(EARLY15)
+    assert a.lock.assets == ["btc", "sol", "xrp"] and b.lock.assets == ["btc", "eth", "sol", "xrp"]   # reports/81: no ETH on 5m
     assert a.journal_dir != b.journal_dir and a.risk.state_file != b.risk.state_file
 
 
@@ -102,12 +103,12 @@ def test_decide_early_buys_the_leader_at_099():
 
 
 @pytest.mark.parametrize("change,why", [
-    ({"lead_bp": 15.0}, "z"),                         # 15 / sqrt(57.5) = 2.0 < 3
+    ({"lead_bp": 25.0}, "z"),                         # 25 / sqrt(57.5) = 3.3 < 3.5
     ({"ask_up": (0.98, 500.0)}, "ask_too_low"),       # a cheaper seller knows more (reports/80)
     ({"ask_up": (0.995, 500.0)}, "ask_too_high"),
     ({"ask_up": None}, "no_ask"),
     ({"rel": 239.0}, "time"),                         # the closing TWAP has started: the closing-minute bots decide there
-    ({"rel": 170.0}, "time"),
+    ({"rel": 110.0}, "time"),                         # more than 180 s before the end
     ({"sigma": None}, "no_sigma"),
     ({"bn_1s": 75000 * (1 + 2e-4)}, "binance_against"),
     ({"stale": True}, "cl_stale"),
