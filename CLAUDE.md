@@ -213,12 +213,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (15m) before the end, asks 0.985-0.99 only. Out of sample on public trades 1-8 Nov (`reports/81_tools/sim_all.py`, same logic,
   his 9-16 Nov reproduced exactly): 5m 0.59 % lost / +0.35 c a share, 15m 0.54 % / +0.41 c (break-even 0.93 %); 16 days 6175
   entries, 0.57 %. On recorder BOOKS + Chainlink 7-9 Nov (`early_steps.py` + `eval_steps.py`; the worst days by trades too)
-  Chainlink z >= 3 lost 1.5 %, >= 3.5 0.85 %: Chainlink's 1 s sigma is ~14 % below Binance's, so the bot's threshold is 3.5.
-  ETH loses on 5m in all three samples (dropped there). Exits on a reversal (`stops.py`) lose MORE at every threshold
+  Chainlink z >= 3 lost 1.5 %, >= 3.5 0.85 % (Chainlink's 1 s sigma is ~14 % below Binance's); fresh books 16 Nov 11:00 - 17 Nov
+  08:00 (twice the volatility): Chainlink z >= 3.5 192 entries / 4 lost (2.1 %, all four right at the threshold, Binance z
+  2.3-3.1). Only Chainlink z >= 4 (~ Binance 3.5) is positive in all four samples (trades 0.51 % / 0.20 %, books 411 / 2 and
+  74 / 0; ~150 entries a day, +0.56 c a share): the paper bots use z_min 4, z_agree 3.5. ETH loses on 5m in all three
+  samples (dropped there). Exits on a reversal (`stops.py`) lose MORE at every threshold
   (-$54 -> -$62..-$73 on 988 entries): hedging is not an edge. Done: `lock.zone = "early"` in `pmbot/bot/lock.py`
   (`decide_early`, `lockmodel.HourSigma` / `early_z`, books subscribed 20 s before the zone), PAPER units `pmbot-lock-early`
   (`config/lock_early.toml`: 5m BTC/SOL/XRP, window s 120-238) and `pmbot-lock-15-early` (`config/lock15_early.toml`: 15m, anchor
-  s 0-180), z >= 3.5, z_agree 3, 10 shares, 4 windows. Live 5m `config/lock_live.toml` keeps ONLY the top tier [[0.99, 0.98]]
+  s 0-180), z >= 4, z_agree 3.5, 10 shares, 4 windows. Live 5m `config/lock_live.toml` keeps ONLY the top tier [[0.99, 0.98]]
   (real fills: p >= 0.99 16 / 0 / +$4.76, below 153 / 15 / -$18.28); its paper twin `lock_tier.toml` keeps three tiers for the
   tests. Server: 8 paper bots + the recorder stopped and disabled (`pmbot-lock-maker3`, `-tier-wide`, `-tier`, `-tier-pb`,
   `-99`, `-15-tier`, `-15-alt`, `pmbot-hourly-last` = closed, 2 lost of 12), journals of 27 stopped bots in

@@ -2,7 +2,7 @@
 # signal: decide 300-120 s before the end (anchor seconds 0-180), when sellers at 0.99 still
 # stand; in the last minute they are gone (0.995+) and L99 gets 1-2 entries a day. Signal: the leader by
 # z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
-# returns of the last hour, tau0 = seconds to the first closing print) >= 3.5, the same z on received prints >= 3, the Binance
+# returns of the last hour, tau0 = seconds to the first closing print) >= 4, the same z on received prints >= 3.5, the Binance
 # guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. 10 shares, up to 4 windows at once (paper).
 # What is NOT known: the loss rate. A win is +0.93 c a share, a loss -99 c: break-even is 0.93 % lost. Report 80 (trades +
 # Binance, 9-16 Nov): 0.47 % lost on 15m; report 81: trades 1-8 Nov 0.54 % (553 entries). The recorder never wrote 15m books.
@@ -15,9 +15,9 @@ assets = ["btc", "eth", "sol", "xrp"]
 zone = "early"
 rel_lo = 0.0          # 300 s before the end (rel is measured from the anchor end - 300)
 rel_hi = 180.0        # 120 s before the end
-z_min = 3.5           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's (tapes 7-9 Nov), so 3.5 here ~ report 80's
-                      # Binance z >= 3 (trades 1-16 Nov, 15m: 983 entries, 5 lost = 0.51 %)
-z_agree = 3.0
+z_min = 4.0           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's, so 4 here ~ Binance z 3.5 (trades, 15m:
+                      # 1-8 Nov 325 entries / 2 lost, 9-16 Nov 196 / 0; the recorder never wrote 15m books). As the 5m bot (reports/81)
+z_agree = 3.5
 sigma_window_s = 3600.0
 min_sigma_s = 1800.0
 adv1_bp = 1.0

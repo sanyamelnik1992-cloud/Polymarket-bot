@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot TWAP-lock early sniper on 5m (config/lock_early.toml: the leader 120-62 s before the end at 0.985-0.99; paper)
+Description=pmbot TWAP-lock early sniper on 5m (config/lock_early.toml: the leader 180-62 s before the end at 0.985-0.99; paper)
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=600

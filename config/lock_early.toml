@@ -2,10 +2,10 @@
 # signal: decide 180-62 s before the end (window seconds 120-238, before the closing TWAP), when sellers at 0.99 still
 # stand; in the last minute they are gone (0.995+) and L99 gets 1-2 entries a day. Signal: the leader by
 # z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
-# returns of the last hour, tau0 = seconds to the first closing print) >= 3.5, the same z on received prints >= 3, the Binance
+# returns of the last hour, tau0 = seconds to the first closing print) >= 4, the same z on received prints >= 3.5, the Binance
 # guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. 10 shares, up to 4 windows at once (paper).
 # What is NOT known: the loss rate. A win is +0.93 c a share, a loss -99 c: break-even is 0.93 % lost. Report 80 (trades +
-# Binance, 9-16 Nov): 0.51 % lost; report 81: trades 1-8 Nov 0.6 %, books + Chainlink 7-9 Nov (the worst days) 0.85 % at z >= 3.5.
+# Binance, 9-16 Nov): 0.51 % lost; report 81: trades 1-8 Nov 0.6 %; books + Chainlink at z >= 4: 7-9 Nov 0.49 %, 16-17 Nov 0 of 74.
 # Paper measures the fills at 0.99 and the loss rate of exactly this code.
 journal_dir = "data/journal-lock-early"
 
@@ -15,9 +15,10 @@ assets = ["btc", "sol", "xrp"]   # no ETH on 5m: it lost in every sample (trades
 zone = "early"
 rel_lo = 120.0        # 180 s before the end (trades 1-16 Nov: 180-62 s gives 24 % more entries than 120-62 s, the same c a share)
 rel_hi = 238.0        # 62 s before the end: the closing TWAP starts here
-z_min = 3.5           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's (tapes 7-9 Nov), so 3.5 here ~ report 80's
-                      # Binance z >= 3. Tapes 7-9 Nov (books): Chainlink z >= 3 lost 1.5 %, >= 3.5 0.85 %; trades 1-16 Nov (Binance z >= 3): 0.57 %
-z_agree = 3.0
+z_min = 4.0           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's, so 4 here ~ Binance z 3.5. The only threshold
+                      # positive in all four samples (BTC/SOL/XRP, reports/81): trades 1-8 / 9-16 Nov (Binance z >= 3.5) 0.51 % / 0.20 % lost;
+                      # books 7-9 Nov 411 entries / 2 lost; books 16-17 Nov 74 / 0. At 3.5: books 16-17 Nov 192 / 4 lost (2.1 %)
+z_agree = 3.5
 sigma_window_s = 3600.0
 min_sigma_s = 1800.0
 adv1_bp = 1.0

@@ -57,7 +57,7 @@ def test_early_z_counts_the_wait_and_the_closing_average():
     assert early_z(100.3, 100.0, None, 100.0) == 0.0
 
 
-def _inputs(lead_bp=30.0, sigma=1e-4, rel=200.0, Tc=T, ask_up=(0.99, 500.0), ask_dn=(0.02, 500.0)):
+def _inputs(lead_bp=35.0, sigma=1e-4, rel=200.0, Tc=T, ask_up=(0.99, 500.0), ask_dn=(0.02, 500.0)):
     K = 100.0
     now = int((Tc + rel) * 1000)
     S = K * math.exp(lead_bp * 1e-4)
@@ -72,7 +72,7 @@ def test_configs_are_paper_and_early():
         c = cfg.lock
         assert cfg.execution.mode == "paper" and c.zone == "early" and c.duration == dur
         assert (c.rel_lo, c.rel_hi) == (lo, hi)               # 5m: 180-62 s before the end; 15m: 300-120 s (reports/80-81)
-        assert c.z_min == 3.5 and c.z_agree == 3.0 and c.ask_lo == 0.985 and c.a_max == 0.99 and c.sigma_window_s == 3600
+        assert c.z_min == 4.0 and c.z_agree == 3.5 and c.ask_lo == 0.985 and c.a_max == 0.99 and c.sigma_window_s == 3600
         assert not c.tiers and not c.hedge_p and not c.big_shares
     a, b = load_lock_config(EARLY5), load_lock_config(EARLY15)
     assert a.lock.assets == ["btc", "sol", "xrp"] and b.lock.assets == ["btc", "eth", "sol", "xrp"]   # reports/81: no ETH on 5m
@@ -97,13 +97,13 @@ def test_decide_early_buys_the_leader_at_099():
     c = load_lock_config(EARLY5).lock
     sig, ctx = decide_early(c, **_inputs())
     assert sig and sig["side"] == "U" and sig["limit"] == 0.99 and sig["ask"] == 0.99, ctx
-    assert ctx["tau0"] == pytest.approx(38.0) and ctx["z"] == pytest.approx(30 / math.sqrt(57.5), rel=1e-3)
-    sig, ctx = decide_early(c, **_inputs(lead_bp=-30.0, ask_up=(0.02, 500.0), ask_dn=(0.988, 50.0)))
+    assert ctx["tau0"] == pytest.approx(38.0) and ctx["z"] == pytest.approx(35 / math.sqrt(57.5), rel=1e-3)
+    sig, ctx = decide_early(c, **_inputs(lead_bp=-35.0, ask_up=(0.02, 500.0), ask_dn=(0.988, 50.0)))
     assert sig and sig["side"] == "D" and sig["ask"] == 0.988, ctx
 
 
 @pytest.mark.parametrize("change,why", [
-    ({"lead_bp": 25.0}, "z"),                         # 25 / sqrt(57.5) = 3.3 < 3.5
+    ({"lead_bp": 25.0}, "z"),                         # 25 / sqrt(57.5) = 3.3 < 4
     ({"ask_up": (0.98, 500.0)}, "ask_too_low"),       # a cheaper seller knows more (reports/80)
     ({"ask_up": (0.995, 500.0)}, "ask_too_high"),
     ({"ask_up": None}, "no_ask"),
@@ -121,9 +121,9 @@ def test_decide_early_filters(change, why):
         kw["bn_1s"] = change["bn_1s"]
     if change.get("stale"):
         kw["cl_last"] = (kw["cl_last"][0], kw["cl_last"][1], kw["now_ms_"] - 5000)
-    if change.get("agree"):          # Binance says +30 bp, the received prints only +10 bp: wait for Chainlink
+    if change.get("agree"):          # Binance says +35 bp, the received prints only +10 bp: wait for Chainlink
         kw["cl_last"] = (100.0 * math.exp(10e-4), kw["cl_last"][1], kw["cl_last"][2])
-        kw["bn_now"] = 75000.0 * math.exp(20e-4)
+        kw["bn_now"] = 75000.0 * math.exp(25e-4)
         kw["bn_1s"] = kw["bn_3s"] = kw["bn_now"]
     sig, ctx = decide_early(c, **kw)
     assert sig is None and ctx["why"] == why, ctx
