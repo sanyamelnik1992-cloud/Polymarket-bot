@@ -1,17 +1,18 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261116-212402
-mode: live  duration: 277.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 555, 'prewarm': 76, 'lock_state': 866, 'strike': 72, 'order_rejected': 3, 'lock_miss': 3, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3}
+mode: live  duration: 337.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 675, 'prewarm': 92, 'lock_state': 1106, 'strike': 88, 'order_rejected': 3, 'lock_miss': 3, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 3}
 
-lock orders: sent 6  filled 3  ask gone 3  errors 0
-  signal -> exchange answer, ms: median 320  p90 392  max 392
-  market prewarm (2 lookups + signing), ms: median 184  max 426  n 76
-  fill price minus the ask we saw, cents: mean -1.00  worst +0.0
+lock orders: sent 7  filled 4  ask gone 3  errors 0
+  signal -> exchange answer, ms: median 317  p90 392  max 392
+  market prewarm (2 lookups + signing), ms: median 187  max 426  n 92
+  fill price minus the ask we saw, cents: mean -0.75  worst +0.0
   misses came 53-58 s before the end; model p 0.931-0.956
   exchange rejections by code: {'fak_not_filled': 3}
 
-fills: 3  shares: 6  notional: $5.46
+fills: 4  shares: 8  notional: $7.28
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        3   6.114      5.46      0.893  848.605
+eth        1   2.000      1.82      0.910  860.456
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
