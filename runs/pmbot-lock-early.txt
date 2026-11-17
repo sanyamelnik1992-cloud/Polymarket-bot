@@ -1,24 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-early/20261117-124226
-mode: paper  duration: 139.6 min  events: {'start': 1, 'lock_state': 293, 'status': 279, 'strike': 84, 'fill': 16, 'lock_entry': 16, 'provisional': 16, 'lock_miss': 4, 'settle': 16}
+mode: paper  duration: 198.6 min  events: {'start': 1, 'lock_state': 1226, 'status': 397, 'strike': 117, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'lock_miss': 6, 'settle': 18}
 
-lock orders: sent 20  filled 16  ask gone 4  errors 0
-  signal -> exchange answer, ms: median 301  p90 306  max 307
-  fill price minus the ask we saw, cents: mean -0.06  worst +0.1
-  misses came 69-112 s before the end; model p 0.000-0.000
+lock orders: sent 25  filled 19  ask gone 6  errors 0
+  signal -> exchange answer, ms: median 301  p90 307  max 330
+  fill price minus the ask we saw, cents: mean -0.05  worst +0.1
+  misses came 69-150 s before the end; model p 0.000-0.000
 
-fills: 16  shares: 146  notional: $144.40
+fills: 19  shares: 176  notional: $174.10
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        5    50.0     49.47      0.989  177.762
+btc        8    80.0     79.17      0.990  180.160
 sol        6    55.0     54.45      0.990  192.251
 xrp        5    41.0     40.48      0.988  190.447
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc          5  49.507  0.493          0.493     0.0       1.0  0.093  0.121  0.010
+btc          7  69.320  0.680          0.680     0.0       1.0  0.093  0.121  0.010
 sol          6  54.488  0.512          0.512     0.0       1.0  0.046  0.093  0.009
 xrp          5  40.516  0.484          0.484     0.0       1.0  0.046  0.186  0.012
 
-TOTAL pnl $+1.49 (ex-rebate $+1.49) on cost $144.51 -> ROI +1.03%; windows 16, t-stat +11.67
+TOTAL pnl $+1.68 (ex-rebate $+1.68) on cost $164.32 -> ROI +1.02%; windows 18, t-stat +13.17
 max drawdown $0.00; hedged windows (both sides filled): 0
