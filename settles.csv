@@ -445,3 +445,4 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-18 16:34:58,pmbot-lock-early,paper,btc-1795019100,Down,0,10.0,9.9069,10.0,0.0,0.0931
 2026-11-18 16:50:08,pmbot-lock-15-early,paper,eth-1795019400,Down,0,10.0,9.9069,10.0,0.0,0.0931
 2026-11-18 17:39:59,pmbot-lock-early,paper,btc-1795023000,Up,10.0,0,9.9069,10.0,0.0,0.0931
+2026-11-18 18:41:21,pmbot-lock-early,paper,sol-1795026600,Up,10.0,0,9.9069,10.0,0.0,0.0931
