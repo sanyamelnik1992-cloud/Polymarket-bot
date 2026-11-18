@@ -1,16 +1,16 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261117-124225
-mode: paper  duration: 1638.5 min  events: {'start': 1, 'lock_state': 4584, 'status': 3276, 'strike': 436, 'fill': 36, 'lock_entry': 36, 'lock_miss': 28, 'provisional': 36, 'settle': 36}
+mode: paper  duration: 1698.5 min  events: {'start': 1, 'lock_state': 4804, 'status': 3396, 'strike': 452, 'fill': 37, 'lock_entry': 37, 'lock_miss': 29, 'provisional': 37, 'settle': 37}
 
-lock orders: sent 64  filled 36  ask gone 28  errors 0
+lock orders: sent 66  filled 37  ask gone 29  errors 0
   signal -> exchange answer, ms: median 301  p90 306  max 325
   fill price minus the ask we saw, cents: mean -0.06  worst +0.2
   misses came 157-300 s before the end; model p 0.000-0.000
 
-fills: 36  shares: 311  notional: $307.21
+fills: 37  shares: 321  notional: $317.11
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc       19  183.94   181.566      0.987  656.604
-eth        2   20.00    19.800      0.990  646.904
+eth        3   30.00    29.700      0.990  606.835
 sol       10   71.98    71.200      0.989  660.030
 xrp        5   35.00    34.645      0.990  672.696
 
@@ -18,9 +18,9 @@ settled windows:
        windows     cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                               
 btc         19  181.729  2.211          2.211     0.0       1.0  0.037  0.280  0.012
-eth          2   19.814  0.186          0.186     0.0       1.0  0.093  0.093  0.009
+eth          3   29.721  0.279          0.279     0.0       1.0  0.093  0.093  0.009
 sol         10   71.254  0.726          0.726     0.0       1.0  0.028  0.130  0.010
 xrp          5   34.670  0.330          0.330     0.0       1.0  0.046  0.093  0.010
 
-TOTAL pnl $+3.45 (ex-rebate $+3.45) on cost $307.47 -> ROI +1.12%; windows 36, t-stat +12.67
+TOTAL pnl $+3.55 (ex-rebate $+3.55) on cost $317.37 -> ROI +1.12%; windows 37, t-stat +13.01
 max drawdown $0.00; hedged windows (both sides filled): 0
