@@ -1,3 +1,3 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261117-125049
-mode: live  duration: 609.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1219, 'prewarm': 488, 'lock_state': 8858, 'strike': 484, 'prewarm_error': 1}
+mode: live  duration: 669.6 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1339, 'prewarm': 536, 'lock_state': 9774, 'strike': 532, 'prewarm_error': 1}
 no fills
