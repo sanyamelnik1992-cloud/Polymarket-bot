@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261117-125056
-mode: live  duration: 789.7 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1579, 'prewarm': 212, 'lock_state': 3538, 'strike': 208, 'order_filled': 6, 'fill': 6, 'lock_entry': 6, 'provisional': 6, 'settle': 6}
+mode: live  duration: 849.2 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 1698, 'prewarm': 228, 'lock_state': 3755, 'strike': 224, 'order_filled': 7, 'fill': 7, 'lock_entry': 7, 'provisional': 7, 'settle': 6}
 
-lock orders: sent 6  filled 6  ask gone 0  errors 0
-  signal -> exchange answer, ms: median 291  p90 940  max 940
-  market prewarm (2 lookups + signing), ms: median 162  max 542  n 212
-  fill price minus the ask we saw, cents: mean -0.50  worst +0.0
+lock orders: sent 7  filled 7  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 291  p90 1775  max 1775
+  market prewarm (2 lookups + signing), ms: median 161  max 542  n 228
+  fill price minus the ask we saw, cents: mean -0.86  worst +0.0
 
-fills: 6  shares: 12  notional: $11.18
+fills: 7  shares: 14  notional: $13.00
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        3   6.131      5.64      0.920  857.445
+btc        4   8.199      7.46      0.910  857.895
 eth        2   4.022      3.68      0.915  858.608
 xrp        1   2.015      1.86      0.923  843.822
 
