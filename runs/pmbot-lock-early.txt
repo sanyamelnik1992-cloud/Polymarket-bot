@@ -1,24 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-early/20261117-124226
-mode: paper  duration: 1339.6 min  events: {'start': 1, 'lock_state': 4416, 'status': 2678, 'strike': 804, 'fill': 91, 'lock_entry': 91, 'provisional': 91, 'lock_miss': 30, 'settle': 91}
+mode: paper  duration: 1399.6 min  events: {'start': 1, 'lock_state': 4497, 'status': 2798, 'strike': 840, 'fill': 95, 'lock_entry': 95, 'provisional': 95, 'lock_miss': 34, 'settle': 95}
 
-lock orders: sent 121  filled 91  ask gone 30  errors 0
+lock orders: sent 129  filled 95  ask gone 34  errors 0
   signal -> exchange answer, ms: median 301  p90 305  max 340
   fill price minus the ask we saw, cents: mean -0.01  worst +0.5
   misses came 68-180 s before the end; model p 0.000-0.000
 
-fills: 91  shares: 890  notional: $880.77
+fills: 95  shares: 930  notional: $920.37
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc       39   390.0   385.925      0.990  168.628
-sol       33   324.0   320.745      0.990  183.502
-xrp       19   176.0   174.100      0.989  212.138
+sol       35   344.0   340.545      0.990  183.502
+xrp       21   196.0   193.900      0.989  212.138
 
 settled windows:
        windows     cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                               
 btc         39  386.206 -6.206         -6.206     0.0     0.974 -9.907  0.186 -0.016
-sol         33  320.970  3.030          3.030     0.0     1.000  0.046  0.107  0.009
-xrp         19  174.231  1.769          1.769     0.0     1.000  0.046  0.186  0.010
+sol         35  340.783  3.217          3.217     0.0     1.000  0.046  0.107  0.009
+xrp         21  194.045  1.955          1.955     0.0     1.000  0.046  0.186  0.010
 
-TOTAL pnl $-1.41 (ex-rebate $-1.41) on cost $881.41 -> ROI -0.16%; windows 91, t-stat -0.14
+TOTAL pnl $-1.03 (ex-rebate $-1.03) on cost $921.03 -> ROI -0.11%; windows 95, t-stat -0.10
 max drawdown $-9.91; hedged windows (both sides filled): 0
