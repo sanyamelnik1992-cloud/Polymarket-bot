@@ -1,0 +1,23 @@
+[Unit]
+Description=pmbot early sniper on 15m LIVE (config/lock15_early_live.toml: the leader at 0.985-0.99 300-120 s before the end, REAL MONEY, 15 shares, up to 3 windows, stop after two losses)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY (reports/82, owner 19 Nov). Installed but NOT enabled/started: the owner starts it (Telegram /restart pmbot-lock-15-early-live).
+# A daily-loss stop exits the process; it stays stopped until a human starts it again.
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock15_early_live.toml --live
+# CPU priority: this unit trades REAL MONEY. Under CPU contention it gets 5x the default share, paper bots 0.2x.
+CPUWeight=500
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

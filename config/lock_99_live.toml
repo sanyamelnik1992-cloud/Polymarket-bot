@@ -1,5 +1,7 @@
 # TWAP-lock L99 — LIVE (REAL MONEY). Same rule as config/lock_99.toml (its paper twin pmbot-lock-99, a test checks it).
 # Owner, 10 Nov: "запусти его еще на реальную тоже ... будет 2 на реальные параллельно" (5 shares, the small-stake option).
+# Owner, 19 Nov (reports/82): "плюсовые переводи на реальные деньги и еще давай увеличим реальные деньги, можешь использовать
+# все что на кошельке": 20 shares. Real fills 11-19 Nov 18 / 0 lost / +$2.27 at 5 shares, its paper twin 17 / 0, tapes 0 of 256.
 # Runs next to pmbot-lock-live on the same wallet with its OWN limits: 5 shares, one entry at a time, -$5/day (= one loss) and
 # then it stays stopped until a human starts it. Both live bots may buy in the same window: at most ~$10 at risk together.
 # Rule: the plain L rule on the unfloored model (p >= 0.99), asks 0.96-0.99: ask <= p - 0.004 - fee, so 0.99 needs p >= 0.9947;
@@ -22,15 +24,15 @@ a_max = 0.99
 min_edge = 0.004
 rel_lo = 240.0
 rel_hi = 299.5
-shares = 5
+shares = 20           # owner 19 Nov: "давай увеличим реальные деньги, можешь использовать все что на кошельке" (reports/82)
 max_entries_per_window = 1
 shock_bp = 2.5        # as live (reports/55)
 shock_s = 10.0
 
 [risk]
-max_usd_per_entry = 5.0
-max_open_usd = 5.0           # one entry at a time (5 x 0.99 = $4.95)
-daily_loss_limit = 4.5          # a loss (~-$4.95) stops it until a human restarts it (unless the day already earned > $0.45)
+max_usd_per_entry = 20.0
+max_open_usd = 20.0          # one entry at a time (20 x 0.99 = $19.80)
+daily_loss_limit = 19.0         # a loss (~-$19.2..-19.8) stops it until a human restarts it (reports/82)
 state_file = "data/state/lock_99_live.json"
 resume_next_day = false
 

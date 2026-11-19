@@ -3,7 +3,8 @@
 # stand; in the last minute they are gone (0.995+) and L99 gets 1-2 entries a day. Signal: the leader by
 # z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
 # returns of the last hour, tau0 = seconds to the first closing print) >= 4, the same z on received prints >= 3.5, the Binance
-# guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. 10 shares, up to 4 windows at once (paper).
+# guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. Paper twin of pmbot-lock-15-early-live (REAL MONEY since
+# 19 Nov, reports/82): the same [lock] and open limits, 15 shares, up to 3 windows at once.
 # What is NOT known: the loss rate. A win is +0.93 c a share, a loss -99 c: break-even is 0.93 % lost. Report 80 (trades +
 # Binance, 9-16 Nov): 0.47 % lost on 15m; report 81: trades 1-8 Nov 0.54 % (553 entries). The recorder never wrote 15m books.
 # Paper measures the fills at 0.99 and the loss rate of exactly this code.
@@ -26,13 +27,13 @@ jump_bp = 5.0
 a_min = 0.95
 a_max = 0.99
 ask_lo = 0.985
-shares = 10
+shares = 15           # = live twin pmbot-lock-15-early-live (reports/82)
 max_entries_per_window = 1
 
 [risk]
-max_usd_per_entry = 10.0
-max_open_usd = 40.0
-max_open_entries = 4
+max_usd_per_entry = 15.0
+max_open_usd = 45.0
+max_open_entries = 3   # = live twin
 daily_loss_limit = 50.0      # paper: see the whole day
 state_file = "data/state/lock15_early_paper.json"
 resume_next_day = true

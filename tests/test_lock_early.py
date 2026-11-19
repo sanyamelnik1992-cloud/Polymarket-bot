@@ -195,3 +195,24 @@ def test_every_bot_unit_is_restarted_by_autoupdate():
     assert [u for u in ops.BOT_UNITS + ops.REWARD_UNITS + ops.WEATHER_UNITS if u not in loop] == []
     assert "pmbot-lock-early" in loop and "pmbot-lock-15-early" in loop
     assert not [u for u in ops.REWARD_LIVE_UNITS if u in loop]      # the live rewards test is never restarted by an update
+
+
+def test_15m_early_live_is_its_paper_twin_with_real_money_limits():
+    """reports/82 (owner 19 Nov: "плюсовые переводи на реальные деньги ... можешь использовать все что на кошельке"): the 15m early
+    sniper trades real money with exactly its paper twin's rule; 15 shares, three windows at most, two losses end the day and a
+    human restarts it. The 5m early bot (paper -$24.51, 4 of 167 lost) stays paper."""
+    from pmbot import notify, ops
+    paper = load_lock_config(EARLY15)
+    live = load_lock_config(os.path.join(ROOT, "config", "lock15_early_live.toml"))
+    assert live.execution.mode == "live" and paper.execution.mode == "paper" and load_lock_config(EARLY5).execution.mode == "paper"
+    assert live.lock == paper.lock, "the live early sniper must stay identical to its paper twin pmbot-lock-15-early"
+    assert live.lock.shares == 15 and live.risk.max_usd_per_entry == 15.0 and live.risk.max_open_entries == 3
+    assert live.risk.max_open_usd <= 3 * 15.0 and live.risk.resume_next_day is False
+    assert 1 * 15 * live.lock.ask_lo < live.risk.daily_loss_limit < 2 * 15 * live.lock.ask_lo      # the second loss stops it
+    assert (paper.risk.max_open_usd, paper.risk.max_open_entries) == (live.risk.max_open_usd, live.risk.max_open_entries)
+    assert live.risk.state_file not in ("", paper.risk.state_file) and live.journal_dir != paper.journal_dir
+    text = open(os.path.join(ROOT, "deploy", "pmbot-lock-15-early-live.service")).read()
+    assert "--config config/lock15_early_live.toml --live" in text and "CPUWeight=500" in text
+    assert "pmbot-lock-15-early-live" in ops.BOT_UNITS and notify.TWINS["pmbot-lock-15-early"] == "pmbot-lock-15-early-live"
+    for f in ("autoupdate.sh", "install_units.sh"):
+        assert " pmbot-lock-15-early-live " in open(os.path.join(ROOT, "deploy", f)).read(), f

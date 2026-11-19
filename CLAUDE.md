@@ -390,6 +390,18 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (`lock.zone = "early"`); this branch's parallel one (`lock.early_x_*`, sigma from 10 s Binance returns) was NOT merged.
   Kept: 1 s returns understate the minute-scale sigma (Binance BTC 0.85 vs 0.96 bp from 10 s returns; cf. Chainlink 14 %
   below Binance in report 81). Tools: `reports/80_tools`.
+- **`reports/82_all_paper_and_live_to_real_money.md` (19 Nov, owner: "проанализируй всю бумагу и тень, забери убыточные
+  стратегии, а те что плюсовые переводи на реальные деньги и еще давай увеличим реальные деньги, можешь использовать все что
+  на кошельке"; REAL MONEY)**: all settles (stopped bots from server-reports 17 Nov 11:02, the rest 19 Nov 09:00): only the 0.99
+  zone earns steadily (L99 live 18 / 0 / +$2.27 + its twin 17 / 0; 15m early paper 51 / 0 / +$4.74); the 0.88-0.95 bots are about
+  zero (L3 199 / 15 / +$1.82, L4 358 / 39 / +$0.01) or negative (LM3 -$31.49, 5m early paper 167 / 4 / -$24.51). Done: L99 live
+  (`lock_99_live.toml` + its stopped twin) 20 shares, limits $20 / one window / day stop $19 (one loss); NEW live unit
+  `pmbot-lock-15-early-live` = `config/lock15_early_live.toml` (the [lock] of its paper twin `lock15_early.toml`, a test checks it;
+  15 shares, max_open_entries 3, $45 open, day stop $25 = two losses, no auto-resume, not enabled at boot: /restart), the twin
+  mirrors its size and open limits (`notify.TWINS`). To switch off by the owner in Telegram: `pmbot-lock-live` (5m Ступени, -$13.40,
+  since 17 Nov a copy of L99: 5 of 6 windows the same) and `pmbot-lock-early` (5m early paper). 15m Ступени live unchanged (+$17).
+  At most $74 of $166 at once; every day stop together ~-$55. Review: 15m early live > 1 % lost over 100 entries -> paper; L99 a
+  second loss in its first 100 entries at 20 -> back to 10.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

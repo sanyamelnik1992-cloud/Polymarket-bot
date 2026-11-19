@@ -1,0 +1,38 @@
+# Early sniper on 15m windows — LIVE (REAL MONEY since 19 Nov, reports/82). Owner, 19 Nov: "проанализируй всю бумагу ... забери
+# убыточные стратегии, а те что плюсовые переводи на реальные деньги и еще давай увеличим реальные деньги, можешь использовать все
+# что на кошельке". The rule of its paper twin pmbot-lock-15-early (config/lock15_early.toml, a test keeps [lock] equal): paper
+# 17-19 Nov 51 entries / 0 lost / +$4.74; trades 1-16 Nov at this threshold 521 / 2 lost (reports/81). 15 shares (a loss ~-$14.9),
+# up to 3 windows at once ($45), the day stops after two losses and stays stopped until a human starts it (/restart).
+journal_dir = "data/journal-lock-15-early-live"
+
+[lock]
+duration = 900
+assets = ["btc", "eth", "sol", "xrp"]
+zone = "early"
+rel_lo = 0.0          # 300 s before the end (rel is measured from the anchor end - 300)
+rel_hi = 180.0        # 120 s before the end
+z_min = 4.0           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's, so 4 here ~ Binance z 3.5 (trades, 15m:
+                      # 1-8 Nov 325 entries / 2 lost, 9-16 Nov 196 / 0; the recorder never wrote 15m books). As the 5m bot (reports/81)
+z_agree = 3.5
+sigma_window_s = 3600.0
+min_sigma_s = 1800.0
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.95
+a_max = 0.99
+ask_lo = 0.985
+shares = 15           # = live twin pmbot-lock-15-early-live (reports/82)
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 15.0
+max_open_usd = 45.0
+max_open_entries = 3   # = live twin
+daily_loss_limit = 25.0      # two losses (~-$29.7) end the day
+state_file = "data/state/lock15_early_live.json"
+resume_next_day = false
+
+[execution]
+mode = "live"
+cl_feed = "both"
