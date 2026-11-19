@@ -1,24 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-early/20261117-124226
-mode: paper  duration: 2358.7 min  events: {'start': 1, 'lock_state': 7812, 'status': 4716, 'strike': 1413, 'fill': 146, 'lock_entry': 146, 'provisional': 146, 'lock_miss': 57, 'settle': 146}
+mode: paper  duration: 2417.7 min  events: {'start': 1, 'lock_state': 8077, 'status': 4834, 'strike': 1449, 'fill': 148, 'lock_entry': 148, 'provisional': 148, 'lock_miss': 59, 'settle': 148}
 
-lock orders: sent 203  filled 146  ask gone 57  errors 0
+lock orders: sent 207  filled 148  ask gone 59  errors 0
   signal -> exchange answer, ms: median 301  p90 305  max 341
   fill price minus the ask we saw, cents: mean -0.01  worst +0.5
   misses came 64-180 s before the end; model p 0.000-0.000
 
-fills: 146  shares: 1421  notional: $1406.36
+fills: 148  shares: 1441  notional: $1426.16
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       51   510.0   504.725       0.99  173.242
+btc       52   520.0   514.625       0.99  171.950
 sol       59   584.0   578.045       0.99  186.431
-xrp       36   327.0   323.590       0.99  197.772
+xrp       37   337.0   333.490       0.99  195.682
 
 settled windows:
        windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                                
-btc         51  505.089  -5.089         -5.089     0.0     0.980 -9.907  0.186 -0.010
+btc         52  514.996  -4.996         -4.996     0.0     0.981 -9.907  0.186 -0.010
 sol         59  578.456 -14.456        -14.456     0.0     0.966 -9.907  0.186 -0.025
-xrp         36  323.826  -6.826         -6.826     0.0     0.972 -9.907  0.186 -0.021
+xrp         37  333.732  -6.733         -6.733     0.0     0.973 -9.907  0.186 -0.020
 
-TOTAL pnl $-26.37 (ex-rebate $-26.37) on cost $1407.37 -> ROI -1.87%; windows 146, t-stat -1.33
+TOTAL pnl $-26.18 (ex-rebate $-26.18) on cost $1427.18 -> ROI -1.83%; windows 148, t-stat -1.32
 max drawdown $-34.82; hedged windows (both sides filled): 0
