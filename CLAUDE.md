@@ -414,6 +414,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   0.15, `fair_pmin/pmax` 0.05/0.95, FAK capped at fair - edge), units `pmbot-lock-fair` = `config/lock_fair.toml` (5m, 290-62 s
   before the end) and `pmbot-lock-15-fair` = `config/lock15_fair.toml` (15m, 840-62 s), 10 shares, one entry per window, not
   enabled at boot. Go-live proposal after 1-2 paper days with >= +10 % of the money: 5 shares, 4 windows, -$15 day stop.
+  Section 7-8 (19 Nov 16:00): first 5.3 h of paper, 5m 39 entries / 14 won (12.7 expected at the paid prices) / +$12.56 (+10 %),
+  41 of 59 orders filled; 15m 8 / -$5.03: too few. Owner "улучши его немного": `lock.fair_react_bp = 0.3` in every fair bot (a 0.3 bp
+  Binance move wakes the decision loop via `State.on_tick`, journal `sig_age_ms`) and the paper A/B `pmbot-lock-fair-fut` =
+  `config/lock_fair_fut.toml` (`lock.fair_feed = "futures"`: fair value, strike and sigma from Binance USD-M perpetual mids,
+  `feeds.binance_futures_feed` -> `State.fut_prices`, status `fut_age_ms`; if the server cannot reach fstream it makes no entries).
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

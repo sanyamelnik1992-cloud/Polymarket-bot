@@ -181,6 +181,7 @@ class State:
         self.on_tick = None        # optional callback(asset) after every Binance update (fast reaction)
         self.assets = list(assets)
         self.prices = {a: AssetPrices(halflife_s) for a in self.assets}
+        self.fut_prices = {a: AssetPrices(halflife_s) for a in self.assets}   # Binance USD-M futures mids (fair rule A/B)
         self.books = {}            # token -> Book
         self.windows = {}          # window key -> Window
         self.token_window = {}     # token -> Window

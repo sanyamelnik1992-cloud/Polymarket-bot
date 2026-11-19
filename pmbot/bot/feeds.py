@@ -5,7 +5,7 @@ import logging
 
 import websockets
 
-from ..config import BINANCE_SYMBOL, CHAINLINK_SYMBOL, WS_BINANCE, WS_CLOB_MARKET, WS_RTDS
+from ..config import BINANCE_SYMBOL, CHAINLINK_SYMBOL, WS_BINANCE, WS_BINANCE_FUT, WS_CLOB_MARKET, WS_RTDS
 from .state import State, now_ms
 
 log = logging.getLogger("pmbot.feeds")
@@ -204,3 +204,26 @@ async def binance_feed(st: State, alive=lambda: True):
         except Exception as e:  # noqa: BLE001
             log.warning("binance error %s %s", type(e).__name__, str(e)[:120])
             await asyncio.sleep(1)
+
+
+async def binance_futures_feed(st: State, alive=lambda: True, url=WS_BINANCE_FUT):
+    """Binance USD-M perpetual bookTicker mids into st.fut_prices (the fair rule's futures A/B, reports/83 section 8).
+    The spot feed is untouched; st.on_tick(asset) is called after every update like the spot feed does."""
+    streams = "/".join(f"{BINANCE_SYMBOL[a].lower()}@bookTicker" for a in st.assets)
+    rev = {BINANCE_SYMBOL[a]: a for a in st.assets}
+    while alive():
+        try:
+            async with websockets.connect(f"{url}?streams={streams}", open_timeout=15) as ws:
+                while alive():
+                    msg = await asyncio.wait_for(ws.recv(), timeout=30)
+                    rx = now_ms()
+                    d = json.loads(msg).get("data") or {}
+                    a = rev.get(d.get("s"))
+                    if a and d.get("b") and d.get("a"):
+                        st.feed_alive["binance_fut"] = rx
+                        st.fut_prices[a].on_binance((float(d["b"]) + float(d["a"])) / 2, rx)
+                        if st.on_tick is not None:
+                            st.on_tick(a)
+        except Exception as e:  # noqa: BLE001
+            log.warning("binance futures error %s %s", type(e).__name__, str(e)[:120])
+            await asyncio.sleep(2)

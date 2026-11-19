@@ -125,3 +125,45 @@ def test_fair_bot_takes_a_stale_ask_once_per_window(tmp_path):
     assert [c[0].split("-")[0] for c in br.calls] == ["btc"], br.calls      # eth: +1 bp, no edge; btc once per window
     assert br.calls[0][1] == "U" and br.calls[0][3] == 10 and br.calls[0][2] >= 0.62
     assert any(k == "bn_strike" for k, _ in bot.j.ev)
+
+
+def test_fair_variants_instant_reaction_and_futures_ab():
+    """reports/83 section 8 (owner 19 Nov: "улучши его немного"): every fair bot decides at once on a 0.3 bp Binance move;
+    pmbot-lock-fair-fut is pmbot-lock-fair with the signal from Binance USD-M perpetuals (an A/B, paper only)."""
+    import dataclasses
+    from pmbot import notify, ops
+    spot = load_lock_config(FAIR5)
+    fut = load_lock_config(os.path.join(ROOT, "config", "lock_fair_fut.toml"))
+    assert [k for k in dataclasses.asdict(spot.lock) if getattr(spot.lock, k) != getattr(fut.lock, k)] == ["fair_feed"]
+    assert spot.lock.fair_feed == "spot" and fut.lock.fair_feed == "futures" and fut.execution.mode == "paper"
+    assert spot.lock.fair_react_bp == fut.lock.fair_react_bp == load_lock_config(FAIR15).lock.fair_react_bp == 0.3
+    assert fut.journal_dir != spot.journal_dir and fut.risk.state_file != spot.risk.state_file
+    assert spot.risk == dataclasses.replace(fut.risk, state_file=spot.risk.state_file)
+    assert "pmbot-lock-fair-fut" in ops.BOT_UNITS and "pmbot-lock-fair-fut" in notify.BOTS
+    text = open(os.path.join(ROOT, "deploy", "pmbot-lock-fair-fut.service")).read()
+    assert "--config config/lock_fair_fut.toml" in text and "--live" not in text and "CPUWeight=20" in text
+    for bad in ({"lock": {"fair_feed": "coinbase"}}, {"lock": {"fair_react_bp": -1.0}}):
+        with pytest.raises(ValueError):
+            load_lock_config(FAIR5, overrides=bad)
+
+
+def test_fair_bot_wakes_on_a_binance_move_and_reads_the_futures_mids(tmp_path):
+    cfg = load_lock_config(os.path.join(ROOT, "config", "lock_fair_fut.toml"),
+                           overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
+    assert bot.fut and bot.st.on_tick == bot._on_tick and bot.sig_px("btc") is bot.st.fut_prices["btc"]
+    px = bot.st.fut_prices["btc"]
+    px.bn_hist.append((1000, 100.0))
+    bot._react_mid["btc"] = 100.0
+    bot._on_tick("btc")
+    assert not bot._wake.is_set()                      # no move since the last decision
+    px.bn_hist.append((1100, 100.0 * math.exp(0.2e-4)))
+    bot._on_tick("btc")
+    assert not bot._wake.is_set()                      # 0.2 bp < 0.3 bp
+    px.bn_hist.append((1200, 100.0 * math.exp(0.5e-4)))
+    bot._on_tick("btc")
+    assert bot._wake.is_set()                          # 0.5 bp: decide now
+    spot = load_lock_config(FAIR5, overrides={"risk": {"state_file": str(tmp_path / "t.json"), "kill_file": ""},
+                                              "lock": {"fair_react_bp": 0.0}})
+    b2 = LockBot(spot, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
+    assert b2._wake is None and b2.st.on_tick is None and b2.sig_px("btc") is b2.st.prices["btc"]

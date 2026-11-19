@@ -7,6 +7,7 @@ BINANCE_REST = "https://data-api.binance.vision/api/v3"  # public market-data mi
 WS_CLOB_MARKET = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
 WS_RTDS = "wss://ws-live-data.polymarket.com"  # legacy RTDS, still serves crypto_prices_chainlink without auth
 WS_BINANCE = "wss://data-stream.binance.vision/stream"
+WS_BINANCE_FUT = "wss://fstream.binance.com/stream"   # USD-M perpetuals (reports/83 section 8: may lead spot by tens of ms)
 
 ASSETS = ["btc", "eth", "sol", "xrp"]
 BINANCE_SYMBOL = {"btc": "BTCUSDT", "eth": "ETHUSDT", "sol": "SOLUSDT", "xrp": "XRPUSDT",

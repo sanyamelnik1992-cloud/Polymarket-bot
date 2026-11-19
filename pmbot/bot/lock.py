@@ -30,7 +30,7 @@ from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
 from ..lockmodel import (TW_LO, BlockSigma, ClSigma, HourSigma, Tables, close_from_prints, early_z, expected_dist_bp, lock_state, prob_up,
                          strike_from_prints)
-from .feeds import ClobFeed, binance_feed, polybolt_feed, rtds_feed
+from .feeds import ClobFeed, binance_feed, binance_futures_feed, polybolt_feed, rtds_feed
 from .paper import PaperBroker
 from .state import State, Window, now_ms
 
@@ -137,6 +137,11 @@ class LockCfg:
     fair_pmax: float = 0.95
     fair_sigma_s: float = 3600.0
     fair_min_sigma_s: float = 1800.0
+    fair_feed: str = "spot"              # "spot": Binance spot bookTicker; "futures": Binance USD-M perpetuals (the A/B of reports/83
+                                         # section 8: perpetuals are where price discovery happens first; strike and sigma then come from
+                                         # the futures mids too, so the spot / perp basis cancels)
+    fair_react_bp: float = 0.0           # > 0: decide at once when the signal mid of a coin moved this many bp since that coin's last
+                                         # decision (Binance tick -> decision without waiting up to tick_ms); 0 = only every tick_ms
 
 
 @dataclass
@@ -218,6 +223,8 @@ def load_lock_config(path=None, overrides=None):
             raise ValueError("lock.zone = 'fair': taker entries (1-3 per window), no tiers / insurance / big_shares")
         if e.mode == "live":
             raise ValueError("lock.zone = 'fair' is paper-only: real money only on the owner's word after the paper test (reports/83)")
+        if c.fair_feed not in ("spot", "futures") or not 0 <= c.fair_react_bp <= 5:
+            raise ValueError("lock.fair_feed must be 'spot' or 'futures', 0 <= fair_react_bp <= 5")
     if c.zone == "close" and not 238 <= c.rel_lo < c.rel_hi < 300:
         raise ValueError("lock: 238 <= rel_lo < rel_hi < 300 (the model is valid inside the closing TWAP window only)")
     if c.zone == "early":
@@ -626,6 +633,11 @@ class LockBot:
         self.fair = c.zone == "fair"
         self.bsig = {a: BlockSigma(c.fair_sigma_s) for a in c.assets} if self.fair else {}   # fair: Binance sigma (reports/83)
         self.bn_strikes = {}       # fair: window key -> Binance strike (mean of the mids of [T-62, T-3])
+        self.fut = self.fair and c.fair_feed == "futures"
+        self._wake = asyncio.Event() if self.fair and c.fair_react_bp > 0 else None    # fair: a Binance move wakes the loop
+        self._react_mid = {}       # fair: asset -> signal mid at that coin's last decision
+        if self._wake is not None:
+            self.st.on_tick = self._on_tick
         self.hsig = {a: HourSigma(c.sigma_window_s) for a in c.assets}     # early: one-hour sigma (reports/81)
         self.maker = c.entry == "maker"
         # reports/64: the insurance reads the same model as the entries, without the entry filters (any p from hedge_p)
@@ -844,12 +856,23 @@ class LockBot:
                 log.warning("warm ping: %s", e)
             await asyncio.sleep(period_s)
 
+    def sig_px(self, asset):
+        """fair: the price store the rule reads (spot or futures mids)."""
+        return self.st.fut_prices[asset] if self.fut else self.st.prices[asset]
+
+    def _on_tick(self, asset):
+        """fair (fair_react_bp > 0): wake the decision loop when the signal mid moved enough since the coin's last decision."""
+        mid = self.sig_px(asset).bn_mid()
+        ref = self._react_mid.get(asset)
+        if mid and (ref is None or abs(math.log(mid / ref)) * 1e4 >= self.cfg.lock.fair_react_bp):
+            self._wake.set()
+
     def bn_strike(self, key, asset, T):
         """fair (reports/83): the Binance strike of a window = mean of the per-second Binance mids of [T-62, T-3] (the same
         seconds as the Chainlink strike), forward-filled; None while fewer than 50 of the 60 seconds were seen."""
         K = self.bn_strikes.get(key)
         if K is None:
-            mids = self.st.prices[asset].bn_sec_mid
+            mids = self.sig_px(asset).bn_sec_mid
             xs, last, seen = [], None, 0
             for s in range(T - 70, T - 2):
                 v = mids.get(s)
@@ -902,7 +925,7 @@ class LockBot:
         if self.bsig:                                   # fair: one Binance mid per completed second
             now_sec = now_ms() // 1000
             for a, o in self.bsig.items():
-                px = self.st.prices[a]
+                px = self.sig_px(a)
                 s0 = o.last_sec + 1 if o.last_sec is not None else now_sec - 5
                 for s in range(max(s0, now_sec - 4000), now_sec - 1):
                     v = px.bn_sec_mid.get(s)
@@ -969,7 +992,16 @@ class LockBot:
             took = int((time.time() - t0) * 1000)
             if took > self.stats["decide_max_ms"]:
                 self.stats["decide_max_ms"] = took
-            await asyncio.sleep(max(0.0, c.tick_ms / 1000 - (time.time() - t0)))
+            delay = max(0.0, c.tick_ms / 1000 - (time.time() - t0))
+            if self._wake is None:
+                await asyncio.sleep(delay)
+            else:                          # fair: a Binance move wakes the loop at once (reports/83 section 8)
+                try:
+                    await asyncio.wait_for(self._wake.wait(), timeout=delay)
+                    self.stats["woken"] = self.stats.get("woken", 0) + 1
+                except asyncio.TimeoutError:
+                    pass
+                self._wake.clear()
 
     async def lag_loop(self, period_s=0.05):
         """Event-loop lag (a busy or starved process sees the market late): max per status interval, and how many
@@ -1012,9 +1044,16 @@ class LockBot:
             bn_now = px.bn_mid()
             bn_at_last = px.bn_mid_at(cl[1] + 999) if cl else None
             if self.fair:                  # reports/83: the book lags Binance; buy an ask >= fair_edge below the Binance fair value
-                sig, ctx = decide_fair(c, Tc, self.bn_strike(key, w.asset, w.start), now, bn_now,
+                spx = self.sig_px(w.asset)
+                s_now = spx.bn_mid()
+                if self.fut and now - self.st.feed_alive.get("binance_fut", 0) > c.bn_max_age_ms:
+                    s_now = None                                   # a stale futures feed is no signal
+                self._react_mid[w.asset] = s_now
+                sig, ctx = decide_fair(c, Tc, self.bn_strike(key, w.asset, w.start), now, s_now,
                                        self.bsig[w.asset].sigma(c.fair_min_sigma_s),
                                        self._book_ask(w.token_up), self._book_ask(w.token_down))
+                if spx.bn_hist:
+                    ctx["sig_age_ms"] = now - spx.bn_hist[-1][0]          # how old the signal tick was at the decision
             elif self.early:               # reports/81: before the closing TWAP, one-hour sigma, asks 0.985-0.99 only
                 sig, ctx = decide_early(c, Tc, K, now, cl, self.hsig[w.asset].sigma(c.min_sigma_s), bn_now, bn_at_last,
                                         px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
@@ -1342,6 +1381,8 @@ class LockBot:
                 sg = {a: round((o.sigma(self.cfg.lock.min_sigma_s) or 0) * 1e4, 3) for a, o in self.hsig.items()}
             if self.fair:                  # the Binance sigma of the fair rule (10 s returns, one hour)
                 sg = {a: round((o.sigma(self.cfg.lock.fair_min_sigma_s) or 0) * 1e4, 3) for a, o in self.bsig.items()}
+            if self.fut:                   # is the futures feed alive (the server may not reach fstream)?
+                self.stats["fut_age_ms"] = now_ms() - self.st.feed_alive.get("binance_fut", 0)
             if self._cl_lags:
                 xs = sorted(self._cl_lags)
                 self.stats["cl_lag_ms"] = xs[len(xs) // 2]
@@ -1364,6 +1405,7 @@ class LockBot:
             [polybolt_feed(self.st, self.alive)] if feed in ("polybolt", "both") else [])
         tasks = [asyncio.create_task(x) for x in (
             self.discover_loop(), *cl_feeds, binance_feed(self.st, self.alive),
+            *([binance_futures_feed(self.st, self.alive)] if self.fut else []),
             self.decide_loop(), self.status_loop(), self.strike_check_loop(), self.lag_loop(),
             self.warm_loop())]
         tasks += [asyncio.create_task(f.run()) for f in self.feeds.values()]

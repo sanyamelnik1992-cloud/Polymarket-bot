@@ -20,6 +20,7 @@ fair_pmin = 0.05
 fair_pmax = 0.95
 fair_sigma_s = 3600.0
 fair_min_sigma_s = 1800.0
+fair_react_bp = 0.3     # decide at once on a 0.3 bp Binance move, not up to 50 ms later (reports/83 section 8)
 shares = 10
 max_entries_per_window = 1
 
