@@ -28,7 +28,7 @@ from dataclasses import asdict, dataclass, field, fields, replace
 
 from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
-from ..lockmodel import (TW_LO, ClSigma, HourSigma, Tables, close_from_prints, early_z, expected_dist_bp, lock_state, prob_up,
+from ..lockmodel import (TW_LO, BlockSigma, ClSigma, HourSigma, Tables, close_from_prints, early_z, expected_dist_bp, lock_state, prob_up,
                          strike_from_prints)
 from .feeds import ClobFeed, binance_feed, polybolt_feed, rtds_feed
 from .paper import PaperBroker
@@ -127,6 +127,16 @@ class LockCfg:
                                          # 223 / 5, 0.97 -> 77 / 5, reports/80)
     sigma_window_s: float = 3600.0       # early: sigma = rms of the 1 s Chainlink returns of the last hour (HourSigma)
     min_sigma_s: float = 1800.0          # early: seconds of returns before that sigma is trusted (restored from the state file)
+    # "fair" (reports/83, paper): the book lags Binance. Fair value of a side = Phi(z) with z = ln(S_bn / K_bn) / (sigma_bn *
+    # sqrt(tau0 + 19.5)), S_bn = Binance mid now, K_bn = mean of the Binance mids of [T-62, T-3], sigma_bn = rms of 10 s Binance
+    # returns over the last hour per 1 s (BlockSigma); buy the side whose ask is >= fair_edge below its fair value, FAK capped at
+    # fair - fair_edge, held to resolution. All taker buys of 9-16 Nov (5m, Binance taken 2 s BEFORE the trade): the book >= 15 c
+    # below fair -> +36 % of the money at resolution, 8 of 8 days positive, 4 409 different wallets took those asks.
+    fair_edge: float = 0.15
+    fair_pmin: float = 0.05
+    fair_pmax: float = 0.95
+    fair_sigma_s: float = 3600.0
+    fair_min_sigma_s: float = 1800.0
 
 
 @dataclass
@@ -195,8 +205,19 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock: 0.5 < agree <= theta < 1")
     if not 0 < c.a_min < c.a_max < 1:
         raise ValueError("lock: 0 < a_min < a_max < 1")
-    if c.zone not in ("close", "early"):
-        raise ValueError("lock.zone must be 'close' or 'early'")
+    if c.zone not in ("close", "early", "fair"):
+        raise ValueError("lock.zone must be 'close', 'early' or 'fair'")
+    if c.zone == "fair":
+        if not -600 <= c.rel_lo < c.rel_hi <= 238:
+            raise ValueError("lock.zone = 'fair': -600 <= rel_lo < rel_hi <= 238 (decisions end when the closing TWAP starts)")
+        if not (0.02 <= c.fair_edge <= 0.5 and 0 < c.fair_pmin < c.fair_pmax < 1
+                and 600 <= c.fair_min_sigma_s <= c.fair_sigma_s <= 7200):
+            raise ValueError("lock.zone = 'fair': 0.02 <= fair_edge <= 0.5, 0 < fair_pmin < fair_pmax < 1, "
+                             "600 <= fair_min_sigma_s <= fair_sigma_s <= 7200")
+        if c.tiers or c.hedge_p or c.big_shares or c.entry != "taker" or not 1 <= c.max_entries_per_window <= 3:
+            raise ValueError("lock.zone = 'fair': taker entries (1-3 per window), no tiers / insurance / big_shares")
+        if e.mode == "live":
+            raise ValueError("lock.zone = 'fair' is paper-only: real money only on the owner's word after the paper test (reports/83)")
     if c.zone == "close" and not 238 <= c.rel_lo < c.rel_hi < 300:
         raise ValueError("lock: 238 <= rel_lo < rel_hi < 300 (the model is valid inside the closing TWAP window only)")
     if c.zone == "early":
@@ -460,6 +481,45 @@ def decide_early(c: LockCfg, T, K, now_ms_, cl_last, sigma, bn_now, bn_at_last, 
     return {"side": "U" if up else "D", "limit": c.a_max, "ask": a, "p": round(p, 6), "z": round(sgn * z, 3)}, ctx
 
 
+def decide_fair(c: LockCfg, T, K_bn, now_ms_, bn_now, sigma, ask_up, ask_dn):
+    """lock.zone = "fair" (reports/83): buy the side whose best ask is >= fair_edge below its Binance fair value.
+    T = the anchor (end - 300), K_bn = Binance strike (mean of the mids of [T0-62, T0-3]), sigma = BlockSigma (1 s, log units),
+    ask_* = (price, size) or None. Returns (signal or None, ctx); signal = dict(side, limit, ask, p, edge)."""
+    now_s = now_ms_ / 1000.0
+    rel = now_s - T
+    ctx = {"rel": round(rel, 2), "fair": True}
+    if not (c.rel_lo <= rel <= c.rel_hi):
+        return None, {**ctx, "why": "time"}
+    if not K_bn:
+        return None, {**ctx, "why": "no_strike"}
+    if not sigma:
+        return None, {**ctx, "why": "no_sigma"}
+    if not bn_now:
+        return None, {**ctx, "why": "no_binance"}
+    tau0 = (T + TW_LO) - now_s
+    z = early_z(bn_now, K_bn, sigma, tau0)
+    pu = 0.5 * math.erfc(-z / math.sqrt(2))
+    best = None
+    for side, p, ask in (("U", pu, ask_up), ("D", 1.0 - pu, ask_dn)):
+        if ask and (best is None or p - ask[0] > best[1] - best[2][0]):
+            best = (side, p, ask)
+    ctx.update(z=round(z, 3), lead_bp=round(math.log(bn_now / K_bn) * 1e4, 3), tau0=round(tau0, 1), sigma_bp=round(sigma * 1e4, 4),
+               p_up=round(pu, 4))
+    if best is None:
+        return None, {**ctx, "why": "no_ask"}
+    side, p, ask = best
+    edge = p - ask[0]
+    limit = math.floor((p - c.fair_edge) * 100 + 1e-9) / 100          # never pay more than fair - fair_edge (0.01 grid)
+    ctx.update(side=side, p=round(p, 4), ask=ask[0], ask_sz=ask[1], edge=round(edge, 4), limit=limit)
+    if edge < c.fair_edge:
+        return None, {**ctx, "why": "edge"}
+    if not c.fair_pmin <= ask[0] <= c.fair_pmax:
+        return None, {**ctx, "why": "price"}
+    if limit < ask[0] - 1e-9:
+        return None, {**ctx, "why": "edge"}
+    return {"side": side, "limit": limit, "ask": ask[0], "p": round(p, 6), "edge": round(edge, 4)}, ctx
+
+
 def maker_bid(c: LockCfg, p, best_ask):
     """Maker price for the decided side: p - min_edge (a maker pays no taker fee), capped at a_max and one cent under
     the best ask (post-only), on the 0.01 grid (valid at tick 0.01 and 0.001). None below a_min.
@@ -563,6 +623,9 @@ class LockBot:
         self.tables = tables or Tables(c.tables)
         self.sig = {a: ClSigma() for a in c.assets}
         self.early = c.zone == "early"
+        self.fair = c.zone == "fair"
+        self.bsig = {a: BlockSigma(c.fair_sigma_s) for a in c.assets} if self.fair else {}   # fair: Binance sigma (reports/83)
+        self.bn_strikes = {}       # fair: window key -> Binance strike (mean of the mids of [T-62, T-3])
         self.hsig = {a: HourSigma(c.sigma_window_s) for a in c.assets}     # early: one-hour sigma (reports/81)
         self.maker = c.entry == "maker"
         # reports/64: the insurance reads the same model as the entries, without the entry filters (any p from hedge_p)
@@ -781,6 +844,26 @@ class LockBot:
                 log.warning("warm ping: %s", e)
             await asyncio.sleep(period_s)
 
+    def bn_strike(self, key, asset, T):
+        """fair (reports/83): the Binance strike of a window = mean of the per-second Binance mids of [T-62, T-3] (the same
+        seconds as the Chainlink strike), forward-filled; None while fewer than 50 of the 60 seconds were seen."""
+        K = self.bn_strikes.get(key)
+        if K is None:
+            mids = self.st.prices[asset].bn_sec_mid
+            xs, last, seen = [], None, 0
+            for s in range(T - 70, T - 2):
+                v = mids.get(s)
+                if v is not None:
+                    last = v
+                    if s >= T - 62:
+                        seen += 1
+                if s >= T - 62 and last is not None:
+                    xs.append(last)
+            if seen >= 50 and len(xs) == 60:
+                K = self.bn_strikes[key] = sum(xs) / 60.0
+                self.j.log("bn_strike", key=key, K=K)
+        return K
+
     def strike(self, key, asset, T):
         K = self.strikes.get(key)
         if K is None:
@@ -816,6 +899,15 @@ class LockBot:
 
     # ---------------------------------------------------------------- decisions
     def _update_sigma(self):
+        if self.bsig:                                   # fair: one Binance mid per completed second
+            now_sec = now_ms() // 1000
+            for a, o in self.bsig.items():
+                px = self.st.prices[a]
+                s0 = o.last_sec + 1 if o.last_sec is not None else now_sec - 5
+                for s in range(max(s0, now_sec - 4000), now_sec - 1):
+                    v = px.bn_sec_mid.get(s)
+                    if v is not None:
+                        o.on_second(s, v)
         for a in self.cfg.lock.assets:
             px = self.st.prices[a]
             if not px.cl_last:
@@ -919,7 +1011,11 @@ class LockBot:
             cl = px.cl_last
             bn_now = px.bn_mid()
             bn_at_last = px.bn_mid_at(cl[1] + 999) if cl else None
-            if self.early:                 # reports/81: before the closing TWAP, one-hour sigma, asks 0.985-0.99 only
+            if self.fair:                  # reports/83: the book lags Binance; buy an ask >= fair_edge below the Binance fair value
+                sig, ctx = decide_fair(c, Tc, self.bn_strike(key, w.asset, w.start), now, bn_now,
+                                       self.bsig[w.asset].sigma(c.fair_min_sigma_s),
+                                       self._book_ask(w.token_up), self._book_ask(w.token_down))
+            elif self.early:               # reports/81: before the closing TWAP, one-hour sigma, asks 0.985-0.99 only
                 sig, ctx = decide_early(c, Tc, K, now, cl, self.hsig[w.asset].sigma(c.min_sigma_s), bn_now, bn_at_last,
                                         px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
                                         self._book_ask(w.token_up), self._book_ask(w.token_down),
@@ -1244,6 +1340,8 @@ class LockBot:
             sg = {a: round((o.sigma() or 0) * 1e4, 3) for a, o in self.sig.items()}
             if self.early:                 # the sigma the early rule uses (one hour), None until min_sigma_s of returns
                 sg = {a: round((o.sigma(self.cfg.lock.min_sigma_s) or 0) * 1e4, 3) for a, o in self.hsig.items()}
+            if self.fair:                  # the Binance sigma of the fair rule (10 s returns, one hour)
+                sg = {a: round((o.sigma(self.cfg.lock.fair_min_sigma_s) or 0) * 1e4, 3) for a, o in self.bsig.items()}
             if self._cl_lags:
                 xs = sorted(self._cl_lags)
                 self.stats["cl_lag_ms"] = xs[len(xs) // 2]

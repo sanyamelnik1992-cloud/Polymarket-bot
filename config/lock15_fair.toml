@@ -1,0 +1,37 @@
+# Перехватчик ("fair value" taker) on 15m windows — PAPER (reports/83; owner 19 Nov: "подумай как можно улучшить результат,
+# проанализируй других игроков"). The Polymarket book lags Binance: when Binance moves, asks priced off slower feeds stay for
+# seconds. All 3.9 M public taker trades of 9-16 Nov valued at resolution, with the Binance fair value taken 2 s BEFORE each trade:
+# buys >= 15 c below fair earned +40 % of the money (15m, one entry per window: 68 windows a day, 8 of 8 days positive; 5m: +36 %,
+# 308 a day), and on 5m 4 409 different wallets took such asks (top 5 = 12 % of the money).
+# Rule: fair value of a side = Phi(ln(S_bn / K_bn) / (sigma_bn * sqrt(tau0 + 19.5))) (S_bn = Binance mid now, K_bn = mean of the
+# Binance mids of [T-62, T-3], sigma_bn = rms of 10 s Binance returns of the last hour per 1 s, tau0 = seconds to the closing TWAP);
+# buy the side whose best ask is >= 0.15 below its fair value, FAK capped at fair - 0.15, asks 0.05-0.95, 840-62 s before the end,
+# one entry per window, held to resolution. Paper measures what a bot with our ~0.5 s reaction actually gets from the live book.
+journal_dir = "data/journal-lock-15-fair"
+
+[lock]
+duration = 900
+assets = ["btc", "eth", "sol", "xrp"]
+zone = "fair"
+rel_lo = -540.0        # 840 s before the end (rel is measured from the anchor end - 300)
+rel_hi = 238.0         # 62 s before the end: the closing TWAP starts here
+fair_edge = 0.15
+fair_pmin = 0.05
+fair_pmax = 0.95
+fair_sigma_s = 3600.0
+fair_min_sigma_s = 1800.0
+shares = 10
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 10.0
+max_open_usd = 80.0
+max_open_entries = 8
+daily_loss_limit = 200.0   # paper: see the whole day
+state_file = "data/state/lock15_fair_paper.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_exec_ms = 300
+cl_feed = "both"

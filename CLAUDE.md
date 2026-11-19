@@ -402,6 +402,18 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   since 17 Nov a copy of L99: 5 of 6 windows the same) and `pmbot-lock-early` (5m early paper). 15m Ступени live unchanged (+$17).
   At most $74 of $166 at once; every day stop together ~-$55. Review: 15m early live > 1 % lost over 100 entries -> paper; L99 a
   second loss in its first 100 entries at 20 -> back to 10.
+- **`reports/83_players_and_fair_value_taker.md` (19 Nov, owner: "подумай как можно улучшить результат, проанализируй других
+  игроков ... может для нас найдем что то")**: all 3.9 M public taker trades of 13 056 crypto Up/Down windows (9-16 Nov) valued at
+  resolution: takers lose 1.5 % of $62.6 M; the best wallets buy MID-window at 0.2-0.8. KEY FACT: the book lags Binance. Fair value
+  of a side = Phi(ln(S_bn / K_bn) / (sigma_bn * sqrt(tau0 + 19.5))) (K_bn = mean Binance mid of [T-62, T-3], sigma = 10 s Binance
+  returns over 1 h per 1 s); with Binance taken 2 s BEFORE the trade, 5m buys >= 10 c below fair earned +12 % ($1.1 M), >= 20 c
+  +32 %; every day / coin / price band positive; the edge fades by 5 s. 4 409 wallets took those asks (top 5 = 12 %), median 10
+  shares, episodes 1 s (half) to 38 s+ (quarter). Replay "first such buy per window" (an upper bound: we would have to be first):
+  5m TH 0.15 lag 2 s 308 a day, 49.6 % won at 0.354, +36 % of the money, 8 / 8 days; 15m +40 %; hourly small. Built, PAPER only
+  (the loader refuses live): `lock.zone = "fair"` (`decide_fair`, `LockBot.bn_strike`, `lockmodel.BlockSigma`, `fair_edge`
+  0.15, `fair_pmin/pmax` 0.05/0.95, FAK capped at fair - edge), units `pmbot-lock-fair` = `config/lock_fair.toml` (5m, 290-62 s
+  before the end) and `pmbot-lock-15-fair` = `config/lock15_fair.toml` (15m, 840-62 s), 10 shares, one entry per window, not
+  enabled at boot. Go-live proposal after 1-2 paper days with >= +10 % of the money: 5 shares, 4 windows, -$15 day stop.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
