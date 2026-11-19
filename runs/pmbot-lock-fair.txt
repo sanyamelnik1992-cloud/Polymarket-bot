@@ -1,20 +1,20 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261119-175810
-mode: paper  duration: 123.2 min  events: {'start': 1, 'lock_state': 108, 'status': 246, 'strike': 100, 'bn_strike': 100, 'lock_miss': 8, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 1}
+mode: paper  duration: 183.2 min  events: {'start': 1, 'lock_state': 160, 'status': 366, 'strike': 148, 'bn_strike': 148, 'lock_miss': 12, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 5}
 
-lock orders: sent 10  filled 2  ask gone 8  errors 0
-  signal -> exchange answer, ms: median 307  p90 366  max 366
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 62-260 s before the end; model p 0.223-0.840
+lock orders: sent 17  filled 5  ask gone 12  errors 0
+  signal -> exchange answer, ms: median 316  p90 413  max 415
+  fill price minus the ask we saw, cents: mean +1.10  worst +5.5
+  misses came 62-283 s before the end; model p 0.223-0.961
 
-fills: 2  shares: 2  notional: $0.57
+fills: 5  shares: 27  notional: $10.71
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        2    1.56      0.57      0.395   115.22
+btc        5   26.55    10.712      0.441  101.236
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best  roi
-asset                                                                           
-btc          1  0.304 -0.304         -0.304     0.0       0.0 -0.304 -0.304 -1.0
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+btc          5  11.079  4.471          4.471     0.0       0.6  -2.32  5.883  0.404
 
-TOTAL pnl $-0.30 (ex-rebate $-0.30) on cost $0.30 -> ROI -100.00%; windows 1, t-stat +nan
-max drawdown $0.00; hedged windows (both sides filled): 0
+TOTAL pnl $+4.47 (ex-rebate $+4.47) on cost $11.08 -> ROI +40.35%; windows 5, t-stat +0.66
+max drawdown $-2.32; hedged windows (both sides filled): 0
