@@ -434,7 +434,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `scripts/weather_extract.py` (run by `deploy/push_reports.sh` every 3 hours, nice 19, never fails the report) writes one
   compact table per event date into server-reports `weather/extract-DATE.csv.gz` (event x decision time 36..2 h before the end
   of the local day x bucket: last book bid/ask before it, each model's max of the local day from the latest forecast fetched
-  before it, routine-METAR max so far, the winner); a date file is rewritten only when it changes. Analysis: report 84.
+  before it, routine-METAR max so far, the winner); a date file is rewritten only when it changes. Report 84 (19 Nov, first look,
+  ~110 events of 16-19 Nov, 48 cities): the market beats a plain model (mean of the 3 models' day max + leave-one-date-out
+  normal error, floor = observed max) at EVERY horizon (log loss 24 h: 1.70 vs 1.21; 12 h: 1.32 vs 0.77; 6 h: 0.63 vs 0.035),
+  trading its disagreements loses 11-33 %; forecast error of the day max +0.6 C mean, 1.2-1.6 C sd a day ahead. Next: record to
+  23 Nov, model v1 (station bias, the forecast's remaining hours, time of day, model spread); close weather if it does not beat
+  the market on 300 events. Tool: `reports/84_tools/wx_check.py`.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
