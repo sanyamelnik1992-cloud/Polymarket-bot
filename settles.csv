@@ -487,3 +487,6 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-19 04:05:16,pmbot-lock-15-early,paper,sol-1795059900,Up,10.0,0,9.9069,10.0,0.0,0.0931
 2026-11-19 04:10:39,pmbot-lock-early,paper,btc-1795060800,Up,10.0,0,9.9069,10.0,0.0,0.0931
 2026-11-19 04:10:39,pmbot-lock-early,paper,xrp-1795060800,Up,10.0,0,9.9069,10.0,0.0,0.0931
+2026-11-19 05:14:50,pmbot-lock-early,paper,sol-1795064700,Up,10.0,0,9.9069,10.0,0.0,0.0931
+2026-11-19 05:35:14,pmbot-lock-15-live,live,btc-1795065300,Down,0,2.0222,1.8327,2.0222,0.0,0.1895
+2026-11-19 06:00:12,pmbot-lock-early,paper,sol-1795067400,Up,10.0,0,9.9069,10.0,0.0,0.0931
