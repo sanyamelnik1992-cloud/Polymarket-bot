@@ -430,6 +430,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   unit `pmbot-weather-rec` (`ops.WEATHER_UNITS`, not enabled at boot, /restart pmbot-weather-rec): METAR + books every 10 min,
   ECMWF/GFS/ICON forecasts (Open-Meteo) hourly, events on change -> `data/weather/DATE/*.jsonl.gz`; stations
   `config/weather_stations.json`. Next: model v1 after ~7 days; go on only if its log loss beats the market on >= 300 events.
+  19 Nov (owner: "что там с тестом по погоде, уже можно что-то увидеть?"): the recorder's files stay on the server, so
+  `scripts/weather_extract.py` (run by `deploy/push_reports.sh` every 3 hours, nice 19, never fails the report) writes one
+  compact table per event date into server-reports `weather/extract-DATE.csv.gz` (event x decision time 36..2 h before the end
+  of the local day x bucket: last book bid/ask before it, each model's max of the local day from the latest forecast fetched
+  before it, routine-METAR max so far, the winner); a date file is rewritten only when it changes. Analysis: report 84.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);

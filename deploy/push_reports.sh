@@ -22,6 +22,11 @@ if [ ! -d "$WT/.git" ] && [ ! -f "$WT/.git" ]; then
 fi
 
 "$REPO/.venv/bin/python" scripts/server_report.py "$WT"
+# reports/84: a compact weather table (events x decision times x buckets: books, forecasts, METAR max, winner) every 3 hours,
+# so the recorder's data can be analysed off the server. Never fails the report.
+if [ $(( 10#$(date -u +%H) % 3 )) -eq 0 ] && [ -d data/weather ]; then
+  nice -n 19 "$REPO/.venv/bin/python" scripts/weather_extract.py data/weather "$WT/weather" >/dev/null 2>&1 || true
+fi
 cd "$WT"
 git add -A
 if git diff --cached --quiet; then exit 0; fi

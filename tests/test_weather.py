@@ -133,3 +133,50 @@ def test_weather_rec_note_counts_todays_files(tmp_path, monkeypatch):
     (d / "books.jsonl.gz").write_bytes(b"x" * 1_700_000)
     assert ops.weather_rec_note(now) == "сегодня 3.2 МБ"
     assert os.path.isdir(tmp_path / "data" / "weather")
+
+
+def test_weather_extract_builds_one_row_per_event_time_bucket(tmp_path):
+    """reports/84: the compact table the server pushes every 3 hours (scripts/weather_extract.py)."""
+    import calendar
+    import csv
+    import importlib.util
+    import os
+    root = os.path.join(os.path.dirname(__file__), "..")
+    spec = importlib.util.spec_from_file_location("wx_extract", os.path.join(root, "scripts", "weather_extract.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    d = tmp_path / "src" / "2026-11-17"
+    d.mkdir(parents=True)
+    end = calendar.timegm((2026, 11, 18, 0, 0, 0))                     # London: local midnight = UTC midnight in November
+    ev = dict(slug="highest-temperature-in-london-on-november-17-2026", city="london", date="2026-11-17", station="EGLC",
+              unit="C", closed=True, markets=[dict(label="9°C or below", lo=None, hi=9, yes="t1", won=False),
+                                              dict(label="10°C", lo=10, hi=10, yes="t2", won=True),
+                                              dict(label="11°C or higher", lo=11, hi=None, yes="t3", won=False)])
+    def put(name, rows):
+        with gzip.open(d / f"{name}.jsonl.gz", "wt") as f:
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
+            f.write('{"half-written')                                    # the recorder may be appending
+    put("events", [dict(t=end - 90000, **ev)])
+    put("books", [dict(t=end - 12 * 3600 - 600, slug=ev["slug"], label="10°C", bid=0.40, ask=0.44, bid_sz=50, ask_sz=30),
+                  dict(t=end - 12 * 3600 + 60, slug=ev["slug"], label="10°C", bid=0.70, ask=0.75, bid_sz=5, ask_sz=5)])
+    hours = [f"2026-11-17T{h:02d}:00" for h in range(24)] + [f"2026-11-18T{h:02d}:00" for h in range(24)]
+    temps = [8.0] * 14 + [10.4] + [8.0] * 9 + [12.0] * 24
+    put("forecasts", [dict(t=end - 13 * 3600, station="EGLC", tz="Europe/London", time=hours,
+                           temps={"ecmwf_ifs025": temps, "gfs_seamless": [t - 1 for t in temps], "icon_seamless": temps})])
+    put("metar", [dict(t=end - 14 * 3600, station="EGLC", line="METAR EGLC 170950Z 22010KT 9999 SCT030 09/05 Q1012 RMK T00870052"),
+                  dict(t=end - 13 * 3600, station="EGLC", line="SPECI EGLC 171040Z 22010KT 9999 SCT030 11/05 Q1012"),
+                  dict(t=end - 3 * 3600, station="EGLC", line="METAR EGLC 172050Z 22010KT 9999 SCT030 10/05 Q1012 RMK T01040052")])
+    got = mod.extract(str(tmp_path / "src"), str(tmp_path / "out"), now=end + 3600)
+    assert got == {"2026-11-17": len(mod.H_BEFORE) * 3}
+    rows = list(csv.DictReader(gzip.open(tmp_path / "out" / "extract-2026-11-17.csv.gz", "rt")))
+    r12 = [r for r in rows if r["h"] == "12" and r["label"] == "10°C"][0]
+    assert (r12["bid"], r12["ask"]) == ("0.4", "0.44")                  # the snapshot before the decision time, not after
+    assert float(r12["fc_ecmwf_ifs025"]) == 10.4 and float(r12["fc_gfs_seamless"]) == 9.4   # max of the local day only
+    assert float(r12["obs_c"]) == 8.7 and r12["n_obs"] == "1"            # the SPECI does not count; later METARs unseen
+    assert r12["won"] == "1" and [r["won"] for r in rows if r["h"] == "12"] == ["0", "1", "0"]
+    r2 = [r for r in rows if r["h"] == "2" and r["label"] == "10°C"][0]
+    assert float(r2["obs_c"]) == 10.4 and r2["n_obs"] == "2"
+    mtime = os.path.getmtime(tmp_path / "out" / "extract-2026-11-17.csv.gz")
+    mod.extract(str(tmp_path / "src"), str(tmp_path / "out"), now=end + 3600)
+    assert os.path.getmtime(tmp_path / "out" / "extract-2026-11-17.csv.gz") == mtime     # unchanged -> not rewritten
