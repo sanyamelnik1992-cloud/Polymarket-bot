@@ -1,26 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261119-101233
-mode: paper  duration: 408.6 min  events: {'start': 1, 'lock_state': 340, 'status': 817, 'strike': 328, 'bn_strike': 328, 'fill': 41, 'lock_entry': 41, 'lock_miss': 21, 'provisional': 41, 'settle': 41}
-
-lock orders: sent 62  filled 41  ask gone 21  errors 0
-  signal -> exchange answer, ms: median 301  p90 313  max 370
-  fill price minus the ask we saw, cents: mean -0.66  worst +2.0
-  misses came 64-247 s before the end; model p 0.347-0.937
-
-fills: 41  shares: 400  notional: $123.64
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-btc       13  129.99    42.545      0.327  143.655
-eth        9   90.00    27.200      0.302  220.980
-sol        9   85.00    29.950      0.353  220.818
-xrp       10   95.00    23.950      0.267  198.720
-
-settled windows:
-       windows    cost     pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                               
-btc         13  44.192  -4.192         -4.192     0.0     0.308 -7.050  8.937 -0.095
-eth          9  28.332   1.668          1.668     0.0     0.333 -4.168  7.784  0.059
-sol          9  31.126  -1.126         -1.126     0.0     0.333 -6.757  7.784 -0.036
-xrp         10  24.964  10.036         10.036     0.0     0.400 -6.266  8.832  0.402
-
-TOTAL pnl $+6.39 (ex-rebate $+6.39) on cost $128.61 -> ROI +4.97%; windows 41, t-stat +0.21
-max drawdown $-32.82; hedged windows (both sides filled): 0
+run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261119-175810
+mode: paper  duration: 4.1 min  events: {'start': 1, 'lock_state': 8, 'status': 8, 'strike': 4, 'bn_strike': 4}
+no fills
