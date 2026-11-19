@@ -1,17 +1,17 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261119-101048
-mode: live  duration: 351.1 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 96, 'lock_state': 898, 'status': 702, 'strike': 92, 'order_filled': 9, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 9, 'order_rejected': 12, 'lock_miss': 12}
+mode: live  duration: 410.2 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 112, 'lock_state': 1189, 'status': 820, 'strike': 108, 'order_filled': 10, 'fill': 10, 'lock_entry': 10, 'provisional': 10, 'settle': 9, 'order_rejected': 12, 'lock_miss': 12}
 
-lock orders: sent 21  filled 9  ask gone 12  errors 0
-  signal -> exchange answer, ms: median 238  p90 296  max 407
-  market prewarm (2 lookups + signing), ms: median 149  max 264  n 96
-  fill price minus the ask we saw, cents: mean +0.04  worst +0.2
+lock orders: sent 22  filled 10  ask gone 12  errors 0
+  signal -> exchange answer, ms: median 238  p90 315  max 407
+  market prewarm (2 lookups + signing), ms: median 148  max 623  n 112
+  fill price minus the ask we saw, cents: mean +0.03  worst +0.2
   misses came 121-265 s before the end; model p 0.000-0.000
   exchange rejections by code: {'fak_not_filled': 12}
 
-fills: 9  shares: 111  notional: $109.89
+fills: 10  shares: 126  notional: $124.74
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        4  60.094     59.40      0.988  609.958
+btc        5  75.155     74.25      0.988  619.356
 eth        1  15.000     14.85      0.990  629.244
 sol        2  21.000     20.79      0.990  670.169
 xrp        2  15.000     14.85      0.990  685.100
