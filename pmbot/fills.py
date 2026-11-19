@@ -22,6 +22,13 @@ def load(run_dir):
             if t == "fv":
                 fv[e["key"]].append((e["t"] * 1000, e["p"], e.get("mid")))
             elif t == "fill":
+                # the hourly bot writes its fills as {t, avg_px, shares, cost} (no ts / price / size): the nightly review
+                # crashed on them on 16 and 17 Nov (KeyError 'ts') and no review reached Telegram
+                if "ts" not in e:
+                    e = {**e, "ts": e.get("t", 0) * 1000, "price": e.get("price", e.get("avg_px")),
+                         "size": e.get("size", e.get("shares"))}
+                if e.get("price") is None or e.get("size") is None or e.get("side") not in ("U", "D"):
+                    continue
                 fills.append(e)
             elif t == "settle":
                 winners[e["key"]] = e["winner"]

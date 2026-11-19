@@ -206,6 +206,27 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   was under $1 after fees once (+0.4 c), never on hourly markets; any size = 24 one-sample cases of 1-12 shares, $0.41 in
   total; the two +4 c cases of the first sample never came back (most likely request skew of that slower sampler). No money
   test, no Base wallet; cross-venue stays closed until Kalshi opens to us or Limitless / Opinion get volume.
+  **`reports/81_early_099_check_and_cleanup.md` (17 Nov 12:40, owner: "снова минус ... конкурент зарабатывает, почему мы не можем
+  ... хеджирование ... реши эту проблему ... удали с сервера всё ненужное")**: the brother's report 80 (branch
+  `claude/keen-tesla-ns5ptk`, merged 19 Nov as docs and tools only) found the competitor's wallet (+$89 after fees on
+  $23.4k in 8 days, 5m -$108) and an EARLY 0.99 rule: z = lead / (sigma_1h * sqrt(tau0 + 19.5)) >= 3, 120-62 s (5m) / 300-120 s
+  (15m) before the end, asks 0.985-0.99 only. Out of sample on public trades 1-8 Nov (`reports/81_tools/sim_all.py`, same logic,
+  his 9-16 Nov reproduced exactly): 5m 0.59 % lost / +0.35 c a share, 15m 0.54 % / +0.41 c (break-even 0.93 %); 16 days 6175
+  entries, 0.57 %. On recorder BOOKS + Chainlink 7-9 Nov (`early_steps.py` + `eval_steps.py`; the worst days by trades too)
+  Chainlink z >= 3 lost 1.5 %, >= 3.5 0.85 % (Chainlink's 1 s sigma is ~14 % below Binance's); fresh books 16 Nov 11:00 - 17 Nov
+  08:00 (twice the volatility): Chainlink z >= 3.5 192 entries / 4 lost (2.1 %, all four right at the threshold, Binance z
+  2.3-3.1). Only Chainlink z >= 4 (~ Binance 3.5) is positive in all four samples (trades 0.51 % / 0.20 %, books 411 / 2 and
+  74 / 0; ~150 entries a day, +0.56 c a share): the paper bots use z_min 4, z_agree 3.5. ETH loses on 5m in all three
+  samples (dropped there). Exits on a reversal (`stops.py`) lose MORE at every threshold
+  (-$54 -> -$62..-$73 on 988 entries): hedging is not an edge. Done: `lock.zone = "early"` in `pmbot/bot/lock.py`
+  (`decide_early`, `lockmodel.HourSigma` / `early_z`, books subscribed 20 s before the zone), PAPER units `pmbot-lock-early`
+  (`config/lock_early.toml`: 5m BTC/SOL/XRP, window s 120-238) and `pmbot-lock-15-early` (`config/lock15_early.toml`: 15m, anchor
+  s 0-180), z >= 4, z_agree 3.5, 10 shares, 4 windows. Live 5m `config/lock_live.toml` keeps ONLY the top tier [[0.99, 0.98]]
+  (real fills: p >= 0.99 16 / 0 / +$4.76, below 153 / 15 / -$18.28); its paper twin `lock_tier.toml` keeps three tiers for the
+  tests. Server: 8 paper bots + the recorder stopped and disabled (`pmbot-lock-maker3`, `-tier-wide`, `-tier`, `-tier-pb`,
+  `-99`, `-15-tier`, `-15-alt`, `pmbot-hourly-last` = closed, 2 lost of 12), journals of 27 stopped bots in
+  `/root/archive/journals-stopped-20261117.tar.gz`, load 4.2 -> 1.3. `pmbot/fills.py` reads the hourly fill format (the nightly
+  review crashed 16-17 Nov). Real money on the early rule ONLY on the owner's word (proposal: 5 shares, 2 windows, -$10 day stop).
   **`reports/54_speed_server_feeds.md` (10 Nov)**: the server is 25-30 ms from the exchange on a warm connection and signs an order
   in 7-12 ms, the rest of an order's ~240 ms is the exchange: do not move or upsize the server for speed. The SDK pool drops a
   connection idle for 30 s, so the live lock bot keeps it warm in the closing minute (`TakerLiveBroker.ping`, `LockBot.warm_loop`,
@@ -364,15 +385,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   sigma x sqrt(s to the closing TWAP + 20)) >= 3, 5m at 120-62 s and 15m at 300-120 s before the end, asks 0.985-0.99 ONLY (at
   0.97: 5 of 77 lost): 302 entries a day, 0.50 % lost, +0.4-0.5 c, +$13 a day at 10 shares, 7 of 8 days positive (break-even
   0.93 % at 0.99). Sellers at 0.99 exist early, not in the last minute (decided 5m windows: 97 % vs 5 %), which is why L99 gets
-  1-2 a day. Section 8 (owner: "у нас так и нету особо плюса за день стабильно"): paper bots "Ранний снайпер" BUILT, not started:
-  the early mode of `pmbot/bot/lock.py` (`lock.early_x_hi / early_x_lo / early_z / early_a_min / early_a_max / early_sigma_s /
-  early_min_sigma_s`, `lock.last_minute`, `decide_early`, sigma = `lockmodel.BlockSigma`: RMS of 10 s Binance mid returns over
-  1 h / sqrt(10), because 1 s returns understate the minute-scale moves, BTC 0.85 vs 0.96 bp); the config loader refuses it in
-  live. Units `pmbot-lock-early` = `config/lock_early.toml` (5m, 120-62 s before the end) and `pmbot-lock-15-early` =
-  `config/lock15_early.toml` (15m, 300-120 s): z >= 3, asks 0.985-0.99, 10 shares, max_open_entries 4, closing minute off; not
-  enabled at boot (/restart). Their exact rule on 9-16 Nov: 5m 150 a day, 0.59 % lost, +0.35 c; 15m 31 a day, 0 of 248; together
-  +$8.2 a day at 10 shares, 6 of 8 days positive (ETH 5m -$30). Exam ~400-550 paper entries, <= 0.6 % lost, >= +0.3 c a share,
-  then real money only on the owner's word at 5 shares. Tools: `reports/80_tools`.
+  1-2 a day. Section 8: why his days look loss-free (a ~1-in-100 loss: at 36 entries a day ~78 % of the days have none) and
+  why ours were not (5m bought at 0.88-0.94, every 9th lost); the early paper bots run the report-81 implementation
+  (`lock.zone = "early"`); this branch's parallel one (`lock.early_x_*`, sigma from 10 s Binance returns) was NOT merged.
+  Kept: 1 s returns understate the minute-scale sigma (Binance BTC 0.85 vs 0.96 bp from 10 s returns; cf. Chainlink 14 %
+  below Binance in report 81). Tools: `reports/80_tools`.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

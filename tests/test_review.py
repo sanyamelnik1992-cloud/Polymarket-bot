@@ -72,3 +72,18 @@ def test_build_and_chart(tmp_path, monkeypatch):
     assert "promote" in md
     png = charts.equity_png(days=3650)
     assert png and png[:4] == b"\x89PNG"
+
+
+def test_fills_load_reads_the_hourly_bot_fill_format(tmp_path):
+    """pmbot-review crashed on 16-17 Nov (KeyError 'ts'): the hourly bot journals fills as {t, avg_px, shares, cost}."""
+    import json
+    from pmbot.fills import load
+    rows = [{"t": 1794869940.682, "type": "fill", "key": "btc-1794866400", "side": "U", "avg_px": 0.93, "shares": 10.0, "cost": 9.3},
+            {"t": 1794869941.0, "type": "fill", "key": "eth-1794866400", "side": "D", "price": 0.95, "size": 5.0, "ts": 1794869941000},
+            {"t": 1794870000.0, "type": "settle", "key": "btc-1794866400", "winner": "Up"},
+            {"t": 1794870000.0, "type": "settle", "key": "eth-1794866400", "winner": "Up"}]
+    (tmp_path / "events.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    d = load(str(tmp_path))
+    assert len(d) == 2
+    got = {r.key: (r.price, r.size, r.won) for r in d.itertuples()}
+    assert got == {"btc-1794866400": (0.93, 10.0, True), "eth-1794866400": (0.95, 5.0, False)}

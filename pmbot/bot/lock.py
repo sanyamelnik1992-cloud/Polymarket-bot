@@ -13,12 +13,9 @@ Rule (all must hold at the decision moment, window second rel in [rel_lo, rel_hi
 Then one FAK buy of `shares` with that limit (paper: matched against the book paper_exec_ms later). One entry per
 window, held to resolution. Risk: $ per entry, $ open across windows, daily loss stop, kill file STOP.
 
-Early mode (lock.early_x_hi > 0, "Ранний снайпер", reports/80; paper only): also decide BEFORE the closing TWAP, from
-early_x_hi to early_x_lo seconds before the window end, by a plain rule instead of the last-minute model:
-  * z = lead / (sigma * sqrt(tau)) >= early_z, lead = log(nowcast / strike), tau = seconds to the closing TWAP + 59 / 3,
-    sigma = RMS of 10 s Binance mid returns over early_sigma_s, per 1 s (lockmodel.BlockSigma)
-  * the side's best ask in [early_a_min, early_a_max] (0.985-0.99: a cheaper seller knows more)
-lock.last_minute = false switches the closing-minute rule off (the early paper bots measure the early rule alone).
+lock.zone = "early" (reports/80-81, paper): the same bot decides 1-5 minutes BEFORE the closing TWAP with decide_early():
+the leader by z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (HourSigma, one hour of 1 s Chainlink returns), bought only
+at an ask of 0.985-0.99.
 """
 import asyncio
 import json
@@ -31,7 +28,7 @@ from dataclasses import asdict, dataclass, field, fields, replace
 
 from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
-from ..lockmodel import (BlockSigma, ClSigma, Tables, close_from_prints, expected_dist_bp, lock_state, prob_up,
+from ..lockmodel import (TW_LO, ClSigma, HourSigma, Tables, close_from_prints, early_z, expected_dist_bp, lock_state, prob_up,
                          strike_from_prints)
 from .feeds import ClobFeed, binance_feed, polybolt_feed, rtds_feed
 from .paper import PaperBroker
@@ -118,20 +115,18 @@ class LockCfg:
     big_late_rel: float = 0.0            # > 0: an entry at window second >= this buys big_shares whatever its tier (reports/73: late
                                          # entries are the cleanest group in every sample: 15m live + twin 16 / 0 lost, 5m 59 / 1,
                                          # tapes of 1-9 Nov 61 / 0, at ~0.90 where break-even is ~9 % lost). 0 = off
-    early_x_hi: float = 0.0              # > 0: the EARLY mode ("Ранний снайпер", reports/80, paper only): decide also from this many
-                                         # seconds before the window end down to early_x_lo (62 = where the closing TWAP starts) by
-                                         # z = lead / (sigma * sqrt(tau)) >= early_z (see decide_early). Sellers at 0.99 sit there, not in
-                                         # the last minute: decided 5m windows had a public buy at 0.985-0.99 at 180-62 s in 97 %, in the
-                                         # closing minute in 5 %. Replay 9-16 Nov (13 056 windows, a public buy within 5 s = our fill, sigma
-                                         # from 10 s returns): 5m at 120-62 s 150 entries a day, 0.6 % lost, +0.35 c a share; 15m at 300-120 s
-                                         # 31 a day, 0 of 248 lost, +0.95 c. Break-even at 0.99 is 0.93 % lost. 0 = off
-    early_x_lo: float = 62.0
-    early_z: float = 3.0
-    early_a_min: float = 0.985           # a seller below this is a warning, not a bargain (5m replay, z >= 3: 7 of 2151 lost at 0.99,
-    early_a_max: float = 0.99            # 5 of 223 at 0.98, 5 of 77 at 0.97)
-    early_sigma_s: int = 3600            # sigma lookback, s
-    early_min_sigma_s: int = 1800        # no early entry before this much Binance history (30 min after a start)
-    last_minute: bool = True             # false: no closing-minute entries (the early paper bots measure the early rule alone)
+    zone: str = "close"                  # "close": the closing-minute model above (rel_lo..rel_hi inside the closing TWAP).
+                                         # "early" (reports/80-81, the competitor's timing): decide BEFORE the closing TWAP, 1-5 min
+                                         # before the end, when sellers at 0.99 still stand (in the last minute they are gone: 0.995+).
+                                         # Signal: the leader by z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) >= z_min, the same z on
+                                         # received Chainlink prints only >= z_agree, the Binance guards; bought only at an ask in
+                                         # [ask_lo, a_max] = 0.985-0.99. One FAK at a_max, held to resolution
+    z_min: float = 3.0
+    z_agree: float = 2.5
+    ask_lo: float = 0.985                # early: a cheaper seller is skipped, he knows more (5m z >= 3: 0.99 -> 2151 / 7 lost, 0.98 ->
+                                         # 223 / 5, 0.97 -> 77 / 5, reports/80)
+    sigma_window_s: float = 3600.0       # early: sigma = rms of the 1 s Chainlink returns of the last hour (HourSigma)
+    min_sigma_s: float = 1800.0          # early: seconds of returns before that sigma is trusted (restored from the state file)
 
 
 @dataclass
@@ -200,8 +195,21 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("lock: 0.5 < agree <= theta < 1")
     if not 0 < c.a_min < c.a_max < 1:
         raise ValueError("lock: 0 < a_min < a_max < 1")
-    if not 238 <= c.rel_lo < c.rel_hi < 300:
+    if c.zone not in ("close", "early"):
+        raise ValueError("lock.zone must be 'close' or 'early'")
+    if c.zone == "close" and not 238 <= c.rel_lo < c.rel_hi < 300:
         raise ValueError("lock: 238 <= rel_lo < rel_hi < 300 (the model is valid inside the closing TWAP window only)")
+    if c.zone == "early":
+        if not -600 <= c.rel_lo < c.rel_hi <= 238:
+            raise ValueError("lock.zone = 'early': -600 <= rel_lo < rel_hi <= 238 (decisions end when the closing TWAP starts)")
+        if not (2 <= c.z_min <= 10 and 0 <= c.z_agree <= c.z_min):
+            raise ValueError("lock.zone = 'early': 2 <= z_min <= 10 and 0 <= z_agree <= z_min")
+        if not c.a_min <= c.ask_lo <= c.a_max:
+            raise ValueError("lock.zone = 'early': a_min <= ask_lo <= a_max")
+        if not 600 <= c.sigma_window_s <= 7200 or not 60 <= c.min_sigma_s <= c.sigma_window_s:
+            raise ValueError("lock.zone = 'early': 600 <= sigma_window_s <= 7200 and 60 <= min_sigma_s <= sigma_window_s")
+        if c.tiers or c.hedge_p or c.big_shares or c.entry != "taker" or c.max_entries_per_window != 1:
+            raise ValueError("lock.zone = 'early': one taker entry per window, no tiers / insurance / big_shares")
     if c.shares < 1:
         raise ValueError("lock.shares must be >= 1")
     if c.duration not in DURATIONS:
@@ -234,22 +242,6 @@ def load_lock_config(path=None, overrides=None):
         raise ValueError("risk.max_usd_per_entry must fit lock.big_shares at lock.a_max (whole shares on every live FAK)")
     if r.max_open_entries < 0:
         raise ValueError("risk.max_open_entries must be >= 0")
-    if c.early_x_hi:
-        if not 62 <= c.early_x_lo < c.early_x_hi <= c.duration - 10:
-            raise ValueError("lock.early_x_hi must be 0 (off) or in (early_x_lo, duration - 10] with early_x_lo >= 62 "
-                             "(the early rule is for the time before the closing TWAP)")
-        if not (2 <= c.early_z <= 10 and 0.5 < c.early_a_min <= c.early_a_max < 1
-                and 600 <= c.early_min_sigma_s <= c.early_sigma_s <= 7200):
-            raise ValueError("lock.early_*: early_z in [2, 10], 0.5 < early_a_min <= early_a_max < 1, "
-                             "600 <= early_min_sigma_s <= early_sigma_s <= 7200")
-        if e.mode == "live":
-            raise ValueError("lock.early_x_hi is paper-only: real money only on the owner's word after the paper exam (reports/80)")
-        if c.hedge_p or c.entry != "taker" or c.max_entries_per_window != 1:
-            raise ValueError("lock.early_x_hi: the early mode is a taker entry, one per window, without the insurance")
-        if r.max_usd_per_entry < c.shares * c.early_a_max:
-            raise ValueError("risk.max_usd_per_entry must fit lock.shares at lock.early_a_max")
-    if not c.last_minute and not c.early_x_hi:
-        raise ValueError("lock.last_minute = false needs the early mode (lock.early_x_hi)")
     if c.tiers:
         ts = sorted((float(t[0]), float(t[1])) for t in c.tiers)
         if any(len(t) != 2 for t in c.tiers) or any(not (0.5 < pm < 1 and c.a_min <= am <= c.a_max) for pm, am in ts):
@@ -376,43 +368,6 @@ def decide_state(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, s
     return ("U" if up else "D"), p, ctx
 
 
-def decide_early(c: LockCfg, end_s, K, now_ms_, cl_last, bn_now, bn_at_last, sigma, ask_up, ask_dn):
-    """The early rule (reports/80), before the closing TWAP. sigma = 1 s sigma of a log return (BlockSigma), not bp.
-    Returns (signal or None, ctx) like decide(); ctx["why"] says why not. p is the normal probability of z, for the record."""
-    x = end_s - now_ms_ / 1000.0
-    ctx = {"early": True, "x": round(x, 2), "rel": round(300.0 - x, 2)}
-    if not c.early_x_lo <= x <= c.early_x_hi:
-        return None, {**ctx, "why": "time"}
-    if K is None:
-        return None, {**ctx, "why": "no_strike"}
-    if not sigma:
-        return None, {**ctx, "why": "no_sigma"}
-    if cl_last is None or now_ms_ - cl_last[2] > c.cl_max_age_ms:
-        return None, {**ctx, "why": "cl_stale"}
-    if not bn_now or not bn_at_last:
-        return None, {**ctx, "why": "no_binance"}
-    spot = cl_last[0] * bn_now / bn_at_last           # the Chainlink print moved by Binance since it (as lock_state)
-    lead = math.log(spot / K) * 1e4
-    tau = (x - 62.0) + 59.0 / 3.0                     # to the closing TWAP [end-62, end-3] + a third of its length
-    z = abs(lead) / (sigma * 1e4 * math.sqrt(tau))
-    up = lead >= 0
-    p = 0.5 * math.erfc(-z / math.sqrt(2))
-    ctx.update(side="U" if up else "D", z=round(z, 3), lead_bp=round(abs(lead), 3), sigma_bp=round(sigma * 1e4, 4),
-               tau=round(tau, 1), p=round(p, 6))
-    if z < c.early_z:
-        return None, {**ctx, "why": "z"}
-    ask = ask_up if up else ask_dn
-    if not ask:
-        return None, {**ctx, "why": "no_ask"}
-    a = ask[0]
-    ctx.update(ask=a, ask_sz=ask[1], limit=c.early_a_max)
-    if a < c.early_a_min - 1e-9:
-        return None, {**ctx, "why": "ask_too_low"}
-    if a > c.early_a_max + 1e-9:
-        return None, {**ctx, "why": "ask_too_high"}
-    return {"side": "U" if up else "D", "limit": c.early_a_max, "ask": a, "p": p}, ctx
-
-
 def tier_limit(c: LockCfg, p, rel=None):
     """Highest ask accepted at model probability p: the cheapest-tier rule of c.tiers that p reaches, None if p reaches none.
     With lock.late_tier_rel and a window second rel before it, the tiers below late_tier_p do not count (reports/60)."""
@@ -450,6 +405,59 @@ def decide(c: LockCfg, tables, asset, T, K, now_ms_, cl_by_sec, cl_last, sigma, 
     if a > limit + 1e-9:
         return None, {**ctx, "why": "ask_too_high"}
     return {"side": side, "limit": limit, "ask": a, "p": p}, ctx
+
+
+def decide_early(c: LockCfg, T, K, now_ms_, cl_last, sigma, bn_now, bn_at_last, bn_1s, bn_3s, ask_up, ask_dn, shock=None):
+    """lock.zone = "early" (reports/80-81): the leader 1-5 minutes before the end, bought only at 0.985-0.99.
+    T = the anchor (end - 300, as in decide), K = strike, cl_last = (value, ts_ms, rx_ms), sigma = HourSigma (1 s returns),
+    ask_* = (price, size) or None. Returns (signal or None, ctx); signal = dict(side, limit, ask, p, z)."""
+    now_s = now_ms_ / 1000.0
+    rel = now_s - T
+    ctx = {"rel": round(rel, 2)}
+    if not (c.rel_lo <= rel <= c.rel_hi):
+        return None, {**ctx, "why": "time"}
+    if K is None:
+        return None, {**ctx, "why": "no_strike"}
+    if sigma is None:
+        return None, {**ctx, "why": "no_sigma"}
+    if cl_last is None or now_ms_ - cl_last[2] > c.cl_max_age_ms:
+        return None, {**ctx, "why": "cl_stale"}
+    if not bn_now or not bn_at_last or not bn_1s or not bn_3s:
+        return None, {**ctx, "why": "no_binance"}
+    S = cl_last[0] * bn_now / bn_at_last          # nowcast: the last received print moved with Binance since
+    tau0 = (T + TW_LO) - now_s                    # seconds to the first closing print
+    z = early_z(S, K, sigma, tau0)
+    zc = early_z(cl_last[0], K, sigma, tau0)      # received prints only
+    up = z >= 0
+    sgn = 1.0 if up else -1.0
+    mv1 = math.log(bn_now / bn_1s) * 1e4
+    mv3 = math.log(bn_now / bn_3s) * 1e4
+    ctx.update(side="U" if up else "D", z=round(z, 3), z_cl=round(zc, 3), lead_bp=round(math.log(S / K) * 1e4, 3),
+               tau0=round(tau0, 1), sigma_bp=round(sigma * 1e4, 4), mv1=round(mv1, 3), mv3=round(mv3, 3))
+    if sgn * z < c.z_min:
+        return None, {**ctx, "why": "z"}
+    if sgn * zc < c.z_agree:
+        return None, {**ctx, "why": "agree"}
+    if -sgn * mv1 > c.adv1_bp or -sgn * mv3 > c.adv3_bp:
+        return None, {**ctx, "why": "binance_against"}
+    if abs(mv1) > c.jump_bp:
+        return None, {**ctx, "why": "binance_jump"}
+    if c.shock_bp > 0 and shock is not None:
+        sh = shock() if callable(shock) else shock
+        ctx["shock_bp"] = round(sh, 3)
+        if sh > c.shock_bp:
+            return None, {**ctx, "why": "shock"}
+    ask = ask_up if up else ask_dn
+    if not ask:
+        return None, {**ctx, "why": "no_ask"}
+    a = ask[0]
+    ctx.update(ask=a, ask_sz=ask[1], limit=c.a_max)
+    if a < c.ask_lo - 1e-9:
+        return None, {**ctx, "why": "ask_too_low"}
+    if a > c.a_max + 1e-9:
+        return None, {**ctx, "why": "ask_too_high"}
+    p = 0.5 * math.erfc(-sgn * z / math.sqrt(2))       # Gaussian reading of z, for the journal only (the tails are fatter)
+    return {"side": "U" if up else "D", "limit": c.a_max, "ask": a, "p": round(p, 6), "z": round(sgn * z, 3)}, ctx
 
 
 def maker_bid(c: LockCfg, p, best_ask):
@@ -554,7 +562,8 @@ class LockBot:
         self.st = State(c.assets)
         self.tables = tables or Tables(c.tables)
         self.sig = {a: ClSigma() for a in c.assets}
-        self.esig = {a: BlockSigma(c.early_sigma_s) for a in c.assets} if c.early_x_hi else {}   # early mode (reports/80)
+        self.early = c.zone == "early"
+        self.hsig = {a: HourSigma(c.sigma_window_s) for a in c.assets}     # early: one-hour sigma (reports/81)
         self.maker = c.entry == "maker"
         # reports/64: the insurance reads the same model as the entries, without the entry filters (any p from hedge_p)
         self.hedge_cfg = replace(c, theta=c.hedge_p, agree=0.0, dmin_bp=-1e9, adv1_bp=1e9, adv3_bp=1e9, jump_bp=1e9,
@@ -610,6 +619,9 @@ class LockBot:
             if a in self.sig and time.time() - s.get("saved", 0) < 300:
                 o = self.sig[a]
                 o.num, o.den, o.n, o.last_sec, o.last_v = s["num"], s["den"], s["n"], s["last_sec"], s["last_v"]
+        for a, s in (d.get("hsigma") or {}).items():       # early: the hour of returns survives a restart (autoupdate)
+            if a in self.hsig and time.time() - s.get("saved", 0) < 300:
+                self.hsig[a].load(s)
 
     def _save_state(self):
         p = self._state_path()
@@ -620,6 +632,8 @@ class LockBot:
         d["settled"] = d["settled"][-500:]
         d["sigma"] = {a: {"num": o.num, "den": o.den, "n": o.n, "last_sec": o.last_sec, "last_v": o.last_v,
                           "saved": time.time()} for a, o in self.sig.items() if o.last_sec is not None}
+        if self.early:
+            d["hsigma"] = {a: {**o.to_dict(), "saved": time.time()} for a, o in self.hsig.items() if o.last_sec is not None}
         os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
@@ -702,14 +716,14 @@ class LockBot:
                         mk = e["markets"][0]
                         m["tick"] = float(mk.get("orderPriceMinTickSize") or 0.01)
                         self.meta[key] = m
-            # books only around the last minute (light feed): add 100 s before the end (the early mode: 20 s before its
-            # first decision), drop after the end
-            lead_s = max(100.0, self.cfg.lock.early_x_hi + 20.0) if self.cfg.lock.early_x_hi else 100.0
+            # books only around the decisions (light feed): from 100 s before the end (early zone: 20 s before its start),
+            # dropped after the end
+            lead = max(100.0, 300.0 - self.cfg.lock.rel_lo + 20.0)
             for key, m in list(self.meta.items()):
                 a, start = key.rsplit("-", 1)
                 start = int(start)
                 rel = now - start
-                if self.dur - lead_s <= rel < self.dur + 5 and key not in self.st.windows:
+                if self.dur - lead <= rel < self.dur + 5 and key not in self.st.windows:
                     self.st.add_window(Window(asset=a, start=start, slug=m["slug"], condition_id=m["condition_id"],
                                               token_up=m["token_up"], token_down=m["token_down"], tick=m["tick"],
                                               end=start + self.dur))
@@ -802,15 +816,6 @@ class LockBot:
 
     # ---------------------------------------------------------------- decisions
     def _update_sigma(self):
-        if self.esig:                                   # early mode: one Binance mid per completed second
-            now_sec = now_ms() // 1000
-            for a, o in self.esig.items():
-                px = self.st.prices[a]
-                s0 = o.last_sec + 1 if o.last_sec is not None else now_sec - 5
-                for s in range(max(s0, now_sec - 4000), now_sec - 1):
-                    v = px.bn_sec_mid.get(s)
-                    if v is not None:
-                        o.on_second(s, v)
         for a in self.cfg.lock.assets:
             px = self.st.prices[a]
             if not px.cl_last:
@@ -822,10 +827,19 @@ class LockBot:
             o = self.sig[a]
             if o.last_sec is None:
                 o.on_print(last, px.cl_last[0])
-                continue
-            for s in range(o.last_sec + 1, last + 1):
-                v = px.cl_by_sec.get(s, o.last_v)
-                o.on_print(s, v)
+            else:
+                for s in range(o.last_sec + 1, last + 1):
+                    v = px.cl_by_sec.get(s, o.last_v)
+                    o.on_print(s, v)
+            if self.early:
+                h = self.hsig[a]
+                if h.last_sec is not None and last - h.last_sec > 3600:      # an hour without prints: start over
+                    h = self.hsig[a] = HourSigma(self.cfg.lock.sigma_window_s)
+                if h.last_sec is None:
+                    h.on_print(last, px.cl_last[0])
+                else:
+                    for s in range(h.last_sec + 1, last + 1):
+                        h.on_print(s, px.cl_by_sec.get(s, h.last_v))
 
     def _shock(self, asset, now):
         """Largest 3 s Binance move of the last shock_s seconds (bp), cached for 200 ms per asset."""
@@ -886,8 +900,7 @@ class LockBot:
         for key, w in list(self.st.windows.items()):
             Tc = self.anchor(w.start)
             rel = now / 1000 - Tc
-            early = bool(c.early_x_hi) and c.early_x_lo <= 300.0 - rel <= c.early_x_hi       # reports/80
-            if not early and not (c.last_minute and c.rel_lo <= rel <= c.rel_hi):
+            if not (c.rel_lo <= rel <= c.rel_hi):
                 continue
             if self.hedge_cfg and self.entries.get(key):
                 if key not in self.busy and now >= self.next_try.get(key, 0):
@@ -906,10 +919,11 @@ class LockBot:
             cl = px.cl_last
             bn_now = px.bn_mid()
             bn_at_last = px.bn_mid_at(cl[1] + 999) if cl else None
-            if early:
-                sig, ctx = decide_early(c, w.start + self.dur, K, now, cl, bn_now, bn_at_last,
-                                        self.esig[w.asset].sigma(c.early_min_sigma_s),
-                                        self._book_ask(w.token_up), self._book_ask(w.token_down))
+            if self.early:                 # reports/81: before the closing TWAP, one-hour sigma, asks 0.985-0.99 only
+                sig, ctx = decide_early(c, Tc, K, now, cl, self.hsig[w.asset].sigma(c.min_sigma_s), bn_now, bn_at_last,
+                                        px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
+                                        self._book_ask(w.token_up), self._book_ask(w.token_down),
+                                        shock=lambda a=w.asset: self._shock(a, now))
             else:
                 sig, ctx = decide(c, self.tables, w.asset, Tc, K, now, px.cl_by_sec, cl, self.sig[w.asset].sigma()
                                   if self.sig[w.asset].n >= c.min_sigma_prints else None, bn_now, bn_at_last,
@@ -1228,6 +1242,8 @@ class LockBot:
         while self.alive():
             await asyncio.sleep(30)
             sg = {a: round((o.sigma() or 0) * 1e4, 3) for a, o in self.sig.items()}
+            if self.early:                 # the sigma the early rule uses (one hour), None until min_sigma_s of returns
+                sg = {a: round((o.sigma(self.cfg.lock.min_sigma_s) or 0) * 1e4, 3) for a, o in self.hsig.items()}
             if self._cl_lags:
                 xs = sorted(self._cl_lags)
                 self.stats["cl_lag_ms"] = xs[len(xs) // 2]
@@ -1235,9 +1251,8 @@ class LockBot:
             msg = (f"day={self.day_pnl():+.2f} open=${self.open_cost():.2f} stats={self.stats} sigma_bp={sg} "
                    f"windows={sorted(self.st.windows)} killed={self.risk.get('killed_day') == self.today()}")
             log.info(msg)
-            extra = {"early_sigma_bp": {a: round((o.sigma() or 0) * 1e4, 3) for a, o in self.esig.items()}} if self.esig else {}
             self.j.log("status", pnl=round(self.day_pnl(), 4), open_worst=round(self.open_cost(), 4),
-                       stats=dict(self.stats), sigma_bp=sg, **extra)
+                       stats=dict(self.stats), sigma_bp=sg)
             self.stats["lag_max_ms"] = self.stats["decide_max_ms"] = 0      # maxima per 30 s interval
             self.stats.pop("ping_ms", None)
             self.stats.pop("cl_lag_ms", None)

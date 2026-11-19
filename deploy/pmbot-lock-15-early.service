@@ -1,5 +1,5 @@
 [Unit]
-Description=pmbot early sniper on 15m (config/lock15_early.toml: the sure side at 0.99 300-120 s before the end, z >= 3; paper)
+Description=pmbot TWAP-lock early sniper on 15m (config/lock15_early.toml: the leader 300-120 s before the end at 0.985-0.99; paper)
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=600
@@ -9,9 +9,9 @@ StartLimitBurst=5
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# PAPER. reports/80. The competitor's zone done our way: z >= 3 on the Chainlink nowcast, asks 0.985-0.99, up to 4 coins at once.
+# PAPER. reports/80, reports/81: the early 0.99 rule, measured on paper before any real money.
 ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock15_early.toml
-# CPU priority: paper/recorder yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
+# CPU priority: paper bots yield to the live bots when the 2 vCPU are busy (load 3.0 on 9 Nov, G loop lag 17 s)
 Nice=10
 CPUWeight=20
 Restart=on-failure

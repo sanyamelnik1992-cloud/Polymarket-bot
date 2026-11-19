@@ -24,7 +24,10 @@ rel_lo = 240.0
 rel_hi = 299.5
 shares = 2            # reports/70 (12 Nov): the p 0.95-0.97 tier buys 2 shares (was 5). Live 10-12 Nov: that tier 38 entries / 5 lost / -$10.74, the upper tiers 24 / 0 / +$9.31. 2 x 0.93 = $1.86 > the $1 exchange minimum
 max_entries_per_window = 1
-tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93]]
+tiers = [[0.99, 0.98]]  # reports/81 (17 Nov, owner: "снова минус ... реши эту проблему"): only the top tier on real money. Real fills of
+                      # this bot 9-17 Nov by model p: >= 0.99 16 entries / 0 lost / +$4.76; 0.97-0.99 39 / 2 / -$6.32; 0.95-0.97 101 / 11 /
+                      # -$8.38; < 0.95 13 / 2 / -$3.58. The states agree (reports/75-76: below 0.99 the loss rate is the price's).
+                      # Its paper twin config/lock_tier.toml keeps the three tiers (the twin unit is stopped since 17 Nov). Only stricter
 sigma_floor_bp = 0.5  # reports/52: sigma never below 0.5 bp -> no entry on a 1-2 bp lead in a calm market. Only stricter than plain L3
                       # (every entry is also an L3 entry): ~40 % of the entries, ~1/4 of the losses in the replay of 7-10 Nov
 floor_free_p = 0.99   # reports/55: when the unfloored model gives >= 0.99 it decides (the original L rule: 57 entries, 0 lost)

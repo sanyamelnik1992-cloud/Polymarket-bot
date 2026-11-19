@@ -1,36 +1,44 @@
-# Ранний снайпер, 5-minute markets — PAPER (unit pmbot-lock-early, reports/80; owner 17 Nov: "у нас так и нету особо плюса за
-# день стабильно"). The competitor of the owner's screenshot buys the sure side at 0.98-0.99 1-5 minutes BEFORE the end, not in
-# the closing minute where our L3 / L99 wait: sellers at 0.99 sit there (decided 5m windows: a public buy at 0.985-0.99 at
-# 180-62 s before the end in 97 %, in the closing minute in 5 %). Our version of his rule (lockmodel.BlockSigma + decide_early):
-# z = lead / (sigma * sqrt(tau)) >= 3, sigma from 10 s Binance returns over the last hour, 120-62 s before the end, asks 0.985-0.99
-# only. Replay 9-16 Nov, all 4 coins, a public buy within 5 s = our fill: 150 entries a day, 0.6 % lost, +0.35 c a share,
-# ~+$5 a day at 10 shares (ETH -$30 of it, the other coins +$19..+$32). His own rule on the same 5m data: 1.84 % lost, -0.2 c.
-# Exam (reports/80 section 8): >= 600 paper entries with <= 0.6 % lost and >= +0.3 c a share; real money only on the owner's word.
+# Early sniper ("Ранний снайпер") on 5m windows — PAPER (reports/80, reports/81). The competitor's timing with a stricter
+# signal: decide 180-62 s before the end (window seconds 120-238, before the closing TWAP), when sellers at 0.99 still
+# stand; in the last minute they are gone (0.995+) and L99 gets 1-2 entries a day. Signal: the leader by
+# z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (S = Chainlink nowcast, K = strike, sigma = rms of the 1 s Chainlink
+# returns of the last hour, tau0 = seconds to the first closing print) >= 4, the same z on received prints >= 3.5, the Binance
+# guards. Buy only at an ask of 0.985-0.99: a cheaper seller knows more. 10 shares, up to 4 windows at once (paper).
+# What is NOT known: the loss rate. A win is +0.93 c a share, a loss -99 c: break-even is 0.93 % lost. Report 80 (trades +
+# Binance, 9-16 Nov): 0.51 % lost; report 81: trades 1-8 Nov 0.6 %; books + Chainlink at z >= 4: 7-9 Nov 0.49 %, 16-17 Nov 0 of 74.
+# Paper measures the fills at 0.99 and the loss rate of exactly this code.
 journal_dir = "data/journal-lock-early"
 
 [lock]
-assets = ["btc", "eth", "sol", "xrp"]
-duration = 300
-early_x_hi = 120.0     # seconds before the window end: the early zone 120-62 s
-early_x_lo = 62.0      # the closing TWAP starts 62 s before the end
-early_z = 3.0
-early_a_min = 0.985    # only the 0.99 sellers (at 0.97: 5 of 77 lost)
-early_a_max = 0.99
-early_sigma_s = 3600
-early_min_sigma_s = 1800
-last_minute = false    # the early rule alone: no closing-minute entries in this bot
+assets = ["btc", "sol", "xrp"]   # no ETH on 5m: it lost in every sample (trades 1-8 Nov 772 / 9 lost, 9-16 Nov 658 / 7,
+                                 # books 7-9 Nov 216 / 5; the other coins 0.4 %). 15m keeps ETH (positive in both halves)
+zone = "early"
+rel_lo = 120.0        # 180 s before the end (trades 1-16 Nov: 180-62 s gives 24 % more entries than 120-62 s, the same c a share)
+rel_hi = 238.0        # 62 s before the end: the closing TWAP starts here
+z_min = 4.0           # Chainlink z: the Chainlink 1 s sigma is ~14 % below Binance's, so 4 here ~ Binance z 3.5. The only threshold
+                      # positive in all four samples (BTC/SOL/XRP, reports/81): trades 1-8 / 9-16 Nov (Binance z >= 3.5) 0.51 % / 0.20 % lost;
+                      # books 7-9 Nov 411 entries / 2 lost; books 16-17 Nov 74 / 0. At 3.5: books 16-17 Nov 192 / 4 lost (2.1 %)
+z_agree = 3.5
+sigma_window_s = 3600.0
+min_sigma_s = 1800.0
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.95
+a_max = 0.99
+ask_lo = 0.985
 shares = 10
 max_entries_per_window = 1
 
 [risk]
 max_usd_per_entry = 10.0
-max_open_usd = 40.0    # all four coins of one window at once (the competitor holds up to 4)
+max_open_usd = 40.0
 max_open_entries = 4
-daily_loss_limit = 30.0   # paper: three losses end the day, it resumes at 00:00 UTC
+daily_loss_limit = 50.0      # paper: see the whole day
 state_file = "data/state/lock_early_paper.json"
 resume_next_day = true
 
 [execution]
 mode = "paper"
-cl_feed = "both"       # PolyBolt + RTDS, first arrival wins (reports/69)
 paper_exec_ms = 300
+cl_feed = "both"

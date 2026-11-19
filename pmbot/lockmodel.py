@@ -13,7 +13,6 @@ probability comes from an EMPIRICAL table of Y_m = X_m / (sigma * sqrt(v_m)) bui
 """
 import math
 import os
-from collections import deque
 
 import numpy as np
 
@@ -82,49 +81,6 @@ def build_tables(series_by_asset, halflife=900, y_grid=None):
     return out
 
 
-class BlockSigma:
-    """1 s sigma for a look minutes ahead (the early rule, reports/80): RMS of `block`-second log returns over the last
-    `lookback` seconds, divided by sqrt(block). Fed with one price per second; skipped seconds are forward-filled.
-    1 s returns understate the minute-scale moves (Binance 9-16 Nov, bp per sqrt(s): BTC 0.85 from 1 s returns, 0.96 from
-    10 s, 0.97 from 60 s; ETH 1.18 / 1.31 / 1.30), and the early rule looks 1-5 minutes ahead."""
-
-    def __init__(self, lookback=3600, block=10):
-        self.block = int(block)
-        self.r2 = deque(maxlen=max(1, int(lookback) // self.block))
-        self.last_sec = None
-        self.last_v = None
-        self.block_v = None           # price at the end of the previous block
-
-    def on_second(self, sec, v):
-        if v is None or v <= 0:
-            return
-        if self.last_sec is not None:
-            if sec <= self.last_sec:
-                return
-            if sec - self.last_sec > 600:     # a long outage: the old history describes another market
-                self.r2.clear()
-                self.block_v = None
-            else:
-                for s in range(self.last_sec + 1, sec):
-                    self._close(s, self.last_v)
-        self._close(sec, v)
-
-    def _close(self, sec, v):
-        self.last_sec, self.last_v = sec, v
-        if sec % self.block == self.block - 1:          # the last second of a block
-            if self.block_v:
-                self.r2.append(math.log(v / self.block_v) ** 2)
-            self.block_v = v
-
-    def seconds(self):
-        return len(self.r2) * self.block
-
-    def sigma(self, min_s=0):
-        if not self.r2 or self.seconds() < min_s:
-            return None
-        return math.sqrt(sum(self.r2) / len(self.r2) / self.block)
-
-
 class ClSigma:
     """EWMA of squared 1 s Chainlink log returns (half-life 900 s, like the tables), gaps forward-filled."""
 
@@ -158,6 +114,74 @@ class ClSigma:
         if self.n < self.min_n or self.den <= 0:
             return None
         return math.sqrt(self.num / self.den)
+
+
+class HourSigma:
+    """Root mean square of the 1 s Chainlink log returns of the last `window_s` seconds (the early rule, reports/80-81).
+    The EWMA of ClSigma (half-life 15 min) forgets a jump quickly: almost every "impossible" loss of a 3-sigma lead came
+    after a calm stretch right before a sharp move, and a one-hour sigma removed them (15m, 180 s before the end, z >= 3:
+    5-minute sigma 822 windows / 11 lost, one-hour sigma 715 / 0). Kept in per-minute buckets so the state file can
+    carry it over a restart; forward-filled seconds are zero returns like in ClSigma."""
+
+    def __init__(self, window_s=3600):
+        self.window_s = int(window_s)
+        self.buckets = {}          # minute (sec // 60) -> [sum of r^2, seconds]
+        self.last_sec = None
+        self.last_v = None
+
+    def on_print(self, sec, v):
+        if v is None or v <= 0:
+            return
+        if self.last_sec is None:
+            self.last_sec, self.last_v = sec, v
+            return
+        if sec <= self.last_sec:
+            return
+        for s in range(self.last_sec + 1, min(sec, self.last_sec + 121)):
+            self._add(s, 0.0)
+        self._add(sec, math.log(v / self.last_v) ** 2)
+        self.last_sec, self.last_v = sec, v
+
+    def _add(self, sec, r2):
+        m = sec // 60
+        b = self.buckets.get(m)
+        if b is None:
+            b = self.buckets[m] = [0.0, 0]
+            lo = (sec - self.window_s) // 60
+            for old in [k for k in self.buckets if k <= lo]:
+                del self.buckets[old]
+        b[0] += r2
+        b[1] += 1
+
+    @property
+    def n(self):
+        return sum(b[1] for b in self.buckets.values())
+
+    def sigma(self, min_n=1800):
+        n = self.n
+        if n < max(min_n, 1):
+            return None
+        return math.sqrt(sum(b[0] for b in self.buckets.values()) / n)
+
+    def to_dict(self):
+        return {"b": {str(k): [round(v[0], 16), v[1]] for k, v in self.buckets.items()},
+                "last_sec": self.last_sec, "last_v": self.last_v}
+
+    def load(self, d):
+        self.buckets = {int(k): [float(v[0]), int(v[1])] for k, v in (d.get("b") or {}).items()}
+        self.last_sec, self.last_v = d.get("last_sec"), d.get("last_v")
+
+
+EARLY_AVG_VAR = 19.5              # variance of the mean of 60 one-second prints after the first one, in seconds of sigma^2
+
+
+def early_z(S, K, sigma, tau0):
+    """z of the lead before the closing TWAP: ln(S / K) / (sigma * sqrt(tau0 + 19.5)); tau0 = seconds to the first closing
+    print. The 60 closing prints are all in the future: their mean moves like the price tau0 s ahead plus the average
+    over the minute (sum of min(i, j) for i, j in 0..59 over 60^2 = 19.5)."""
+    if not S or not K or S <= 0 or K <= 0 or not sigma or sigma <= 0:
+        return 0.0
+    return math.log(S / K) / (sigma * math.sqrt(max(tau0, 0.0) + EARLY_AVG_VAR))
 
 
 def mean_prints(cl_by_sec, first_sec, max_missing=3):
