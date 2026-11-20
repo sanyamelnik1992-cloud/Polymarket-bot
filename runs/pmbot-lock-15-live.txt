@@ -1,22 +1,22 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261119-175803
-mode: live  duration: 302.1 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 84, 'status': 604, 'lock_state': 1442, 'strike': 80, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: live  duration: 363.1 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 100, 'status': 726, 'lock_state': 1695, 'strike': 96, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3}
 
-lock orders: sent 2  filled 1  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 562  p90 562  max 562
-  market prewarm (2 lookups + signing), ms: median 184  max 708  n 84
-  fill price minus the ask we saw, cents: mean -1.00  worst -1.0
+lock orders: sent 4  filled 3  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 451  p90 562  max 562
+  market prewarm (2 lookups + signing), ms: median 182  max 708  n 100
+  fill price minus the ask we saw, cents: mean -0.17  worst +0.5
   misses came 42-42 s before the end; model p 0.960-0.960
   exchange rejections by code: {'fak_not_filled': 1}
 
-fills: 1  shares: 2  notional: $1.86
+fills: 3  shares: 6  notional: $5.50
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        1   2.044      1.86       0.91  863.467
+btc        3   6.046       5.5       0.91  862.631
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
-btc          1  1.872  0.172          0.172     0.0       1.0  0.172  0.172  0.092
+btc          3  5.535  0.511          0.511     0.0       1.0  0.168  0.172  0.092
 
-TOTAL pnl $+0.17 (ex-rebate $+0.17) on cost $1.87 -> ROI +9.21%; windows 1, t-stat +nan
+TOTAL pnl $+0.51 (ex-rebate $+0.51) on cost $5.53 -> ROI +9.24%; windows 3, t-stat +155.11
 max drawdown $0.00; hedged windows (both sides filled): 0
