@@ -1,9 +1,9 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261119-175803
-mode: live  duration: 483.7 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 132, 'status': 967, 'strike': 128, 'lock_state': 1094, 'order_rejected': 7, 'lock_miss': 7, 'order_filled': 10, 'fill': 10, 'lock_entry': 10, 'provisional': 10, 'settle': 7}
+mode: live  duration: 542.7 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 148, 'status': 1085, 'strike': 144, 'lock_state': 1232, 'order_rejected': 7, 'lock_miss': 7, 'order_filled': 10, 'fill': 10, 'lock_entry': 10, 'provisional': 10, 'settle': 10}
 
 lock orders: sent 17  filled 10  ask gone 7  errors 0
   signal -> exchange answer, ms: median 243  p90 356  max 439
-  market prewarm (2 lookups + signing), ms: median 164  max 357  n 132
+  market prewarm (2 lookups + signing), ms: median 164  max 382  n 148
   fill price minus the ask we saw, cents: mean +0.02  worst +0.1
   misses came 192-300 s before the end; model p 0.000-0.000
   exchange rejections by code: {'fak_not_filled': 7}
@@ -18,9 +18,9 @@ xrp        2  25.000    24.750      0.990  617.544
 settled windows:
        windows    cost     pnl  pnl_ex_rebate  rebate  win_rate   worst   best    roi
 asset                                                                                
-btc          4  59.448 -29.357        -29.357     0.0       0.5 -14.860  0.182 -0.494
-sol          2  24.768   0.239          0.239     0.0       1.0   0.093  0.146  0.010
-xrp          1  14.860   0.140          0.140     0.0       1.0   0.140  0.140  0.009
+btc          5  74.308 -29.217        -29.217     0.0       0.6 -14.860  0.182 -0.393
+sol          3  39.628   0.379          0.379     0.0       1.0   0.093  0.146  0.010
+xrp          2  24.767   0.233          0.233     0.0       1.0   0.093  0.140  0.009
 
-TOTAL pnl $-28.98 (ex-rebate $-28.98) on cost $99.08 -> ROI -29.25%; windows 7, t-stat -1.50
+TOTAL pnl $-28.61 (ex-rebate $-28.61) on cost $138.70 -> ROI -20.62%; windows 10, t-stat -1.43
 max drawdown $-14.86; hedged windows (both sides filled): 0
