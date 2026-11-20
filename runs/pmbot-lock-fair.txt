@@ -1,26 +1,14 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261119-175810
-mode: paper  duration: 724.1 min  events: {'start': 1, 'lock_state': 630, 'status': 1447, 'strike': 580, 'bn_strike': 580, 'lock_miss': 87, 'fill': 54, 'lock_entry': 54, 'provisional': 53, 'settle': 53}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261120-062515
+mode: paper  duration: 37.1 min  events: {'start': 1, 'lock_state': 36, 'status': 74, 'strike': 28, 'bn_strike': 28, 'fill': 2, 'lock_entry': 2, 'lock_miss': 1, 'provisional': 2}
 
-lock orders: sent 141  filled 54  ask gone 87  errors 0
-  signal -> exchange answer, ms: median 305  p90 383  max 946
-  fill price minus the ask we saw, cents: mean +0.04  worst +5.5
-  misses came 62-290 s before the end; model p 0.202-0.997
+lock orders: sent 3  filled 2  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 305  p90 311  max 311
+  fill price minus the ask we saw, cents: mean -1.00  worst +0.0
+  misses came 69-69 s before the end; model p 0.388-0.388
 
-fills: 54  shares: 498  notional: $159.86
+fills: 2  shares: 20  notional: $3.90
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       33  296.55   110.467      0.383  136.822
-eth        8   80.00    23.572      0.295  193.172
-sol        5   50.00     9.850      0.197  222.683
-xrp        8   71.22    15.967      0.222  219.519
-
-settled windows:
-       windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                                
-btc         32  112.065  -1.515         -1.515     0.0     0.406 -6.952  7.162 -0.014
-eth          8   24.606  25.394         25.394     0.0     0.625 -3.863  8.937  1.032
-sol          5   10.381 -10.381        -10.381     0.0     0.000 -3.250 -1.168 -1.000
-xrp          8   16.825   1.175          1.175     0.0     0.250 -2.951  7.664  0.070
-
-TOTAL pnl $+14.67 (ex-rebate $+14.67) on cost $163.88 -> ROI +8.95%; windows 53, t-stat +0.47
-max drawdown $-26.48; hedged windows (both sides filled): 0
+eth        1    10.0       1.9       0.19  236.488
+sol        1    10.0       2.0       0.20  231.741
+no settled windows yet
