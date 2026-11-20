@@ -1,16 +1,18 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261120-062525
-mode: paper  duration: 335.6 min  events: {'start': 1, 'lock_state': 112, 'status': 671, 'strike': 92, 'bn_strike': 92, 'lock_miss': 8, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
+mode: paper  duration: 396.7 min  events: {'start': 1, 'lock_state': 128, 'status': 793, 'strike': 108, 'bn_strike': 108, 'lock_miss': 10, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 2}
 
-lock orders: sent 10  filled 2  ask gone 8  errors 0
-  signal -> exchange answer, ms: median 328  p90 362  max 362
-  fill price minus the ask we saw, cents: mean +0.50  worst +1.0
-  misses came 64-224 s before the end; model p 0.330-0.734
+lock orders: sent 15  filled 5  ask gone 10  errors 0
+  signal -> exchange answer, ms: median 304  p90 362  max 362
+  fill price minus the ask we saw, cents: mean -0.60  worst +1.0
+  misses came 64-224 s before the end; model p 0.305-0.734
 
-fills: 2  shares: 19  notional: $4.21
+fills: 5  shares: 49  notional: $9.11
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        1   10.00     2.100       0.21  676.336
+btc        2   20.00     3.200       0.16  740.459
+eth        1   10.00     1.400       0.14  771.997
 sol        1    9.16     2.107       0.23  826.964
+xrp        1   10.00     2.400       0.24  829.937
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi

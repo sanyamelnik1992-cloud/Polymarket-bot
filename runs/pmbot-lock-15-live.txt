@@ -1,16 +1,17 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261120-062507
-mode: live  duration: 336.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 672, 'prewarm': 92, 'lock_state': 1435, 'strike': 88, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3}
+mode: live  duration: 397.1 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 794, 'prewarm': 108, 'lock_state': 1760, 'strike': 104, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 3}
 
-lock orders: sent 3  filled 3  ask gone 0  errors 0
-  signal -> exchange answer, ms: median 307  p90 341  max 341
-  market prewarm (2 lookups + signing), ms: median 159  max 547  n 92
-  fill price minus the ask we saw, cents: mean -0.33  worst +0.0
+lock orders: sent 4  filled 4  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 341  p90 344  max 344
+  market prewarm (2 lookups + signing), ms: median 158  max 547  n 108
+  fill price minus the ask we saw, cents: mean -0.50  worst +0.0
 
-fills: 3  shares: 6  notional: $5.54
+fills: 4  shares: 8  notional: $7.36
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        2   4.045      3.68       0.91  863.548
 sol        1   2.000      1.86       0.93  840.951
+xrp        1   2.022      1.82       0.90  841.789
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
