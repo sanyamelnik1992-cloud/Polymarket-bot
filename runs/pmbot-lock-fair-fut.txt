@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-fair-fut/20261120-062522
-mode: paper  duration: 154.8 min  events: {'start': 1, 'lock_state': 134, 'status': 309, 'strike': 124, 'bn_strike': 124, 'lock_miss': 21, 'fill': 8, 'lock_entry': 8, 'provisional': 8, 'settle': 8}
+mode: paper  duration: 214.8 min  events: {'start': 1, 'lock_state': 194, 'status': 429, 'strike': 172, 'bn_strike': 172, 'lock_miss': 24, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 8}
 
-lock orders: sent 29  filled 8  ask gone 21  errors 0
+lock orders: sent 33  filled 9  ask gone 24  errors 0
   signal -> exchange answer, ms: median 304  p90 628  max 778
-  fill price minus the ask we saw, cents: mean +0.14  worst +14.0
+  fill price minus the ask we saw, cents: mean +0.12  worst +14.0
   misses came 64-275 s before the end; model p 0.226-0.902
 
-fills: 8  shares: 79  notional: $30.60
+fills: 9  shares: 89  notional: $37.10
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        4    40.0    17.000      0.425   43.441
+btc        5    50.0    23.500      0.470   59.938
 sol        2    20.0     8.600      0.430  233.289
 xrp        2    19.0     5.002      0.266  223.304
 
