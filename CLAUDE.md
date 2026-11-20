@@ -419,6 +419,10 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   Binance move wakes the decision loop via `State.on_tick`, journal `sig_age_ms`) and the paper A/B `pmbot-lock-fair-fut` =
   `config/lock_fair_fut.toml` (`lock.fair_feed = "futures"`: fair value, strike and sigma from Binance USD-M perpetual mids,
   `feeds.binance_futures_feed` -> `State.fut_prices`, status `fut_age_ms`; if the server cannot reach fstream it makes no entries).
+  Section 9 (20 Nov 17:00, first day after the speedup): 5m spot 121 entries / 53 won vs 46.4 break-even / +$62 (+14 %), futures
+  127 / 57 vs 48.2 / +$73 (+16 %), 15m 22 / +$25; t 1.3-1.4 and < 200 entries, one bad evening (futures -$40 on 19 Nov 18-24 h):
+  nothing changed. Before live: the loader still refuses `zone = "fair"`, the $1 minimum (ceil(1.05 / p) shares below 0.21 at 5
+  shares), a day stop ~$25 or fewer windows (paper drawdown -$47 at 10 shares), stop the other 5m variant (3 bots ~90 % of a core).
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost
