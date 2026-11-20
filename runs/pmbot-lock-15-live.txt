@@ -1,22 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261119-175803
-mode: live  duration: 363.1 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 100, 'status': 726, 'lock_state': 1695, 'strike': 96, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3}
+mode: live  duration: 423.6 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 116, 'status': 847, 'lock_state': 1884, 'strike': 112, 'order_rejected': 2, 'lock_miss': 2, 'order_filled': 5, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 4}
 
-lock orders: sent 4  filled 3  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 451  p90 562  max 562
-  market prewarm (2 lookups + signing), ms: median 182  max 708  n 100
-  fill price minus the ask we saw, cents: mean -0.17  worst +0.5
-  misses came 42-42 s before the end; model p 0.960-0.960
-  exchange rejections by code: {'fak_not_filled': 1}
+lock orders: sent 7  filled 5  ask gone 2  errors 0
+  signal -> exchange answer, ms: median 323  p90 562  max 562
+  market prewarm (2 lookups + signing), ms: median 182  max 708  n 116
+  fill price minus the ask we saw, cents: mean -0.88  worst +0.5
+  misses came 42-49 s before the end; model p 0.960-0.975
+  exchange rejections by code: {'fak_not_filled': 2}
 
-fills: 3  shares: 6  notional: $5.50
+fills: 5  shares: 10  notional: $9.26
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        3   6.046       5.5       0.91  862.631
+btc        4   8.136      7.36      0.905  855.842
+eth        1   2.043      1.90      0.930  853.039
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
 btc          3  5.535  0.511          0.511     0.0       1.0  0.168  0.172  0.092
+eth          1  1.909  0.134          0.134     0.0       1.0  0.134  0.134  0.070
 
-TOTAL pnl $+0.51 (ex-rebate $+0.51) on cost $5.53 -> ROI +9.24%; windows 3, t-stat +155.11
+TOTAL pnl $+0.65 (ex-rebate $+0.65) on cost $7.44 -> ROI +8.67%; windows 4, t-stat +17.48
 max drawdown $0.00; hedged windows (both sides filled): 0
