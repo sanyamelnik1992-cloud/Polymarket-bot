@@ -419,6 +419,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   Binance move wakes the decision loop via `State.on_tick`, journal `sig_age_ms`) and the paper A/B `pmbot-lock-fair-fut` =
   `config/lock_fair_fut.toml` (`lock.fair_feed = "futures"`: fair value, strike and sigma from Binance USD-M perpetual mids,
   `feeds.binance_futures_feed` -> `State.fut_prices`, status `fut_age_ms`; if the server cannot reach fstream it makes no entries).
+- **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
+  the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
+  reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost
+  vs 0.93 % break-even). The competitor lost the 23:45 window too (101 shares at 0.98, -$98.98); his record 9-20 Nov: 376 entries,
+  3 lost, +$67.54 after fees (~0.25 % of turnover). REAL MONEY risk cut on the owner's word: L99 live + twin back to 10 shares,
+  $10 per entry / $10 open / day stop $9.5 (one loss). The owner is asked to /off `pmbot-lock-15-early-live` (paper twin keeps
+  running; back to money only if positive over 200+ paper entries). Real money by UTC day 14-20 Nov: +6.22, -1.34, -19.86, +1.04,
+  +1.75, -9.71, -12.83 (to 05:00); wallet $141.22.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

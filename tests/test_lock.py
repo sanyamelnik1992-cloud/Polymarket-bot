@@ -1063,13 +1063,14 @@ def test_l99_is_paper_and_buys_the_sure_side_up_to_099(tables):
 
 def test_l99_live_is_the_paper_rule_with_small_real_money_limits():
     """reports/56: the competitor zone on real money, next to live L3. One loss stops it for the day. reports/82 (owner 19 Nov:
-    "давай увеличим реальные деньги, можешь использовать все что на кошельке"): 20 shares, still one window at a time."""
+    "давай увеличим реальные деньги, можешь использовать все что на кошельке"): 20 shares, still one window at a time; reports/85
+    (owner 20 Nov, after two 15-share losses of the 15m early bot in one night): back to 10."""
     paper = load_lock_config(os.path.join(ROOT, "config", "lock_99.toml"))
     live = load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml"))
     l3 = load_lock_config(os.path.join(ROOT, "config", "lock_live.toml"))
     assert live.execution.mode == "live" and paper.execution.mode == "paper"
     assert live.lock == paper.lock, "L99 live must stay identical to its paper twin pmbot-lock-99"
-    assert live.lock.shares == 20 and live.risk.max_usd_per_entry <= 20.0 and live.risk.max_open_usd <= 20.0   # reports/82
+    assert live.lock.shares == 10 and live.risk.max_usd_per_entry <= 10.0 and live.risk.max_open_usd <= 10.0   # reports/82, 85
     assert live.risk.resume_next_day is False
     assert live.risk.daily_loss_limit < live.lock.shares * live.lock.a_min    # below the smallest possible loss: one loss = stop
     assert paper.risk.max_open_usd == live.risk.max_open_usd and paper.risk.daily_loss_limit == live.risk.daily_loss_limit

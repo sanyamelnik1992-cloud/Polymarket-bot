@@ -19,15 +19,15 @@ a_max = 0.99
 min_edge = 0.004
 rel_lo = 240.0
 rel_hi = 299.5
-shares = 20           # owner 19 Nov: "давай увеличим реальные деньги, можешь использовать все что на кошельке" (reports/82)
+shares = 10           # owner 20 Nov: back from 20 to 10 after the night of 19-20 Nov (reports/85); 19 Nov: 20 (reports/82)
 max_entries_per_window = 1
 shock_bp = 2.5        # as live (reports/55)
 shock_s = 10.0
 
 [risk]
-max_usd_per_entry = 20.0
-max_open_usd = 20.0   # = live twin pmbot-lock-99-live: one entry at a time
-daily_loss_limit = 19.0
+max_usd_per_entry = 10.0
+max_open_usd = 10.0   # = live twin pmbot-lock-99-live: one entry at a time
+daily_loss_limit = 9.5
 state_file = "data/state/lock_99_paper.json"
 resume_next_day = true
 
