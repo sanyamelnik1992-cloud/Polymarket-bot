@@ -202,7 +202,9 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-15-live", "config/lock15_live.toml", True),
                             ("pmbot-lock-early", "config/lock_early.toml", False),          # reports/81, paper
                             ("pmbot-lock-15-early", "config/lock15_early.toml", False),
-                            ("pmbot-lock-15-early-live", "config/lock15_early_live.toml", True)):
+                            ("pmbot-lock-15-early-live", "config/lock15_early_live.toml", True),
+                            ("pmbot-lock-fair", "config/lock_fair.toml", False),            # reports/83
+                            ("pmbot-lock-fair-live", "config/lock_fair_live.toml", True)):
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config {cfg}" in text
         assert ("--live" in text) == live

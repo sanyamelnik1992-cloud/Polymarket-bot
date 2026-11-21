@@ -1,0 +1,23 @@
+[Unit]
+Description=pmbot fair-value taker on 5m LIVE (config/lock_fair_live.toml: buy an ask >= 15 c below the Binance fair value, REAL MONEY, 5 shares, up to 4 windows, day stop $20)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY (reports/83 section 10). Installed but NOT enabled/started: the owner starts it (Telegram /restart pmbot-lock-fair-live).
+# A daily-loss stop exits the process; it stays stopped until a human starts it again.
+ExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/lock_fair_live.toml --live
+# CPU priority: this unit trades REAL MONEY. Under CPU contention it gets 5x the default share, paper bots 0.2x.
+CPUWeight=500
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

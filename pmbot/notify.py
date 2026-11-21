@@ -45,7 +45,8 @@ BOTS = {
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
     "pmbot-lock-early": ("🌅", "Ранний снайпер 5 мин", "BTC, SOL, XRP: лидер за 3–1 минуты до конца, только по 0.985–0.99, отрыв ≥ 4 сигм за час (paper, отчёты 80–81)"),
     "pmbot-lock-15-early": ("🌄", "Ранний снайпер 15 мин", "лидер за 5–2 минуты до конца, только по 0.985–0.99, отрыв ≥ 4 сигм за час (paper-близнец живого, отчёты 80–82)"),
-    "pmbot-lock-fair": ("⚡", "Перехватчик 5 мин", "стакан отстаёт от Binance: покупка стороны, которая в стакане на 15¢+ дешевле справедливой цены по Binance, за 5–1 минуты до конца (paper, отчёт 83)"),
+    "pmbot-lock-fair": ("⚡", "Перехватчик 5 мин", "стакан отстаёт от Binance: покупка стороны, которая в стакане на 15¢+ дешевле справедливой цены по Binance, за 5–1 минуты до конца (paper-близнец живого, отчёт 83)"),
+    "pmbot-lock-fair-live": ("⚡", "Перехватчик 5 мин", "стакан отстаёт от Binance: покупка стороны, которая в стакане на 15¢+ дешевле справедливой цены по Binance, за 5–1 минуты до конца; выигрывает примерно каждая вторая (5 акций, дешевле 0.21 — на $1.05, до 4 окон, стоп −$20/день)"),
     "pmbot-lock-fair-fut": ("⚡", "Перехватчик 5 мин · фьючерсы", "то же правило, но сигнал по фьючерсам Binance (они обычно двигаются раньше): сравнение с обычным (paper)"),
     "pmbot-lock-15-fair": ("⚡", "Перехватчик 15 мин", "то же на 15-минутках: за 14–1 минуты до конца (paper, отчёт 83)"),
     "pmbot-lock-15-early-live": ("🌄", "Ранний снайпер 15 мин", "лидер за 5–2 минуты до конца, только по 0.985–0.99, отрыв ≥ 4 сигм за час: ~+1¢ на акцию, минус ≈ −$14.9 (15 акций, до 3 окон, два минуса = стоп на день)"),
@@ -57,7 +58,11 @@ PAIRS = [("pmbot-5m-c", "pmbot-5m"), ("pmbot-5m-d", "pmbot-5m-b")]   # (variant,
 # Paper bots that run exactly the rule of a live bot (shown right under "real money" so the two can be compared at a glance)
 TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-lock-15-tier": "pmbot-lock-15-live",
          "pmbot-lock-15-early": "pmbot-lock-15-early-live",
+         "pmbot-lock-fair": "pmbot-lock-fair-live",
          "pmbot-5m-e": "pmbot-5m-live"}
+# Live units whose every closed window is NOT a Telegram message (the Перехватчик closes ~140 windows a day, half of them
+# lost: one message each would bury the alerts that matter). Their totals stay in /status and the digests.
+QUIET_SETTLES = {"pmbot-lock-fair-live"}
 GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
           ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
 

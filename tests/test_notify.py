@@ -41,6 +41,18 @@ def test_paper_windows_are_not_sent_one_by_one_but_live_ones_are():
     assert alerts(per_window=True).render("settle", rec)
 
 
+def test_live_interceptor_closed_windows_are_not_messaged_one_by_one():
+    """reports/83 section 10: the live Перехватчик closes ~140 windows a day; each one as a message would bury the alerts that
+    matter. Its start, stop and errors are still sent; the other live bots keep their per-window messages."""
+    rec = {"key": "btc-1793988600", "winner": "Up", "pnl": -1.8, "side": "U", "shares": 5, "cost": 1.8}
+    a = TelegramAlerts(token="", chat="", config_path="config/lock_fair_live.toml", mode="live")
+    assert a.unit == "pmbot-lock-fair-live" and a.unit in notify.QUIET_SETTLES
+    assert a.render("settle", rec) is None
+    assert a.render("start", {"mode": "live"}) and a.render("kill", {"reason": "daily loss limit 20.0 reached"})
+    other = TelegramAlerts(token="", chat="", config_path="config/lock_99_live.toml", mode="live")
+    assert other.unit == "pmbot-lock-99-live" and other.render("settle", rec)
+
+
 def test_paper_bots_are_silent_about_start_pause_and_final():
     a = alerts()
     for kind in ("start", "pause", "final"):

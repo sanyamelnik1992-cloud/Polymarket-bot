@@ -7,6 +7,9 @@
 # Binance mids of [T-62, T-3], sigma_bn = rms of 10 s Binance returns of the last hour per 1 s, tau0 = seconds to the closing TWAP);
 # buy the side whose best ask is >= 0.15 below its fair value, FAK capped at fair - 0.15, asks 0.05-0.95, 290-62 s before the end,
 # one entry per window, held to resolution. Paper measures what a bot with our ~0.5 s reaction actually gets from the live book.
+# Since 21 Nov: the PAPER TWIN of the live unit pmbot-lock-fair-live (config/lock_fair_live.toml, reports/83 section 10): the same
+# [lock] (a test keeps them equal) and the same size and open limits (5 shares, 4 windows, $20 open); paper since 19 Nov 17:40
+# at 10 shares: 275 entries, 123 won vs 100.7 break-even, +22.8 % of the money.
 journal_dir = "data/journal-lock-fair"
 
 [lock]
@@ -20,13 +23,13 @@ fair_pmax = 0.95
 fair_sigma_s = 3600.0
 fair_min_sigma_s = 1800.0
 fair_react_bp = 0.3     # decide at once on a 0.3 bp Binance move, not up to 50 ms later (reports/83 section 8)
-shares = 10
+shares = 5            # = live twin pmbot-lock-fair-live (reports/83 section 10; 10 until 21 Nov)
 max_entries_per_window = 1
 
 [risk]
-max_usd_per_entry = 10.0
-max_open_usd = 80.0
-max_open_entries = 8
+max_usd_per_entry = 5.0
+max_open_usd = 20.0
+max_open_entries = 4   # = live twin (one entry per coin of a window)
 daily_loss_limit = 200.0   # paper: see the whole day
 state_file = "data/state/lock_fair_paper.json"
 resume_next_day = true

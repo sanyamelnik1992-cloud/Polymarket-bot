@@ -57,6 +57,10 @@ class TelegramAlerts:
             return None
         if kind in LIVE_ONLY and self.mode != "live" and not (kind == "settle" and self.per_window):
             return None
+        if kind == "settle" and not self.per_window:
+            from ..notify import QUIET_SETTLES
+            if self.unit in QUIET_SETTLES:
+                return None               # ~140 windows a day (reports/83 section 10): totals come in /status and the digest
         if kind in RATE_LIMITED:
             now = self.clock()
             if now - self._last_err.get(kind, -1e18) < ERROR_EVERY_S:
