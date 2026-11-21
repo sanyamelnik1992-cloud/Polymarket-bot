@@ -1,0 +1,38 @@
+# Перехватчик ("fair value" taker) on 5m windows — LIVE, REAL MONEY (reports/83 section 10). Installed but NOT enabled at boot:
+# it trades only after the owner's word and his Telegram /restart pmbot-lock-fair-live.
+# The rule of its paper twin pmbot-lock-fair (config/lock_fair.toml, a test keeps [lock] equal): the Polymarket book lags Binance;
+# buy the side whose best ask is >= 0.15 below its Binance fair value Phi(ln(S_bn / K_bn) / (sigma_bn * sqrt(tau0 + 19.5))), FAK
+# capped at fair - 0.15, asks 0.05-0.95, 290-62 s before the end, one entry per window, held to resolution. Paper since the speedup
+# (19 Nov 17:40 - 21 Nov 12:00, 10 shares): 275 entries, 123 won vs 100.7 break-even, +$214.58 = +22.8 % of the money, both days
+# positive, every coin and price band positive; at 5 shares about +$115 with a worst drawdown of -$16.6. Half of the entries lose:
+# a day swings by tens of dollars at this size.
+# Size: 5 shares; below 0.21 an order would be under the exchange's $1 minimum, so a cheap entry buys ceil(1.05 / limit) shares
+# (min_order_shares). The live FAK is a dollar budget of shares x limit: when the ask is below the cap it buys more shares than the
+# paper twin (paper takes up to `shares`), so compare live and twin by % of the money, not by dollars.
+journal_dir = "data/journal-lock-fair-live"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+zone = "fair"
+rel_lo = 10.0          # 290 s before the end (rel is measured from the anchor end - 300)
+rel_hi = 238.0         # 62 s before the end: the closing TWAP starts here
+fair_edge = 0.15
+fair_pmin = 0.05
+fair_pmax = 0.95
+fair_sigma_s = 3600.0
+fair_min_sigma_s = 1800.0
+fair_react_bp = 0.3     # decide at once on a 0.3 bp Binance move, not up to 50 ms later (reports/83 section 8)
+shares = 5            # = paper twin pmbot-lock-fair (reports/83 section 10)
+max_entries_per_window = 1
+
+[risk]
+max_usd_per_entry = 5.0
+max_open_usd = 20.0
+max_open_entries = 4   # = paper twin (one entry per coin of a window)
+daily_loss_limit = 20.0      # paper at 5 shares never fell below -$6.84 within a UTC day; the stop stays until a human restarts it
+state_file = "data/state/lock_fair_live.json"
+resume_next_day = false
+
+[execution]
+mode = "live"
+cl_feed = "both"

@@ -1,6 +1,8 @@
 # Перехватчик on 5m windows, the FUTURES signal — PAPER A/B of pmbot-lock-fair (reports/83 section 8): the same rule and limits,
 # but the fair value, the strike and the sigma come from Binance USD-M perpetual mids (fstream), where price discovery tends to
 # happen first. Judge it against pmbot-lock-fair over the same hours: fills per signal and money per entry.
+# Since 21 Nov the same size and limits as the spot bot (5 shares, 4 windows); spot won the A/B (reports/83 section 10:
+# +22.8 % vs +16.6 % of the money, on the 213 common windows +$196.55 vs +$103.59): to be switched off (/off pmbot-lock-fair-fut).
 # The spot twin's notes follow.
 # Перехватчик ("fair value" taker) on 5m windows — PAPER (reports/83; owner 19 Nov: "подумай как можно улучшить результат,
 # проанализируй других игроков"). The Polymarket book lags Binance: when Binance moves, asks priced off slower feeds stay for
@@ -25,13 +27,13 @@ fair_sigma_s = 3600.0
 fair_min_sigma_s = 1800.0
 fair_feed = "futures"
 fair_react_bp = 0.3     # decide at once on a 0.3 bp Binance move, not up to 50 ms later (reports/83 section 8)
-shares = 10
+shares = 5
 max_entries_per_window = 1
 
 [risk]
-max_usd_per_entry = 10.0
-max_open_usd = 80.0
-max_open_entries = 8
+max_usd_per_entry = 5.0
+max_open_usd = 20.0
+max_open_entries = 4
 daily_loss_limit = 200.0   # paper: see the whole day
 state_file = "data/state/lock_fair_fut_paper.json"
 resume_next_day = true

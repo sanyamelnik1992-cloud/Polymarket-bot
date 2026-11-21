@@ -423,6 +423,16 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   127 / 57 vs 48.2 / +$73 (+16 %), 15m 22 / +$25; t 1.3-1.4 and < 200 entries, one bad evening (futures -$40 on 19 Nov 18-24 h):
   nothing changed. Before live: the loader still refuses `zone = "fair"`, the $1 minimum (ceil(1.05 / p) shares below 0.21 at 5
   shares), a day stop ~$25 or fewer windows (paper drawdown -$47 at 10 shares), stop the other 5m variant (3 bots ~90 % of a core).
+  Section 10 (21 Nov 12:00, 200+ entries): spot 275 entries / 123 won vs 100.7 / +$214.58 (+22.8 %, t 2.7, both days plus),
+  futures 301 / +$173.25 (+16.6 %, t 2.0; on the 213 common windows spot +$197 vs +$104), 15m 69 / +$88.60 (t 1.9, paper).
+  PREPARED, real money only on the owner's word: unit `pmbot-lock-fair-live` = `config/lock_fair_live.toml` (the [lock] of its
+  twin `lock_fair.toml`, a test checks it; 5 shares, `max_open_entries` 4, $20 open, day stop $20, no auto-resume, not enabled
+  at boot: /restart). The loader lets `zone = "fair"` go live only as tested (spot, 5m, one entry per window, edge >= 0.15,
+  <= 10 shares, max_open_entries set). `min_order_shares`: an entry under $1.05 buys ceil(1.05 / limit) whole shares (paper and
+  live; journal `min_order`). Both 5m paper fair bots now run 5 shares / 4 windows / $20. `notify.QUIET_SETTLES`: no Telegram
+  message per closed window for the live interceptor (~140 a day). The live FAK is a dollar budget (shares x limit): it buys
+  more shares than paper when the ask is below the cap, so compare live and twin by % of the money. Back to paper if < +5 %
+  of the money after 200 live entries; the futures paper bot is to be switched off (/off pmbot-lock-fair-fut).
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost

@@ -44,22 +44,24 @@ def test_block_sigma_uses_10_s_returns_and_forward_fills():
 
 def test_fair_configs_are_paper_and_validated():
     from pmbot import notify, ops
-    for path, dur, lo in ((FAIR5, 300, 10.0), (FAIR15, 900, -540.0)):
+    for path, dur, lo, shares in ((FAIR5, 300, 10.0, 5), (FAIR15, 900, -540.0, 10)):
         cfg = load_lock_config(path)
         c = cfg.lock
         assert cfg.execution.mode == "paper" and c.zone == "fair" and c.duration == dur and (c.rel_lo, c.rel_hi) == (lo, 238.0)
-        assert c.fair_edge == 0.15 and c.max_entries_per_window == 1 and c.shares == 10
+        assert c.fair_edge == 0.15 and c.max_entries_per_window == 1 and c.shares == shares
         unit = "pmbot-lock-" + ("fair" if dur == 300 else "15-fair")
-        assert unit in ops.BOT_UNITS and unit in notify.BOTS and unit not in notify.TWINS
+        assert unit in ops.BOT_UNITS and unit in notify.BOTS
+        assert notify.TWINS.get(unit) == ("pmbot-lock-fair-live" if dur == 300 else None)     # the 5m bot is the live bot's twin
         text = open(os.path.join(ROOT, "deploy", unit + ".service")).read()
         assert f"--config config/{os.path.basename(path)}" in text and "--live" not in text and "CPUWeight=20" in text
         for f in ("autoupdate.sh", "install_units.sh"):
             assert f" {unit} " in open(os.path.join(ROOT, "deploy", f)).read(), f
-    for bad in ({"execution": {"mode": "live"}, "risk": {"resume_next_day": False}},           # paper only (reports/83)
-                {"lock": {"rel_lo": 240.0, "rel_hi": 299.0}}, {"lock": {"fair_edge": 0.0}}, {"lock": {"fair_pmin": 0.96}},
+    for bad in ({"lock": {"rel_lo": 240.0, "rel_hi": 299.0}}, {"lock": {"fair_edge": 0.0}}, {"lock": {"fair_pmin": 0.96}},
                 {"lock": {"max_entries_per_window": 4}}, {"lock": {"hedge_p": 0.65}}):
         with pytest.raises(ValueError):
             load_lock_config(FAIR5, overrides=bad)
+    with pytest.raises(ValueError):           # the 15m fair bot is paper only (reports/83 section 10)
+        load_lock_config(FAIR15, overrides={"execution": {"mode": "live"}, "risk": {"resume_next_day": False}})
     for name in ("lock_live.toml", "lock_99_live.toml", "lock15_live.toml", "lock15_early_live.toml"):
         assert load_lock_config(os.path.join(ROOT, "config", name)).lock.zone != "fair", name
 
@@ -123,8 +125,86 @@ def test_fair_bot_takes_a_stale_ask_once_per_window(tmp_path):
     asyncio.run(go(now))
     asyncio.run(go(now + 1000))
     assert [c[0].split("-")[0] for c in br.calls] == ["btc"], br.calls      # eth: +1 bp, no edge; btc once per window
-    assert br.calls[0][1] == "U" and br.calls[0][3] == 10 and br.calls[0][2] >= 0.62
+    assert br.calls[0][1] == "U" and br.calls[0][3] == 5 and br.calls[0][2] >= 0.62
     assert any(k == "bn_strike" for k, _ in bot.j.ev)
+
+
+def test_fair_live_is_its_paper_twin_with_real_money_limits():
+    """reports/83 section 10: the live Перехватчик trades exactly the rule of pmbot-lock-fair (paper since 19 Nov 17:40: 275 entries,
+    +22.8 % of the money), 5 shares, one entry per coin of a window (4 at most, $20 open), a -$20 day stop that a human lifts.
+    It is installed, not started: it trades only after the owner's word (/restart pmbot-lock-fair-live)."""
+    from pmbot import notify, ops
+    live_path = os.path.join(ROOT, "config", "lock_fair_live.toml")
+    paper, live = load_lock_config(FAIR5), load_lock_config(live_path)
+    assert live.execution.mode == "live" and paper.execution.mode == "paper"
+    assert live.lock == paper.lock, "the live Перехватчик must stay identical to its paper twin pmbot-lock-fair"
+    assert live.lock.fair_feed == "spot" and live.lock.duration == 300 and live.lock.shares == 5
+    for cfg in (live, paper):
+        assert (cfg.risk.max_usd_per_entry, cfg.risk.max_open_usd, cfg.risk.max_open_entries) == (5.0, 20.0, 4)
+    assert live.risk.daily_loss_limit == 20.0 and live.risk.resume_next_day is False
+    assert live.risk.state_file not in ("", paper.risk.state_file) and live.journal_dir != paper.journal_dir
+    text = open(os.path.join(ROOT, "deploy", "pmbot-lock-fair-live.service")).read()
+    assert "--config config/lock_fair_live.toml --live" in text and "CPUWeight=500" in text
+    assert "pmbot-lock-fair-live" in ops.BOT_UNITS and ops.unit_is_live("pmbot-lock-fair-live")
+    assert notify.TWINS["pmbot-lock-fair"] == "pmbot-lock-fair-live" and "pmbot-lock-fair-live" in notify.BOTS
+    for f in ("autoupdate.sh", "install_units.sh"):
+        assert " pmbot-lock-fair-live " in open(os.path.join(ROOT, "deploy", f)).read(), f
+    # real money only with the tested rule: no futures signal, no looser edge, one entry per window, a cap on the size and on
+    # the open windows, 5m only
+    for bad in ({"lock": {"fair_feed": "futures"}}, {"lock": {"fair_edge": 0.10}}, {"lock": {"max_entries_per_window": 2}},
+                {"lock": {"shares": 20}}, {"risk": {"max_open_entries": 0}}, {"lock": {"duration": 900, "rel_lo": -540.0}},
+                {"risk": {"resume_next_day": True}}):
+        with pytest.raises(ValueError):
+            load_lock_config(live_path, overrides=bad)
+
+
+def test_min_order_shares_lifts_a_cheap_entry_to_one_dollar(tmp_path):
+    """The exchange refuses a marketable BUY under $1 (reports/69): at 5 shares any limit below 0.21 would be refused, so a cheap
+    fair entry buys ceil(1.05 / limit) whole shares (paper and live alike)."""
+    import time as _t
+    from pmbot.bot.lock import MIN_BUY_USD, min_order_shares
+    from pmbot.bot.state import Window
+    assert min_order_shares(5, 0.30, 5.0) == (5, False)
+    assert min_order_shares(5, 0.21, 5.0) == (5, False)                 # $1.05 exactly
+    assert min_order_shares(5, 0.18, 5.0) == (6, True)                  # $1.08
+    assert min_order_shares(5, 0.05, 5.0) == (21, True)                 # $1.05
+    assert min_order_shares(5, 0.05, 1.0) == (5, False)                 # never above the per-entry limit
+    assert min_order_shares(10, 0.12, 10.0) == (10, False)              # $1.20 is enough
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((key, side, limit, shares))
+            return limit, shares, 0.0
+
+    br = Br()
+    cfg = load_lock_config(FAIR5, overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+    now = int(_t.time() * 1000)
+    start = now // 1000 - 150
+    bot.st.add_window(Window(asset="btc", start=start, slug="btc", condition_id="btc", token_up="bu", token_down="bd"))
+    px = bot.st.prices["btc"]
+    for s in range(start - 70, start):
+        px.bn_sec_mid[s] = 100.0
+    px.bn_hist.append((now - 200, 100.0 * math.exp(4.5e-4)))           # +4.5 bp: Up ~0.67, Down ~0.33
+    bot.bsig["btc"].r2.extend([1e-8 * 10] * 360)
+    bot.bsig["btc"].last_sec = now // 1000 - 2
+    bot.st.books["bu"] = type("B", (), {"asks": {0.62: 30.0}})()        # Up: no edge
+    bot.st.books["bd"] = type("B", (), {"asks": {0.08: 30.0}})()        # Down sells at 0.08, ~25 c below its fair value
+    bot.st.feed_alive["clob"]["btc"] = now
+    bot.st.feed_alive["binance"] = now
+
+    async def go():
+        await bot.decide_once(now)
+        await asyncio.sleep(0.01)
+    asyncio.run(go())
+    (key, side, limit, shares), = br.calls
+    assert side == "D" and limit < 0.21 and shares == math.ceil(MIN_BUY_USD / limit - 1e-9) and shares * limit >= 1.05
+    assert any(k == "lock_entry" and kw.get("min_order") for k, kw in bot.j.ev)
 
 
 def test_fair_variants_instant_reaction_and_futures_ab():

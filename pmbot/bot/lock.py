@@ -221,8 +221,13 @@ def load_lock_config(path=None, overrides=None):
                              "600 <= fair_min_sigma_s <= fair_sigma_s <= 7200")
         if c.tiers or c.hedge_p or c.big_shares or c.entry != "taker" or not 1 <= c.max_entries_per_window <= 3:
             raise ValueError("lock.zone = 'fair': taker entries (1-3 per window), no tiers / insurance / big_shares")
-        if e.mode == "live":
-            raise ValueError("lock.zone = 'fair' is paper-only: real money only on the owner's word after the paper test (reports/83)")
+        if e.mode == "live" and (c.fair_feed != "spot" or c.duration != 300 or c.max_entries_per_window != 1
+                                 or c.fair_edge < 0.15 - 1e-9 or c.shares > 10 or not r.max_open_entries):
+            # real money only with the rule the paper bot pmbot-lock-fair tested (reports/83 section 10): Binance spot signal,
+            # 5m windows, one entry per window, an edge of 15 c or more, <= 10 shares, a cap on open windows. The futures
+            # signal and the 15m bot are paper only; growing any of this is the owner's decision
+            raise ValueError("lock.zone = 'fair' live: spot signal, 5m windows, one entry per window, fair_edge >= 0.15, "
+                             "shares <= 10 and risk.max_open_entries > 0 only (reports/83 section 10)")
         if c.fair_feed not in ("spot", "futures") or not 0 <= c.fair_react_bp <= 5:
             raise ValueError("lock.fair_feed must be 'spot' or 'futures', 0 <= fair_react_bp <= 5")
     if c.zone == "close" and not 238 <= c.rel_lo < c.rel_hi < 300:
@@ -571,6 +576,18 @@ class PaperTaker:
             cost += q * px
             fee += q * fee_per_share(px)
         return (cost / got if got else 0.0), got, fee
+
+
+def min_order_shares(shares, limit, max_usd):
+    """Whole shares for a marketable BUY of at least MIN_BUY_USD: the exchange refuses a smaller one (reports/69). A cheap
+    entry of the fair rule (5 shares below 0.21) buys ceil(1.05 / limit) shares instead, never above max_usd.
+    Returns (shares, raised)."""
+    if limit <= 0 or shares * limit >= MIN_BUY_USD - 1e-9:
+        return shares, False
+    need = math.ceil(MIN_BUY_USD / limit - 1e-9)
+    if need * limit > max_usd + 1e-9:
+        return shares, False
+    return need, True
 
 
 def fak_budget(shares, limit):
@@ -1082,6 +1099,9 @@ class LockBot:
             if want > c.shares and c.big_calm_s and now - self.guard_t.get(key, -1e18) < c.big_calm_s * 1000:
                 want, ctx = c.shares, {**ctx, "calm": False}       # reports/71: an alarm a moment ago = the small size
             shares = min(want, math.floor(self.cfg.risk.max_usd_per_entry / sig["limit"] * 100) / 100)
+            shares, raised = min_order_shares(shares, sig["limit"], self.cfg.risk.max_usd_per_entry)
+            if raised:                     # reports/83 section 10: a cheap fair entry is still a valid order ($1.05+)
+                ctx = {**ctx, "min_order": True}
             cands.append((sig["p"] - sig["ask"], w, sig, shares, ctx))
         # Open risk counts the orders still in flight: all coins become eligible in the same tick at rel_lo, and an
         # order takes ~0.3 s to come back, so without the reservation two or three coins went out together past
