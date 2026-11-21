@@ -433,6 +433,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   message per closed window for the live interceptor (~140 a day). The live FAK is a dollar budget (shares x limit): it buys
   more shares than paper when the ask is below the cap, so compare live and twin by % of the money. Back to paper if < +5 %
   of the money after 200 live entries; the futures paper bot is to be switched off (/off pmbot-lock-fair-fut).
+  Section 11 (21 Nov 20:00): spot 370 / 165 won vs 131.7 / +$329 (+26.7 %, t 3.6), futures +17.3 %, 15m 98 / +38 % (t 2.0);
+  public-trades check (`reports/83_tools/fair_vs_trades.py`): 115 of 122 paper entries had other takers buying our side at our
+  price or better in the same window (median 517 shares): the prices were real; the timing only live can show.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost
@@ -462,6 +465,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   trading its disagreements loses 11-33 %; forecast error of the day max +0.6 C mean, 1.2-1.6 C sd a day ahead. Next: record to
   23 Nov, model v1 (station bias, the forecast's remaining hours, time of day, model spread); close weather if it does not beat
   the market on 300 events. Tool: `reports/84_tools/wx_check.py`.
+  CLOSED 21 Nov (report 84, last section): 225 events of 15-21 Nov, model v1 (`reports/84_tools/wx_v1.py`: station bias + model
+  spread) loses to the market at every horizon (24 h log loss 1.59 vs 1.18), any blend with the model is worse than the market
+  alone, every price band loses after spread + fee: no edge from free forecasts. The recorder can be switched off.
 - `pmbot-5m-g2` = `config/g2.toml` (brother, `reports/46`): G with `strategy.favorite_only = 0.02` (opening bids only on
   the side priced >= 0.52), paper, judged against G.
 - Stopped and disabled 9 Nov (owner: "не нужное с сервера можешь удалить"): F (`pmbot-5m-f`) and H (`pmbot-5m-h`);
