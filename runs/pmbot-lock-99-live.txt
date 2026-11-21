@@ -1,26 +1,9 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261120-062458
-mode: live  duration: 2315.9 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 4631, 'prewarm': 1852, 'lock_state': 39264, 'strike': 1848, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3, 'order_rejected': 4, 'lock_miss': 4}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261121-211258
+mode: live  duration: 49.1 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 40, 'status': 98, 'lock_state': 329, 'strike': 36, 'order_rejected': 1, 'lock_miss': 1}
 
-lock orders: sent 7  filled 3  ask gone 4  errors 0
-  signal -> exchange answer, ms: median 295  p90 448  max 448
-  market prewarm (2 lookups + signing), ms: median 168  max 704  n 1852
-  fill price minus the ask we saw, cents: mean +0.70  worst +3.0
-  misses came 15-60 s before the end; model p 0.991-0.997
-  exchange rejections by code: {'fak_not_filled': 4}
-
-fills: 3  shares: 30  notional: $29.70
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-btc        1  10.000       9.9       0.99  273.986
-eth        1  10.421       9.9       0.95  295.679
-sol        1  10.000       9.9       0.99  240.498
-
-settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-btc          1  9.907  0.093          0.093     0.0       1.0  0.093  0.093  0.009
-eth          1  9.935  0.486          0.486     0.0       1.0  0.486  0.486  0.049
-sol          1  9.907  0.093          0.093     0.0       1.0  0.093  0.093  0.009
-
-TOTAL pnl $+0.67 (ex-rebate $+0.67) on cost $29.75 -> ROI +2.26%; windows 3, t-stat +1.71
-max drawdown $0.00; hedged windows (both sides filled): 0
+lock orders: sent 1  filled 0  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 223  p90 223  max 223
+  market prewarm (2 lookups + signing), ms: median 167  max 465  n 40
+  misses came 20-20 s before the end; model p 0.995-0.995
+  exchange rejections by code: {'fak_not_filled': 1}
+no fills
