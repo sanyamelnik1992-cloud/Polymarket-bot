@@ -1,9 +1,9 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261120-062507
-mode: live  duration: 1235.7 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 2471, 'prewarm': 332, 'lock_state': 7560, 'strike': 328, 'order_filled': 9, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 8, 'order_rejected': 1, 'lock_miss': 1}
+mode: live  duration: 1296.7 min  events: {'geoblock_ok': 1, 'start': 1, 'status': 2593, 'prewarm': 348, 'lock_state': 8254, 'strike': 344, 'order_filled': 9, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 9, 'order_rejected': 1, 'lock_miss': 1}
 
 lock orders: sent 10  filled 9  ask gone 1  errors 0
   signal -> exchange answer, ms: median 324  p90 425  max 425
-  market prewarm (2 lookups + signing), ms: median 164  max 547  n 332
+  market prewarm (2 lookups + signing), ms: median 161  max 547  n 348
   fill price minus the ask we saw, cents: mean -0.44  worst +0.0
   misses came 18-18 s before the end; model p 0.933-0.933
   exchange rejections by code: {'fak_not_filled': 1}
@@ -19,10 +19,10 @@ xrp        3   6.044      5.46      0.903  849.563
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
-btc          3  5.575  0.514          0.514     0.0       1.0  0.131  0.211  0.092
+btc          4  7.444  0.645          0.645     0.0       1.0  0.131  0.211  0.087
 eth          1  1.832  0.168          0.168     0.0       1.0  0.168  0.168  0.092
 sol          1  1.869  0.131          0.131     0.0       1.0  0.131  0.131  0.070
 xrp          3  5.497  0.548          0.548     0.0       1.0  0.168  0.190  0.100
 
-TOTAL pnl $+1.36 (ex-rebate $+1.36) on cost $14.77 -> ROI +9.21%; windows 8, t-stat +17.17
+TOTAL pnl $+1.49 (ex-rebate $+1.49) on cost $16.64 -> ROI +8.96%; windows 9, t-stat +16.97
 max drawdown $0.00; hedged windows (both sides filled): 0
