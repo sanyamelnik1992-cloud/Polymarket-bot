@@ -1,0 +1,3 @@
+run: /home/pmbot/Polymarket-bot/data/journal-lock-fair-live/20261122-054327
+mode: live  duration: 18.0 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 20, 'lock_state': 20, 'status': 36, 'strike': 16, 'bn_strike': 16}
+no fills
