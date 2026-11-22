@@ -80,7 +80,9 @@ def test_alert_texts_are_labelled_and_escaped():
                       ("order_rejected", {"key": "eth-1793988600", "error": "bad <html> & stuff"})]:
         msg = a.render(kind, rec)
         assert msg and "<b>A</b>" in msg and balanced(msg), kind
-    assert "00:00 UTC" in alerts(mode="live").render("kill", {"reason": "daily loss limit 50 reached"})
+    live_stop = alerts(mode="live").render("kill", {"reason": "daily loss limit 50 reached"})
+    assert "/restart pmbot-5m" in live_stop and "/resume" not in live_stop          # reports/83 section 15
+    assert "00:00 UTC" in alerts().render("kill", {"reason": "daily loss limit 50 reached"})   # paper resumes by itself
     assert "/resume" in alerts().render("kill", {"reason": "kill file STOP present"})
     assert alerts().render("quote", {}) is None and alerts().render("fv", {}) is None
 

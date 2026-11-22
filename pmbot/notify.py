@@ -193,8 +193,12 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
             how = "Вернуть: /resume"
         elif "награды" in reason:
             how = "Котировки включатся сами в 00:00 UTC, /resume не нужен."
+        elif "daily loss" in reason and (mode == "live" or rec.get("mode") == "live"):
+            # 22 Nov: "(тогда /resume)" here led to a /resume that started four old paper bots and not this one (reports/83 s. 15)
+            how = (f"Живой бот сам не включится. Запуск — на следующий день: /restart {esc(unit)}" if unit else
+                   "Живой бот сам не включится: на следующий день — /restart.")
         elif "daily loss" in reason:
-            how = "Сегодня бот больше не торгует. Новый день начнётся в 00:00 UTC (тогда /resume)."
+            how = "Бумажный бот продолжит сам в 00:00 UTC, ничего делать не нужно."
         else:
             how = "Посмотреть: /status, /log"
         return f"⛔ {who} — <b>торговля остановлена</b>\nПричина: {esc(ru)}\nВсе заявки сняты. {how}"

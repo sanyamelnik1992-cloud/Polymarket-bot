@@ -457,6 +457,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   here): `freeze_gc()` in `LockBot.run()` after the SDK start and again 2 min later. The hourly report, autoupdate and wallet
   jobs now run Nice 19/10, CPUWeight 10/20. Diagnostics: `queue_ms` on entries/misses, `stats.gc_max_ms`, and report_journal.py
   prints the exchange call alone, the queue, GC pauses, signal age and fair entries by edge / ask size / signal age with outcomes.
+  Section 15 (22 Nov): the live day-stop message said "(тогда /resume)"; a /resume at ~09:23 started every unit enabled at boot
+  (old makers A and C, L2, 5m early) and not the interceptor. Fixed: the live day-stop message says /restart <unit> the next day,
+  paper says it resumes at 00:00 UTC; /stop records the running units (`tg_bot.STOPPED_FILE`) and /resume starts exactly those;
+  `deploy/install_units.sh` RETIRED list: disabled at boot, paper ones also stopped (`--no-block`); `tests/test_ops.py` KEEP_UNITS
+  = the current lineup (L99 live, 15m live, fair live + paper, 15m fair, 15m early paper, tg); every other unit must be RETIRED.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost

@@ -9,6 +9,7 @@
 Without PMBOT_TG_CHAT the bot only answers "your chat id is ..." so the id can be put into /etc/pmbot/pmbot.env.
 Trading bots do not depend on this process: if it dies nothing changes for them.
 """
+import json
 import logging
 import os
 import subprocess
@@ -94,23 +95,43 @@ def enabled_units(units):
 
 
 # ---------------------------------------------------------------- commands
+STOPPED_FILE = os.path.join(ops.REPO, "data", "state", "stopped_by_tg.json")   # units that ran when /stop was sent
+
+
 def cmd_stop(_):
+    running = [u for u in ops.BOT_UNITS + ops.REWARD_UNITS if ops.unit_state(u)[0] == "active"]
+    os.makedirs(os.path.dirname(STOPPED_FILE), exist_ok=True)
+    with open(STOPPED_FILE, "w") as f:
+        json.dump(running, f)
     open(ops.KILL_FILE, "w").write(f"stopped from Telegram at {datetime.now(timezone.utc).isoformat()}\n")
     return ("⛔ <b>STOP создан</b>\nБоты снимают все заявки и выключаются (обычно за несколько секунд).\n"
-            "Вернуть: /resume")
+            "Вернуть: /resume (запустит те же боты, что работали сейчас)")
 
 
 def cmd_resume(_):
+    """Undo /stop: remove STOP and start exactly the units that ran when it was sent. It used to start every unit enabled at
+    boot: on 22 Nov a /resume after the live interceptor's day stop started four retired paper bots, and not the interceptor
+    (a day stop is not a STOP; a live bot comes back only by /restart; reports/83 section 15)."""
     removed, cleared = ops.resume_after_stop()
+    try:
+        units = [u for u in json.load(open(STOPPED_FILE)) if u in ops.BOT_UNITS + ops.REWARD_UNITS]
+    except (OSError, ValueError):
+        units = []
     started = []
-    for u in enabled_units(ops.BOT_UNITS + ops.REWARD_UNITS):
+    for u in units:
         ok, _ = systemctl("start", "--no-block", u)
         if ok:
             started.append(u)
+    if removed or not units:
+        try:
+            os.remove(STOPPED_FILE)
+        except OSError:
+            pass
     msg = ("▶️ STOP удалён. " if removed else "STOP не было. ") + \
         (f"kill снят: {', '.join(label(u, False) for u in cleared)}. " if cleared else "")
     msg += f"Запускаю: {', '.join(label(u, False) for u in started) or 'нечего'}.\n"
-    msg += "Если бот остановился по дневному стопу убытка, он сам не начнёт торговать до 00:00 UTC."
+    msg += ("/resume отменяет только /stop. Бот, остановленный дневным стопом убытка: бумажный продолжит сам в 00:00 UTC, "
+            "живой — только /restart юнит.")
     return msg
 
 

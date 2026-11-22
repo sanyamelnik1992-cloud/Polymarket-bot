@@ -159,6 +159,45 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
+KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair-live", "pmbot-lock-fair", "pmbot-lock-15-fair",
+              "pmbot-lock-15-early", "pmbot-tg"}      # the current lineup (22 Nov); every other bot unit is retired
+
+
+def test_retired_units_are_disabled_and_the_lineup_is_not():
+    """reports/83 section 15: install_units.sh disables every retired bot (and stops the paper ones), so neither a reboot nor a
+    /resume starts them again; the current lineup is never touched. A new unit must be put on one of the two lists."""
+    import re
+    text = open("deploy/install_units.sh").read()
+    retired = set(re.search(r'(?m)^RETIRED="([^"]+)"', text).group(1).split())
+    assert not retired & KEEP_UNITS
+    every = set(ops.BOT_UNITS + ops.REWARD_UNITS + ops.REWARD_LIVE_UNITS + ops.WEATHER_UNITS)
+    assert every - retired - KEEP_UNITS == set(), every - retired - KEEP_UNITS
+    for u in retired:
+        assert os.path.exists(f"deploy/{u}.service"), u
+
+
+def test_resume_starts_only_what_stop_stopped(tmp_path, monkeypatch):
+    """22 Nov: the day-stop message of the live interceptor said "/resume"; /resume started every unit enabled at boot (four
+    retired paper bots) and not the interceptor. Now /stop records the running units and /resume starts exactly those."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("tg", os.path.join(os.path.dirname(__file__), "..", "scripts", "tg_bot.py"))
+    tg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tg)
+    monkeypatch.setattr(tg, "STOPPED_FILE", str(tmp_path / "stopped.json"))
+    monkeypatch.setattr(ops, "KILL_FILE", str(tmp_path / "STOP"))
+    monkeypatch.setattr(ops, "unit_state", lambda u: ("active" if u in ("pmbot-lock-99-live", "pmbot-lock-fair") else "inactive", None))
+    monkeypatch.setattr(ops, "resume_after_stop", lambda: (os.path.exists(ops.KILL_FILE), []))
+    calls = []
+    monkeypatch.setattr(tg, "systemctl", lambda *a: (calls.append(a) or (True, "")))
+    assert "STOP создан" in tg.cmd_stop(None) and os.path.exists(ops.KILL_FILE)
+    msg = tg.cmd_resume(None)
+    assert sorted(c[-1] for c in calls) == ["pmbot-lock-99-live", "pmbot-lock-fair"] and "/restart" in msg
+    calls.clear()
+    os.remove(ops.KILL_FILE)
+    tg.cmd_resume(None)                                   # no STOP and nothing recorded: nothing is started
+    assert calls == []
+
+
 def test_background_jobs_yield_the_cpu_to_the_bots():
     """reports/83 section 14: the hourly report, the update (git + pytest) and the wallet reader run below every bot."""
     import re
