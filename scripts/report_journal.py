@@ -29,6 +29,13 @@ def lock_orders(ev):
     if ms:
         print(f"  signal -> exchange answer, ms: median {ms[len(ms) // 2]:.0f}  p90 {ms[min(len(ms) - 1, int(0.9 * len(ms)))]:.0f}  "
               f"max {ms[-1]:.0f}")
+    call = sorted(e["latency_ms"] for e in ev if e["type"] in ("order_filled", "order_rejected") and e.get("latency_ms") is not None)
+    if call:                       # the exchange call alone: the rest of "signal -> answer" is spent inside our process
+        print(f"  exchange call alone, ms: median {call[len(call) // 2]:.0f}  p90 {call[min(len(call) - 1, int(0.9 * len(call)))]:.0f}  "
+              f"max {call[-1]:.0f}")
+    age = sorted(e["sig_age_ms"] for e in ent + clean if e.get("sig_age_ms") is not None)
+    if age:                        # fair bots: how old the Binance tick was when the bot decided
+        print(f"  signal age at the decision, ms: median {age[len(age) // 2]:.0f}  p90 {age[min(len(age) - 1, int(0.9 * len(age)))]:.0f}")
     warm = sorted(e["ms"] for e in ev if e["type"] == "prewarm" and e.get("ms") is not None)
     if warm:
         print(f"  market prewarm (2 lookups + signing), ms: median {warm[len(warm) // 2]:.0f}  max {warm[-1]:.0f}  n {len(warm)}")

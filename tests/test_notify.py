@@ -41,13 +41,25 @@ def test_paper_windows_are_not_sent_one_by_one_but_live_ones_are():
     assert alerts(per_window=True).render("settle", rec)
 
 
-def test_live_interceptor_closed_windows_are_not_messaged_one_by_one():
-    """reports/83 section 10: the live Перехватчик closes ~140 windows a day; each one as a message would bury the alerts that
-    matter. Its start, stop and errors are still sent; the other live bots keep their per-window messages."""
+def test_live_interceptor_closed_windows_come_as_one_summary_an_hour():
+    """reports/83 sections 10 and 13: the live Перехватчик closes dozens of windows a day; one message each would bury the alerts
+    that matter, but with none at all the owner saw only the stop (22 Nov). So one summary an hour; start, stop and errors are
+    sent at once; the other live bots keep their per-window messages."""
+    clock = {"t": 1000.0}
     rec = {"key": "btc-1793988600", "winner": "Up", "pnl": -1.8, "side": "U", "shares": 5, "cost": 1.8}
-    a = TelegramAlerts(token="", chat="", config_path="config/lock_fair_live.toml", mode="live")
+    a = TelegramAlerts(token="", chat="", config_path="config/lock_fair_live.toml", mode="live", clock=lambda: clock["t"])
     assert a.unit == "pmbot-lock-fair-live" and a.unit in notify.QUIET_SETTLES
     assert a.render("settle", rec) is None
+    clock["t"] += 1800
+    assert a.render("settle", dict(rec, pnl=3.2)) is None
+    clock["t"] += 1900                                                    # an hour after the first window of the period
+    msg = a.render("settle", dict(rec, pnl=-0.5))
+    assert "окон 3 (+1/−2)" in msg and "+0.90$" in msg and "с запуска: окон 3" in msg and balanced(msg)
+    clock["t"] += 600
+    assert a.render("settle", dict(rec, pnl=1.0)) is None                  # a new period starts
+    clock["t"] += 3600
+    msg = a.render("settle", dict(rec, pnl=1.0))
+    assert "окон 2 (+2/−0)" in msg and "с запуска: окон 5 (+3/−2), итог +2.90$" in msg
     assert a.render("start", {"mode": "live"}) and a.render("kill", {"reason": "daily loss limit 20.0 reached"})
     other = TelegramAlerts(token="", chat="", config_path="config/lock_99_live.toml", mode="live")
     assert other.unit == "pmbot-lock-99-live" and other.render("settle", rec)

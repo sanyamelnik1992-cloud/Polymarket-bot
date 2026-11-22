@@ -25,6 +25,7 @@ RATE_LIMITED = {"order_rejected", "cancel_failed", "heartbeat_error", "user_stre
 # its ask already gone). The hourly report counts them ("продажи уже не было")
 NORMAL_REJECTS = {"post_only_would_cross", "fak_not_filled", "fok_not_filled"}
 ERROR_EVERY_S = 600
+QUIET_EVERY_S = 3600      # a unit of notify.QUIET_SETTLES: one summary of its closed windows an hour, not one message each
 
 
 class TelegramAlerts:
@@ -44,6 +45,8 @@ class TelegramAlerts:
                 self.unit = None
         self._last_err = {}       # kind -> last sent ts
         self._skipped = {}        # kind -> messages not sent since then
+        self._quiet = None        # QUIET_SETTLES: windows closed since the last summary {"since", "n", "won", "pnl"}
+        self._quiet_total = {"n": 0, "won": 0, "pnl": 0.0}     # ... and since this process started
         self.q = queue.Queue(maxsize=500)
         self.enabled = bool(self.token and self.chat)
         if self.enabled:
@@ -60,7 +63,7 @@ class TelegramAlerts:
         if kind == "settle" and not self.per_window:
             from ..notify import QUIET_SETTLES
             if self.unit in QUIET_SETTLES:
-                return None               # ~140 windows a day (reports/83 section 10): totals come in /status and the digest
+                return self._quiet_settle(rec)   # dozens of windows a day (reports/83 sections 10, 13): one summary an hour
         if kind in RATE_LIMITED:
             now = self.clock()
             if now - self._last_err.get(kind, -1e18) < ERROR_EVERY_S:
@@ -76,6 +79,22 @@ class TelegramAlerts:
         if msg and self._skipped.get(kind):
             msg += f"\n(ещё таких же за {ERROR_EVERY_S // 60} мин: {self._skipped.pop(kind)})"
         return msg
+
+    def _quiet_settle(self, rec):
+        """Count a closed window of a QUIET_SETTLES unit; once QUIET_EVERY_S passed since the first uncounted one, the summary."""
+        now = self.clock()
+        pnl = float(rec.get("pnl") or 0.0)
+        if self._quiet is None:
+            self._quiet = {"since": now, "n": 0, "won": 0, "pnl": 0.0}
+        for q in (self._quiet, self._quiet_total):
+            q["n"] += 1
+            q["won"] += pnl > 0
+            q["pnl"] += pnl
+        if now - self._quiet["since"] < QUIET_EVERY_S:
+            return None
+        q, self._quiet = self._quiet, None
+        from ..notify import quiet_summary
+        return quiet_summary(self.unit, q, self._quiet_total, minutes=round((now - q["since"]) / 60), mode=self.mode)
 
     def maybe_send(self, kind, rec):
         if not self.enabled:

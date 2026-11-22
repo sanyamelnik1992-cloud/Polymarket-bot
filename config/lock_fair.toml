@@ -37,5 +37,6 @@ resume_next_day = true
 
 [execution]
 mode = "paper"
-paper_exec_ms = 300
+paper_exec_ms = 500       # = the live twin's median signal -> exchange answer on 22 Nov (496 ms; was 300): paper fills must
+                          # not assume a faster bot than the live one (reports/83 section 13)
 cl_feed = "both"

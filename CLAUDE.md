@@ -444,6 +444,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   restored when < 5 min old (each restart used to cost 30 min without entries). Competitors: the stale asks are taken mostly by
   high-frequency BTC traders (42 buys a window, both sides, -0.9 % overall; top 10 first in 62 % of windows); only 6 selective
   wallets like ours, all small; none sells back as a taker.
+  Section 13 (22 Nov 09:00): the LIVE interceptor (started 05:43 by the brother) hit its -$20 day stop: 84 orders, 17 filled (20 %
+  vs 49 % on paper), signal -> answer 496 ms median, p90 2.5 s (Sniper 300 ms); on 7 of its 8 windows the paper twin did the same
+  and lost too, the 24 windows it missed made the paper +$18.75: live is slower than paper assumed. Done: twin `paper_exec_ms = 500`,
+  `report_journal.py` prints the exchange call alone (`latency_ms`) and the signal age (`sig_age_ms`), Telegram: one summary of
+  the live interceptor's windows an hour (`alerts.QUIET_EVERY_S`, `notify.quiet_summary`). Live stays OFF until paper at 500 ms is
+  positive for 1-2 days and the delay is found.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost

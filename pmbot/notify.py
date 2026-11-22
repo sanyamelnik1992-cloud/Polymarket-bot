@@ -60,11 +60,18 @@ TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-l
          "pmbot-lock-15-early": "pmbot-lock-15-early-live",
          "pmbot-lock-fair": "pmbot-lock-fair-live",
          "pmbot-5m-e": "pmbot-5m-live"}
-# Live units whose every closed window is NOT a Telegram message (the Перехватчик closes ~140 windows a day, half of them
-# lost: one message each would bury the alerts that matter). Their totals stay in /status and the digests.
+# Live units whose closed windows come as ONE summary an hour instead of a message each (the Перехватчик closes dozens of
+# windows a day, half of them lost). 22 Nov the owner saw only the stop message and no trade at all (reports/83 section 13).
 QUIET_SETTLES = {"pmbot-lock-fair-live"}
 GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
           ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
+
+
+def quiet_summary(unit, q, total, minutes=60, mode="live"):
+    """One message for the windows a QUIET_SETTLES unit closed in the last ~hour, with the total since its start."""
+    tail = " 💰" if mode == "live" else " (paper)"
+    return (f"{label(unit, False)} · за {minutes} мин: окон {q['n']} (+{q['won']}/−{q['n'] - q['won']}), итог {money(q['pnl'], True)}{tail}\n"
+            f"с запуска: окон {total['n']} (+{total['won']}/−{total['n'] - total['won']}), итог {money(total['pnl'])}")
 
 
 def group_of(unit, mode):
