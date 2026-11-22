@@ -1,8 +1,21 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261122-092313
-mode: paper  duration: 38.2 min  events: {'start': 1, 'lock_state': 16, 'status': 76, 'strike': 12, 'bn_strike': 12, 'lock_miss': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261122-103536
+mode: paper  duration: 25.6 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 12, 'status': 51, 'strike': 8, 'bn_strike': 8, 'lock_miss': 3}
 
-lock orders: sent 1  filled 0  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 1292  p90 1292  max 1292
-  signal age at the decision, ms: median 64  p90 64
-  misses came 564-564 s before the end; model p 0.950-0.950
+lock orders: sent 3  filled 0  ask gone 3  errors 0
+  signal -> exchange answer, ms: median 304  p90 304  max 304
+  decision -> order sent, ms: median 111  p90 464  max 464
+  GC pause per 30 s, ms: median 15  p90 41  max 113
+  signal age at the decision, ms: median 111  p90 277
+  misses came 289-466 s before the end; model p 0.468-0.564
+
+fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
+       15-20:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       25-35:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+
+fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
+       10-50:    3 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+
+fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
+       0-100:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+     100-300:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 no fills
