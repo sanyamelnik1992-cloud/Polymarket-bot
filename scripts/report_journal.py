@@ -33,6 +33,14 @@ def lock_orders(ev):
     if call:                       # the exchange call alone: the rest of "signal -> answer" is spent inside our process
         print(f"  exchange call alone, ms: median {call[len(call) // 2]:.0f}  p90 {call[min(len(call) - 1, int(0.9 * len(call)))]:.0f}  "
               f"max {call[-1]:.0f}")
+    q = sorted(e["queue_ms"] for e in ent + clean if e.get("queue_ms") is not None)
+    if q:                          # decision -> the order task running (our own event loop)
+        print(f"  decision -> order sent, ms: median {q[len(q) // 2]:.0f}  p90 {q[min(len(q) - 1, int(0.9 * len(q)))]:.0f}  max {q[-1]:.0f}")
+    gcm = [e["stats"].get("gc_max_ms") for e in ev if e["type"] == "status" and isinstance(e.get("stats"), dict)]
+    gcm = sorted(x for x in gcm if x is not None)
+    if gcm:                        # the longest garbage-collector pause of each 30 s status
+        print(f"  GC pause per 30 s, ms: median {gcm[len(gcm) // 2]:.0f}  p90 {gcm[min(len(gcm) - 1, int(0.9 * len(gcm)))]:.0f}  "
+              f"max {gcm[-1]:.0f}")
     age = sorted(e["sig_age_ms"] for e in ent + clean if e.get("sig_age_ms") is not None)
     if age:                        # fair bots: how old the Binance tick was when the bot decided
         print(f"  signal age at the decision, ms: median {age[len(age) // 2]:.0f}  p90 {age[min(len(age) - 1, int(0.9 * len(age)))]:.0f}")
@@ -56,6 +64,49 @@ def lock_orders(ev):
         print(f"  {e['type']} {e.get('key', '')}: {e.get('err', '')} {str(txt)[:160]}")
 
 
+def fair_breakdown(ev):
+    """Fair-value bots (reports/83 section 14): orders and entries by edge, ask size and signal age, with the outcome of every
+    entry from its window's settle - which signals our speed still gets, and whether those earn."""
+    ent = [e for e in ev if e["type"] == "lock_entry" and e.get("fair")]
+    miss = [e for e in ev if e["type"] == "lock_miss" and e.get("fair") and not e.get("error")]
+    if not ent and not miss:
+        return
+    win = {e["key"]: e.get("winner") for e in ev if e["type"] == "settle"}
+
+    def bucket(x, edges):
+        if x is None:
+            return "?"
+        for lo, hi in zip(edges, edges[1:]):
+            if lo <= x < hi:
+                return f"{lo:g}-{hi:g}"
+        return f">={edges[-1]:g}"
+
+    for name, field_, edges in (("edge, c", "edge", (0.15, 0.20, 0.25, 0.35)), ("ask size, shares", "ask_sz", (0, 10, 50, 200)),
+                                ("signal age, ms", "sig_age_ms", (0, 100, 300, 1000))):
+        rows = {}
+        for e in ent + miss:
+            x = e.get(field_)
+            r = rows.setdefault(bucket(x * 100 if (field_ == "edge" and x is not None) else x,
+                                       tuple(v * 100 for v in edges) if field_ == "edge" else edges),
+                                {"orders": 0, "filled": 0, "settled": 0, "won": 0, "exp": 0.0, "pnl": 0.0})
+            r["orders"] += 1
+            if e["type"] == "lock_entry":
+                r["filled"] += 1
+                w = win.get(e["key"])
+                if w and e.get("price") is not None:
+                    won = (e["side"] == "U") == (w == "Up")
+                    sh, px = float(e.get("shares") or 0), float(e["price"])
+                    r["settled"] += 1
+                    r["won"] += won
+                    r["exp"] += px
+                    r["pnl"] += sh * ((1.0 if won else 0.0) - px - 0.07 * px * (1 - px))
+        print(f"\nfair entries by {name}: orders / filled / settled / won (expected at the paid prices) / pnl")
+        for k in sorted(rows, key=lambda k: (k == "?", float(k.split("-")[0].lstrip(">=")) if k != "?" else 0)):
+            r = rows[k]
+            print(f"  {k:>10s}: {r['orders']:4d} / {r['filled']:4d} ({100 * r['filled'] / max(r['orders'], 1):3.0f} %) / {r['settled']:4d} / "
+                  f"{r['won']:4d} ({r['exp']:6.1f}) / {r['pnl']:+8.2f}")
+
+
 def main(d):
     ev = [json.loads(line) for line in open(os.path.join(d, "events.jsonl")) if line.strip()]
     kinds = Counter(e["type"] for e in ev)
@@ -73,6 +124,7 @@ def main(d):
     if not quotes.empty:
         print(f"quotes placed: {len(quotes)}")
     lock_orders(ev)
+    fair_breakdown(ev)
     if fills.empty:
         print("no fills")
         return

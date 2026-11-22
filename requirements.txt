@@ -6,3 +6,4 @@ pyarrow>=15
 websockets>=12
 pytest>=8
 matplotlib>=3.8
+coincurve>=20    # fast secp256k1 for order signing: eth-keys uses it when present (3 ms -> 0.3 ms an order, reports/83 section 14)

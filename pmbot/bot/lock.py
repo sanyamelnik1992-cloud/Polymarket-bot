@@ -18,6 +18,7 @@ the leader by z = ln(S / K) / (sigma_1h * sqrt(tau0 + 19.5)) (HourSigma, one hou
 at an ask of 0.985-0.99.
 """
 import asyncio
+import gc
 import json
 import logging
 import math
@@ -645,6 +646,32 @@ class LiveTaker:
 
 
 # ------------------------------------------------------------------------------------------------ bot
+GC_PAUSE = {"t0": None, "max_ms": 0.0, "gen2": 0}     # the longest garbage-collector pause of the status interval (reports/83 s. 14)
+
+
+def _gc_timer(phase, info):
+    """gc.callbacks hook: a collection stops the whole event loop (feeds, decisions and order replies wait), so the longest one
+    of every 30 s status goes to stats.gc_max_ms; the live interceptor's orders took 2.5-3 s for every tenth (22 Nov)."""
+    if phase == "start":
+        GC_PAUSE["t0"] = time.perf_counter()
+    elif GC_PAUSE["t0"] is not None:
+        ms = (time.perf_counter() - GC_PAUSE["t0"]) * 1000
+        GC_PAUSE["t0"] = None
+        GC_PAUSE["max_ms"] = max(GC_PAUSE["max_ms"], ms)
+        if info.get("generation") == 2:
+            GC_PAUSE["gen2"] += 1
+
+
+def freeze_gc():
+    """Move every object alive now (modules, the exchange SDK, config, tables) out of the collector's reach: a full collection
+    of the ~110 000 objects of a live lock bot stopped its event loop for ~43 ms on a fast desktop, more on the 2-vCPU server
+    with 15-25 % steal; afterwards the bot's own data (mostly untracked tuples and dicts of numbers) takes ~0 ms
+    (reports/83 section 14). Objects frozen here and dropped later are never freed: a few KB of the start-up windows."""
+    gc.collect()
+    gc.freeze()
+    return gc.get_freeze_count()
+
+
 class LockBot:
     def __init__(self, cfg: LockConfig, journal, broker=None, tables=None):
         self.cfg = cfg
@@ -693,6 +720,8 @@ class LockBot:
         self.last_why = {}
         self.stats = {"signals": 0, "orders": 0, "filled": 0, "missed": 0, "skipped_risk": 0,
                       "lag_max_ms": 0, "lag_over_100ms": 0, "decide_max_ms": 0}   # lag/decide: per 30 s status
+        if _gc_timer not in gc.callbacks:
+            gc.callbacks.append(_gc_timer)
         self.dur = c.duration
         self.tag = DURATIONS[c.duration]
         self._stop = False
@@ -1134,7 +1163,7 @@ class LockBot:
                 continue
             self.busy.add(w.key)
             self.pending[w.key] = need
-            asyncio.get_running_loop().create_task(self._execute(w, sig, shares, ctx))
+            asyncio.get_running_loop().create_task(self._execute(w, sig, shares, {**ctx, "t_dec": now}))
 
     def _hedge_once(self, key, w, Tc, now):
         """reports/64: insurance on a reversal (LockCfg.hedge_p). Once per window, sent through _execute like an entry; it is not
@@ -1305,6 +1334,9 @@ class LockBot:
         # 0.01 grid), and passing them again as keywords raised TypeError inside this task, so until 9 Nov no
         # lock_entry / lock_miss line was ever written (paper and live) and the miss rate was invisible
         rec = {**ctx, "key": key, "side": sig["side"], "limit": limit, "ms": now_ms() - t_sent}
+        t_dec = rec.pop("t_dec", None)
+        if t_dec is not None:      # decision -> the order task running: time lost in our own event loop (reports/83 section 14)
+            rec["queue_ms"] = t_sent - t_dec
         hedge = bool(ctx.get("hedge"))
         if got <= 1e-9:
             self.stats["missed"] += 1
@@ -1427,6 +1459,8 @@ class LockBot:
                 xs = sorted(self._cl_lags)
                 self.stats["cl_lag_ms"] = xs[len(xs) // 2]
                 self._cl_lags = []
+            self.stats["gc_max_ms"], GC_PAUSE["max_ms"] = round(GC_PAUSE["max_ms"], 1), 0.0     # longest GC pause of the 30 s
+            self.stats["gc_gen2"] = GC_PAUSE["gen2"]                                           # full collections so far
             msg = (f"day={self.day_pnl():+.2f} open=${self.open_cost():.2f} stats={self.stats} sigma_bp={sg} "
                    f"windows={sorted(self.st.windows)} killed={self.risk.get('killed_day') == self.today()}")
             log.info(msg)
@@ -1437,9 +1471,17 @@ class LockBot:
             self.stats.pop("cl_lag_ms", None)
             self._save_state()
 
+    async def _refreeze(self, after_s=120.0):
+        """Freeze once more when the feeds, connections and SDK caches created at start-up exist (reports/83 section 14)."""
+        await asyncio.sleep(after_s)
+        if self.alive():
+            self.j.log("gc_freeze", frozen=freeze_gc())
+
     async def run(self):
         await self.broker.start()
         self.j.log("start", mode=self.broker.mode, config=asdict(self.cfg))
+        self.j.log("gc_freeze", frozen=freeze_gc())       # the SDK and modules are loaded: no more full-GC pauses on them
+        self._bg.add(asyncio.get_running_loop().create_task(self._refreeze()))
         feed = self.cfg.execution.cl_feed
         cl_feeds = ([rtds_feed(self.st, self.alive)] if feed in ("rtds", "both") else []) + (
             [polybolt_feed(self.st, self.alive)] if feed in ("polybolt", "both") else [])

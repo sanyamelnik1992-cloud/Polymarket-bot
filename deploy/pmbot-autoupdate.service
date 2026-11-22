@@ -5,5 +5,8 @@ After=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/pmbot/pmbot.env
+# low priority for git and pytest; the bots it restarts get their own unit's priority, not this one's (reports/83 s. 14)
+Nice=10
+CPUWeight=20
 ExecStart=/bin/bash __REPO__/deploy/autoupdate.sh
 TimeoutStartSec=900

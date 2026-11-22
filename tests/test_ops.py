@@ -159,6 +159,15 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
+def test_background_jobs_yield_the_cpu_to_the_bots():
+    """reports/83 section 14: the hourly report, the update (git + pytest) and the wallet reader run below every bot."""
+    import re
+    for unit, nice, weight in (("pmbot-reports", 19, 10), ("pmbot-autoupdate", 10, 20), ("pmbot-wallet", 10, 20)):
+        text = open(f"deploy/{unit}.service").read()
+        assert re.search(rf"(?m)^Nice={nice}$", text) and re.search(rf"(?m)^CPUWeight={weight}$", text), unit
+    assert "IOSchedulingClass=idle" in open("deploy/pmbot-reports.service").read()
+
+
 def test_unit_cpu_priority_live_lock_above_paper_bots():
     """Under CPU contention the live lock bot (real money, ~100 ms decisions) must outrank every paper bot and the recorder."""
     import glob

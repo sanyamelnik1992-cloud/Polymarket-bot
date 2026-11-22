@@ -347,3 +347,72 @@ def test_fair_takes_up_to_three_entries_a_window_15_s_apart(tmp_path, monkeypatc
         asyncio.run(go(now + dt))
     assert got == [0, 16000, 31500]                                    # 15 s apart, at most 3 entries a window
     assert all(c[0] == "btc-%d" % start for c in br.calls) and len(bot.entries["btc-%d" % start]) == 3
+
+
+def test_order_timing_diagnostics_and_gc_freeze(tmp_path):
+    """reports/83 section 14: the live interceptor's orders took 496 ms from signal to answer (Sniper 300 ms), every tenth 2.5-3 s.
+    The journal now splits the time: queue_ms (decision -> order task running) next to ms (the order) and the exchange call's own
+    latency_ms; status carries the longest garbage-collector pause; run() freezes the start-up objects out of the collector."""
+    import gc
+    import importlib.util
+    import io
+    import contextlib
+    import time as _t
+    from pmbot.bot import lock as lockmod
+    from pmbot.bot.state import Window
+
+    class Br:
+        mode = "paper"
+
+        async def buy(self, token, key, side, limit, shares):
+            return limit, shares, 0.0
+
+    j = _J()
+    cfg = load_lock_config(FAIR5, overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, j, broker=Br(), tables=_Tab())
+    now = int(_t.time() * 1000)
+    start = now // 1000 - 150
+    bot.st.add_window(Window(asset="btc", start=start, slug="btc", condition_id="btc", token_up="bu", token_down="bd"))
+    px = bot.st.prices["btc"]
+    for s in range(start - 70, start):
+        px.bn_sec_mid[s] = 100.0
+    px.bn_hist.append((now - 200, 100.0 * math.exp(20e-4)))
+    bot.bsig["btc"].r2.extend([1e-8 * 10] * 360)
+    bot.st.books["bu"] = type("B", (), {"asks": {0.62: 30.0}})()
+    bot.st.books["bd"] = type("B", (), {"asks": {0.40: 30.0}})()
+    bot.st.feed_alive["clob"]["btc"] = now
+    bot.st.feed_alive["binance"] = now
+
+    async def go():
+        await bot.decide_once(now)
+        await asyncio.sleep(0.01)
+    asyncio.run(go())
+    entry = next(kw for k, kw in j.ev if k == "lock_entry")
+    assert entry["queue_ms"] >= 0 and "t_dec" not in entry and entry["fair"] is True
+
+    assert lockmod._gc_timer in gc.callbacks
+    n2 = lockmod.GC_PAUSE["gen2"]
+    gc.collect()
+    assert lockmod.GC_PAUSE["gen2"] == n2 + 1 and lockmod.GC_PAUSE["max_ms"] >= 0.0
+    try:
+        assert lockmod.freeze_gc() > 0 and gc.get_freeze_count() > 0
+    finally:
+        gc.unfreeze()
+
+    spec = importlib.util.spec_from_file_location("rj", os.path.join(ROOT, "scripts", "report_journal.py"))
+    rj = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rj)
+    ev = [{"type": "lock_entry", "fair": True, "key": "btc-1", "side": "U", "price": 0.3, "shares": 5, "edge": 0.17, "ask_sz": 40,
+           "sig_age_ms": 150, "ms": 480, "queue_ms": 12},
+          {"type": "lock_miss", "fair": True, "key": "sol-1", "side": "U", "edge": 0.16, "ask_sz": 300, "sig_age_ms": 80, "ms": 450,
+           "queue_ms": 5},
+          {"type": "order_filled", "latency_ms": 260}, {"type": "settle", "key": "btc-1", "winner": "Up"},
+          {"type": "status", "stats": {"gc_max_ms": 410.0}}]
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rj.lock_orders(ev)
+        rj.fair_breakdown(ev)
+    out = buf.getvalue()
+    assert "exchange call alone, ms: median 260" in out and "decision -> order sent, ms: median 12" in out
+    assert "GC pause per 30 s, ms: median 410" in out and "15-20:    2 /    1 ( 50 %) /    1 /    1 (   0.3) /    +3.43" in out
+    assert "coincurve" in open(os.path.join(ROOT, "requirements.txt")).read()

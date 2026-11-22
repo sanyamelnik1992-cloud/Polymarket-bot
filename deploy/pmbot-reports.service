@@ -6,5 +6,10 @@ After=network-online.target
 Type=oneshot
 User=__USER__
 WorkingDirectory=__REPO__
+# low priority: the hourly report (pandas over every journal) ran at the default weight at :00 every hour, next to the live
+# bots whose orders took 2.5-3 s for every tenth on 22 Nov (reports/83 section 14)
+Nice=19
+CPUWeight=10
+IOSchedulingClass=idle
 ExecStart=/bin/bash __REPO__/deploy/push_reports.sh
 TimeoutStartSec=600

@@ -450,6 +450,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `report_journal.py` prints the exchange call alone (`latency_ms`) and the signal age (`sig_age_ms`), Telegram: one summary of
   the live interceptor's windows an hour (`alerts.QUIET_EVERY_S`, `notify.quiet_summary`). Live stays OFF until paper at 500 ms is
   positive for 1-2 days and the delay is found.
+  Section 14 (22 Nov, owner: "подумай как можно улучшить время и работу бота"): the extra ~200 ms and the 2.5-3 s tails are in our
+  process (the exchange holds a taker ~150-250 ms, the network is 25-30 ms; the SDK posts over one warm HTTP/2 connection, no retries).
+  Order signing was pure Python (eth-keys without coincurve: 3 ms here, 7-12 ms on the server, blocking the loop; 0.3 ms with
+  coincurve -> `coincurve` in requirements.txt). A full GC of the ~110 000 start-up objects (SDK, modules) stopped the loop (43 ms
+  here): `freeze_gc()` in `LockBot.run()` after the SDK start and again 2 min later. The hourly report, autoupdate and wallet
+  jobs now run Nice 19/10, CPUWeight 10/20. Diagnostics: `queue_ms` on entries/misses, `stats.gc_max_ms`, and report_journal.py
+  prints the exchange call alone, the queue, GC pauses, signal age and fair entries by edge / ask size / signal age with outcomes.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost
