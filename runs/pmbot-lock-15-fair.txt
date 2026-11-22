@@ -1,40 +1,42 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261122-152900
-mode: paper  duration: 92.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 184, 'lock_state': 30, 'strike': 24, 'bn_strike': 24, 'fill': 3, 'lock_entry': 3, 'lock_miss': 3, 'provisional': 3, 'settle': 2}
+mode: paper  duration: 152.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 305, 'lock_state': 46, 'strike': 40, 'bn_strike': 40, 'fill': 5, 'lock_entry': 5, 'lock_miss': 5, 'provisional': 5, 'settle': 5}
 
-lock orders: sent 6  filled 3  ask gone 3  errors 0
-  signal -> exchange answer, ms: median 315  p90 340  max 340
+lock orders: sent 10  filled 5  ask gone 5  errors 0
+  signal -> exchange answer, ms: median 311  p90 340  max 340
   decision -> order sent, ms: median 3  p90 202  max 202
-  GC pause per 30 s, ms: median 1  p90 13  max 122
-  signal age at the decision, ms: median 107  p90 987
-  fill price minus the ask we saw, cents: mean -7.01  worst +1.0
-  misses came 69-304 s before the end; model p 0.405-0.669
+  GC pause per 30 s, ms: median 1  p90 10  max 122
+  signal age at the decision, ms: median 87  p90 987
+  fill price minus the ask we saw, cents: mean -4.61  worst +1.0
+  misses came 69-577 s before the end; model p 0.310-0.686
 
 fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
-       15-20:    4 /    2 ( 50 %) /    1 /    0 (   0.1) /    -1.59
+       15-20:    7 /    3 ( 43 %) /    3 /    1 (   0.5) /    +4.92
+       20-25:    1 /    1 (100 %) /    1 /    1 (   0.1) /    +8.52
        25-35:    2 /    1 ( 50 %) /    1 /    0 (   0.3) /    -2.83
 
 fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
-        0-10:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
-       10-50:    2 /    2 (100 %) /    2 /    0 (   0.4) /    -4.42
-      50-200:    2 /    1 ( 50 %) /    0 /    0 (   0.0) /    +0.00
+        0-10:    3 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       10-50:    5 /    4 ( 80 %) /    4 /    1 (   0.7) /    +2.61
+      50-200:    2 /    1 ( 50 %) /    1 /    1 (   0.2) /    +7.99
 
 fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
-       0-100:    3 /    1 ( 33 %) /    0 /    0 (   0.0) /    +0.00
-     100-300:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       0-100:    6 /    2 ( 33 %) /    2 /    2 (   0.3) /   +16.51
+     100-300:    2 /    1 ( 50 %) /    1 /    0 (   0.1) /    -1.48
     300-1000:    2 /    2 (100 %) /    2 /    0 (   0.4) /    -4.42
 
-fills: 3  shares: 30  notional: $6.10
+fills: 5  shares: 50  notional: $8.90
        fills  shares  notional  avg_price  med_rel
 asset                                             
-eth        1    10.0     1.900       0.19  703.608
-sol        1    10.0     2.697       0.27  596.599
-xrp        1    10.0     1.500       0.15  786.233
+eth        2    20.0     3.300      0.165  759.411
+sol        1    10.0     2.697      0.270  596.599
+xrp        2    20.0     2.900      0.145  744.796
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best  roi
-asset                                                                           
-sol          1  2.835 -2.835         -2.835     0.0       0.0 -2.835 -2.835 -1.0
-xrp          1  1.589 -1.589         -1.589     0.0       0.0 -1.589 -1.589 -1.0
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+eth          2  3.492  6.508          6.508     0.0       0.5 -1.484  7.992  1.864
+sol          1  2.835 -2.835         -2.835     0.0       0.0 -2.835 -2.835 -1.000
+xrp          2  3.074  6.926          6.926     0.0       0.5 -1.589  8.516  2.254
 
-TOTAL pnl $-4.42 (ex-rebate $-4.42) on cost $4.42 -> ROI -100.00%; windows 2, t-stat +nan
+TOTAL pnl $+10.60 (ex-rebate $+10.60) on cost $9.40 -> ROI +112.75%; windows 5, t-stat +0.84
 max drawdown $-2.84; hedged windows (both sides filled): 0
