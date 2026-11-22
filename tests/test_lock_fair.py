@@ -416,3 +416,49 @@ def test_order_timing_diagnostics_and_gc_freeze(tmp_path):
     assert "exchange call alone, ms: median 260" in out and "decision -> order sent, ms: median 12" in out
     assert "GC pause per 30 s, ms: median 410" in out and "15-20:    2 /    1 ( 50 %) /    1 /    1 (   0.3) /    +3.43" in out
     assert "coincurve" in open(os.path.join(ROOT, "requirements.txt")).read()
+
+
+def test_fair_max_sig_age_skips_an_old_lag(tmp_path):
+    """Prepared for the decision of 23 Nov (reports/83 section 16): lock.fair_max_sig_age_ms > 0 makes the fair bot act only
+    when the last Binance move is fresh at the decision; 0 (every config today) keeps the rule as it is."""
+    import time as _t
+    from pmbot.bot.state import Window
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append(key)
+            return limit, shares, 0.0
+
+    for max_age, tick_age, want in ((0, 250, 1), (100, 250, 0), (100, 40, 1)):
+        br, j = Br(), _J()
+        cfg = load_lock_config(FAIR5, overrides={"risk": {"state_file": str(tmp_path / f"s{max_age}{tick_age}.json"), "kill_file": ""},
+                                                 "lock": {"fair_max_sig_age_ms": max_age}})
+        bot = LockBot(cfg, j, broker=br, tables=_Tab())
+        now = int(_t.time() * 1000)
+        start = now // 1000 - 150
+        bot.st.add_window(Window(asset="btc", start=start, slug="btc", condition_id="btc", token_up="bu", token_down="bd"))
+        px = bot.st.prices["btc"]
+        for s in range(start - 70, start):
+            px.bn_sec_mid[s] = 100.0
+        px.bn_hist.append((now - tick_age, 100.0 * math.exp(20e-4)))
+        bot.bsig["btc"].r2.extend([1e-8 * 10] * 360)
+        bot.st.books["bu"] = type("B", (), {"asks": {0.62: 30.0}})()
+        bot.st.books["bd"] = type("B", (), {"asks": {0.40: 30.0}})()
+        bot.st.feed_alive["clob"]["btc"] = now
+        bot.st.feed_alive["binance"] = now
+
+        async def go():
+            await bot.decide_once(now)
+            await asyncio.sleep(0.01)
+        asyncio.run(go())
+        assert len(br.calls) == want, (max_age, tick_age)
+        if not want:
+            assert any(k == "lock_state" and kw.get("sig_age_ms") == tick_age for k, kw in j.ev)
+    assert load_lock_config(FAIR5).lock.fair_max_sig_age_ms == 0
+    with pytest.raises(ValueError):
+        load_lock_config(FAIR5, overrides={"lock": {"fair_max_sig_age_ms": 5000}})
