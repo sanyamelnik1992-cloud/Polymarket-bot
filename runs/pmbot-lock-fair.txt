@@ -1,26 +1,26 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261121-211308
-mode: paper  duration: 109.0 min  events: {'start': 1, 'lock_state': 96, 'status': 218, 'strike': 88, 'bn_strike': 88, 'fill': 17, 'lock_entry': 17, 'provisional': 14, 'lock_miss': 24, 'settle': 14}
+mode: paper  duration: 168.6 min  events: {'start': 1, 'lock_state': 143, 'status': 337, 'strike': 136, 'bn_strike': 136, 'fill': 35, 'lock_entry': 35, 'provisional': 34, 'lock_miss': 32, 'settle': 31}
 
-lock orders: sent 41  filled 17  ask gone 24  errors 0
-  signal -> exchange answer, ms: median 304  p90 367  max 397
-  fill price minus the ask we saw, cents: mean -0.35  worst +4.0
-  misses came 63-264 s before the end; model p 0.333-0.838
+lock orders: sent 67  filled 35  ask gone 32  errors 0
+  signal -> exchange answer, ms: median 302  p90 350  max 397
+  fill price minus the ask we saw, cents: mean -0.14  worst +4.0
+  misses came 63-272 s before the end; model p 0.276-0.838
 
-fills: 17  shares: 93  notional: $31.94
+fills: 35  shares: 187  notional: $63.94
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        9    51.0     18.90      0.402  141.479
-eth        4    22.0      7.74      0.370  144.569
-sol        2    10.0      2.90      0.290  223.347
-xrp        2    10.0      2.40      0.240  162.784
+btc       16    87.0     28.05      0.338  122.203
+eth        9    50.0     15.69      0.330  180.590
+sol        6    30.0     12.05      0.402  217.363
+xrp        4    20.0      8.15      0.408  149.035
 
 settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          8  16.960  7.040          7.040     0.0     0.500 -2.437  7.854  0.415
-eth          3   4.352  5.648          5.648     0.0     0.667 -1.259  3.788  1.298
-sol          2   3.038  6.962          6.962     0.0     1.000  3.018  3.944  2.291
-xrp          1   1.160  3.840          3.840     0.0     1.000  3.840  3.840  3.310
+       windows    cost     pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                               
+btc         14  26.788  13.212         13.212     0.0     0.500 -2.437  7.854  0.493
+eth          8  14.612  10.388         10.388     0.0     0.625 -1.259  3.788  0.711
+sol          5  10.980  14.020         14.020     0.0     1.000  1.378  3.944  1.277
+xrp          4   8.438   6.562          6.562     0.0     0.750 -2.337  3.840  0.778
 
-TOTAL pnl $+23.49 (ex-rebate $+23.49) on cost $25.51 -> ROI +92.08%; windows 14, t-stat +2.08
-max drawdown $-2.45; hedged windows (both sides filled): 0
+TOTAL pnl $+44.18 (ex-rebate $+44.18) on cost $60.82 -> ROI +72.65%; windows 31, t-stat +3.01
+max drawdown $-3.98; hedged windows (both sides filled): 0
