@@ -23,7 +23,8 @@ fair_sigma_s = 3600.0
 fair_min_sigma_s = 1800.0
 fair_react_bp = 0.3     # decide at once on a 0.3 bp Binance move, not up to 50 ms later (reports/83 section 8)
 shares = 5            # = paper twin pmbot-lock-fair (reports/83 section 10)
-max_entries_per_window = 1
+max_entries_per_window = 3   # up to 3 entries a window, 15 s apart (reports/83 section 12; 1 until 22 Nov)
+fair_gap_s = 15.0
 
 [risk]
 max_usd_per_entry = 5.0

@@ -142,6 +142,9 @@ class LockCfg:
                                          # the futures mids too, so the spot / perp basis cancels)
     fair_react_bp: float = 0.0           # > 0: decide at once when the signal mid of a coin moved this many bp since that coin's last
                                          # decision (Binance tick -> decision without waiting up to tick_ms); 0 = only every tick_ms
+    fair_gap_s: float = 0.0              # seconds after a fill before the next entry of the same window (max_entries_per_window > 1):
+                                         # a new lag, not the rest of the same stale ask (reports/83 section 12: on 18-21 Nov the 2nd and
+                                         # 3rd entries 15 s apart earned like the first, +34 % / +43 % of the money)
 
 
 @dataclass
@@ -221,13 +224,17 @@ def load_lock_config(path=None, overrides=None):
                              "600 <= fair_min_sigma_s <= fair_sigma_s <= 7200")
         if c.tiers or c.hedge_p or c.big_shares or c.entry != "taker" or not 1 <= c.max_entries_per_window <= 3:
             raise ValueError("lock.zone = 'fair': taker entries (1-3 per window), no tiers / insurance / big_shares")
-        if e.mode == "live" and (c.fair_feed != "spot" or c.duration != 300 or c.max_entries_per_window != 1
-                                 or c.fair_edge < 0.15 - 1e-9 or c.shares > 10 or not r.max_open_entries):
-            # real money only with the rule the paper bot pmbot-lock-fair tested (reports/83 section 10): Binance spot signal,
-            # 5m windows, one entry per window, an edge of 15 c or more, <= 10 shares, a cap on open windows. The futures
-            # signal and the 15m bot are paper only; growing any of this is the owner's decision
-            raise ValueError("lock.zone = 'fair' live: spot signal, 5m windows, one entry per window, fair_edge >= 0.15, "
-                             "shares <= 10 and risk.max_open_entries > 0 only (reports/83 section 10)")
+        if not 0 <= c.fair_gap_s <= 120 or (c.max_entries_per_window > 1 and c.fair_gap_s < 5):
+            # without a gap a second order a moment later takes the rest of the same stale ask (a bigger size, not a new signal),
+            # and paper, which does not take its own fills out of the book, would buy that ask twice
+            raise ValueError("lock.zone = 'fair': 0 <= fair_gap_s <= 120, and >= 5 when max_entries_per_window > 1")
+        if e.mode == "live" and (c.fair_feed != "spot" or c.duration != 300 or c.fair_edge < 0.15 - 1e-9 or c.shares > 10
+                                 or not r.max_open_entries):
+            # real money only with the rule the paper bot pmbot-lock-fair tested (reports/83 sections 10-12): Binance spot signal,
+            # 5m windows, an edge of 15 c or more, <= 10 shares, a cap on open windows (and max_open_usd on the money). The
+            # futures signal and the 15m bot are paper only; growing any of this is the owner's decision
+            raise ValueError("lock.zone = 'fair' live: spot signal, 5m windows, fair_edge >= 0.15, shares <= 10 and "
+                             "risk.max_open_entries > 0 only (reports/83 section 10)")
         if c.fair_feed not in ("spot", "futures") or not 0 <= c.fair_react_bp <= 5:
             raise ValueError("lock.fair_feed must be 'spot' or 'futures', 0 <= fair_react_bp <= 5")
     if c.zone == "close" and not 238 <= c.rel_lo < c.rel_hi < 300:
@@ -714,6 +721,12 @@ class LockBot:
         for a, s in (d.get("hsigma") or {}).items():       # early: the hour of returns survives a restart (autoupdate)
             if a in self.hsig and time.time() - s.get("saved", 0) < 300:
                 self.hsig[a].load(s)
+        for a, s in (d.get("bsigma") or {}).items():       # fair: the Binance hour and the last seconds survive a restart
+            if a in self.bsig and s.get("feed") == self.cfg.lock.fair_feed and time.time() - s.get("saved", 0) < 300:
+                self.bsig[a].load(s)                         # (each restart cost 30 min without entries: 21 Nov 21:13 -> 21:40)
+                mids = self.sig_px(a).bn_sec_mid
+                for k, v in (s.get("mids") or {}).items():   # the seconds of the current window's Binance strike
+                    mids.setdefault(int(k), float(v))
 
     def _save_state(self):
         p = self._state_path()
@@ -726,6 +739,11 @@ class LockBot:
                           "saved": time.time()} for a, o in self.sig.items() if o.last_sec is not None}
         if self.early:
             d["hsigma"] = {a: {**o.to_dict(), "saved": time.time()} for a, o in self.hsig.items() if o.last_sec is not None}
+        if self.fair:
+            cut = int(time.time()) - 130
+            d["bsigma"] = {a: {**o.to_dict(), "saved": time.time(), "feed": self.cfg.lock.fair_feed,
+                               "mids": {str(k): v for k, v in self.sig_px(a).bn_sec_mid.items() if k >= cut}}
+                           for a, o in self.bsig.items() if o.last_sec is not None}
         os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
         tmp = p + ".tmp"
         with open(tmp, "w") as f:
@@ -1300,6 +1318,8 @@ class LockBot:
             self.j.log("lock_hedge_miss" if hedge else "lock_miss", **{**rec, "error": err})
             return
         self.stats["filled"] += 1
+        if self.fair and self.cfg.lock.fair_gap_s > 0:      # the next entry of this window only on a new lag (reports/83 s. 12)
+            self.next_try[key] = now_ms() + int(self.cfg.lock.fair_gap_s * 1000)
         e = {"side": sig["side"], "shares": round(got, 4), "price": round(px, 4), "cost": round(px * got, 6),
              "fee": round(fee, 6), "t": time.time(), "limit": limit, "p": sig["p"]}
         if hedge:

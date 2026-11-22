@@ -48,7 +48,8 @@ def test_fair_configs_are_paper_and_validated():
         cfg = load_lock_config(path)
         c = cfg.lock
         assert cfg.execution.mode == "paper" and c.zone == "fair" and c.duration == dur and (c.rel_lo, c.rel_hi) == (lo, 238.0)
-        assert c.fair_edge == 0.15 and c.max_entries_per_window == 1 and c.shares == shares
+        assert c.fair_edge == 0.15 and c.shares == shares
+        assert (c.max_entries_per_window, c.fair_gap_s) == ((3, 15.0) if dur == 300 else (1, 0.0))     # reports/83 section 12
         unit = "pmbot-lock-" + ("fair" if dur == 300 else "15-fair")
         assert unit in ops.BOT_UNITS and unit in notify.BOTS
         assert notify.TWINS.get(unit) == ("pmbot-lock-fair-live" if dur == 300 else None)     # the 5m bot is the live bot's twin
@@ -151,9 +152,9 @@ def test_fair_live_is_its_paper_twin_with_real_money_limits():
         assert " pmbot-lock-fair-live " in open(os.path.join(ROOT, "deploy", f)).read(), f
     # real money only with the tested rule: no futures signal, no looser edge, one entry per window, a cap on the size and on
     # the open windows, 5m only
-    for bad in ({"lock": {"fair_feed": "futures"}}, {"lock": {"fair_edge": 0.10}}, {"lock": {"max_entries_per_window": 2}},
-                {"lock": {"shares": 20}}, {"risk": {"max_open_entries": 0}}, {"lock": {"duration": 900, "rel_lo": -540.0}},
-                {"risk": {"resume_next_day": True}}):
+    for bad in ({"lock": {"fair_feed": "futures"}}, {"lock": {"fair_edge": 0.10}}, {"lock": {"max_entries_per_window": 4}},
+                {"lock": {"fair_gap_s": 2.0}}, {"lock": {"shares": 20}}, {"risk": {"max_open_entries": 0}},
+                {"lock": {"duration": 900, "rel_lo": -540.0}}, {"risk": {"resume_next_day": True}}):
         with pytest.raises(ValueError):
             load_lock_config(live_path, overrides=bad)
 
@@ -247,3 +248,102 @@ def test_fair_bot_wakes_on_a_binance_move_and_reads_the_futures_mids(tmp_path):
                                               "lock": {"fair_react_bp": 0.0}})
     b2 = LockBot(spot, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
     assert b2._wake is None and b2.st.on_tick is None and b2.sig_px("btc") is b2.st.prices["btc"]
+
+
+def test_fair_sigma_and_strike_seconds_survive_a_restart(tmp_path, monkeypatch):
+    """Each restart (every update of main restarts the bots) cost the fair bots 30 min without entries while the Binance
+    sigma refilled (21 Nov: restart 21:13, first entry in the 21:40 window). The hour of 10 s returns and the last 130 s of
+    Binance mids are saved in the state file (every 30 s and at the stop) and restored when they are < 5 min old."""
+    import json as _json
+    import time as _t
+    o = BlockSigma(lookback=3600, block=10)
+    v = 100.0
+    for s in range(20_000, 20_000 + 3600):
+        if s % 10 == 9:
+            v *= math.exp(1e-4 * (1 if (s // 10) % 2 else -1))
+        o.on_second(s, v)
+    o2 = BlockSigma(lookback=3600, block=10)
+    assert o2.load(_json.loads(_json.dumps(o.to_dict()))) and o2.sigma(min_s=1800) == pytest.approx(o.sigma(min_s=1800))
+    assert (o2.last_sec, o2.last_v, o2.block_v) == (o.last_sec, o.last_v, o.block_v)
+    assert not BlockSigma(lookback=3600, block=5).load(o.to_dict())          # another block length: not restored
+
+    state = str(tmp_path / "s.json")
+    cfg = load_lock_config(FAIR5, overrides={"risk": {"state_file": state, "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
+    now = int(_t.time())
+    T = now - 30                                                         # a window that started 30 s ago
+    for a in cfg.lock.assets:
+        bot.bsig[a].load(o.to_dict())
+        bot.bsig[a].last_sec = now - 2
+        for s in range(now - 130, now):
+            bot.st.prices[a].bn_sec_mid[s] = 100.0 + (s % 7) * 0.01
+    K = bot.bn_strike("btc-x", "btc", T)
+    assert K is not None
+    bot._save_state()
+    fresh = LockBot(cfg, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
+    for a in cfg.lock.assets:
+        assert fresh.bsig[a].sigma(cfg.lock.fair_min_sigma_s) == pytest.approx(o.sigma())       # no 30 min wait
+    assert fresh.bn_strike("btc-x", "btc", T) == pytest.approx(K)          # the strike of the running window too
+    d = _json.load(open(state))
+    for a in d["bsigma"]:
+        d["bsigma"][a]["saved"] -= 400                                       # too old: the market moved on
+    _json.dump(d, open(state, "w"))
+    old = LockBot(cfg, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
+    assert old.bsig["btc"].sigma() is None and not old.st.prices["btc"].bn_sec_mid
+    fut = load_lock_config(os.path.join(ROOT, "config", "lock_fair_fut.toml"),
+                           overrides={"risk": {"state_file": state, "kill_file": ""}})
+    bot._save_state()
+    other = LockBot(fut, _J(), broker=type("B", (), {"mode": "paper"})(), tables=_Tab())
+    assert other.bsig["btc"].sigma() is None                                  # spot history never feeds the futures signal
+
+
+def test_fair_takes_up_to_three_entries_a_window_15_s_apart(tmp_path, monkeypatch):
+    """reports/83 section 12: on the public trades of 18-21 Nov the 2nd and 3rd qualifying moments of a window, 15 s or more after
+    the previous entry, earned like the first (+34 % / +43 % of the money, every day positive), so the 5m bots (live and its twin)
+    take up to 3 entries a window 15 s apart. The open money stays capped by max_open_usd ($20 live)."""
+    import time as _t
+    from pmbot.bot.state import Window
+
+    class Br:
+        mode = "paper"
+
+        def __init__(self):
+            self.calls = []
+
+        async def buy(self, token, key, side, limit, shares):
+            self.calls.append((key, side, limit, shares))
+            return limit, shares, 0.0
+
+    import pmbot.bot.lock as lockmod
+    clock = {"t": int(_t.time() * 1000)}
+    monkeypatch.setattr(lockmod, "now_ms", lambda: clock["t"])           # one clock for the decision and the fill
+    br = Br()
+    cfg = load_lock_config(FAIR5, overrides={"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
+    now = clock["t"]
+    start = now // 1000 - 100
+    bot.st.add_window(Window(asset="btc", start=start, slug="btc", condition_id="btc", token_up="bu", token_down="bd"))
+    px = bot.st.prices["btc"]
+    for s in range(start - 70, start):
+        px.bn_sec_mid[s] = 100.0
+    bot.bsig["btc"].r2.extend([1e-8 * 10] * 360)
+    bot.bsig["btc"].last_sec = now // 1000 - 2
+    bot.st.books["bu"] = type("B", (), {"asks": {0.62: 30.0}})()
+    bot.st.books["bd"] = type("B", (), {"asks": {0.40: 30.0}})()
+
+    got = []
+
+    async def go(t):
+        clock["t"] = t
+        px.bn_hist.append((t - 200, 100.0 * math.exp(20e-4)))        # Binance +20 bp: Up is worth ~0.97, the book sells it at 0.62
+        bot.st.feed_alive["binance"] = t
+        bot.st.feed_alive["clob"]["btc"] = t
+        n = len(br.calls)
+        await bot.decide_once(t)
+        await asyncio.sleep(0.01)
+        if len(br.calls) > n:
+            got.append(t - now)
+    for dt in (0, 1000, 14000, 16000, 17000, 30000, 31500, 47000, 70000):
+        asyncio.run(go(now + dt))
+    assert got == [0, 16000, 31500]                                    # 15 s apart, at most 3 entries a window
+    assert all(c[0] == "btc-%d" % start for c in br.calls) and len(bot.entries["btc-%d" % start]) == 3

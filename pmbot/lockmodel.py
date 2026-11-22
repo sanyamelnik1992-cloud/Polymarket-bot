@@ -215,6 +215,20 @@ class BlockSigma:
             return None
         return math.sqrt(sum(self.r2) / len(self.r2) / self.block)
 
+    def to_dict(self):
+        return {"block": self.block, "r2": [round(x, 16) for x in self.r2], "last_sec": self.last_sec,
+                "last_v": self.last_v, "block_v": self.block_v}
+
+    def load(self, d):
+        """Restore a saved state (the bot's state file): a restart does not wait `min_s` again. False (nothing restored)
+        when the block length differs or the state is empty."""
+        if int(d.get("block") or 0) != self.block or d.get("last_sec") is None:
+            return False
+        self.r2.clear()
+        self.r2.extend(float(x) for x in list(d.get("r2") or [])[-self.r2.maxlen:])
+        self.last_sec, self.last_v, self.block_v = int(d["last_sec"]), d.get("last_v"), d.get("block_v")
+        return True
+
 
 EARLY_AVG_VAR = 19.5              # variance of the mean of 60 one-second prints after the first one, in seconds of sigma^2
 

@@ -436,6 +436,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   Section 11 (21 Nov 20:00): spot 370 / 165 won vs 131.7 / +$329 (+26.7 %, t 3.6), futures +17.3 %, 15m 98 / +38 % (t 2.0);
   public-trades check (`reports/83_tools/fair_vs_trades.py`): 115 of 122 paper entries had other takers buying our side at our
   price or better in the same window (median 517 shares): the prices were real; the timing only live can show.
+  Section 12 (22 Nov night, owner: "подумай как улучшить ... заливай сразу в мейн"): fresh replay 18-21 Nov (`reports/83_tools/fresh`,
+  2.4 M taker trades): 5m +35.9 %, 15m +34.6 %, every coin / price / time zone and every day positive. The 2nd and 3rd entries of a
+  window 15 s apart earn like the first (+34.5 % / +42.7 %): `lock.max_entries_per_window = 3` + new `lock.fair_gap_s = 15` in the
+  live interceptor and both 5m paper bots (money limits unchanged: $20 open, -$20 day; the live loader allows 1-3 with a gap >= 5 s).
+  Warm start: `BlockSigma.to_dict/load` + the last 130 s of Binance mids go to the state file (`bsigma`, every 30 s and at the stop),
+  restored when < 5 min old (each restart used to cost 30 min without entries). Competitors: the stale asks are taken mostly by
+  high-frequency BTC traders (42 buys a window, both sides, -0.9 % overall; top 10 first in 62 % of windows); only 6 selective
+  wallets like ours, all small; none sells back as a taker.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost
