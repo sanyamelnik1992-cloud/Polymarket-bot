@@ -1,10 +1,10 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261122-152853
-mode: paper  duration: 211.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 423, 'strike': 56, 'lock_state': 245, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4}
+mode: paper  duration: 271.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 542, 'strike': 72, 'lock_state': 284, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4}
 
 lock orders: sent 4  filled 4  ask gone 0  errors 0
   signal -> exchange answer, ms: median 303  p90 307  max 307
   decision -> order sent, ms: median 12  p90 22  max 22
-  GC pause per 30 s, ms: median 0  p90 7  max 84
+  GC pause per 30 s, ms: median 0  p90 6  max 84
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
 
 fills: 4  shares: 60  notional: $59.40
