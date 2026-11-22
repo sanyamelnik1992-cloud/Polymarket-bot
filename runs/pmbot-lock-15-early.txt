@@ -1,27 +1,14 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261122-102842
-mode: paper  duration: 273.8 min  events: {'start': 1, 'gc_freeze': 2, 'status': 547, 'strike': 72, 'lock_state': 331, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 5}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261122-152853
+mode: paper  duration: 31.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 63, 'strike': 8, 'lock_state': 10, 'fill': 1, 'lock_entry': 1, 'provisional': 1}
 
-lock orders: sent 5  filled 5  ask gone 0  errors 0
-  signal -> exchange answer, ms: median 304  p90 465  max 465
-  decision -> order sent, ms: median 10  p90 35  max 35
-  GC pause per 30 s, ms: median 1  p90 30  max 157
+lock orders: sent 1  filled 1  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 307  p90 307  max 307
+  decision -> order sent, ms: median 22  p90 22  max 22
+  GC pause per 30 s, ms: median 0  p90 9  max 84
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
 
-fills: 5  shares: 65  notional: $64.35
+fills: 1  shares: 15  notional: $14.85
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        2    30.0     29.70       0.99  677.781
-eth        1    15.0     14.85       0.99  614.997
-sol        1    10.0      9.90       0.99  679.372
-xrp        1    10.0      9.90       0.99  603.013
-
-settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          2  29.721  0.279          0.279     0.0       1.0  0.140  0.140  0.009
-eth          1  14.860  0.140          0.140     0.0       1.0  0.140  0.140  0.009
-sol          1   9.907  0.093          0.093     0.0       1.0  0.093  0.093  0.009
-xrp          1   9.907  0.093          0.093     0.0       1.0  0.093  0.093  0.009
-
-TOTAL pnl $+0.60 (ex-rebate $+0.60) on cost $64.40 -> ROI +0.94%; windows 5, t-stat +10.62
-max drawdown $0.00; hedged windows (both sides filled): 0
+btc        1    15.0     14.85       0.99  600.404
+no settled windows yet
