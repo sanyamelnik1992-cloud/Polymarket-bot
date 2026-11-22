@@ -1,35 +1,35 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261122-103536
-mode: paper  duration: 206.4 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 62, 'status': 412, 'strike': 56, 'bn_strike': 56, 'lock_miss': 28, 'fill': 8, 'lock_entry': 8, 'provisional': 8, 'settle': 8}
+mode: paper  duration: 266.5 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 78, 'status': 532, 'strike': 72, 'bn_strike': 72, 'lock_miss': 29, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 8}
 
-lock orders: sent 36  filled 8  ask gone 28  errors 0
-  signal -> exchange answer, ms: median 305  p90 421  max 1012
-  decision -> order sent, ms: median 33  p90 186  max 464
-  GC pause per 30 s, ms: median 9  p90 41  max 199
-  signal age at the decision, ms: median 71  p90 244
+lock orders: sent 38  filled 9  ask gone 29  errors 0
+  signal -> exchange answer, ms: median 304  p90 421  max 1012
+  decision -> order sent, ms: median 31  p90 186  max 464
+  GC pause per 30 s, ms: median 8  p90 37  max 199
+  signal age at the decision, ms: median 67  p90 244
   fill price minus the ask we saw, cents: mean -0.04  worst +1.7
   misses came 68-672 s before the end; model p 0.212-0.894
 
 fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
-       15-20:   31 /    8 ( 26 %) /    8 /    1 (   1.7) /    -7.87
+       15-20:   33 /    9 ( 27 %) /    8 /    1 (   1.7) /    -7.87
        20-25:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
        25-35:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
         >=35:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 
 fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
         0-10:    4 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
-       10-50:   21 /    5 ( 24 %) /    5 /    0 (   0.9) /    -8.86
-      50-200:   10 /    3 ( 30 %) /    3 /    1 (   0.9) /    +0.98
+       10-50:   22 /    5 ( 23 %) /    5 /    0 (   0.9) /    -8.86
+      50-200:   11 /    4 ( 36 %) /    3 /    1 (   0.9) /    +0.98
        >=200:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 
 fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
-       0-100:   23 /    3 ( 13 %) /    3 /    1 (   1.0) /    -1.00
+       0-100:   25 /    4 ( 16 %) /    3 /    1 (   1.0) /    -1.00
      100-300:   11 /    5 ( 45 %) /    5 /    0 (   0.7) /    -6.87
     300-1000:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 
-fills: 8  shares: 81  notional: $17.13
+fills: 9  shares: 91  notional: $20.93
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        1    12.0     1.080      0.090  695.404
+btc        2    22.0     4.880      0.235  604.756
 eth        3    30.0     9.366      0.312  611.741
 sol        2    20.0     2.900      0.145  810.209
 xrp        2    19.0     3.780      0.195  798.694

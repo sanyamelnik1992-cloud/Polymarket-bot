@@ -1,8 +1,8 @@
 run: /home/pmbot/Polymarket-bot/data/journal-colo-v2/20261122-103528
-mode: paper  duration: 206.5 min  events: {'start': 1, 'vol_seed': 3, 'window': 129, 'filters': 23131, 'status': 412, 'strike_est': 123, 'fv': 36110, 'quote': 8542, 'fill': 54, 'fill_ctx': 54, 'side_block': 54, 'provisional': 30, 'settle': 30, 'strike_correction': 3}
+mode: paper  duration: 266.8 min  events: {'start': 1, 'vol_seed': 3, 'window': 165, 'filters': 30340, 'status': 533, 'strike_est': 156, 'fv': 46472, 'quote': 8783, 'fill': 54, 'fill_ctx': 54, 'side_block': 54, 'provisional': 30, 'settle': 30, 'strike_correction': 4}
 
-filter reasons (state changes): {'model_disagrees': 14096, 'jump_cooldown': 10769, 'fair_unstable': 9856, 'p_out_of_range': 8982, 'wide_spread': 6234, 'too_late': 2821, 'no_book': 1041, 'too_early': 839, 'no_strike': 649, 'no_fair_value': 649, 'chainlink_stale': 160, 'vol_spike': 29, 'binance_stale': 7, 'clob_stale': 4}
-quotes placed: 8542
+filter reasons (state changes): {'model_disagrees': 19384, 'jump_cooldown': 16027, 'p_out_of_range': 13351, 'fair_unstable': 12430, 'wide_spread': 8264, 'too_late': 3941, 'no_book': 1427, 'too_early': 1061, 'no_strike': 962, 'no_fair_value': 962, 'chainlink_stale': 352, 'vol_spike': 99, 'binance_stale': 7, 'clob_stale': 5}
+quotes placed: 8783
 
 fills: 54  shares: 395  notional: $229.12
        fills   shares  notional  avg_price  med_rel
