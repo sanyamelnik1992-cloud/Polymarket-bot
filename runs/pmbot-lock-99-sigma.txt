@@ -1,0 +1,3 @@
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261123-184355
+mode: paper  duration: 16.5 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 45, 'status': 33, 'strike': 12}
+no fills
