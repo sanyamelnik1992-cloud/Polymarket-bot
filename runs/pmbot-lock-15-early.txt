@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261123-073747
-mode: paper  duration: 83.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 167, 'lock_state': 95, 'strike': 20, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
+mode: paper  duration: 144.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 289, 'lock_state': 135, 'strike': 36, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
 
 lock orders: sent 2  filled 2  ask gone 0  errors 0
   signal -> exchange answer, ms: median 303  p90 303  max 303
