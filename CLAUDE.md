@@ -494,10 +494,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   implied 8.3 (the model ~13), others bought our side cheaper within 20 s after 23 of 32; 23 of 33 fills after window second
   200; early orders mostly miss (22 Nov 67 of 84). Live gets only the asks faster bots leave, and those are priced right. The
   paper fill (the ask still in our book 0.5 s later) and the public-trade replay (we are first) cannot model that; the server is
-  overloaded too (paper loop > 100 ms late ~7000 times a day). PREPARED, main only on the owner's word: `pmbot-lock-fair-live`
-  and `pmbot-lock-15-fair` in RETIRED of `deploy/install_units.sh`, live units in its new `STOP_LIVE` are stopped as well
-  (graceful); `KEEP_UNITS` = L99 live, 15m live, 5m fair paper twin (one more day for the race log), 15m early paper, tg. Do not
-  put the interceptor back on money without a paper model that includes the competition.
+  overloaded too (paper loop > 100 ms late ~7000 times a day). STOPPED on the owner's word (23 Nov ~12:00 UTC: "Заливай в мейн и
+  стопай перехватчика"): `pmbot-lock-fair-live` and `pmbot-lock-15-fair` in RETIRED of `deploy/install_units.sh`, live units in
+  its new `STOP_LIVE` are stopped as well (graceful: open windows settle first); `KEEP_UNITS` = L99 live, 15m live, 5m fair
+  paper twin (one more day for the race log), 15m early paper, tg. Do not put the interceptor back on money without a paper
+  model that includes the competition; to bring a unit back, take it out of RETIRED / STOP_LIVE first.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
