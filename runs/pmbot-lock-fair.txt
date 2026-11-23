@@ -1,54 +1,55 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261123-184427
-mode: paper  duration: 195.7 min  events: {'start': 1, 'gc_freeze': 2, 'status': 391, 'lock_state': 185, 'strike': 156, 'bn_strike': 156, 'fill': 14, 'lock_entry': 14, 'lock_race': 40, 'provisional': 13, 'settle': 12, 'lock_miss': 26}
+mode: paper  duration: 257.2 min  events: {'start': 1, 'gc_freeze': 2, 'status': 514, 'lock_state': 242, 'strike': 204, 'bn_strike': 204, 'fill': 24, 'lock_entry': 24, 'lock_race': 61, 'provisional': 20, 'settle': 18, 'lock_miss': 37}
 
-lock orders: sent 40  filled 14  ask gone 26  errors 0
-  signal -> exchange answer, ms: median 501  p90 511  max 524
-  decision -> order sent, ms: median 1  p90 10  max 24
-  GC pause per 30 s, ms: median 2  p90 15  max 109
+lock orders: sent 61  filled 24  ask gone 37  errors 0
+  signal -> exchange answer, ms: median 501  p90 512  max 524
+  decision -> order sent, ms: median 2  p90 10  max 81
+  GC pause per 30 s, ms: median 1  p90 14  max 109
   signal age at the decision, ms: median 4  p90 28
-  fill price minus the ask we saw, cents: mean -0.05  worst +5.0
-  misses came 63-264 s before the end; model p 0.281-0.971
+  fill price minus the ask we saw, cents: mean -0.32  worst +5.0
+  misses came 63-276 s before the end; model p 0.281-0.971
 
 fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
-       15-20:   38 /   12 ( 32 %) /   11 /    5 (   4.4) /    +2.13
-       20-25:    2 /    2 (100 %) /    2 /    1 (   0.5) /    +3.36
+       15-20:   57 /   21 ( 37 %) /   18 /    8 (   6.8) /    +3.93
+       20-25:    3 /    3 (100 %) /    3 /    1 (   0.9) /    +1.17
+       25-35:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 
 fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
-        0-10:   13 /    3 ( 23 %) /    3 /    0 (   0.9) /    -5.09
-       10-50:   18 /    5 ( 28 %) /    5 /    5 (   2.1) /   +14.31
-      50-200:    3 /    2 ( 67 %) /    1 /    0 (   0.2) /    -1.16
-       >=200:    6 /    4 ( 67 %) /    4 /    1 (   1.6) /    -2.57
+        0-10:   19 /    4 ( 21 %) /    4 /    1 (   1.5) /    -3.27
+       10-50:   24 /    7 ( 29 %) /    6 /    5 (   2.3) /   +13.10
+      50-200:    5 /    3 ( 60 %) /    2 /    0 (   0.4) /    -2.30
+       >=200:   13 /   10 ( 77 %) /    9 /    3 (   3.5) /    -2.42
 
 fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
-       0-100:   40 /   14 ( 35 %) /   13 /    6 (   4.8) /    +5.49
+       0-100:   61 /   24 ( 39 %) /   21 /    9 (   7.7) /    +5.10
 
 fair entries by what woke the decision (section 17): orders / filled / settled / won (expected at the paid prices) / pnl
-        book:    3 /    2 ( 67 %) /    2 /    1 (   0.8) /    +0.81
-       level:    2 /    1 ( 50 %) /    1 /    1 (   0.7) /    +1.33
-        move:   22 /    5 ( 23 %) /    4 /    1 (   1.1) /    -1.25
-       timer:   13 /    6 ( 46 %) /    6 /    3 (   2.2) /    +4.60
+        book:    4 /    3 ( 75 %) /    3 /    1 (   1.0) /    -0.40
+       level:    3 /    1 ( 33 %) /    1 /    1 (   0.7) /    +1.33
+        move:   34 /    9 ( 26 %) /    8 /    3 (   2.9) /    -0.62
+       timer:   20 /   11 ( 55 %) /    9 /    4 (   3.1) /    +4.79
 
 race for the ask (reports/83 s. 17): orders whose ask is still in our book this long after the decision
        0    50   100   150   200   250   300   400   500   750  1000  ms
-     95%   75%   65%   60%   55%   50%   45%   40%   35%   28%   20%  all (40)
-    100%  100%  100%  100%  100%  100%  100%  100%  100%   79%   57%  filled (14)
-     92%   62%   46%   38%   31%   23%   15%    8%    0%    0%    0%  missed (26)
-  misses: 13 of 26 had a public trade at or under our limit before our answer = another taker was faster, the first of them 13 ms after our decision (median); 13 without one = the ask was pulled
-  decision -> answer, ms: median 505  (paper: paper_exec_ms)
+     95%   82%   75%   64%   61%   56%   51%   43%   39%   30%   23%  all (61)
+    100%  100%  100%  100%  100%  100%  100%  100%  100%   71%   54%  filled (24)
+     92%   70%   59%   41%   35%   27%   19%    5%    0%    3%    3%  missed (37)
+  misses: 18 of 37 had a public trade at or under our limit before our answer = another taker was faster, the first of them 92 ms after our decision (median); 19 without one = the ask was pulled
+  decision -> answer, ms: median 506  (paper: paper_exec_ms)
 
-fills: 14  shares: 76  notional: $25.72
+fills: 24  shares: 135  notional: $42.29
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       12    66.0    23.025      0.373  188.117
-eth        1     5.0     0.800      0.160  226.068
+btc       19   103.0    36.605      0.376  170.633
+eth        4    27.0     3.790      0.145  218.060
 sol        1     5.0     1.900      0.380  226.176
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
-btc         10  22.684 -1.684         -1.684     0.0       0.4 -6.443  4.984 -0.074
-eth          1   0.847  4.153          4.153     0.0       1.0  4.153  4.153  4.903
+btc         15  36.866 -0.866         -0.866     0.0       0.4 -6.443  4.984 -0.023
+eth          2   2.052  2.948          2.948     0.0       0.5 -1.205  4.153  1.437
 sol          1   1.982  3.018          3.018     0.0       1.0  3.018  3.018  1.522
 
-TOTAL pnl $+5.49 (ex-rebate $+5.49) on cost $25.51 -> ROI +21.50%; windows 12, t-stat +0.47
-max drawdown $-6.63; hedged windows (both sides filled): 0
+TOTAL pnl $+5.10 (ex-rebate $+5.10) on cost $40.90 -> ROI +12.47%; windows 18, t-stat +0.41
+max drawdown $-9.23; hedged windows (both sides filled): 1
