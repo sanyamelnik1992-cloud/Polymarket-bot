@@ -192,7 +192,7 @@ def test_every_bot_unit_is_restarted_by_autoupdate():
     from pmbot import ops
     s = open(os.path.join(ROOT, "deploy", "autoupdate.sh")).read()
     loop = re.search(r"for u in (pmbot-5m [^;]+); do", s).group(1).split()
-    assert [u for u in ops.BOT_UNITS + ops.REWARD_UNITS + ops.WEATHER_UNITS if u not in loop] == []
+    assert [u for u in ops.BOT_UNITS + ops.REWARD_UNITS + ops.WEATHER_UNITS + ops.RESEARCH_UNITS if u not in loop] == []
     assert "pmbot-lock-early" in loop and "pmbot-lock-15-early" in loop
     assert not [u for u in ops.REWARD_LIVE_UNITS if u in loop]      # the live rewards test is never restarted by an update
 

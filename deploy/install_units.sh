@@ -13,7 +13,7 @@ done
 
 # the Telegram bot may start/stop/restart exactly these units and trigger an update -- nothing else
 CMDS=""
-for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-lock-early pmbot-lock-15-early pmbot-lock-15-early-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-fair-fut pmbot-lock-15-fair pmbot-rewards pmbot-rewards-live pmbot-weather-rec pmbot-arb pmbot-hourly pmbot-hourly-last pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
+for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-lock-early pmbot-lock-15-early pmbot-lock-15-early-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-fair-fut pmbot-lock-15-fair pmbot-rewards pmbot-rewards-live pmbot-weather-rec pmbot-feedrec pmbot-arb pmbot-hourly pmbot-hourly-last pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
   for a in start restart stop; do CMDS="$CMDS, /usr/bin/systemctl $a --no-block $u"; done
 done
 echo "$USER_NAME ALL=(root) NOPASSWD: ${CMDS#, }" > /etc/sudoers.d/pmbot
@@ -39,4 +39,11 @@ for u in $RETIRED; do
   else
     systemctl --no-block disable -q --now "$u" 2>/dev/null || true     # no wait: a bot's graceful stop can take minutes
   fi
+done
+
+# Research recorders started here, once their config allows it: they stop by themselves at the config's `until`, and a start
+# after that exits at once (reports/87: the price-source race recorder). Not enabled at boot.
+for u in pmbot-feedrec; do
+  [ -e "$REPO/deploy/$u.service" ] || continue
+  systemctl is-active -q "$u" || systemctl --no-block start "$u" 2>/dev/null || true
 done

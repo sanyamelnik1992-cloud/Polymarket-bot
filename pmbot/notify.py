@@ -40,6 +40,7 @@ BOTS = {
     "pmbot-lock-15-live": ("⏳", "Ступени 15 мин · L3-15", "правило «Ступени» на 15-минутных рынках: 4 ступени, уверенность от 90% (5 акций, стоп −$5/день)"),
     "pmbot-rewards": ("🎁", "Награды · R", "заявки рядом с ценой на рынках с пулами наград, после исполнения сразу хедж (paper)"),
     "pmbot-weather-rec": ("🌡", "Погода · запись", "данные рынков температуры: сводки METAR, стаканы, прогнозы; без заявок"),
+    "pmbot-feedrec": ("📡", "Гонка источников · запись", "цены 11 бирж и стаканы Polymarket с точностью до мс: кто первым видит движение (отчёт 87); без заявок"),
     "pmbot-rewards-live": ("🧪", "Награды · живой тест", "РЕАЛЬНЫЕ ДЕНЬГИ: один рынок, две заявки ≈$20, один час; читает долю и начисления с биржи"),
     "pmbot-arb": ("⚖️", "ARB", "арбитраж 5m/15m на копейки (только гарантированные комплекты)"),
     "pmbot-hourly": ("⏱", "H", "часовой тейкер"),
@@ -621,11 +622,12 @@ def format_status():
             lines += format_rewards_live(unit).split("\n")[:3] + ["   подробно: /rlive", ""]
     if not shown:
         lines.append("ни один бот не запущен\n")
-    for unit in ["pmbot-recorder"] + ops.WEATHER_UNITS:
+    for unit in ["pmbot-recorder"] + ops.WEATHER_UNITS + ops.RESEARCH_UNITS:
         st, since = ops.unit_state(unit)
         if st not in ("inactive", "unknown", "n/a"):
-            note = ops.weather_rec_note() if unit in ops.WEATHER_UNITS else ""
-            lines.append(f"{label(unit, full=unit not in ops.WEATHER_UNITS)}: {ops.STATE_RU.get(st, esc(st))} {ops.fmt_age(since)}"
+            note = ops.rec_note(unit)
+            rec = unit in ops.WEATHER_UNITS + ops.RESEARCH_UNITS
+            lines.append(f"{label(unit, full=not rec)}: {ops.STATE_RU.get(st, esc(st))} {ops.fmt_age(since)}"
                          + (f" · {note}" if note else ""))
     if os.path.exists(ops.KILL_FILE):
         lines.append("⛔ <b>файл STOP есть</b>: торговля остановлена (/resume — снять)")

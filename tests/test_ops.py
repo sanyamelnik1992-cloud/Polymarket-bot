@@ -159,7 +159,7 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
-KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair", "pmbot-lock-15-early", "pmbot-tg"}
+KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair", "pmbot-lock-15-early", "pmbot-feedrec", "pmbot-tg"}
 # the current lineup (23 Nov, reports/86: the live interceptor and the 15m fair paper bot retired); every other unit is retired
 
 
@@ -170,7 +170,7 @@ def test_retired_units_are_disabled_and_the_lineup_is_not():
     text = open("deploy/install_units.sh").read()
     retired = set(re.search(r'(?m)^RETIRED="([^"]+)"', text).group(1).split())
     assert not retired & KEEP_UNITS
-    every = set(ops.BOT_UNITS + ops.REWARD_UNITS + ops.REWARD_LIVE_UNITS + ops.WEATHER_UNITS)
+    every = set(ops.BOT_UNITS + ops.REWARD_UNITS + ops.REWARD_LIVE_UNITS + ops.WEATHER_UNITS + ops.RESEARCH_UNITS)
     assert every - retired - KEEP_UNITS == set(), every - retired - KEEP_UNITS
     for u in retired:
         assert os.path.exists(f"deploy/{u}.service"), u

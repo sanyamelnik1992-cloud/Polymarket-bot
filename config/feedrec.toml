@@ -1,0 +1,12 @@
+# Price-source race recorder (reports/87, scripts/record_feeds.py): public sockets only, no keys, no orders.
+# Which venue shows a BTC / ETH / SOL / XRP move first as seen from the Dublin server, and when the Polymarket 5m makers
+# react. Stops by itself at `until` (UTC); the hourly report runs scripts/feed_race.py on the files.
+until = "2026-11-25T00:00:00Z"
+dir = "data/feeds"
+assets = ["btc", "eth", "sol", "xrp"]
+# bn / bnc: Binance spot (data-stream.binance.vision = the bots' feed / stream.binance.com), bnf: Binance USD-M futures,
+# cb: Coinbase, okx / okxf: OKX spot / swaps, bybit / bybitf: Bybit spot / linear perps, kraken, deribit (public quotes are
+# 100 ms aggregates), hl: Hyperliquid, pm: Polymarket 5m Up books (running window), cl: Chainlink prints (RTDS)
+sources = ["bn", "bnc", "bnf", "cb", "okx", "okxf", "bybit", "bybitf", "kraken", "deribit", "hl", "pm", "cl"]
+min_bp = 0.2          # keep a venue update when its mid moved >= 0.2 bp from the last kept one
+heartbeat_ms = 1000   # ... or a second passed with any change

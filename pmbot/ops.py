@@ -18,10 +18,12 @@ BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e",
 REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/68), its own journal format
 REWARD_LIVE_UNITS = ["pmbot-rewards-live"]  # the live test of the rewards rule: REAL MONEY, one market (pmbot/rewards/live.py)
 WEATHER_UNITS = ["pmbot-weather-rec"]       # weather recorder: public data only, no orders (reports/78)
-ALL_UNITS = BOT_UNITS + REWARD_UNITS + REWARD_LIVE_UNITS + WEATHER_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
+RESEARCH_UNITS = ["pmbot-feedrec"]          # price-source race recorder: public data only, no orders (reports/87)
+ALL_UNITS = BOT_UNITS + REWARD_UNITS + REWARD_LIVE_UNITS + WEATHER_UNITS + RESEARCH_UNITS + ["pmbot-arb", "pmbot-recorder", "pmbot-tg"]
 KILL_FILE = os.path.join(REPO, "STOP")
 WALLET_FILE = "data/state/wallet.json"     # written by scripts/wallet_balance.py (pmbot-wallet.timer), numbers only
 WEATHER_DIR = "data/weather"               # scripts/record_weather.py writes <UTC date>/{events,metar,books,forecasts}.jsonl.gz
+FEEDS_DIR = "data/feeds"                   # scripts/record_feeds.py writes YYYYmmdd-HH.csv[.gz]
 
 
 def _run(cmd, timeout=10):
@@ -428,10 +430,10 @@ def format_status():
             total_live += s["pnl_today"] or 0
     if not lines:
         lines.append("ни один бот не запущен")
-    for unit in ["pmbot-recorder"] + WEATHER_UNITS:
+    for unit in ["pmbot-recorder"] + WEATHER_UNITS + RESEARCH_UNITS:
         st, since = unit_state(unit)
         if st not in ("inactive", "unknown"):
-            note = weather_rec_note() if unit in WEATHER_UNITS else ""
+            note = rec_note(unit)
             lines.append(f"{unit}: {STATE_RU.get(st, st)} {fmt_age(since)}" + (f" · {note}" if note else ""))
     if os.path.exists(KILL_FILE):
         lines.append("⛔ файл STOP есть: торговля остановлена (/resume — снять)")
@@ -443,6 +445,26 @@ def format_status():
     lines.append(f"\nсегодня реальные деньги: {fmt_money(total_live)} · бумага: {fmt_money(total - total_live)}")
     lines.append(f"код: {g['branch']} {g['commit']}")
     return "\n".join(lines)
+
+
+def rec_note(unit):
+    """The data note of a recorder unit in /status ('' for the others)."""
+    if unit in WEATHER_UNITS:
+        return weather_rec_note()
+    if unit in RESEARCH_UNITS:
+        return feeds_note()
+    return ""
+
+
+def feeds_note():
+    """What the price-source recorder holds: 'записано 41 МБ (12 ч)'; '' before its first file."""
+    d = os.path.join(REPO, FEEDS_DIR)
+    try:
+        files = [f for f in os.listdir(d) if f.endswith((".csv", ".csv.gz"))]
+        size = sum(os.path.getsize(os.path.join(d, f)) for f in files)
+    except OSError:
+        return ""
+    return f"записано {size / 1e6:.0f} МБ ({len(files)} ч)" if files else ""
 
 
 def weather_rec_note(now=None):

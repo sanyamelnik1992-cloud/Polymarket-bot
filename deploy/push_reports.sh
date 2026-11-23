@@ -27,6 +27,10 @@ fi
 if [ $(( 10#$(date -u +%H) % 3 )) -eq 0 ] && [ -d data/weather ]; then
   nice -n 19 "$REPO/.venv/bin/python" scripts/weather_extract.py data/weather "$WT/weather" >/dev/null 2>&1 || true
 fi
+# reports/87: the price-source race (which venue shows a move first, when the Polymarket makers react) from data/feeds
+if [ -d data/feeds ]; then
+  timeout 600 nice -n 19 "$REPO/.venv/bin/python" scripts/feed_race.py data/feeds "$WT/feeds" >/dev/null 2>&1 || true
+fi
 cd "$WT"
 git add -A
 if git diff --cached --quiet; then exit 0; fi

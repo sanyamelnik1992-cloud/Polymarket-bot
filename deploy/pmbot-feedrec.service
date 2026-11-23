@@ -1,0 +1,18 @@
+[Unit]
+Description=pmbot price-source race recorder (public sockets of 11 venues + Polymarket books; data only, no orders; reports/87)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+# No orders and no keys: public data only. Started by install_units.sh; stops by itself at config/feedrec.toml `until`
+# (a restart after that exits at once). Nice 0 / CPUWeight 100: its receive times are the measurement, but the live bots
+# (CPUWeight 500) still come first.
+ExecStart=__REPO__/.venv/bin/python scripts/record_feeds.py config/feedrec.toml
+Nice=0
+CPUWeight=100
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=60

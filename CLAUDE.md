@@ -506,6 +506,24 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   a one-day record of Binance spot / futures, Coinbase and OKX top of book with ms receive times (which source leads, by how
   much); then a live interceptor without the race (book / timer entries only, 5 shares, -$5 day) if those earn on paper, or a
   faster source if one leads by 50-100 ms, else close it; colocation / a maker only after that.
+- **`reports/87_price_source_race.md` (23 Nov, owner: "Начинай ... углубиться в альтернативу бинанса или проанализировать все
+  источники, выбрать самые лучшие и ориентироваться на них")**: research recorder `pmbot-feedrec` (`scripts/record_feeds.py`,
+  `pmbot/feedrec.py`, `config/feedrec.toml`; public sockets only, no keys, no orders; started by `deploy/install_units.sh`, not
+  enabled at boot, stops itself at the config's `until` = 25 Nov 00:00 UTC; `ops.RESEARCH_UNITS`, /status shows its size):
+  best bid / ask of BTC / ETH / SOL / XRP on Binance spot (`bn` = the bots' data-stream.binance.vision, `bnc` =
+  stream.binance.com), Binance USD-M (`bnf`), Coinbase (`cb`), OKX spot / swap, Bybit spot / linear, Kraken, Deribit (public
+  quotes are 100 ms aggregates), Hyperliquid, the Polymarket 5m Up book of the running window (`pm`) and Chainlink (`cl`), with
+  our receive time (0.1 ms) and the venue time; a row when the mid moved >= 0.2 bp or 1 s passed (pm / cl: every change);
+  hourly `data/feeds/YYYYmmdd-HH.csv`, gzipped when the hour is over; `lag` rows = recorder stalls, `sys` rows = (re)connects.
+  CPU: Binance sends ~600 (spot) + ~2000 (futures) updates a second, mostly size-only: `PriceGate` skips them by two string
+  finds, compression is off (Binance negotiates permessage-deflate by default: ~40 % more CPU to inflate; the bots' own Binance
+  feed still uses it - a cheap later fix), no per-message `wait_for`: ~10 % of a core here. Analysis `scripts/feed_race.py`
+  (`pmbot/feedrace.py`) hourly in `deploy/push_reports.sh` -> server-reports `feeds/summary.txt` + `feeds/events.csv.gz`: a move
+  = the mid moved >= 2 / 2.5 / 4 / 4 bp (BTC / ETH / SOL / XRP) within 300 ms; an event = the same direction on >= 3 sources
+  within 1.5 s; per source: first %, ms behind the first, ms ahead of `bn`; the Polymarket reaction = the Up mid settled half-way
+  to a >= 1 c new level (held 300 ms: the top flickers); "beats makers" = pm - source > 185 ms (15 ms to the exchange + 150 ms
+  taker delay + 20 ms book feed). Decision after ~a day: a source >= 50 ms ahead of Binance that beats the makers -> paper A/B of
+  the interceptor on it; none -> the race is lost to colocated players, interceptor only on new cheap asks or closed.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
