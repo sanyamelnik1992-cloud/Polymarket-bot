@@ -25,12 +25,14 @@ import math
 import os
 import time
 import tomllib
+from collections import deque
 from dataclasses import asdict, dataclass, field, fields, replace
+from statistics import NormalDist
 
 from ..fees import fee_per_share
 from ..gamma import fetch_event, parse_event, slug_for, window_start
-from ..lockmodel import (TW_LO, BlockSigma, ClSigma, HourSigma, Tables, close_from_prints, early_z, expected_dist_bp, lock_state, prob_up,
-                         strike_from_prints)
+from ..lockmodel import (EARLY_AVG_VAR, TW_LO, BlockSigma, ClSigma, HourSigma, Tables, close_from_prints, early_z, expected_dist_bp,
+                         lock_state, prob_up, strike_from_prints)
 from .feeds import ClobFeed, binance_feed, binance_futures_feed, polybolt_feed, rtds_feed
 from .paper import PaperBroker
 from .state import State, Window, now_ms
@@ -544,6 +546,50 @@ def decide_fair(c: LockCfg, T, K_bn, now_ms_, bn_now, sigma, ask_up, ask_dn):
     return {"side": side, "limit": limit, "ask": ask[0], "p": round(p, 6), "edge": round(edge, 4)}, ctx
 
 
+_ND = NormalDist()
+RACE_MS = (0, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000)   # lock_race: book samples after a fair decision, ms
+
+
+def fair_wake_levels(c: LockCfg, T, K_bn, now_ms_, bn_now, sigma, ask_up, ask_dn):
+    """lock.zone = "fair" (reports/83 section 17): when the rule would buy before the next timer pass, so the decision loop
+    wakes at that moment instead of up to tick_ms later. Same inputs as decide_fair. Returns (caps, mids, due_ms):
+      caps  = {side: the highest ask of that side that is an entry at the current fair value} -> a NEW ask at or under it in the
+              book wakes the loop (State.on_book);
+      mids  = (up, dn): signal mids at / above `up` make the resting Up ask an entry, at / below `dn` the Down ask -> a Binance
+              tick past one wakes the loop (whatever its size; fair_react_bp only wakes on moves of >= 0.3 bp);
+      due_ms = when time alone (tau shrinking under a steady lead) turns the leading side's resting ask into an entry, if
+              that happens in the zone; None otherwise.
+    A wake is only a hint: the full decide_fair runs and may still skip (an early wake costs one pass)."""
+    if not K_bn or not sigma or not bn_now or sigma <= 0 or K_bn <= 0 or bn_now <= 0:
+        return {}, (None, None), None
+    now_s = now_ms_ / 1000.0
+    tau0 = (T + TW_LO) - now_s
+    sd = sigma * math.sqrt(max(tau0, 0.0) + EARLY_AVG_VAR)          # early_z's denominator
+    lead = math.log(bn_now / K_bn)
+    pu = 0.5 * math.erfc(-(lead / sd) / math.sqrt(2))
+    caps = {}
+    for side, p in (("U", pu), ("D", 1.0 - pu)):
+        cap = min(math.floor((p - c.fair_edge) * 100 + 1e-9) / 100, c.fair_pmax)
+        if cap >= c.fair_pmin - 1e-9:
+            caps[side] = round(cap, 2)
+    mids, due = [None, None], None
+    for i, ask in enumerate((ask_up, ask_dn)):
+        if not ask or not c.fair_pmin - 1e-9 <= ask[0] <= c.fair_pmax + 1e-9:
+            continue
+        need = math.ceil(ask[0] * 100 - 1e-9) / 100 + c.fair_edge        # decide_fair: p - fair_edge >= the ask, on the cent grid
+        if not 0.0 < need < 1.0:
+            continue
+        q = _ND.inv_cdf(need)                                            # z (Up) or -z (Down) at which this side is an entry
+        mids[i] = K_bn * math.exp(q * sd) if i == 0 else K_bn * math.exp(-q * sd)
+        lead_side = lead if i == 0 else -lead
+        if q > 0 and lead_side > 0:                                      # the leading side: its p rises as tau shrinks
+            tau_star = (lead_side / (sigma * q)) ** 2 - EARLY_AVG_VAR    # tau0 at which lead / sd(tau) = q
+            t_star = (T + TW_LO - tau_star) * 1000.0
+            if now_ms_ < t_star <= (T + c.rel_hi) * 1000.0 and (due is None or t_star < due):
+                due = t_star
+    return caps, tuple(mids), (int(math.ceil(due)) if due is not None else None)
+
+
 def maker_bid(c: LockCfg, p, best_ask):
     """Maker price for the decided side: p - min_edge (a maker pays no taker fee), capped at a_max and one cent under
     the best ask (post-only), on the 0.01 grid (valid at tick 0.01 and 0.001). None below a_min.
@@ -691,8 +737,16 @@ class LockBot:
         self.fut = self.fair and c.fair_feed == "futures"
         self._wake = asyncio.Event() if self.fair and c.fair_react_bp > 0 else None    # fair: a Binance move wakes the loop
         self._react_mid = {}       # fair: asset -> signal mid at that coin's last decision
+        self._caps = {}            # fair: token -> a new ask at or under this wakes the loop (fair_wake_levels, reports/83 s. 17)
+        self._trig = {}            # fair: asset -> [(mid_up, mid_dn)]: a Binance tick past one of these wakes the loop
+        self._due = None           # fair: ms at which time alone makes a resting ask an entry (the loop sleeps no longer)
+        self._wake_cause = None    # fair: what set the wake event: move (>= fair_react_bp) / level / book
+        self._cause = "timer"      # fair: why the current decision pass runs (timer / due / move / level / book): "wake" field
+        self._trades = {}          # fair: token -> deque of public trades (rx ms, exchange ms, side, price, size) for lock_race
+        self._race_res = {}        # fair: (window key, decision ms) -> the order's answer, read by _race
         if self._wake is not None:
             self.st.on_tick = self._on_tick
+            self.st.on_book = self._on_book
         self.hsig = {a: HourSigma(c.sigma_window_s) for a in c.assets}     # early: one-hour sigma (reports/81)
         self.maker = c.entry == "maker"
         # reports/64: the insurance reads the same model as the entries, without the entry filters (any p from hedge_p)
@@ -708,8 +762,9 @@ class LockBot:
             self.broker = LiveTaker(cfg.risk.max_usd_per_entry, journal)
         else:
             self.broker = PaperTaker(self.st, cfg.execution.paper_exec_ms)
-        self.feeds = {a: ClobFeed(self.st, a, on_trade=self._on_public_trade if self.maker else None,
-                                  alive=self.alive) for a in c.assets}
+        self.feeds = {a: ClobFeed(self.st, a, alive=self.alive,
+                                  on_trade=self._on_public_trade if self.maker else (self._on_trade_fair if self.fair else None))
+                      for a in c.assets}
         self.meta = {}             # window key -> parsed market (from Gamma, fetched ahead)
         self.strikes = {}          # window key -> K
         self.entries = {}          # window key -> list of entry dicts (open until settled)
@@ -929,11 +984,79 @@ class LockBot:
         return self.st.fut_prices[asset] if self.fut else self.st.prices[asset]
 
     def _on_tick(self, asset):
-        """fair (fair_react_bp > 0): wake the decision loop when the signal mid moved enough since the coin's last decision."""
-        mid = self.sig_px(asset).bn_mid()
-        ref = self._react_mid.get(asset)
-        if mid and (ref is None or abs(math.log(mid / ref)) * 1e4 >= self.cfg.lock.fair_react_bp):
-            self._wake.set()
+        """fair (fair_react_bp > 0): wake the decision loop when the signal mid moved enough since the coin's last decision, or
+        when it changed and is past a level at which a resting ask becomes an entry (fair_wake_levels, reports/83 section 17).
+        Runs inside the Binance feed on every update: cheap, and it never raises."""
+        try:
+            mid = self.sig_px(asset).bn_mid()
+            if not mid:
+                return
+            ref = self._react_mid.get(asset)
+            if ref is None or abs(math.log(mid / ref)) * 1e4 >= self.cfg.lock.fair_react_bp:
+                self._set_wake("move")
+            elif mid != ref:               # an unchanged mid (a size update) cannot turn an ask into an entry
+                for up, dn in self._trig.get(asset, ()):
+                    if (up is not None and mid >= up) or (dn is not None and mid <= dn):
+                        self._set_wake("level")
+                        break
+        except Exception as e:  # noqa: BLE001
+            log.warning("on_tick %s: %s", asset, e)
+
+    def _on_book(self, token, price):
+        """fair: a book event added or grew an ask at or under the price we would pay for that token now (and under the best ask
+        of the last pass): wake the decision loop at once instead of up to tick_ms later. Inside the book feed: never raises."""
+        try:
+            cap = self._caps.get(token)
+            if cap is not None and price <= cap + 1e-9:
+                self._set_wake("book")
+        except Exception as e:  # noqa: BLE001
+            log.warning("on_book %s: %s", token, e)
+
+    def _set_wake(self, why):
+        if self._wake_cause is None:
+            self._wake_cause = why
+        self._wake.set()
+
+    def _on_trade_fair(self, token, side, price, size, ts, rx):
+        """fair: public trades of the subscribed tokens, kept for a few seconds for lock_race (inside the book feed)."""
+        try:
+            q = self._trades.get(token)
+            if q is None:
+                q = self._trades[token] = deque(maxlen=100)
+            q.append((rx, ts, side, price, size))
+        except Exception:  # noqa: BLE001
+            pass
+
+    async def _race(self, key, token, other, side, limit, t_dec):
+        """fair (reports/83 section 17): the race for the ask we went for. Our view of the book of `token` at RACE_MS after the
+        decision (shares at or under `limit`), the order's answer, and the public trades around it: on `token` at or under the
+        limit ("m") and on the other outcome at or over 1 - limit ("o", the same liquidity seen from the other book). Paper:
+        what fill rate a faster or slower order would get; live: was a miss taken by another taker (a trade before our answer)
+        or pulled by its maker (no trade). Journal lock_race; it never touches the exchange."""
+        try:
+            avail = []
+            for off in RACE_MS:
+                dt = t_dec + off - now_ms()
+                if dt > 0:
+                    await asyncio.sleep(min(dt, 1500) / 1000)
+                b = self.st.books.get(token)
+                avail.append(round(sum(q for p, q in b.asks.items() if p <= limit + 1e-9), 2) if b is not None else 0.0)
+            for _ in range(20):            # the answer of a slow order; late trades of the last samples (~20 ms behind)
+                if (key, t_dec) in self._race_res:
+                    break
+                await asyncio.sleep(0.1)
+            res = self._race_res.pop((key, t_dec), {})
+            tr = []
+            for tok, mark in ((token, "m"), (other, "o")):
+                for rx, ex, sd, px, sz in list(self._trades.get(tok, ())):
+                    if t_dec - 1000 <= rx <= t_dec + 2000 and (px <= limit + 1e-9 if mark == "m" else px >= 1.0 - limit - 1e-9):
+                        tr.append([ex - t_dec, rx - t_dec, mark, sd, px, sz])
+            tr.sort()
+            self.j.log("lock_race", key=key, side=side, limit=limit, offs=list(RACE_MS), avail=avail, trades=tr[:30], **res)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            log.warning("race %s: %s", key, e)
 
     def bn_strike(self, key, asset, T):
         """fair (reports/83): the Binance strike of a window = mean of the per-second Binance mids of [T-62, T-3] (the same
@@ -1064,12 +1187,20 @@ class LockBot:
             if self._wake is None:
                 await asyncio.sleep(delay)
             else:                          # fair: a Binance move wakes the loop at once (reports/83 section 8)
+                due = self._due            # ... and so do the levels of section 17 (book, tick past a level, time)
+                if due is not None:
+                    delay = min(delay, max(0.0, (due - now_ms()) / 1000))
                 try:
                     await asyncio.wait_for(self._wake.wait(), timeout=delay)
                     self.stats["woken"] = self.stats.get("woken", 0) + 1
+                    cause = self._wake_cause or "move"
                 except asyncio.TimeoutError:
-                    pass
+                    cause = "due" if due is not None and now_ms() >= due - 1 else "timer"
                 self._wake.clear()
+                self._wake_cause = None
+                self._cause = cause
+                if cause in ("level", "book", "due"):
+                    self.stats["wake_" + cause] = self.stats.get("wake_" + cause, 0) + 1
 
     async def lag_loop(self, period_s=0.05):
         """Event-loop lag (a busy or starved process sees the market late): max per status interval, and how many
@@ -1089,6 +1220,7 @@ class LockBot:
         c = self.cfg.lock
         ok, why_risk = self.can_enter()
         cands = []                 # signals of this tick: (margin p - ask, window, signal, shares, ctx)
+        caps, trig, due = {}, {}, None      # fair: the wake levels of this pass (fair_wake_levels)
         for key, w in list(self.st.windows.items()):
             Tc = self.anchor(w.start)
             rel = now / 1000 - Tc
@@ -1117,13 +1249,25 @@ class LockBot:
                 if self.fut and now - self.st.feed_alive.get("binance_fut", 0) > c.bn_max_age_ms:
                     s_now = None                                   # a stale futures feed is no signal
                 self._react_mid[w.asset] = s_now
-                sig, ctx = decide_fair(c, Tc, self.bn_strike(key, w.asset, w.start), now, s_now,
-                                       self.bsig[w.asset].sigma(c.fair_min_sigma_s),
-                                       self._book_ask(w.token_up), self._book_ask(w.token_down))
+                K_bn, sg = self.bn_strike(key, w.asset, w.start), self.bsig[w.asset].sigma(c.fair_min_sigma_s)
+                a_up, a_dn = self._book_ask(w.token_up), self._book_ask(w.token_down)
+                sig, ctx = decide_fair(c, Tc, K_bn, now, s_now, sg, a_up, a_dn)
+                ctx["wake"] = self._cause                                  # what started this pass (reports/83 section 17)
                 if spx.bn_hist:
                     ctx["sig_age_ms"] = now - spx.bn_hist[-1][0]          # how old the signal tick was at the decision
                     if sig and c.fair_max_sig_age_ms and ctx["sig_age_ms"] > c.fair_max_sig_age_ms:
                         sig, ctx = None, {**ctx, "why": "sig_age"}          # the lag is old: what is left of it is adverse
+                if not sig and ok and self._wake is not None and ctx.get("why") != "time":
+                    w_caps, w_mids, w_due = fair_wake_levels(c, Tc, K_bn, now, s_now, sg, a_up, a_dn)
+                    for side_, cap in w_caps.items():
+                        tok, ask = (w.token_up, a_up) if side_ == "U" else (w.token_down, a_dn)
+                        if ask:                                            # only an ask below the present best one is new
+                            cap = min(cap, round(ask[0] - 0.0005, 4))
+                        caps[tok] = cap
+                    if w_mids != (None, None):
+                        trig.setdefault(w.asset, []).append(w_mids)
+                    if w_due is not None and (due is None or w_due < due):
+                        due = w_due
             elif self.early:               # reports/81: before the closing TWAP, one-hour sigma, asks 0.985-0.99 only
                 sig, ctx = decide_early(c, Tc, K, now, cl, self.hsig[w.asset].sigma(c.min_sigma_s), bn_now, bn_at_last,
                                         px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
@@ -1156,6 +1300,8 @@ class LockBot:
             if raised:                     # reports/83 section 10: a cheap fair entry is still a valid order ($1.05+)
                 ctx = {**ctx, "min_order": True}
             cands.append((sig["p"] - sig["ask"], w, sig, shares, ctx))
+        if self._wake is not None:
+            self._caps, self._trig, self._due = caps, trig, due
         # Open risk counts the orders still in flight: all coins become eligible in the same tick at rel_lo, and an
         # order takes ~0.3 s to come back, so without the reservation two or three coins went out together past
         # max_open_usd (the limit that makes live "one entry at a time"). The widest margin goes first.
@@ -1169,7 +1315,14 @@ class LockBot:
                 continue
             self.busy.add(w.key)
             self.pending[w.key] = need
-            asyncio.get_running_loop().create_task(self._execute(w, sig, shares, {**ctx, "t_dec": now}))
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._execute(w, sig, shares, {**ctx, "t_dec": now}))
+            if self.fair:                  # reports/83 section 17: the race for this ask, logged ~1-3 s later
+                up = sig["side"] == "U"
+                t = loop.create_task(self._race(w.key, w.token_up if up else w.token_down, w.token_down if up else w.token_up,
+                                                sig["side"], round(tick_floor(sig["limit"], 0.01), 2), now))
+                self._bg.add(t)
+                t.add_done_callback(self._bg.discard)
 
     def _hedge_once(self, key, w, Tc, now):
         """reports/64: insurance on a reversal (LockCfg.hedge_p). Once per window, sent through _execute like an entry; it is not
@@ -1343,6 +1496,10 @@ class LockBot:
         t_dec = rec.pop("t_dec", None)
         if t_dec is not None:      # decision -> the order task running: time lost in our own event loop (reports/83 section 14)
             rec["queue_ms"] = t_sent - t_dec
+            if self.fair:          # the answer for lock_race (section 17)
+                self._race_res[(key, t_dec)] = {"got": round(got, 4), "ans_ms": now_ms() - t_dec, "error": err}
+                while len(self._race_res) > 50:
+                    self._race_res.pop(next(iter(self._race_res)))
         hedge = bool(ctx.get("hedge"))
         if got <= 1e-9:
             self.stats["missed"] += 1
@@ -1466,6 +1623,8 @@ class LockBot:
                 self.stats["cl_lag_ms"] = xs[len(xs) // 2]
                 self._cl_lags = []
             self.stats["gc_max_ms"], GC_PAUSE["max_ms"] = round(GC_PAUSE["max_ms"], 1), 0.0     # longest GC pause of the 30 s
+            for tok in [t for t in self._trades if t not in self.st.token_window]:
+                del self._trades[tok]                                   # lock_race: trades of windows that are gone
             self.stats["gc_gen2"] = GC_PAUSE["gen2"]                                           # full collections so far
             msg = (f"day={self.day_pnl():+.2f} open=${self.open_cost():.2f} stats={self.stats} sigma_bp={sg} "
                    f"windows={sorted(self.st.windows)} killed={self.risk.get('killed_day') == self.today()}")

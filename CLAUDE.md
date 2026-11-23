@@ -466,6 +466,18 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   and price band positive (< 0.3: +10.4 %, so NO price floor). By signal age: <= 0.1 s +$46.63 on 136, older +$10.17 on 76 ->
   new `lock.fair_max_sig_age_ms` (0 = off): 100 in `lock_fair_live.toml` + twin `lock_fair.toml` (+ `lock_fair_fut.toml`), 0 in 15m.
   Live restart proposed with it (5 shares, 3 entries a window, $20 open, -$20 day), only on the owner's word.
+  Section 17 (23 Nov, owner: "этой скорости достаточно ... что нужно сделать что бы улучшить скорость"): we cannot be the fastest
+  (the 150 ms taker delay is the same for every taker, so the race is who reaches the exchange first: London-colocated bots and
+  US bots on a Coinbase signal are ~35-100 ms ahead; half of the stale asks go to them). The fair loop now wakes at the exact
+  moment: after every pass `fair_wake_levels` gives per token the highest ask that is an entry (`State.on_book` from the book
+  feed: a new, cheaper ask at or under it wakes the loop), per coin the Binance mids past which a resting ask becomes an entry (a
+  changed tick past one wakes it, whatever its size) and the time at which a shrinking tau alone makes it one (`_due`: the loop
+  sleeps no longer); none while the bot cannot enter; journal `wake` = timer / due / move / level / book on every decision. A pass
+  costs ~0.07 ms (here). `lock_race` (fair bots, paper and live, nothing sent): ~1-3 s after every order, our view of that ask at
+  `RACE_MS` 0-1000 ms, the answer, and the public trades at our price (`m` our token, `o` the other book); report_journal.py
+  prints the survival curve and how many misses had a trade first (another taker) vs none (pulled by the maker). Next speed steps
+  only if that shows the milliseconds are worth money: Coinbase as an earlier signal (record both feeds first), Polymarket's
+  London colocation (KYC/KYB; a UK VPS is close-only). Not worth it: a bigger server, a Tokyo relay.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost

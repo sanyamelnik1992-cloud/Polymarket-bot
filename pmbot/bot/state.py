@@ -179,6 +179,8 @@ class AssetPrices:
 class State:
     def __init__(self, assets, halflife_s=900.0):
         self.on_tick = None        # optional callback(asset) after every Binance update (fast reaction)
+        self.on_book = None        # optional callback(token, price) when a book event adds or grows asks; price = the lowest
+                                   # such ask of that token in the event (the fair rule wakes when it is an entry, reports/83 s. 17)
         self.assets = list(assets)
         self.prices = {a: AssetPrices(halflife_s) for a in self.assets}
         self.fut_prices = {a: AssetPrices(halflife_s) for a in self.assets}   # Binance USD-M futures mids (fair rule A/B)

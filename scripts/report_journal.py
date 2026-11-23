@@ -82,13 +82,17 @@ def fair_breakdown(ev):
         return f">={edges[-1]:g}"
 
     for name, field_, edges in (("edge, c", "edge", (0.15, 0.20, 0.25, 0.35)), ("ask size, shares", "ask_sz", (0, 10, 50, 200)),
-                                ("signal age, ms", "sig_age_ms", (0, 100, 300, 1000))):
+                                ("signal age, ms", "sig_age_ms", (0, 100, 300, 1000)),
+                                ("what woke the decision (section 17)", "wake", None)):
         rows = {}
         for e in ent + miss:
             x = e.get(field_)
-            r = rows.setdefault(bucket(x * 100 if (field_ == "edge" and x is not None) else x,
-                                       tuple(v * 100 for v in edges) if field_ == "edge" else edges),
-                                {"orders": 0, "filled": 0, "settled": 0, "won": 0, "exp": 0.0, "pnl": 0.0})
+            if edges is None:      # a category: timer / due / move / level / book
+                k = str(x) if x is not None else "?"
+            else:
+                k = bucket(x * 100 if (field_ == "edge" and x is not None) else x,
+                           tuple(v * 100 for v in edges) if field_ == "edge" else edges)
+            r = rows.setdefault(k, {"orders": 0, "filled": 0, "settled": 0, "won": 0, "exp": 0.0, "pnl": 0.0})
             r["orders"] += 1
             if e["type"] == "lock_entry":
                 r["filled"] += 1
@@ -100,11 +104,48 @@ def fair_breakdown(ev):
                     r["won"] += won
                     r["exp"] += px
                     r["pnl"] += sh * ((1.0 if won else 0.0) - px - 0.07 * px * (1 - px))
+        if edges is None and set(rows) == {"?"}:
+            continue               # journals from before the field existed
         print(f"\nfair entries by {name}: orders / filled / settled / won (expected at the paid prices) / pnl")
-        for k in sorted(rows, key=lambda k: (k == "?", float(k.split("-")[0].lstrip(">=")) if k != "?" else 0)):
+        for k in sorted(rows, key=lambda k: (k == "?", (float(k.split("-")[0].lstrip(">=")) if edges is not None else 0)
+                                             if k != "?" else 0, k)):
             r = rows[k]
             print(f"  {k:>10s}: {r['orders']:4d} / {r['filled']:4d} ({100 * r['filled'] / max(r['orders'], 1):3.0f} %) / {r['settled']:4d} / "
                   f"{r['won']:4d} ({r['exp']:6.1f}) / {r['pnl']:+8.2f}")
+
+
+def race_report(ev):
+    """Fair bots (reports/83 section 17): the race for the asks we went for (lock_race). Share of the orders whose ask was still
+    in our view of the book at each delay after the decision (paper: the fill rate a faster or slower order would get), and for
+    the misses whether a public trade at or under our limit came before our answer (another taker was faster) or the ask went
+    without one (its maker pulled it)."""
+    rs = [e for e in ev if e["type"] == "lock_race" and e.get("avail")]
+    if not rs:
+        return
+    offs = rs[0]["offs"]
+    print(f"\nrace for the ask (reports/83 s. 17): orders whose ask is still in our book this long after the decision")
+    print("  " + "".join(f"{o:>6d}" for o in offs) + "  ms")
+    groups = (("all", rs), ("filled", [r for r in rs if (r.get("got") or 0) > 0]),
+              ("missed", [r for r in rs if r.get("got") == 0 and not r.get("error")]))
+    for name, grp in groups:
+        if grp:
+            share = [100.0 * sum(1 for r in grp if len(r["avail"]) > i and r["avail"][i] > 0) / len(grp) for i in range(len(offs))]
+            print("  " + "".join(f"{x:5.0f}%" for x in share) + f"  {name} ({len(grp)})")
+    miss = groups[2][1]
+    if miss:
+        firsts = []
+        for r in miss:
+            ans = r.get("ans_ms") or 0
+            ts = [t[0] for t in r.get("trades", []) if t[2] == "m" and -200 <= t[0] <= ans]
+            if ts:
+                firsts.append(min(ts))
+        firsts.sort()
+        med = f", the first of them {firsts[len(firsts) // 2]} ms after our decision (median)" if firsts else ""
+        print(f"  misses: {len(firsts)} of {len(miss)} had a public trade at or under our limit before our answer = another "
+              f"taker was faster{med}; {len(miss) - len(firsts)} without one = the ask was pulled")
+    ans = sorted(r["ans_ms"] for r in rs if r.get("ans_ms") is not None)
+    if ans:
+        print(f"  decision -> answer, ms: median {ans[len(ans) // 2]}  (paper: paper_exec_ms)")
 
 
 def main(d):
@@ -125,6 +166,7 @@ def main(d):
         print(f"quotes placed: {len(quotes)}")
     lock_orders(ev)
     fair_breakdown(ev)
+    race_report(ev)
     if fills.empty:
         print("no fills")
         return

@@ -55,7 +55,10 @@ class ClobFeed:
                 b.bids = {float(x["price"]): float(x["size"]) for x in ev["bids"] if float(x["size"]) > 0}
                 b.asks = {float(x["price"]): float(x["size"]) for x in ev["asks"] if float(x["size"]) > 0}
                 b.last_rx = rx
+                if self.st.on_book is not None and b.asks:
+                    self.st.on_book(ev["asset_id"], min(b.asks))
         elif t == "price_change":
+            low = None                     # token -> lowest ask this event added or grew (on_book)
             for c in ev["price_changes"]:
                 b = self.st.books.get(c["asset_id"])
                 if b is None:
@@ -65,8 +68,14 @@ class ClobFeed:
                 if s <= 0:
                     side.pop(p, None)
                 else:
+                    if side is b.asks and self.st.on_book is not None and (low is None or p < low.get(c["asset_id"], 2.0)):
+                        low = low or {}
+                        low[c["asset_id"]] = p
                     side[p] = s
                 b.last_rx = rx
+            if low:
+                for tok, p in low.items():
+                    self.st.on_book(tok, p)
         elif t == "last_trade_price" and self.on_trade:
             self.on_trade(ev["asset_id"], ev.get("side"), float(ev["price"]), float(ev["size"]),
                           int(ev.get("timestamp") or rx), rx)

@@ -462,3 +462,169 @@ def test_fair_max_sig_age_skips_an_old_lag(tmp_path):
     assert load_lock_config(FAIR5).lock.fair_max_sig_age_ms == 100 and load_lock_config(FAIR15).lock.fair_max_sig_age_ms == 0
     with pytest.raises(ValueError):
         load_lock_config(FAIR5, overrides={"lock": {"fair_max_sig_age_ms": 5000}})
+
+
+def _fair_bot(tmp_path, name, br=None, lead_bp=0.0, ask_up=0.62, ask_dn=0.40, rel=150, sig_age=50):
+    """A 5m fair bot (the paper twin's config) with one BTC window `rel` s into the zone, Binance strike 100, sigma 1 bp."""
+    import time as _t
+    from pmbot.bot.state import Window
+    cfg = load_lock_config(FAIR5, overrides={"risk": {"state_file": str(tmp_path / f"{name}.json"), "kill_file": ""}})
+    bot = LockBot(cfg, _J(), broker=br or type("B", (), {"mode": "paper"})(), tables=_Tab())
+    now = int(_t.time() * 1000)
+    start = now // 1000 - rel
+    bot.st.add_window(Window(asset="btc", start=start, slug="btc", condition_id="btc", token_up="bu", token_down="bd"))
+    px = bot.st.prices["btc"]
+    for s in range(start - 70, start):
+        px.bn_sec_mid[s] = 100.0
+    px.bn_hist.append((now - sig_age, 100.0 * math.exp(lead_bp * 1e-4)))
+    bot.bsig["btc"].r2.extend([1e-8 * 10] * 360)
+    bot.bsig["btc"].last_sec = now // 1000 - 2
+    bot.st.books["bu"] = type("B", (), {"asks": {ask_up: 30.0}})()
+    bot.st.books["bd"] = type("B", (), {"asks": {ask_dn: 30.0}})()
+    bot.st.feed_alive["clob"]["btc"] = now
+    bot.st.feed_alive["binance"] = now
+    return bot, now, start
+
+
+def test_fair_wake_levels_match_decide_fair():
+    """reports/83 section 17: the levels at which the loop wakes are exactly where decide_fair starts to buy."""
+    from pmbot.bot.lock import fair_wake_levels
+    c = load_lock_config(FAIR5).lock
+    sig, K, now = 1e-4, 100.0, (T + 150) * 1000
+    up, dn = (0.62, 30.0), (0.40, 30.0)
+    caps, (m_up, m_dn), due = fair_wake_levels(c, T, K, now, K, sig, up, dn)
+    assert caps == {"U": 0.35, "D": 0.35} and due is None             # no lead: p 0.50 both, nothing to wait for
+    assert m_dn < K < m_up
+    assert decide_fair(c, T, K, now, m_up * (1 + 1e-7), sig, up, dn)[0]["side"] == "U"
+    assert decide_fair(c, T, K, now, m_up * (1 - 1e-6), sig, up, dn)[0] is None
+    assert decide_fair(c, T, K, now, m_dn * (1 - 1e-7), sig, up, dn)[0]["side"] == "D"
+    assert decide_fair(c, T, K, now, m_dn * (1 + 1e-6), sig, up, dn)[0] is None
+    # a steady 5 bp lead: Up p 0.69 < 0.77 now; as tau shrinks it reaches 0.77 at ~rel 211.7 s, inside the zone (rel_hi 238)
+    S = K * math.exp(5e-4)
+    assert decide_fair(c, T, K, now, S, sig, up, dn)[0] is None
+    _, _, due = fair_wake_levels(c, T, K, now, S, sig, up, dn)
+    assert due is not None and 211_000 < due - T * 1000 < 212_500
+    assert decide_fair(c, T, K, due + 1, S, sig, up, dn)[0]["side"] == "U"
+    assert decide_fair(c, T, K, due - 300, S, sig, up, dn)[0] is None
+    # an ask out of [fair_pmin, fair_pmax] never wakes; a lead the time cannot finish in the zone has no due time
+    caps, mids, due = fair_wake_levels(c, T, K, now, K * math.exp(1e-4), sig, (0.97, 5.0), None)
+    assert mids == (None, None) and due is None
+    assert fair_wake_levels(c, T, None, now, K, sig, up, dn) == ({}, (None, None), None)
+
+
+def test_fair_bot_wakes_on_a_cheap_new_ask_and_on_a_tick_past_a_level(tmp_path):
+    bot, now, start = _fair_bot(tmp_path, "w")
+    asyncio.run(bot.decide_once(now))                                  # no lead: no entry, the levels are set
+    assert bot._caps == {"bu": 0.35, "bd": 0.35} and len(bot._trig["btc"]) == 1 and bot._due is None
+    bot._on_book("bu", 0.36)
+    assert not bot._wake.is_set()                                      # 0.36 > 0.35: not an entry
+    bot._on_book("bu", 0.35)
+    assert bot._wake.is_set() and bot._wake_cause == "book"
+    bot._wake.clear()
+    bot._wake_cause = None
+    m_up, m_dn = bot._trig["btc"][0]
+    px = bot.st.prices["btc"]
+    bot._react_mid["btc"] = m_up * math.exp(-0.1e-4)                   # the last decision saw a mid 0.1 bp under the level
+    px.bn_hist.append((now + 10, m_up * math.exp(-0.05e-4)))
+    bot._on_tick("btc")
+    assert not bot._wake.is_set()                                      # moved 0.05 bp, still under the level
+    px.bn_hist.append((now + 20, m_up * math.exp(0.05e-4)))
+    bot._on_tick("btc")
+    assert bot._wake.is_set() and bot._wake_cause == "level"           # 0.15 bp < fair_react_bp 0.3, but past the level
+    bot._wake.clear()
+    bot._wake_cause = None
+    bot._react_mid["btc"] = m_up * math.exp(0.05e-4)
+    bot._on_tick("btc")
+    assert not bot._wake.is_set()                                      # the same mid again (a size update): no new pass
+    bot._react_mid["btc"] = m_dn * math.exp(0.1e-4)
+    px.bn_hist.append((now + 30, m_dn * math.exp(-0.05e-4)))
+    bot._on_tick("btc")
+    assert bot._wake.is_set() and bot._wake_cause == "level"           # the Down level too
+    # a lead that time will finish: the pass sets the due time; the 15m bot (fair_react_bp 0.3) has the same machinery
+    b2, now2, _ = _fair_bot(tmp_path, "d", lead_bp=5.0)
+    asyncio.run(b2.decide_once(now2))
+    assert b2._due is not None and now2 < b2._due
+
+
+def test_fair_wake_levels_are_off_while_the_bot_cannot_enter(tmp_path):
+    bot, now, _ = _fair_bot(tmp_path, "k")
+    bot.can_enter = lambda: (False, "daily_loss")
+    asyncio.run(bot.decide_once(now))
+    assert bot._caps == {} and bot._trig == {} and bot._due is None
+
+
+def test_decide_loop_sleeps_until_the_due_time_and_names_the_cause(tmp_path):
+    bot, now, _ = _fair_bot(tmp_path, "l")
+    seen = []
+
+    async def fake_once(t):
+        seen.append((t, bot._cause))
+        if len(seen) == 1:
+            bot._due = t + 30                  # time alone makes an entry 30 ms from now (the timer would wait 1 s)
+        elif len(seen) == 2:
+            bot._due = None
+            asyncio.get_running_loop().call_later(0.02, bot._set_wake, "book")
+        else:
+            bot._stop = True
+    bot.cfg.lock.tick_ms = 1000
+    bot.decide_once = fake_once
+    bot._update_sigma = lambda: None
+    asyncio.run(asyncio.wait_for(bot.decide_loop(), 3))
+    assert [c for _, c in seen] == ["timer", "due", "book"]
+    assert seen[1][0] - seen[0][0] < 300 and seen[2][0] - seen[1][0] < 300
+    assert bot.stats["wake_due"] == 1 and bot.stats["wake_book"] == 1
+
+
+def test_book_feed_reports_new_asks_only(tmp_path):
+    from pmbot.bot.feeds import ClobFeed
+    from pmbot.bot.state import State, Window
+    st = State(["btc"])
+    st.add_window(Window(asset="btc", start=T, slug="btc", condition_id="btc", token_up="bu", token_down="bd"))
+    got = []
+    st.on_book = lambda tok, p: got.append((tok, p))
+    f = ClobFeed(st, "btc")
+    f.handle({"event_type": "book", "asset_id": "bu", "bids": [{"price": "0.40", "size": "5"}],
+              "asks": [{"price": "0.45", "size": "10"}, {"price": "0.47", "size": "3"}]}, 1)
+    f.handle({"event_type": "price_change", "price_changes": [
+        {"asset_id": "bu", "side": "BUY", "price": "0.41", "size": "5"},         # a bid: never
+        {"asset_id": "bu", "side": "SELL", "price": "0.45", "size": "0"},        # an ask removed: never
+        {"asset_id": "bu", "side": "SELL", "price": "0.44", "size": "7"},
+        {"asset_id": "bu", "side": "SELL", "price": "0.43", "size": "2"},
+        {"asset_id": "bd", "side": "SELL", "price": "0.58", "size": "1"}]}, 2)
+    assert got == [("bu", 0.45), ("bu", 0.43), ("bd", 0.58)]
+    assert st.books["bu"].asks == {0.47: 3.0, 0.44: 7.0, 0.43: 2.0}
+
+
+def test_race_log_samples_the_book_and_the_trades_after_a_fair_order(tmp_path, monkeypatch):
+    """reports/83 section 17: lock_race = our view of the ask after the decision, the answer, and the public trades at our price."""
+    import pmbot.bot.lock as lockmod
+
+    class Br:
+        mode = "paper"
+
+        async def buy(self, token, key, side, limit, shares):
+            await asyncio.sleep(0.03)
+            return 0.0, 0.0, 0.0                                       # a miss
+
+    monkeypatch.setattr(lockmod, "RACE_MS", (0, 40, 120))
+    bot, now, start = _fair_bot(tmp_path, "r", br=Br(), lead_bp=20.0)
+
+    async def go():
+        t0 = lockmod.now_ms()
+        await bot.decide_once(t0)
+        await asyncio.sleep(0.06)
+        bot._on_trade_fair("bu", "BUY", 0.62, 30.0, t0 + 55, t0 + 70)  # another taker takes the ask ...
+        bot._on_trade_fair("bu", "BUY", 0.95, 5.0, t0 + 60, t0 + 75)   # ... (above our limit 0.82: not ours)
+        bot._on_trade_fair("bd", "SELL", 0.38, 30.0, t0 + 55, t0 + 71) # the same match seen from the other book
+        bot.st.books["bu"].asks = {}
+        await asyncio.sleep(0.5)
+        return t0
+    t0 = asyncio.run(go())
+    race = [kw for k, kw in bot.j.ev if k == "lock_race"]
+    assert len(race) == 1, bot.j.ev
+    r = race[0]
+    assert r["side"] == "U" and r["limit"] == 0.82 and r["offs"] == [0, 40, 120] and r["avail"] == [30.0, 30.0, 0.0]
+    assert r["got"] == 0.0 and r["ans_ms"] >= 25 and r["error"] is False
+    assert [x[2:5] for x in r["trades"]] == [["m", "BUY", 0.62], ["o", "SELL", 0.38]]
+    miss = [kw for k, kw in bot.j.ev if k == "lock_miss"]
+    assert miss and miss[0]["wake"] == "timer"
