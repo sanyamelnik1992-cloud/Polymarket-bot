@@ -1,0 +1,40 @@
+# Снайпер с гибкой паузой (reports/88, owner 23 Nov: "ты думаешь какой самый перспективный?") — PAPER. The rule of the live
+# Sniper (config/lock_99_live.toml = its paper twin config/lock_99.toml) with ONE change: the pause after a Binance jump grows
+# with volatility, max(2.5 bp, 3 sigma * sqrt(3)) (lock.shock_sigmas = 3, as the Ступени family since reports/58), instead of the
+# fixed 2.5 bp. In 7.2 days of journals (reports/76 section 8) the fixed pause skipped 75 of 228 windows with p >= 0.99 and a
+# seller at <= 0.99, none of them lost. Entries with shock_bp > 2.5 in the journal are the ones only this pause allows
+# (scripts/report_journal.py prints them apart). A test keeps everything else equal to the live rule. Real money only after
+# >= 300 paper entries and on the owner's word.
+journal_dir = "data/journal-lock-99-sigma"
+
+[lock]
+assets = ["btc", "eth", "sol", "xrp"]
+theta = 0.99
+agree = 0.90
+dmin_bp = 0.5
+adv1_bp = 1.0
+adv3_bp = 2.0
+jump_bp = 5.0
+a_min = 0.96
+a_max = 0.99
+min_edge = 0.004
+rel_lo = 240.0
+rel_hi = 299.5
+shares = 10           # owner 20 Nov: back from 20 to 10 after the night of 19-20 Nov (reports/85); 19 Nov: 20 (reports/82)
+max_entries_per_window = 1
+shock_bp = 2.5        # as live (reports/55)
+shock_s = 10.0
+shock_sigmas = 3.0    # THE difference from the live Sniper: the pause threshold is max(2.5 bp, 3 sigma * sqrt(3))
+
+[risk]
+max_usd_per_entry = 10.0
+max_open_usd = 10.0   # = live twin pmbot-lock-99-live: one entry at a time
+daily_loss_limit = 50.0   # paper: see the whole day (the live Sniper stops after one loss)
+state_file = "data/state/lock_99_sigma.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+cl_feed = "both"      # reports/69: Chainlink from PolyBolt and the legacy RTDS socket, first arrival wins. RTDS alone timed out ~10 times
+                      # on the night of 11-12 Nov (a few blind seconds each); live 5m runs "both" since 11 Nov 20:50 (reports/66)
+paper_exec_ms = 300

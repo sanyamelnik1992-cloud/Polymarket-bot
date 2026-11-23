@@ -197,6 +197,7 @@ def test_units_wire_the_configs():
                             ("pmbot-lock-tier-pb", "config/lock_tier_pb.toml", False),
                             ("pmbot-lock-tier-late", "config/lock_tier_late.toml", False),
                             ("pmbot-lock-99", "config/lock_99.toml", False),
+                            ("pmbot-lock-99-sigma", "config/lock_99_sigma.toml", False),   # reports/88, paper
                             ("pmbot-lock-99-live", "config/lock_99_live.toml", True),
                             ("pmbot-lock-live", "config/lock_live.toml", True),
                             ("pmbot-lock-15-live", "config/lock15_live.toml", True),
@@ -1611,3 +1612,17 @@ def test_no_insurance_for_the_small_entries(tmp_path, monkeypatch):
         asyncio.run(tick())
         assert [c[3] for c in br.calls] == ([want] if want else []), (held, ask, br.calls)
 
+
+
+def test_sniper_with_the_volatility_pause_differs_from_the_live_sniper_only_by_it():
+    """reports/88: the paper Sniper with the pause after a Binance jump in sigmas (max(2.5 bp, 3 sigma * sqrt(3))); every other
+    part of the rule and the entry size equal to the live Sniper, so its extra entries are the ones the fixed pause skips."""
+    from dataclasses import replace
+    var = load_lock_config(os.path.join(ROOT, "config", "lock_99_sigma.toml"))
+    live = load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml"))
+    assert var.execution.mode == "paper" and var.lock.shock_sigmas == 3.0 and live.lock.shock_sigmas == 0.0
+    assert replace(var.lock, shock_sigmas=0.0) == live.lock
+    assert var.risk.max_usd_per_entry == live.risk.max_usd_per_entry and var.risk.max_open_usd == live.risk.max_open_usd
+    assert var.risk.state_file != live.risk.state_file and var.journal_dir != live.journal_dir
+    inst = open(os.path.join(ROOT, "deploy", "install_units.sh")).read()
+    assert "START_ONCE=" in inst and "pmbot-lock-99-sigma" in inst.split("START_ONCE=")[1].splitlines()[0]

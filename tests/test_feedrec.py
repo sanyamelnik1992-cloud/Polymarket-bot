@@ -166,7 +166,7 @@ def test_recorder_unit_is_data_only_and_wired():
     assert "[Install]" not in text                                       # never enabled at boot
     assert "pmbot-feedrec" in ops.ALL_UNITS and "pmbot-feedrec" in ops.RESEARCH_UNITS and "pmbot-feedrec" in notify.BOTS
     inst = open(os.path.join(ROOT, "deploy", "install_units.sh")).read()
-    assert " pmbot-feedrec " in inst and "for u in pmbot-feedrec; do" in inst
+    assert " pmbot-feedrec " in inst and "pmbot-feedrec" in inst.split("START_ONCE=")[1].splitlines()[0]
     assert " pmbot-feedrec " in open(os.path.join(ROOT, "deploy", "autoupdate.sh")).read()
     assert "scripts/feed_race.py data/feeds" in open(os.path.join(ROOT, "deploy", "push_reports.sh")).read()
 

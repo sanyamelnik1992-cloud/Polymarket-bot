@@ -548,6 +548,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   copying his trades with a delay costs more than his edge; on our wallet it is ~$1 a day at 10 shares. Proposed (owner to
   decide): no stake increase; paper for the Sniper with a 3-sigma shock pause, the Sniper on 2-4 coins at 5 shares with $20
   open, and 15m DOGE / BNB / HYPE at the >= 99 % tier only; money after 300+ paper entries each. Hourly markets not worth it.
+  Section 6 (owner: "ты думаешь какой самый перспективный?"): the volatility pause for the Sniper (75 of 228 0.99 windows skipped
+  by the fixed 2.5 bp pause, none lost); "several coins at once" blocked only 5 of 46 missed windows; the whole 5m 0.99 zone is
+  worth ~$2-4 a day at 10 shares, expected gain +$0.3-1 a day. PREPARED (paper, main on the owner's word): unit
+  `pmbot-lock-99-sigma` = `config/lock_99_sigma.toml` (the live Sniper's rule + `shock_sigmas = 3`, a test keeps the rest equal);
+  `deploy/install_units.sh` `START_ONCE` starts new research / paper units once on their first deploy (marker
+  `data/state/.started-<unit>`: a later /off sticks); report_journal.py `shock_breakdown` splits entries at the fixed 2.5 bp.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

@@ -159,7 +159,8 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
-KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair", "pmbot-lock-15-early", "pmbot-feedrec", "pmbot-tg"}
+KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair", "pmbot-lock-15-early", "pmbot-feedrec", "pmbot-tg",
+              "pmbot-lock-99-sigma"}
 # the current lineup (23 Nov, reports/86: the live interceptor and the 15m fair paper bot retired); every other unit is retired
 
 

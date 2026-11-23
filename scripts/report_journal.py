@@ -148,6 +148,21 @@ def race_report(ev):
         print(f"  decision -> answer, ms: median {ans[len(ans) // 2]}  (paper: paper_exec_ms)")
 
 
+def shock_breakdown(ev, fixed_bp=2.5):
+    """Lock entries by the Binance jump of the last seconds (reports/88): the Sniper with the volatility pause enters up to
+    max(2.5 bp, 3 sigma * sqrt(3)); entries above the fixed 2.5 bp are the ones only that pause allows."""
+    ent = [e for e in ev if e["type"] == "lock_entry" and e.get("shock_bp") is not None]
+    if not ent:
+        return
+    pnl = {e["key"]: e.get("pnl", 0.0) for e in ev if e["type"] == "settle"}
+    print(f"\nentries by the Binance jump before them (fixed pause {fixed_bp} bp): entries / settled / lost / pnl")
+    for name, sel in ((f"<= {fixed_bp} bp (the fixed pause allows too)", lambda x: x <= fixed_bp),
+                      (f"> {fixed_bp} bp (only the volatility pause)", lambda x: x > fixed_bp)):
+        es = [e for e in ent if sel(float(e["shock_bp"]))]
+        done = [pnl[e["key"]] for e in es if e["key"] in pnl]
+        print(f"  {name:45s}: {len(es):4d} / {len(done):4d} / {sum(1 for x in done if x < 0):3d} / {sum(done):+8.2f}")
+
+
 def main(d):
     ev = [json.loads(line) for line in open(os.path.join(d, "events.jsonl")) if line.strip()]
     kinds = Counter(e["type"] for e in ev)
@@ -167,6 +182,7 @@ def main(d):
     lock_orders(ev)
     fair_breakdown(ev)
     race_report(ev)
+    shock_breakdown(ev)
     if fills.empty:
         print("no fills")
         return
