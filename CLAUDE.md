@@ -499,6 +499,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   its new `STOP_LIVE` are stopped as well (graceful: open windows settle first); `KEEP_UNITS` = L99 live, 15m live, 5m fair
   paper twin (one more day for the race log), 15m early paper, tg. Do not put the interceptor back on money without a paper
   model that includes the competition; to bring a unit back, take it out of RETIRED / STOP_LIVE first.
+  Section 7 (first 30 min of the race log, live + paper): decisions woken by a Binance move (`wake = move`) 0 of 13 filled, by a
+  new cheap ask in the book 4 of 4, by the timer 4 of 9; 11 of 18 misses were pulled by the maker (no trade at our price), 7
+  taken by another taker. The 150 ms taker delay lets makers (100-250 ms) cancel before any taker that sees the move via Binance
+  in Europe: speed alone cannot win those races. Proposed plan (owner to decide): 1-2 days of paper (race log by wake cause) +
+  a one-day record of Binance spot / futures, Coinbase and OKX top of book with ms receive times (which source leads, by how
+  much); then a live interceptor without the race (book / timer entries only, 5 shares, -$5 day) if those earn on paper, or a
+  faster source if one leads by 50-100 ms, else close it; colocation / a maker only after that.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
