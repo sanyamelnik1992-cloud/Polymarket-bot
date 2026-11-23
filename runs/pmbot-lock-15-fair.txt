@@ -1,10 +1,10 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261122-152900
-mode: paper  duration: 872.2 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1743, 'lock_state': 264, 'strike': 232, 'bn_strike': 232, 'fill': 43, 'lock_entry': 43, 'lock_miss': 58, 'provisional': 43, 'settle': 43}
+mode: paper  duration: 932.7 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1864, 'lock_state': 282, 'strike': 248, 'bn_strike': 248, 'fill': 43, 'lock_entry': 43, 'lock_miss': 58, 'provisional': 43, 'settle': 43}
 
 lock orders: sent 101  filled 43  ask gone 58  errors 0
   signal -> exchange answer, ms: median 301  p90 312  max 350
   decision -> order sent, ms: median 2  p90 14  max 202
-  GC pause per 30 s, ms: median 1  p90 6  max 122
+  GC pause per 30 s, ms: median 1  p90 7  max 122
   signal age at the decision, ms: median 17  p90 278
   fill price minus the ask we saw, cents: mean -0.69  worst +4.0
   misses came 62-837 s before the end; model p 0.211-0.906
