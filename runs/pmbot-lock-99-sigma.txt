@@ -1,10 +1,10 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261123-184355
-mode: paper  duration: 136.6 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 1630, 'status': 273, 'strike': 108, 'lock_miss': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: paper  duration: 196.1 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 2220, 'status': 392, 'strike': 156, 'lock_miss': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
 lock orders: sent 2  filled 1  ask gone 1  errors 0
   signal -> exchange answer, ms: median 373  p90 373  max 373
   decision -> order sent, ms: median 3  p90 3  max 3
-  GC pause per 30 s, ms: median 1  p90 11  max 80
+  GC pause per 30 s, ms: median 1  p90 10  max 80
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
   misses came 10-10 s before the end; model p 0.997-0.997
 
