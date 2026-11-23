@@ -30,6 +30,8 @@ fair_react_bp = 0.3     # decide at once on a 0.3 bp Binance move, not up to 50 
 shares = 5
 max_entries_per_window = 3   # up to 3 entries a window, 15 s apart (reports/83 section 12; 1 until 22 Nov)
 fair_gap_s = 15.0
+fair_max_sig_age_ms = 100   # act only on a fresh Binance move (reports/83 section 16: paper at the live delay, 22-23 Nov:
+                            # decided <= 0.1 s after the tick +$46.63 on 136 entries, older +$10.17 on 76)
 
 [risk]
 max_usd_per_entry = 5.0

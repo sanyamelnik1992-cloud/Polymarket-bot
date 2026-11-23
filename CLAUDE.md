@@ -462,6 +462,10 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   paper says it resumes at 00:00 UTC; /stop records the running units (`tg_bot.STOPPED_FILE`) and /resume starts exactly those;
   `deploy/install_units.sh` RETIRED list: disabled at boot, paper ones also stopped (`--no-block`); `tests/test_ops.py` KEEP_UNITS
   = the current lineup (L99 live, 15m live, fair live + paper, 15m fair, 15m early paper, tg); every other unit must be RETIRED.
+  Section 16 (23 Nov 07:00): paper twin at 500 ms over ~21.5 h: 220 entries, 97 won vs 72.8, +$99.47 (+18.5 %, t 2.0), every coin
+  and price band positive (< 0.3: +10.4 %, so NO price floor). By signal age: <= 0.1 s +$46.63 on 136, older +$10.17 on 76 ->
+  new `lock.fair_max_sig_age_ms` (0 = off): 100 in `lock_fair_live.toml` + twin `lock_fair.toml` (+ `lock_fair_fut.toml`), 0 in 15m.
+  Live restart proposed with it (5 shares, 3 entries a window, $20 open, -$20 day), only on the owner's word.
 - **`reports/85_night_20nov_two_losses.md` (20 Nov, owner: "глянь что у него ... ночью у нас снова минус"; then "заливай в main")**:
   the 15m early live bot lost two 15-share BTC entries (windows ending 23:45 and 00:45 UTC, -$14.86 each, sharp last-minute
   reversals); its paper twin lost the same two: 15m early live 21 / 2 / -$27.13, paper since 17 Nov 74 / 2 / -$22.40 (2.7 % lost

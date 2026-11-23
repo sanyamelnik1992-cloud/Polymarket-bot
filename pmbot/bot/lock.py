@@ -143,6 +143,8 @@ class LockCfg:
                                          # the futures mids too, so the spot / perp basis cancels)
     fair_react_bp: float = 0.0           # > 0: decide at once when the signal mid of a coin moved this many bp since that coin's last
                                          # decision (Binance tick -> decision without waiting up to tick_ms); 0 = only every tick_ms
+    fair_max_sig_age_ms: int = 0         # > 0: act only when the last Binance move is at most this old at the decision (a fresh lag;
+                                         # paper at the live delay 22 Nov: decided < 0.1 s after the tick +$23 on 58, older -$9 on 41)
     fair_gap_s: float = 0.0              # seconds after a fill before the next entry of the same window (max_entries_per_window > 1):
                                          # a new lag, not the rest of the same stale ask (reports/83 section 12: on 18-21 Nov the 2nd and
                                          # 3rd entries 15 s apart earned like the first, +34 % / +43 % of the money)
@@ -225,6 +227,8 @@ def load_lock_config(path=None, overrides=None):
                              "600 <= fair_min_sigma_s <= fair_sigma_s <= 7200")
         if c.tiers or c.hedge_p or c.big_shares or c.entry != "taker" or not 1 <= c.max_entries_per_window <= 3:
             raise ValueError("lock.zone = 'fair': taker entries (1-3 per window), no tiers / insurance / big_shares")
+        if not 0 <= c.fair_max_sig_age_ms <= 2000:
+            raise ValueError("lock.fair_max_sig_age_ms must be in [0, 2000] (0 = off)")
         if not 0 <= c.fair_gap_s <= 120 or (c.max_entries_per_window > 1 and c.fair_gap_s < 5):
             # without a gap a second order a moment later takes the rest of the same stale ask (a bigger size, not a new signal),
             # and paper, which does not take its own fills out of the book, would buy that ask twice
@@ -1118,6 +1122,8 @@ class LockBot:
                                        self._book_ask(w.token_up), self._book_ask(w.token_down))
                 if spx.bn_hist:
                     ctx["sig_age_ms"] = now - spx.bn_hist[-1][0]          # how old the signal tick was at the decision
+                    if sig and c.fair_max_sig_age_ms and ctx["sig_age_ms"] > c.fair_max_sig_age_ms:
+                        sig, ctx = None, {**ctx, "why": "sig_age"}          # the lag is old: what is left of it is adverse
             elif self.early:               # reports/81: before the closing TWAP, one-hour sigma, asks 0.985-0.99 only
                 sig, ctx = decide_early(c, Tc, K, now, cl, self.hsig[w.asset].sigma(c.min_sigma_s), bn_now, bn_at_last,
                                         px.bn_mid_at(now - 1000), px.bn_mid_at(now - 3000),
