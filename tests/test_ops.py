@@ -159,8 +159,8 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
-KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair-live", "pmbot-lock-fair", "pmbot-lock-15-fair",
-              "pmbot-lock-15-early", "pmbot-tg"}      # the current lineup (22 Nov); every other bot unit is retired
+KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair", "pmbot-lock-15-early", "pmbot-tg"}
+# the current lineup (23 Nov, reports/86: the live interceptor and the 15m fair paper bot retired); every other unit is retired
 
 
 def test_retired_units_are_disabled_and_the_lineup_is_not():
@@ -174,6 +174,10 @@ def test_retired_units_are_disabled_and_the_lineup_is_not():
     assert every - retired - KEEP_UNITS == set(), every - retired - KEEP_UNITS
     for u in retired:
         assert os.path.exists(f"deploy/{u}.service"), u
+    stop_live = set(re.search(r'(?m)^STOP_LIVE="([^"]*)"', text).group(1).split())
+    assert stop_live <= retired and "pmbot-lock-fair-live" in stop_live          # reports/86: stopped, not only disabled
+    for u in stop_live:
+        assert "--live" in open(f"deploy/{u}.service").read(), u
 
 
 def test_resume_starts_only_what_stop_stopped(tmp_path, monkeypatch):

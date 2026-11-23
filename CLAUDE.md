@@ -486,6 +486,18 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   $10 per entry / $10 open / day stop $9.5 (one loss). The owner is asked to /off `pmbot-lock-15-early-live` (paper twin keeps
   running; back to money only if positive over 200+ paper entries). Real money by UTC day 14-20 Nov: +6.22, -1.34, -19.86, +1.04,
   +1.75, -9.71, -12.83 (to 05:00); wallet $141.22.
+- **`reports/86_interceptor_live_loss.md` (23 Nov, owner: "перехватчик все уходит в минус, глянь в чем причина и что сделать
+  можно")**: the live interceptor made 25 windows / -$26.4 (22 Nov -$22.1, 23 Nov to 11:50 -$4.3) while its paper twin showed
+  +$560 in 5 days. On the same windows live ~ paper (20 windows: live -$21.68, paper -$12.93); the paper's profit came from 33
+  windows live never filled (+$23.24). Real fills from the exchange's public trades (`reports/86_tools`: `fetch.py`,
+  `live_fills.py`; our wallet only from PMBOT_WALLET or one known fill, never in the repo): 33 fills, 6 won where the paid prices
+  implied 8.3 (the model ~13), others bought our side cheaper within 20 s after 23 of 32; 23 of 33 fills after window second
+  200; early orders mostly miss (22 Nov 67 of 84). Live gets only the asks faster bots leave, and those are priced right. The
+  paper fill (the ask still in our book 0.5 s later) and the public-trade replay (we are first) cannot model that; the server is
+  overloaded too (paper loop > 100 ms late ~7000 times a day). PREPARED, main only on the owner's word: `pmbot-lock-fair-live`
+  and `pmbot-lock-15-fair` in RETIRED of `deploy/install_units.sh`, live units in its new `STOP_LIVE` are stopped as well
+  (graceful); `KEEP_UNITS` = L99 live, 15m live, 5m fair paper twin (one more day for the race log), 15m early paper, tg. Do not
+  put the interceptor back on money without a paper model that includes the competition.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
