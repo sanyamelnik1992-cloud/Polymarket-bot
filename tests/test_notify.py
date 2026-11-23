@@ -117,17 +117,62 @@ def test_digest_daily_and_status_from_journals(tmp_path, monkeypatch):
     monkeypatch.setattr(ops, "unit_state", lambda u: ("active", time.time() - 60) if u in ("pmbot-5m", "pmbot-5m-c")
                         else ("inactive", None))
     d = notify.format_digest(time.time() - 3600)
-    assert "<b>A</b>" in d and "+5.50$" in d and "окон 1 (✅1 ❌0)" in d and balanced(d)
-    assert "сделок не было" in d                           # C had no closed windows this hour
+    assert "A: 🟢" in d and "+5.50$" in d and "окон 1 (✅1 ❌0)" in d and balanced(d)
+    assert "C: ⚪ сделок не было" in d                      # C had no closed windows this hour
     assert "C</b> vs" in d and "+2.00$" in d and "строгий лучше" in d   # 7.5 - 5.5
+    assert "Тесты" in d and "Реальные деньги" not in d    # everything here is paper
     st = notify.format_status()
-    assert "+5.50$" in st and "остановлен до ручного запуска" in st and balanced(st)
-    # real money and paper are separate blocks with separate totals (reports/56): everything here is paper
-    assert "БУМАГА · эксперименты" in st and "Σ бумага сегодня" in st and "РЕАЛЬНЫЕ ДЕНЬГИ" not in st
-    assert "Σ бумага" in d
+    assert "+5.50$" in st and "создан файл STOP" in st and "⛔ стоп на сегодня" in st and balanced(st)
+    # real money and paper are separate blocks (reports/56, 88): everything running here is paper
+    assert "ТЕСТЫ" in st and "сейчас ни один бот на деньгах не запущен" in st and "сегодня на реальных деньгах: <b>+0.00$</b>" in st
     assert notify.group_of("pmbot-lock-live", "live") == "live" and notify.group_of("pmbot-lock-99-live", "live") == "live"
     assert notify.group_of("pmbot-lock-tier", "paper") == "twin" and notify.group_of("pmbot-lock-99", "paper") == "twin"
     assert notify.group_of("pmbot-lock-tier-wide", "paper") == "lab"
     for u in ("pmbot-lock-live", "pmbot-lock-99-live", "pmbot-lock-tier", "pmbot-lock-99"):
         assert u in notify.BOTS and "·" in notify.BOTS[u][1]          # plain name first, the letter code second
     assert balanced(notify.format_trades())
+
+
+def test_status_shows_running_bots_real_money_apart_and_the_shelf(tmp_path, monkeypatch):
+    """reports/88 (owner 23 Nov): dropped strategies and switched-off tests are not listed; real money apart from the tests;
+    shelved / unfinished strategies marked; a live bot stopped by its own day stop is shown with how to restart it, and a live
+    bot stopped on purpose still counts in the day's real money."""
+    (tmp_path / "deploy").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "data" / "state").mkdir(parents=True)
+    today = ops.today_utc()
+
+    def unit(name, mode, pnl, extra="", killed=False):
+        live = " --live" if mode == "live" else ""
+        (tmp_path / "deploy" / f"{name}.service").write_text(
+            f"[Service]\nExecStart=__REPO__/.venv/bin/python scripts/run_lock.py --config config/{name}.toml{live}\n")
+        (tmp_path / "config" / f"{name}.toml").write_text(
+            f'journal_dir = "data/j-{name}"\n[lock]\nshares = 10\n{extra}[risk]\nstate_file = "data/state/{name}.json"\n'
+            f'daily_loss_limit = 9.5\n[execution]\nmode = "{mode}"\n')
+        st = {"realized_by_day": {"2026-11-20": 1.0, today: pnl}}
+        if killed:
+            st.update(killed_day=today, kill_reason="daily loss limit 9.5 reached")
+        (tmp_path / "data" / "state" / f"{name}.json").write_text(json.dumps(st))
+
+    unit("pmbot-lock-99-live", "live", 0.19)
+    unit("pmbot-lock-15-live", "live", -5.2, killed=True)
+    unit("pmbot-lock-fair-live", "live", 0.37)
+    unit("pmbot-lock-fair", "paper", -9.92)
+    unit("pmbot-lock-15-fair", "paper", -1.39)
+    running = {"pmbot-lock-99-live", "pmbot-lock-fair", "pmbot-feedrec"}
+    monkeypatch.setattr(ops, "REPO", str(tmp_path))
+    monkeypatch.setattr(ops, "KILL_FILE", str(tmp_path / "STOP"))
+    monkeypatch.setattr(ops, "unit_state", lambda u: ("active", time.time() - 600) if u in running else ("inactive", None))
+    st = notify.format_status()
+    assert balanced(st)
+    live, rest = st.split("🧪 <b>ТЕСТЫ</b>")
+    assert "Снайпер · 5 мин" in live and "10 акций · стоп −$9.5 в день" in live
+    assert "дневной стоп" in live and "/restart pmbot-lock-15-live" in live           # stopped by its own day stop
+    assert "Перехватчик" not in live and "⏹ остановленные сегодня: +0.37$" in live   # retired live: only its money
+    assert "сегодня на реальных деньгах: <b>−4.64$</b>" in st                         # 0.19 - 5.2 + 0.37
+    assert "Перехватчик · 5 мин" in rest and "−9.92$" in rest                           # a running test
+    assert "−1.39$" not in st                                                           # a switched-off test is not listed
+    assert "📡 <b>СБОР ДАННЫХ</b>" in rest and "Гонка источников цены" in rest
+    assert "🗂 <b>ОТЛОЖЕНО И В РАБОТЕ</b>" in rest and all(n in rest for _, n, _ in notify.SHELF)
+    assert notify.limits("pmbot-lock-99-live") == "10 акций · стоп −$9.5 в день"
+    assert notify._shares_word(2) == "акции" and notify._shares_word(1) == "акция" and notify._shares_word(12) == "акций"
