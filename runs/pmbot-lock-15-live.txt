@@ -1,20 +1,21 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261122-152849
-mode: live  duration: 692.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 188, 'lock_state': 2114, 'status': 1384, 'strike': 184, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3, 'order_rejected': 3, 'lock_miss': 3}
+mode: live  duration: 753.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 204, 'lock_state': 2563, 'status': 1507, 'strike': 200, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 3, 'order_rejected': 4, 'lock_miss': 4}
 
-lock orders: sent 6  filled 3  ask gone 3  errors 0
-  signal -> exchange answer, ms: median 441  p90 753  max 753
-  exchange call alone, ms: median 441  p90 753  max 753
+lock orders: sent 8  filled 4  ask gone 4  errors 0
+  signal -> exchange answer, ms: median 391  p90 753  max 753
+  exchange call alone, ms: median 391  p90 753  max 753
   decision -> order sent, ms: median 1  p90 2  max 2
   GC pause per 30 s, ms: median 0  p90 3  max 106
-  market prewarm (2 lookups + signing), ms: median 137  max 363  n 188
-  fill price minus the ask we saw, cents: mean -0.67  worst +0.0
+  market prewarm (2 lookups + signing), ms: median 134  max 363  n 204
+  fill price minus the ask we saw, cents: mean -0.25  worst +1.0
   misses came 42-51 s before the end; model p 0.930-0.937
-  exchange rejections by code: {'fak_not_filled': 3}
+  exchange rejections by code: {'fak_not_filled': 4}
 
-fills: 3  shares: 6  notional: $5.58
+fills: 4  shares: 8  notional: $7.40
        fills  shares  notional  avg_price  med_rel
 asset                                             
 eth        1   2.022      1.86      0.920  856.254
+sol        1   2.000      1.82      0.910  854.749
 xrp        2   4.097      3.72      0.908  857.956
 
 settled windows:
