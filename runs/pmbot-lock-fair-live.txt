@@ -1,28 +1,32 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-fair-live/20261122-054327
-mode: live  duration: 198.2 min  events: {'geoblock_ok': 1, 'start': 1, 'prewarm': 164, 'lock_state': 183, 'status': 396, 'strike': 160, 'bn_strike': 160, 'order_rejected': 67, 'lock_miss': 67, 'order_filled': 17, 'fill': 17, 'lock_entry': 17, 'provisional': 11, 'settle': 8}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-fair-live/20261123-081720
+mode: live  duration: 44.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 40, 'lock_state': 53, 'status': 88, 'strike': 36, 'bn_strike': 36, 'order_rejected': 4, 'lock_miss': 4, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 2}
 
-lock orders: sent 84  filled 17  ask gone 67  errors 0
-  signal -> exchange answer, ms: median 496  p90 2530  max 3195
-  market prewarm (2 lookups + signing), ms: median 121  max 285  n 164
-  fill price minus the ask we saw, cents: mean -0.27  worst +1.6
-  misses came 66-286 s before the end; model p 0.239-0.995
-  exchange rejections by code: {'fak_not_filled': 67}
+lock orders: sent 8  filled 4  ask gone 4  errors 0
+  signal -> exchange answer, ms: median 309  p90 434  max 434
+  exchange call alone, ms: median 309  p90 434  max 434
+  decision -> order sent, ms: median 1  p90 1  max 1
+  GC pause per 30 s, ms: median 1  p90 9  max 80
+  signal age at the decision, ms: median 40  p90 87
+  market prewarm (2 lookups + signing), ms: median 114  max 162  n 40
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+  misses came 72-106 s before the end; model p 0.316-0.553
+  exchange rejections by code: {'fak_not_filled': 4}
 
-fills: 17  shares: 120  notional: $25.74
+fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
+       15-20:    8 /    4 ( 50 %) /    0 /    0 (   0.0) /    +0.00
+
+fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
+        0-10:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       10-50:    2 /    1 ( 50 %) /    0 /    0 (   0.0) /    +0.00
+      50-200:    1 /    1 (100 %) /    0 /    0 (   0.0) /    +0.00
+       >=200:    3 /    2 ( 67 %) /    0 /    0 (   0.0) /    +0.00
+
+fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
+       0-100:    8 /    4 ( 50 %) /    0 /    0 (   0.0) /    +0.00
+
+fills: 4  shares: 26  notional: $4.83
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        7  55.847     10.06      0.193  222.372
-eth        7  44.102     10.95      0.270  217.077
-sol        1   5.500      2.20      0.400  208.959
-xrp        2  14.259      2.53      0.198  204.137
-
-settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          2   7.046 -7.046         -7.046     0.0      0.00 -4.564 -2.482 -1.000
-eth          4  10.194 -5.031         -5.031     0.0      0.25 -4.084  1.928 -0.493
-sol          1   2.292 -2.292         -2.292     0.0      0.00 -2.292 -2.292 -1.000
-xrp          1   1.524  3.735          3.735     0.0      1.00  3.735  3.735  2.452
-
-TOTAL pnl $-10.63 (ex-rebate $-10.63) on cost $21.06 -> ROI -50.50%; windows 8, t-stat -1.32
-max drawdown $-8.15; hedged windows (both sides filled): 0
+btc        3  20.000      3.78      0.207  217.096
+eth        1   5.526      1.05      0.190  211.116
+no settled windows yet

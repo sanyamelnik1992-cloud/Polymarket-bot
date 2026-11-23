@@ -1,19 +1,30 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-fair/20261123-073749
-mode: paper  duration: 23.5 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 12, 'status': 47, 'strike': 8, 'bn_strike': 8, 'lock_miss': 1}
+mode: paper  duration: 83.6 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 28, 'status': 167, 'strike': 24, 'bn_strike': 24, 'lock_miss': 5, 'fill': 3, 'lock_entry': 3, 'provisional': 3}
 
-lock orders: sent 1  filled 0  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 301  p90 301  max 301
-  decision -> order sent, ms: median 4  p90 4  max 4
+lock orders: sent 8  filled 3  ask gone 5  errors 0
+  signal -> exchange answer, ms: median 306  p90 370  max 370
+  decision -> order sent, ms: median 2  p90 8  max 8
   GC pause per 30 s, ms: median 1  p90 13  max 72
-  signal age at the decision, ms: median 7  p90 7
-  misses came 304-304 s before the end; model p 0.436-0.436
+  signal age at the decision, ms: median 41  p90 228
+  fill price minus the ask we saw, cents: mean -2.67  worst +0.0
+  misses came 81-304 s before the end; model p 0.295-0.890
 
 fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
-       15-20:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       15-20:    8 /    3 ( 38 %) /    0 /    0 (   0.0) /    +0.00
 
 fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
-       10-50:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       10-50:    6 /    3 ( 50 %) /    0 /    0 (   0.0) /    +0.00
+      50-200:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       >=200:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 
 fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
-       0-100:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
-no fills
+       0-100:    7 /    2 ( 29 %) /    0 /    0 (   0.0) /    +0.00
+     100-300:    1 /    1 (100 %) /    0 /    0 (   0.0) /    +0.00
+
+fills: 3  shares: 30  notional: $5.00
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        1    10.0       2.0       0.20  796.196
+eth        1    10.0       1.6       0.16  762.754
+sol        1    10.0       1.4       0.14  792.351
+no settled windows yet
