@@ -1,29 +1,12 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261122-152849
-mode: live  duration: 932.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 252, 'lock_state': 3338, 'status': 1865, 'strike': 248, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4, 'order_rejected': 5, 'lock_miss': 5}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261123-073736
+mode: live  duration: 23.5 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 47, 'prewarm': 8, 'lock_state': 91, 'strike': 4, 'order_rejected': 1, 'lock_miss': 1}
 
-lock orders: sent 9  filled 4  ask gone 5  errors 0
-  signal -> exchange answer, ms: median 236  p90 753  max 753
-  exchange call alone, ms: median 236  p90 753  max 753
-  decision -> order sent, ms: median 1  p90 2  max 2
-  GC pause per 30 s, ms: median 0  p90 4  max 106
-  market prewarm (2 lookups + signing), ms: median 135  max 422  n 252
-  fill price minus the ask we saw, cents: mean -0.25  worst +1.0
-  misses came 42-51 s before the end; model p 0.930-0.961
-  exchange rejections by code: {'fak_not_filled': 5}
-
-fills: 4  shares: 8  notional: $7.40
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-eth        1   2.022      1.86      0.920  856.254
-sol        1   2.000      1.82      0.910  854.749
-xrp        2   4.097      3.72      0.908  857.956
-
-settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-eth          1  1.870  0.151          0.151     0.0       1.0  0.151  0.151  0.081
-sol          1  1.832  0.168          0.168     0.0       1.0  0.168  0.168  0.092
-xrp          2  3.744  0.353          0.353     0.0       1.0  0.160  0.194  0.094
-
-TOTAL pnl $+0.67 (ex-rebate $+0.67) on cost $7.45 -> ROI +9.04%; windows 4, t-stat +18.36
-max drawdown $0.00; hedged windows (both sides filled): 0
+lock orders: sent 1  filled 0  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 211  p90 211  max 211
+  exchange call alone, ms: median 210  p90 210  max 210
+  decision -> order sent, ms: median 0  p90 0  max 0
+  GC pause per 30 s, ms: median 0  p90 2  max 71
+  market prewarm (2 lookups + signing), ms: median 192  max 206  n 8
+  misses came 25-25 s before the end; model p 0.963-0.963
+  exchange rejections by code: {'fak_not_filled': 1}
+no fills
