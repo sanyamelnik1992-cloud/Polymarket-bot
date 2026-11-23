@@ -524,6 +524,13 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   to a >= 1 c new level (held 300 ms: the top flickers); "beats makers" = pm - source > 185 ms (15 ms to the exchange + 150 ms
   taker delay + 20 ms book feed). Decision after ~a day: a source >= 50 ms ahead of Binance that beats the makers -> paper A/B of
   the interceptor on it; none -> the race is lost to colocated players, interceptor only on new cheap asks or closed.
+  Section 6 (first hour on the server, 13:29-14:02 UTC, BTC +4 % in 2 h): all 13 sources connected from Dublin (OKX and
+  stream.binance.com refuse only US addresses), but the recorder took ~40 % of a core (Binance futures bookTicker ~6000
+  messages a second for BTC + ETH), the server was busy 76 % / steal 26 % / CPU pressure 50 %, the live bots' loops lagged up to
+  ~1 s and the receive times ran seconds late (that hour is unusable). The LIGHT set (`config/feedrec.toml`): BTC + ETH, `bn`,
+  `bnft` (Binance USD-M aggTrade, ~19x fewer messages; USD-M market streams moved to `wss://fstream.binance.com/market/stream`,
+  the old `/stream` route connects and sends no aggTrade), `cb`, `okxf`, `bybitf`, `hl`, `pm`, `cl`; `min_bp` 0.5; `Overload`
+  in `scripts/record_feeds.py` stops the recorder when it stalled > 25 % of the last minute.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

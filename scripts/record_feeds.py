@@ -176,14 +176,37 @@ async def polymarket(assets, w, alive):
             t.cancel()
 
 
-async def lag_loop(w, alive, period_ms=10.0, report_ms=15.0):
-    """A stall of the event loop delays every receive time in it: mark it so the analysis can drop those moves."""
+class Overload:
+    """Stall time of the last `window_s`; over `max_share` of it the recorder stops itself. On 23 Nov the first version (13
+    sources, 4 coins) took ~40 % of a core, its receive times ran seconds late and the live bots' loops lagged up to ~1 s:
+    a measurement that slows the live bots is not worth having."""
+
+    def __init__(self, window_s=60.0, max_share=0.25):
+        self.window_ms, self.max_share = window_s * 1000.0, max_share
+        self.stalls = []
+
+    def add(self, t, ms):
+        self.stalls.append((t, ms))
+        cut = t - self.window_ms
+        while self.stalls and self.stalls[0][0] < cut:
+            self.stalls.pop(0)
+        return sum(m for _, m in self.stalls) > self.max_share * self.window_ms
+
+
+async def lag_loop(w, alive, period_ms=10.0, report_ms=15.0, guard=None):
+    """A stall of the event loop delays every receive time in it: mark it so the analysis can drop those moves; a recorder
+    stalled more than a quarter of a minute stops itself (Overload)."""
+    guard = guard or Overload()
     while alive():
         t = rx_ms()
         await asyncio.sleep(period_ms / 1000)
         over = rx_ms() - t - period_ms
         if over > report_ms:
             w.mark(t, "lag", "", f"{over:.1f}")
+            if guard.add(t, over):
+                w.mark(rx_ms(), "sys", "stop", "", "overload: stalled > 25 % of the last minute")
+                log.error("feedrec: overloaded, stopping")
+                STOP["flag"] = True
 
 
 async def flush_loop(w, alive):

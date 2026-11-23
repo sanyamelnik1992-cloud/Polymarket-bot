@@ -3,10 +3,12 @@
 # react. Stops by itself at `until` (UTC); the hourly report runs scripts/feed_race.py on the files.
 until = "2026-11-25T00:00:00Z"
 dir = "data/feeds"
-assets = ["btc", "eth", "sol", "xrp"]
-# bn / bnc: Binance spot (data-stream.binance.vision = the bots' feed / stream.binance.com), bnf: Binance USD-M futures,
-# cb: Coinbase, okx / okxf: OKX spot / swaps, bybit / bybitf: Bybit spot / linear perps, kraken, deribit (public quotes are
-# 100 ms aggregates), hl: Hyperliquid, pm: Polymarket 5m Up books (running window), cl: Chainlink prints (RTDS)
-sources = ["bn", "bnc", "bnf", "cb", "okx", "okxf", "bybit", "bybitf", "kraken", "deribit", "hl", "pm", "cl"]
-min_bp = 0.2          # keep a venue update when its mid moved >= 0.2 bp from the last kept one
+assets = ["btc", "eth"]   # 23 Nov 14:00: four coins x 13 sources took ~40 % of a core on the server: BTC and ETH only
+# bn: Binance spot bookTicker (data-stream.binance.vision = the bots' signal), bnft: Binance USD-M futures trades (aggTrade;
+# the futures bookTicker `bnf` is ~2000 messages a second), cb: Coinbase, okxf: OKX swaps, bybitf: Bybit linear perps,
+# hl: Hyperliquid, pm: Polymarket 5m Up book (running window), cl: Chainlink prints (RTDS). Dropped after the first hour:
+# bnc (a second Binance host: 8 ms apart on the one event seen), okx / bybit spot (their perps lead), kraken (570 ms to
+# us), deribit (public quotes are 100 ms aggregates).
+sources = ["bn", "bnft", "cb", "okxf", "bybitf", "hl", "pm", "cl"]
+min_bp = 0.5          # keep a venue update when its mid moved >= 0.5 bp from the last kept one (moves of >= 2 bp are measured)
 heartbeat_ms = 1000   # ... or a second passed with any change

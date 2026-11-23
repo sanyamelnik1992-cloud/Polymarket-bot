@@ -77,6 +77,17 @@ class PriceGate:
 
 
 # ---- parsers: one message (text) -> list of (asset, bid, ask, ts_ms or None); [] for anything else. Never raise on odd input.
+def parse_binance_trade(msg):
+    """Binance aggTrade (futures): the trade price as both sides, the trade time. ~10x fewer messages than the futures
+    bookTicker (~2000 a second for four coins), which the 2-vCPU server could not read in time next to the bots (23 Nov)."""
+    d = json.loads(msg).get("data") or {}
+    a = BN_SYM.get(d.get("s"))
+    if not a:
+        return []
+    p = _f(d.get("p"))
+    return [(a, p, p, float(d["T"]) if d.get("T") else None)]
+
+
 def parse_binance(msg, with_ts=False):
     d = json.loads(msg).get("data") or {}
     a = BN_SYM.get(d.get("s"))
@@ -187,6 +198,9 @@ def sources(assets=ASSETS):
     return {
         "bn": (f"wss://data-stream.binance.vision/stream?streams={bn}", [], lambda: PriceGate(parse_binance, BN_KEYS), None, 20),
         "bnc": (f"wss://stream.binance.com:9443/stream?streams={bn}", [], lambda: PriceGate(parse_binance, BN_KEYS), None, 20),
+        # USD-M market streams (aggTrade) moved to the /market route: the old /stream route connects and sends nothing (23 Nov)
+        "bnft": ("wss://fstream.binance.com/market/stream?streams=" + "/".join(f"{s.lower()}@aggTrade" for s in _inv(BN_SYM, assets)),
+                 [], lambda: PriceGate(parse_binance_trade, ('"p":"',)), None, 20),
         "bnf": (f"wss://fstream.binance.com/stream?streams={bn}", [],
                 lambda: PriceGate(lambda m: parse_binance(m, True), BN_KEYS), None, 20),
         "cb": ("wss://ws-feed.exchange.coinbase.com",

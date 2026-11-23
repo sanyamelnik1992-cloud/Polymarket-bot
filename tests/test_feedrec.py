@@ -56,14 +56,15 @@ def test_parsers_read_every_venue():
 
 def test_every_source_has_a_subscription_for_the_four_coins():
     s = rec.sources()
-    assert set(s) == {"bn", "bnc", "bnf", "cb", "okx", "okxf", "bybit", "bybitf", "kraken", "deribit", "hl"}
+    assert set(s) == {"bn", "bnc", "bnf", "bnft", "cb", "okx", "okxf", "bybit", "bybitf", "kraken", "deribit", "hl"}
     for name, (url, subs, make, app_ping, proto_ping) in s.items():
         assert url.startswith("wss://") and callable(make())
         text = url + json.dumps(subs)
         for coin in ("BTC", "ETH", "SOL", "XRP"):
             assert coin in text.upper(), (name, coin)
     cfg = tomllib.load(open(os.path.join(ROOT, "config", "feedrec.toml"), "rb"))
-    assert set(cfg["sources"]) == set(s) | {"pm", "cl"} and cfg["until"].endswith("Z")
+    assert set(cfg["sources"]) <= set(s) | {"pm", "cl"} and {"bn", "pm"} <= set(cfg["sources"]) and cfg["until"].endswith("Z")
+    assert "bnf" not in cfg["sources"] and "bnft" in cfg["sources"] and cfg["assets"] == ["btc", "eth"]   # the light set (23 Nov)
 
 
 def test_writer_keeps_moves_heartbeats_and_every_polymarket_change(tmp_path):
@@ -201,3 +202,16 @@ def test_price_gate_skips_size_only_updates_and_the_book_feed_follows_the_runnin
     want = f.wanted()
     assert f"u{cur}" in want and not any(t.startswith("d") for t in want)
     assert (f"u{cur + 300}" in want) == (now >= cur + 297)               # the next window only from 3 s before its start
+
+
+def test_futures_trades_and_the_overload_guard():
+    m = '{"stream":"btcusdt@aggTrade","data":{"e":"aggTrade","E":1795440000100,"s":"BTCUSDT","p":"61280.80","q":"0.01","T":1795440000098}}'
+    g = rec.PriceGate(rec.parse_binance_trade, ('"p":"',))
+    assert g(m) == [("btc", 61280.8, 61280.8, 1795440000098.0)] and g(m.replace('"q":"0.01"', '"q":"0.02"')) == []
+    assert rec.sources()["bnft"][0].startswith("wss://fstream.binance.com/market/stream?streams=btcusdt@aggTrade")
+    spec = importlib.util.spec_from_file_location("record_feeds", os.path.join(ROOT, "scripts", "record_feeds.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    o = mod.Overload(window_s=60, max_share=0.25)
+    assert not any(o.add(1000.0 * k, 100.0) for k in range(60))        # 100 ms stalls once a second: 10 % of the minute
+    assert o.add(61_000.0, 10_000.0)                                     # + a 10 s stall: 15.9 s of the last minute = stop
