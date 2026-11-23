@@ -531,6 +531,23 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `bnft` (Binance USD-M aggTrade, ~19x fewer messages; USD-M market streams moved to `wss://fstream.binance.com/market/stream`,
   the old `/stream` route connects and sends no aggTrade), `cb`, `okxf`, `bybitf`, `hl`, `pm`, `cl`; `min_bp` 0.5; `Overload`
   in `scripts/record_feeds.py` stops the recorder when it stalled > 25 % of the last minute.
+- **`reports/88_telegram_sizes_competitor.md` (23 Nov evening, owner: Telegram cleanup, stake size, the competitor)**: /status and
+  the 6-hourly digest (`notify.format_status` / `format_digest`) list only RUNNING units (`notify.RUNNING`): real money first
+  (each live bot with today, total and the limits read from its config by `notify.limits`), a live bot stopped by its own day
+  stop with `/restart <unit>`, a live bot stopped on purpose only in the day's real-money total ("⏹ остановленные сегодня");
+  then the running paper tests, the data recorders and `notify.SHELF` (postponed / in-progress strategies, one line each: keep
+  it current). Shorter names for the lineup. Stake size on real money (`settles.csv`): Sniper 5 shares 19 / 0 / +$2.36 in 9 days
+  (+$0.12 a win), 10-20 shares 10 / 0 / +$2.79 in 3.5 days (+$0.28 a win, a loss ~-$9.8); 15m Ступени 2 shares 55 / 1 / +$7.22
+  in 7 days vs 5 shares 56 / 4 / +$15.66 (of it +$19.04 lucky fills on 12 Nov); 15m early live 15 shares 22 / 2 / -$26.98 (one
+  loss = 108 wins). Wins are cents, losses are dollars and come every 10-100 windows, so a week's result is "was there a loss",
+  not the stake: grow by the number of entries, raise a stake only after >= 300 real entries and with one loss <= 5 % of the
+  wallet (at $128: <= 6 shares at 0.99; the Sniper's 10 shares = 7.7 %). The competitor (wallet found again from his losing
+  trade of 19 Nov 23:40:02 UTC, BUY Down 101 @ 0.98 in btc-updown-15m of 23:30; never in the repo): 9-23 Nov 457 buys, 3
+  lost, +$173.96 after fees on $38.5k (+0.45 %): 15m 225 / 1 / +$168, hourly 57 / 0 / +$52 (none after 17 Nov), 4h 4 / 0, 5m
+  171 / 2 / -$52; 70-300 shares at 0.98-0.99, ~20-30 buys a day. His rule = our "Ранний снайпер" (~+0.4 c a share on replays);
+  copying his trades with a delay costs more than his edge; on our wallet it is ~$1 a day at 10 shares. Proposed (owner to
+  decide): no stake increase; paper for the Sniper with a 3-sigma shock pause, the Sniper on 2-4 coins at 5 shares with $20
+  open, and 15m DOGE / BNB / HYPE at the >= 99 % tier only; money after 300+ paper entries each. Hourly markets not worth it.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
