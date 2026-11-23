@@ -1,12 +1,25 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261123-073736
-mode: live  duration: 144.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 289, 'prewarm': 40, 'lock_state': 544, 'strike': 36, 'order_rejected': 1, 'lock_miss': 1}
+mode: live  duration: 203.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 406, 'prewarm': 56, 'lock_state': 692, 'strike': 52, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-lock orders: sent 1  filled 0  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 211  p90 211  max 211
-  exchange call alone, ms: median 210  p90 210  max 210
-  decision -> order sent, ms: median 0  p90 0  max 0
-  GC pause per 30 s, ms: median 0  p90 2  max 71
-  market prewarm (2 lookups + signing), ms: median 169  max 314  n 40
+lock orders: sent 2  filled 1  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 396  p90 396  max 396
+  exchange call alone, ms: median 396  p90 396  max 396
+  decision -> order sent, ms: median 1  p90 1  max 1
+  GC pause per 30 s, ms: median 0  p90 3  max 71
+  market prewarm (2 lookups + signing), ms: median 170  max 314  n 56
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
   misses came 25-25 s before the end; model p 0.963-0.963
   exchange rejections by code: {'fak_not_filled': 1}
-no fills
+
+fills: 1  shares: 2  notional: $1.90
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+eth        1     2.0       1.9       0.95  840.992
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+eth          1  1.907  0.093          0.093     0.0       1.0  0.093  0.093  0.049
+
+TOTAL pnl $+0.09 (ex-rebate $+0.09) on cost $1.91 -> ROI +4.90%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
