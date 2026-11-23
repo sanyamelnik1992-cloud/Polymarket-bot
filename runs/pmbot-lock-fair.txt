@@ -1,53 +1,58 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261123-132932
-mode: paper  duration: 32.3 min  events: {'start': 1, 'gc_freeze': 2, 'status': 64, 'lock_state': 90, 'strike': 24, 'bn_strike': 24, 'lock_miss': 4, 'lock_race': 10, 'fill': 6, 'lock_entry': 6, 'provisional': 1, 'settle': 1}
+mode: paper  duration: 91.4 min  events: {'start': 1, 'gc_freeze': 2, 'status': 182, 'lock_state': 246, 'strike': 72, 'bn_strike': 72, 'lock_miss': 36, 'lock_race': 50, 'fill': 14, 'lock_entry': 14, 'provisional': 10, 'settle': 6}
 
-lock orders: sent 10  filled 6  ask gone 4  errors 0
-  signal -> exchange answer, ms: median 518  p90 1544  max 1544
-  decision -> order sent, ms: median 22  p90 202  max 202
-  GC pause per 30 s, ms: median 2  p90 32  max 175
-  signal age at the decision, ms: median 38  p90 93
-  fill price minus the ask we saw, cents: mean -2.50  worst +0.0
-  misses came 77-188 s before the end; model p 0.238-0.561
+lock orders: sent 50  filled 14  ask gone 36  errors 0
+  signal -> exchange answer, ms: median 511  p90 879  max 1544
+  decision -> order sent, ms: median 2  p90 55  max 202
+  GC pause per 30 s, ms: median 13  p90 37  max 175
+  signal age at the decision, ms: median 18  p90 91
+  fill price minus the ask we saw, cents: mean -1.84  worst +0.0
+  misses came 71-284 s before the end; model p 0.238-0.877
 
 fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
-       15-20:    6 /    2 ( 33 %) /    1 /    1 (   0.4) /    +2.71
-       20-25:    3 /    3 (100 %) /    1 /    0 (   0.2) /    -1.11
-       25-35:    1 /    1 (100 %) /    0 /    0 (   0.0) /    +0.00
+       15-20:   39 /   10 ( 26 %) /    3 /    2 (   1.3) /    +3.46
+       20-25:    7 /    3 ( 43 %) /    3 /    0 (   1.1) /    -5.78
+       25-35:    2 /    1 ( 50 %) /    1 /    0 (   0.4) /    -2.19
+        >=35:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
 
 fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
-        0-10:    1 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
-       10-50:    4 /    2 ( 50 %) /    0 /    0 (   0.0) /    +0.00
-      50-200:    4 /    3 ( 75 %) /    1 /    0 (   0.2) /    -1.11
-       >=200:    1 /    1 (100 %) /    1 /    1 (   0.4) /    +2.71
+        0-10:   12 /    1 (  8 %) /    0 /    0 (   0.0) /    +0.00
+       10-50:   22 /    6 ( 27 %) /    2 /    1 (   1.0) /    -0.37
+      50-200:   14 /    5 ( 36 %) /    4 /    0 (   1.3) /    -6.85
+       >=200:    2 /    2 (100 %) /    1 /    1 (   0.4) /    +2.71
 
 fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
-       0-100:   10 /    6 ( 60 %) /    2 /    1 (   0.7) /    +1.61
+       0-100:   50 /   14 ( 28 %) /    7 /    2 (   2.8) /    -4.51
 
 fair entries by what woke the decision (section 17): orders / filled / settled / won (expected at the paid prices) / pnl
-        book:    4 /    4 (100 %) /    0 /    0 (   0.0) /    +0.00
-        move:    2 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
-       timer:    4 /    2 ( 50 %) /    2 /    1 (   0.7) /    +1.61
+        book:   19 /    5 ( 26 %) /    4 /    1 (   1.9) /    -4.69
+       level:    4 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+        move:   19 /    7 ( 37 %) /    1 /    0 (   0.3) /    -1.42
+       timer:    8 /    2 ( 25 %) /    2 /    1 (   0.7) /    +1.61
 
 race for the ask (reports/83 s. 17): orders whose ask is still in our book this long after the decision
        0    50   100   150   200   250   300   400   500   750  1000  ms
-     70%   70%   70%   70%   70%   80%   70%   70%   60%   40%   40%  all (10)
-     83%   83%   83%   83%   83%  100%  100%  100%  100%   67%   67%  filled (6)
-     50%   50%   50%   50%   50%   50%   25%   25%    0%    0%    0%  missed (4)
-  misses: 1 of 4 had a public trade at or under our limit before our answer = another taker was faster, the first of them 195 ms after our decision (median); 3 without one = the ask was pulled
-  decision -> answer, ms: median 540  (paper: paper_exec_ms)
+     86%   50%   40%   38%   32%   34%   32%   32%   30%   22%   22%  all (50)
+     93%   86%   86%   86%   86%   93%   93%   93%  100%   64%   57%  filled (14)
+     83%   36%   22%   19%   11%   11%    8%    8%    3%    6%    8%  missed (36)
+  misses: 8 of 36 had a public trade at or under our limit before our answer = another taker was faster, the first of them -4 ms after our decision (median); 28 without one = the ask was pulled
+  decision -> answer, ms: median 525  (paper: paper_exec_ms)
 
-fills: 6  shares: 30  notional: $12.60
+fills: 14  shares: 93  notional: $19.82
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc        3    15.0      5.35      0.357  112.672
-eth        1     5.0      2.75      0.550   14.953
-sol        1     5.0      2.05      0.410   17.507
-xrp        1     5.0      2.45      0.490   17.532
+btc        6    36.3     8.330      0.257  158.574
+eth        4    25.0     5.750      0.252  183.615
+sol        2    20.0     2.238      0.211  126.138
+xrp        2    12.0     3.500      0.320   45.411
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
-btc          1  3.394  1.606          1.606     0.0       1.0  1.606  1.606  0.473
+btc          3  6.999 -1.999         -1.999     0.0     0.333 -2.185  1.606 -0.286
+eth          1  2.837  2.163          2.163     0.0     1.000  2.163  2.163  0.763
+sol          1  2.135 -2.135         -2.135     0.0     0.000 -2.135 -2.135 -1.000
+xrp          1  2.538 -2.538         -2.538     0.0     0.000 -2.538 -2.538 -1.000
 
-TOTAL pnl $+1.61 (ex-rebate $+1.61) on cost $3.39 -> ROI +47.31%; windows 1, t-stat +nan
-max drawdown $0.00; hedged windows (both sides filled): 1
+TOTAL pnl $-4.51 (ex-rebate $-4.51) on cost $14.51 -> ROI -31.07%; windows 6, t-stat -0.88
+max drawdown $-6.11; hedged windows (both sides filled): 1
