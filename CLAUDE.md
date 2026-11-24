@@ -497,7 +497,7 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   overloaded too (paper loop > 100 ms late ~7000 times a day). STOPPED on the owner's word (23 Nov ~12:00 UTC: "Заливай в мейн и
   стопай перехватчика"): `pmbot-lock-fair-live` and `pmbot-lock-15-fair` in RETIRED of `deploy/install_units.sh`, live units in
   its new `STOP_LIVE` are stopped as well (graceful: open windows settle first); `KEEP_UNITS` = L99 live, 15m live, 5m fair
-  paper twin (one more day for the race log), 15m early paper, tg. Do not put the interceptor back on money without a paper
+  paper twin (one more day for the race log; retired 24 Nov, report 87 section 7), 15m early paper, tg. Do not put the interceptor back on money without a paper
   model that includes the competition; to bring a unit back, take it out of RETIRED / STOP_LIVE first.
   Section 7 (first 30 min of the race log, live + paper): decisions woken by a Binance move (`wake = move`) 0 of 13 filled, by a
   new cheap ask in the book 4 of 4, by the timer 4 of 9; 11 of 18 misses were pulled by the maker (no trade at our price), 7
@@ -536,8 +536,8 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   trades +1 ms median, Bybit futures -2, OKX futures -14, Coinbase -25, Hyperliquid -0.8 s; the earliest of all only 13-22 ms
   ahead). Paper twin's race log (251 orders, 0.5 s): only Binance-driven entries earn on paper (`move` +$14.17, `level`
   +$14.39), `book` -$5.07 and `timer` -$3.62 (no race entries lose even on paper); 66 of 148 misses went to a taker ~100 ms
-  ahead of our decision. By report 86 section 7: close the interceptor (proposed: stop the paper twin `pmbot-lock-fair`,
-  ~26 % of a core; owner's word). The bots' Binance feed costs 46 us a message (~2 % of a core here): no compression 35,
+  ahead of our decision. By report 86 section 7: close the interceptor. DONE 24 Nov (owner: "Заливай в мейн, выключай
+  перехватчика"): the paper twin `pmbot-lock-fair` is in RETIRED too (stopped, off at boot); the interceptor is closed. The bots' Binance feed costs 46 us a message (~2 % of a core here): no compression 35,
   lean loop 24; postponed.
 - **`reports/88_telegram_sizes_competitor.md` (23 Nov evening, owner: Telegram cleanup, stake size, the competitor)**: /status and
   the 6-hourly digest (`notify.format_status` / `format_digest`) list only RUNNING units (`notify.RUNNING`): real money first
@@ -598,7 +598,8 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   a test keeps all else equal). Inventory skew is two-way (`discount`): the long side lower, the short side as much higher but
   never above its reference. First local run (24 Nov 11:50-12:05, ref fair): 15 fills / 67 shares, +1.7 c vs fair at the fill,
   windows +$0.33 (22 / 25 paired), -$3.50 and -$4.25 (10 shares one side within 2 s, the model 3-4 c above the book, the book
-  right): hence the "min" twin. A one-sided window is +-$4: judge on hundreds of windows.
+  right): hence the "min" twin. A one-sided window is +-$4: judge on hundreds of windows. Both makers in main 24 Nov ~16:00
+  UTC on the owner's "Заливай в мейн" (started once by install_units.sh; cold start: ~30 min of Binance history before quoting).
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
