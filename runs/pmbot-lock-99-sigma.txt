@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261123-184355
-mode: paper  duration: 797.7 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 9017, 'status': 1595, 'strike': 636, 'lock_miss': 3, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: paper  duration: 858.2 min  events: {'start': 1, 'gc_freeze': 2, 'lock_state': 9909, 'status': 1716, 'strike': 684, 'lock_miss': 4, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-lock orders: sent 4  filled 1  ask gone 3  errors 0
+lock orders: sent 5  filled 1  ask gone 4  errors 0
   signal -> exchange answer, ms: median 303  p90 373  max 373
   decision -> order sent, ms: median 1  p90 3  max 3
   GC pause per 30 s, ms: median 1  p90 10  max 80
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 10-59 s before the end; model p 0.990-0.997
+  misses came 10-60 s before the end; model p 0.990-0.997
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    1 /    1 /   0 /    +0.02
