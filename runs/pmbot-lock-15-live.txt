@@ -1,33 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261123-184405
-mode: live  duration: 1216.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 328, 'lock_state': 5636, 'status': 2433, 'strike': 320, 'order_rejected': 5, 'lock_miss': 5, 'order_filled': 8, 'fill': 8, 'lock_entry': 8, 'provisional': 8, 'settle': 8}
-
-lock orders: sent 13  filled 8  ask gone 5  errors 0
-  signal -> exchange answer, ms: median 277  p90 628  max 680
-  exchange call alone, ms: median 277  p90 628  max 680
-  decision -> order sent, ms: median 1  p90 9  max 11
-  GC pause per 30 s, ms: median 0  p90 6  max 143
-  market prewarm (2 lookups + signing), ms: median 143  max 424  n 328
-  fill price minus the ask we saw, cents: mean -0.03  worst +0.0
-  misses came 24-59 s before the end; model p 0.930-0.970
-  exchange rejections by code: {'fak_not_filled': 5}
-
-entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
-  <= 2.5 bp (the fixed pause allows too)       :    6 /    6 /   0 /    +1.04
-  > 2.5 bp (only the volatility pause)         :    2 /    2 /   0 /    +0.26
-
-fills: 8  shares: 16  notional: $14.68
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-btc        4   8.066      7.32      0.908  856.965
-eth        3   6.005      5.46      0.909  853.199
-sol        1   2.000      1.90      0.950  841.130
-
-settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-btc          4  7.367  0.699          0.699     0.0       1.0  0.151  0.190  0.095
-eth          3  5.495  0.510          0.510     0.0       1.0  0.168  0.173  0.093
-sol          1  1.907  0.093          0.093     0.0       1.0  0.093  0.093  0.049
-
-TOTAL pnl $+1.30 (ex-rebate $+1.30) on cost $14.77 -> ROI +8.82%; windows 8, t-stat +15.02
-max drawdown $0.00; hedged windows (both sides filled): 0
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261124-155552
+mode: live  duration: 4.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 9, 'prewarm': 4, 'lock_state': 4}
+no fills
