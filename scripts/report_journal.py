@@ -163,6 +163,61 @@ def shock_breakdown(ev, fixed_bp=2.5):
         print(f"  {name:45s}: {len(es):4d} / {len(done):4d} / {sum(1 for x in done if x < 0):3d} / {sum(done):+8.2f}")
 
 
+def maker_report(ev):
+    """Paper maker (reports/89): quotes, fills by our edge at the fill (fair value - price), the side's fair value 5 / 30 s later
+    (markout: > 0 = the fill was not picked off), the outcome per share and the windows."""
+    fills = [e for e in ev if e["type"] == "mm_fill"]
+    quotes = [e for e in ev if e["type"] == "mm_quote"]
+    if not quotes and not fills:
+        return
+    win = {e["key"]: e for e in ev if e["type"] == "settle"}
+    mk = {}
+    for e in ev:
+        if e["type"] == "mm_markout" and e.get("d") is not None:
+            mk.setdefault((e["key"], e["side"], e["price"], e["h"]), []).append(e["d"])
+    why = Counter(e["why"] for e in ev if e["type"] == "mm_cancel")
+    sh = sum(e["size"] for e in fills)
+    print(f"\nmaker: quotes {len(quotes)} (moved {sum(1 for e in quotes if e.get('re'))}), pulls on a Binance jump "
+          f"{sum(1 for e in ev if e['type'] == 'mm_pull')}, cancels {dict(why.most_common(6))}")
+    print(f"  fills {len(fills)}: {sh:.0f} shares, ${sum(e['size'] * e['price'] for e in fills):.2f}")
+    if not fills:
+        return
+
+    def row(name, fs):
+        n = sum(f["size"] for f in fs)
+        if not n:
+            return
+        edge = sum((f.get("edge") or 0) * f["size"] for f in fs) / n
+        out = [name, f"{len(fs):5d}", f"{n:7.0f}", f"{100 * edge:+6.2f}"]
+        for h in (5, 30):
+            xs = [(mk[(f["key"], f["side"], f["price"], h)][0], f["size"]) for f in fs if (f["key"], f["side"], f["price"], h) in mk]
+            w = sum(q for _, q in xs)
+            out.append(f"{100 * sum(d * q for d, q in xs) / w:+6.2f}" if w else "     .")
+        done = [f for f in fs if f["key"] in win]
+        w = sum(f["size"] for f in done)
+        res = sum(((1.0 if win[f["key"]]["winner"][0] == f["side"] else 0.0) - f["price"]) * f["size"] for f in done)
+        out.append(f"{100 * res / w:+7.2f} ({w:.0f})" if w else "      .")
+        print("  " + "  ".join(out))
+
+    hdr = "fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)"
+    print(f"  by our edge at the fill (fair - price):     {hdr}")
+    for lo, hi in ((-1, 0), (0, 0.01), (0.01, 0.02), (0.02, 0.03), (0.03, 0.05), (0.05, 1)):
+        row(f"{100 * lo:+4.0f}..{100 * hi:+4.0f} c" + " " * 30, [f for f in fills if f.get("edge") is not None and lo <= f["edge"] < hi])
+    print(f"  by the Binance move of the 2 s before (bp): {hdr}")
+    for name, sel in (("against us (< -0.5)", lambda v: v < -0.5), ("flat", lambda v: -0.5 <= v <= 0.5),
+                      ("toward us (> 0.5)", lambda v: v > 0.5)):
+        row(f"{name:42s}", [f for f in fills if f.get("bn2") is not None and sel(f["bn2"])])
+    row(f"{'all':42s}", fills)
+    ws = [e for e in win.values()]
+    if ws:
+        pnl = [e["pnl"] for e in ws]
+        paired = sum(min(e["up"], e["down"]) for e in ws)
+        unp = sum(abs(e["up"] - e["down"]) for e in ws)
+        print(f"  windows settled {len(ws)}: pnl {sum(pnl):+.2f} (won {sum(1 for x in pnl if x > 0)}, lost "
+              f"{sum(1 for x in pnl if x < 0)}, worst {min(pnl):+.2f}, best {max(pnl):+.2f}); shares paired {paired:.0f}, "
+              f"unpaired {unp:.0f}")
+
+
 def main(d):
     ev = [json.loads(line) for line in open(os.path.join(d, "events.jsonl")) if line.strip()]
     kinds = Counter(e["type"] for e in ev)
@@ -183,6 +238,7 @@ def main(d):
     fair_breakdown(ev)
     race_report(ev)
     shock_breakdown(ev)
+    maker_report(ev)
     if fills.empty:
         print("no fills")
         return

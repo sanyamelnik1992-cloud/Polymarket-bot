@@ -1,0 +1,44 @@
+# Мейкер осторожный ("min" reference) — PAPER, the A/B twin of config/maker_fair.toml (reports/89 section 8). The same rule, but
+# each bid is placed under min(Binance fair value, the side's book mid): never above where the market itself values the side.
+# Local run 24 Nov (3 windows): both losing windows were one-sided fills where the model valued the side 3-4 c above the book and
+# the book was right. A test keeps everything else equal to maker_fair.toml.
+journal_dir = "data/journal-maker-safe"
+
+[lock]
+assets = ["btc"]
+zone = "fair"               # the Binance fair value (strike, BlockSigma), not the taker rule: FairMaker decides
+rel_lo = 20.0               # window seconds 20..230: no bids while the strike is fresh or in the closing TWAP
+rel_hi = 230.0
+fair_sigma_s = 3600.0
+fair_min_sigma_s = 1800.0
+fair_react_bp = 0.3         # a 0.3 bp Binance move wakes the quote loop at once
+tick_ms = 200
+
+[maker]
+half_spread = 0.01          # bid = min(fair, book mid) - 0.01, down to the 0.01 grid
+ref = "min"
+shares = 5
+max_side_shares = 25
+max_unpaired = 10
+skew_c = 0.01
+requote_c = 0.01
+pull_bp = 1.5               # pull a coin's bids for pause_s after a Binance move of max(1.5 bp, 2.5 sigma * sqrt(2 s))
+pull_sigmas = 2.5           # within 2 s: a jump for the current volatility (a fixed 1.5 bp pulled every 3-4 s at sigma 1.3 bp)
+pull_s = 2.0
+pause_s = 2.0
+p_lo = 0.10
+p_hi = 0.90
+markout_s = [5, 30]
+
+[risk]
+max_usd_per_entry = 5.0     # unused by the maker (each bid is `shares` at <= p_hi)
+max_open_usd = 40.0         # worst case of open windows + every resting bid as if filled
+daily_loss_limit = 30.0     # paper: a stop, then the next UTC day
+state_file = "data/state/maker_safe.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_place_ms = 60         # a bid is live 60 ms after the decision (live 8 Nov: place median 52-62 ms)
+paper_cancel_ms = 50        # and gone 50 ms after its cancel (cancel median 40-49 ms)
+cl_feed = "both"            # Chainlink prints only for the provisional result after each window

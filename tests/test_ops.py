@@ -160,7 +160,7 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
 
 
 KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-fair", "pmbot-lock-15-early", "pmbot-feedrec", "pmbot-tg",
-              "pmbot-lock-99-sigma"}
+              "pmbot-lock-99-sigma", "pmbot-maker", "pmbot-maker-safe"}
 # the current lineup (23 Nov, reports/86: the live interceptor and the 15m fair paper bot retired); every other unit is retired
 
 

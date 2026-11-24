@@ -581,6 +581,24 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   latency); then a live test at 5 shares / <= $20-30 / -$5 a day only on the owner's word. The old makers (A-H, LM3) quoted
   off the book and did not cancel on Binance moves. Tools: `reports/89_tools` (`lb_pnl.py`, `prof7.py`, `who7.py`,
   `taker1.py`, `maker1.py`, `mkt_mom.py`, `mkt_maker.py`, `fairlib.py`).
+  Section 8 (owner: "Давай, делай"): PAPER unit `pmbot-maker` = `config/maker_fair.toml` (`pmbot/bot/fairmaker.py`
+  `FairMaker(LockBot)` + `load_maker_config` ([maker] section -> `MakerCfg`, the rest a zone-"fair" LockConfig; the loader refuses
+  live), `scripts/run_maker.py`; started once by `install_units.sh` START_ONCE, in KEEP_UNITS). BTC 5m, window s 20-230: bids
+  for Up and Down at fair - `half_spread` 0.01 (0.01 grid, post-only <= ask - 1 c), 5 shares; lowered at once, raised only
+  `UP_HYST` 0.3 c past the next cent (`keep_bid`); both pulled for 2 s after a Binance move >= max(1.5 bp, `pull_sigmas` 2.5 x
+  sigma x sqrt(2 s)) within 2 s (a fixed 1.5 bp pulled every 3-4 s at sigma 1.3 bp); <= 25 shares a side, no bid on the long
+  side at |Up - Down| >= 10, skew 1 c per 5; no bid at fair < 0.10 or > 0.90; held to resolution, no rebate counted. Paper
+  fills = PaperBroker queue model (60 ms to go live, 50 ms to cancel, matched on the exchange time); each public trade comes
+  once, on the taker's token, and the Up / Down books are mirrors (checked live 24 Nov). Journal `mm_quote` / `mm_cancel` /
+  `mm_pull` / `mm_fill` (fair, edge, `bn2`) / `mm_markout` (5, 30 s) / `fv` (book mid every 5 s -> the hourly markout-60);
+  `report_journal.py` `maker_report`. BTC 5m books are 1 c wide with ~700 shares queued at the touch and a volatile fair moves
+  a cent every 1-2 s: the queue is the open question. Exam 1-2 days (windows' result, outcome per share of fills with edge >= 1 c,
+  markouts, one-sided windows); live only on the owner's word and with a reviewed live maker broker (none exists).
+  A/B twin `pmbot-maker-safe` = `config/maker_safe.toml` (`maker.ref = "min"`: each bid under min(fair, the side's book mid);
+  a test keeps all else equal). Inventory skew is two-way (`discount`): the long side lower, the short side as much higher but
+  never above its reference. First local run (24 Nov 11:50-12:05, ref fair): 15 fills / 67 shares, +1.7 c vs fair at the fill,
+  windows +$0.33 (22 / 25 paired), -$3.50 and -$4.25 (10 shares one side within 2 s, the model 3-4 c above the book, the book
+  right): hence the "min" twin. A one-sided window is +-$4: judge on hundreds of windows.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
