@@ -1,16 +1,16 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261124-201820
-mode: live  duration: 103.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 206, 'prewarm': 28, 'lock_state': 144, 'strike': 24, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: live  duration: 162.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 325, 'prewarm': 44, 'lock_state': 179, 'strike': 40, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
 lock orders: sent 1  filled 1  ask gone 0  errors 0
   signal -> exchange answer, ms: median 280  p90 280  max 280
   exchange call alone, ms: median 280  p90 280  max 280
   decision -> order sent, ms: median 1  p90 1  max 1
   GC pause per 30 s, ms: median 0  p90 2  max 98
-  market prewarm (2 lookups + signing), ms: median 133  max 237  n 28
+  market prewarm (2 lookups + signing), ms: median 133  max 237  n 44
   fill price minus the ask we saw, cents: mean -0.10  worst -0.1
 
 окна, где модель была уверена (p >= 0.99): вход 1; без входа:
-     5  фильтр Binance (движение против нас / скачок / пауза)
+     6  фильтр Binance (движение против нас / скачок / пауза)
 
 fills: 1  shares: 5  notional: $4.95
        fills  shares  notional  avg_price  med_rel
