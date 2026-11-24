@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261124-155600
-mode: paper  duration: 126.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 252, 'lock_state': 1614, 'strike': 96, 'lock_miss': 1}
+mode: paper  duration: 185.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 370, 'lock_state': 2201, 'strike': 144, 'lock_miss': 1}
 
 lock orders: sent 1  filled 0  ask gone 1  errors 0
   signal -> exchange answer, ms: median 301  p90 301  max 301
