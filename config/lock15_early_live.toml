@@ -22,14 +22,14 @@ jump_bp = 5.0
 a_min = 0.95
 a_max = 0.99
 ask_lo = 0.985
-shares = 15           # = live twin pmbot-lock-15-early-live (reports/82)
+shares = 5            # 24 Nov (owner: "Давай", reports/92): back on real money at 5 shares (15 on 19-20 Nov, reports/82, 85)
 max_entries_per_window = 1
 
 [risk]
-max_usd_per_entry = 15.0
-max_open_usd = 45.0
-max_open_entries = 3   # = live twin
-daily_loss_limit = 25.0      # two losses (~-$29.7) end the day
+max_usd_per_entry = 5.0      # 5 shares at <= 0.99 (fee on top in fak_budget)
+max_open_usd = 10.0          # two windows at most: the worst moment is two losses, ~-$9.9
+max_open_entries = 2   # = live twin (reports/92: 3 until 24 Nov)
+daily_loss_limit = 3.0       # reports/92: the FIRST loss (~-$4.95) ends the day; a human restarts it
 state_file = "data/state/lock15_early_live.json"
 resume_next_day = false
 

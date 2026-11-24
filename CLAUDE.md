@@ -618,6 +618,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   <= $20-30 / -$5 a day on the owner's word, then grow by stages. Money: no deposit now (limits come from the 5 %-of-wallet
   rule and the number of trades); ~$70-100 for 15m at 10 shares after 100 entries at 5 (<= 2.5 % lost); $500-1000 only after
   a positive live maker test. Lock-family ceiling ~$20-40 a day at $1-2k.
+- **`reports/92_early_sniper_15m_back_live.md` (24 Nov, owner: "стратегия конкурента ... по 50$ в день", then "Давай"; REAL
+  MONEY)**: the competitor 9-24 Nov: 478 buys / 3 lost / +$200 after fees (+0.49 %, ~$12.5 a day; 15m 238 / 1 / +$186, 5m 179 / 2 /
+  -$44); since his last loss (19 Nov) +$148 in 5 days (~$30 a day, no $50 day); a loss costs him $85-100; 100-130 shares at
+  0.98-0.99. Our paper copy `pmbot-lock-15-early`: 200 / 2 lost / -$6.98 (both BTC, night of 19-20 Nov); since 20 Nov 06:00
+  126 / 0 / +$15.41. `pmbot-lock-15-early-live` (`config/lock15_early_live.toml`) is back on money: 5 shares, $5 an entry, 2
+  windows / $10 open, day stop $3 (the FIRST loss ~-$4.95 ends the day, a human restarts it); the twin mirrors size and open
+  limits; out of RETIRED, started once by `install_units.sh` START_ONCE (the owner cannot run /restart); off the Telegram
+  shelf. Review after ~200 real entries: <= 1 lost in 160 -> grow with the wallet (5 % rule: 10 shares at ~$200, 100 at ~$2k);
+  > 1 in 100 -> back to paper.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

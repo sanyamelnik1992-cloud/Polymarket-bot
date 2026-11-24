@@ -206,9 +206,10 @@ def test_15m_early_live_is_its_paper_twin_with_real_money_limits():
     live = load_lock_config(os.path.join(ROOT, "config", "lock15_early_live.toml"))
     assert live.execution.mode == "live" and paper.execution.mode == "paper" and load_lock_config(EARLY5).execution.mode == "paper"
     assert live.lock == paper.lock, "the live early sniper must stay identical to its paper twin pmbot-lock-15-early"
-    assert live.lock.shares == 15 and live.risk.max_usd_per_entry == 15.0 and live.risk.max_open_entries == 3
-    assert live.risk.max_open_usd <= 3 * 15.0 and live.risk.resume_next_day is False
-    assert 1 * 15 * live.lock.ask_lo < live.risk.daily_loss_limit < 2 * 15 * live.lock.ask_lo      # the second loss stops it
+    # reports/92 (24 Nov, owner: "Давай"): back on money at 5 shares, two windows at most, the FIRST loss ends the day
+    assert live.lock.shares == 5 and live.risk.max_usd_per_entry == 5.0 and live.risk.max_open_entries == 2
+    assert live.risk.max_open_usd <= 2 * 5.0 and live.risk.resume_next_day is False
+    assert 0 < live.risk.daily_loss_limit < 5 * live.lock.ask_lo                                      # one loss stops it
     assert (paper.risk.max_open_usd, paper.risk.max_open_entries) == (live.risk.max_open_usd, live.risk.max_open_entries)
     assert live.risk.state_file not in ("", paper.risk.state_file) and live.journal_dir != paper.journal_dir
     text = open(os.path.join(ROOT, "deploy", "pmbot-lock-15-early-live.service")).read()
