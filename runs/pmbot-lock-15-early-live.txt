@@ -1,19 +1,26 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261124-201820
-mode: live  duration: 43.0 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 86, 'prewarm': 12, 'lock_state': 41, 'strike': 8, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1}
+mode: live  duration: 103.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 206, 'prewarm': 28, 'lock_state': 144, 'strike': 24, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
 lock orders: sent 1  filled 1  ask gone 0  errors 0
   signal -> exchange answer, ms: median 280  p90 280  max 280
   exchange call alone, ms: median 280  p90 280  max 280
   decision -> order sent, ms: median 1  p90 1  max 1
   GC pause per 30 s, ms: median 0  p90 2  max 98
-  market prewarm (2 lookups + signing), ms: median 145  max 168  n 12
+  market prewarm (2 lookups + signing), ms: median 133  max 237  n 28
   fill price minus the ask we saw, cents: mean -0.10  worst -0.1
 
 окна, где модель была уверена (p >= 0.99): вход 1; без входа:
-     1  фильтр Binance (движение против нас / скачок / пауза)
+     5  фильтр Binance (движение против нас / скачок / пауза)
 
 fills: 1  shares: 5  notional: $4.95
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        1   5.015      4.95      0.987  693.514
-no settled windows yet
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+btc          1  4.954  0.061          0.061     0.0       1.0  0.061  0.061  0.012
+
+TOTAL pnl $+0.06 (ex-rebate $+0.06) on cost $4.95 -> ROI +1.23%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
