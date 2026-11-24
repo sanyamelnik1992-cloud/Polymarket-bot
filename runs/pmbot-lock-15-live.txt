@@ -1,12 +1,31 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261123-184405
-mode: live  duration: 316.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 88, 'lock_state': 1564, 'status': 633, 'strike': 80, 'order_rejected': 1, 'lock_miss': 1}
+mode: live  duration: 377.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 104, 'lock_state': 1840, 'status': 754, 'strike': 96, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
 
-lock orders: sent 1  filled 0  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 215  p90 215  max 215
-  exchange call alone, ms: median 215  p90 215  max 215
-  decision -> order sent, ms: median 1  p90 1  max 1
+lock orders: sent 3  filled 2  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 439  p90 628  max 628
+  exchange call alone, ms: median 439  p90 628  max 628
+  decision -> order sent, ms: median 1  p90 9  max 9
   GC pause per 30 s, ms: median 0  p90 4  max 143
-  market prewarm (2 lookups + signing), ms: median 163  max 424  n 88
+  market prewarm (2 lookups + signing), ms: median 162  max 424  n 104
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
   misses came 39-39 s before the end; model p 0.970-0.970
   exchange rejections by code: {'fak_not_filled': 1}
-no fills
+
+entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
+  <= 2.5 bp (the fixed pause allows too)       :    1 /    1 /   0 /    +0.19
+  > 2.5 bp (only the volatility pause)         :    1 /    1 /   0 /    +0.09
+
+fills: 2  shares: 4  notional: $3.72
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        1   2.022      1.82       0.90  875.502
+sol        1   2.000      1.90       0.95  841.130
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+btc          1  1.833  0.190          0.190     0.0       1.0  0.190  0.190  0.103
+sol          1  1.907  0.093          0.093     0.0       1.0  0.093  0.093  0.049
+
+TOTAL pnl $+0.28 (ex-rebate $+0.28) on cost $3.74 -> ROI +7.57%; windows 2, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
