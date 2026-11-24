@@ -562,6 +562,25 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `pmbot-lock-99-sigma` = `config/lock_99_sigma.toml` (the live Sniper's rule + `shock_sigmas = 3`, a test keeps the rest equal);
   `deploy/install_units.sh` `START_ONCE` starts new research / paper units once on their first deploy (marker
   `data/state/.started-<unit>`: a later /off sticks); report_journal.py `shock_breakdown` splits entries at the fixed 2.5 bp.
+- **`reports/89_who_makes_money_5m.md` (24 Nov, owner: "как закрыть если там кто то зарабатывает большие деньги, нужно разобраться
+  как они это делают и тоже сделать")**: analysis only, nothing changed. Crypto leaderboard (day / week / month) + each wallet's
+  exchange PnL (`/v2/user-pnl`) + its last ~2000 trades (`taker_only` true / false: maker rows = all minus taker rows).
+  Of the week's top 60 crypto wallets 26 are BTC 5/15m MAKERS: +$409k in 7 days on $17.2M (+2.4 %, of it $51k = exchange
+  maker rebates, 0.2-0.4 % of volume), median +$12k, 83 % of days positive; they bid BOTH sides (or SPLIT and sell both) all
+  window, $3-7 a fill, fill 0.6-2.4 c better than our Binance fair, markouts 5 / 30 s ~0; fills right after a Binance move
+  against them (20-28 %) are 0.7-9 c worse. The biggest pure TAKER (0x7d21..., +$54k in 13 days, ~$380 a buy, BTC 5m,
+  mid-window, one side, ~7 buys a window) is a gamble: -$25k / +$43k days, t 0.97 by window, his 10 best windows > his
+  total; his apparent rule (buy the side Binance moved toward in the last 60 s) does not hold on all 1.2M BTC 5m taker buys
+  of 18-21 Nov (-3.0 % overall). Our Binance fair model is well calibrated (fair 0.6-0.7 -> 66.3 % won, 0.7-0.8 -> 79.5 %).
+  Maker side of all 1.36M BTC 5m taker trades: a fill h c better than fair earns ~h c a share by outcome, except right
+  after a >= 2 bp Binance move against the maker (+5.6 c promised, +0.4 c earned): cancelling on Binance moves is the rule.
+  Conclusion: the interceptor hunts these makers' quotes and they escape inside the 150 ms taker delay; the winning side is
+  the maker. Proposed (owner to decide): a PAPER fair-value maker for BTC 5m (bids on both sides at fair - h, 5 shares,
+  requote on a >= 1 c fair move, cancel on a 1-2 bp Binance move, not in the first ~20 s / last ~60 s, unpaired-share limit
+  and skew; paper fills only when public trades pass through our price and eat the queue ahead, our cancel with our
+  latency); then a live test at 5 shares / <= $20-30 / -$5 a day only on the owner's word. The old makers (A-H, LM3) quoted
+  off the book and did not cancel on Binance moves. Tools: `reports/89_tools` (`lb_pnl.py`, `prof7.py`, `who7.py`,
+  `taker1.py`, `maker1.py`, `mkt_mom.py`, `mkt_maker.py`, `fairlib.py`).
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
