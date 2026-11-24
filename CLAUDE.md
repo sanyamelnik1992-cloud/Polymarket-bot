@@ -610,6 +610,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (`risk:max_open`) / missed FAK / Binance guard / no seller at our price / day stop -> decide on 2 windows at a time for 15m.
   Back to 2 shares at two losses in 3 days or > 4 % lost over 50 entries; 10 shares below 0.99 only with a ~$200 wallet
   and 100 entries at 5 with <= 2.5 % lost.
+- **`reports/91_plan_max_income.md` (24 Nov evening, owner: "напиши план ... увеличить доход до максимума и если нужно я еще
+  закину денег")**: the roadmap. Now ~$2.5-3 a day expected (15m Ступени 5 shares + Sniper 10). Step 1 (to ~1 Dec): missed-signal
+  counts -> 2 coins at a time on 15m; 15m 5-share review at 50 entries (<= 4 % lost, else back to 2); Sniper volatility pause to
+  money after >= 100 paper entries without a loss. Step 2: the maker is the only path to $100+ a day: paper verdict 25-26 Nov,
+  then a reviewed live maker broker (maker-only orders, cancel by id, position reconcile, heartbeat, STOP), live test 5 shares /
+  <= $20-30 / -$5 a day on the owner's word, then grow by stages. Money: no deposit now (limits come from the 5 %-of-wallet
+  rule and the number of trades); ~$70-100 for 15m at 10 shares after 100 entries at 5 (<= 2.5 % lost); $500-1000 only after
+  a positive live maker test. Lock-family ceiling ~$20-40 a day at $1-2k.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
