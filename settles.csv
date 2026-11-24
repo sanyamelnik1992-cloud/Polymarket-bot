@@ -1,8 +1,4 @@
 time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
-2026-11-10 11:11:12,pmbot-lock-live,live,eth-1794308400,Down,0,5.0,4.6728,5.0,0.0,0.3272
-2026-11-10 11:30:43,pmbot-lock-live,live,xrp-1794309600,Down,0,5.0,4.6728,5.0,0.0,0.3272
-2026-11-10 11:46:14,pmbot-lock-live,live,eth-1794310500,Down,0,5.0,4.6728,5.0,0.0,0.3272
-2026-11-10 11:51:25,pmbot-lock-live,live,eth-1794310800,Down,0,5.0,4.5787,5.0,0.0,0.4213
 2026-11-10 12:10:16,pmbot-lock-live,live,eth-1794312000,Down,0,5.1099,4.6793,5.1099,0.0,0.4306
 2026-11-10 12:25:17,pmbot-lock-live,live,eth-1794312900,Down,0,5.6173,4.6105,5.6173,0.0,1.0068
 2026-11-10 12:35:58,pmbot-lock-live,live,xrp-1794313500,Down,0,5.0,4.7666,5.0,0.0,0.2334
@@ -2545,3 +2541,14 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-24 10:45:16,pmbot-lock-fair,paper,btc-1795516500,Down,0,10.0,4.9663,10.0,0.0,5.0337
 2026-11-24 10:48:07,pmbot-lock-fair,paper,sol-1795516800,Down,5.0,0,1.4092,0,0.0,-1.4092
 2026-11-24 10:50:46,pmbot-lock-15-early,paper,xrp-1795516200,Down,0,5.0,4.9535,5.0,0.0,0.0465
+2026-11-24 11:05:37,pmbot-lock-15-early,paper,sol-1795517100,Down,0,10.0,9.9069,10.0,0.0,0.0931
+2026-11-24 11:05:59,pmbot-lock-fair,paper,btc-1795517700,Up,5.0,0,4.056,5.0,0.0,0.944
+2026-11-24 11:27:11,pmbot-lock-fair,paper,btc-1795519200,Down,5.0,0,1.1601,0,0.0,-1.1601
+2026-11-24 11:43:34,pmbot-lock-fair,paper,sol-1795520100,Down,5.0,0,1.0039,0,0.0,-1.0039
+2026-11-24 11:45:05,pmbot-lock-fair,paper,xrp-1795520100,Up,5.0,0,1.4706,5.0,0.0,3.5294
+2026-11-24 11:45:15,pmbot-lock-fair,paper,eth-1795520100,Up,9.0,0,0.9567,9.0,0.0,8.0433
+2026-11-24 11:45:55,pmbot-lock-fair,paper,btc-1795520100,Down,5.0,0,1.1601,0,0.0,-1.1601
+2026-11-24 11:53:37,pmbot-lock-fair,paper,btc-1795520700,Up,5.0,0,3.3785,5.0,0.0,1.6215
+2026-11-24 11:54:48,pmbot-lock-fair,paper,sol-1795520700,Up,5.0,0,1.9316,5.0,0.0,3.0684
+2026-11-24 11:55:08,pmbot-lock-fair,paper,xrp-1795520700,Up,5.0,0,1.5221,5.0,0.0,3.4779
+2026-11-24 11:55:28,pmbot-lock-fair,paper,eth-1795520700,Up,5.0,0,1.6762,5.0,0.0,3.3238
