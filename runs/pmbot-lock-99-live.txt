@@ -1,6 +1,30 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261124-194100
-mode: live  duration: 21.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 42, 'prewarm': 16, 'lock_state': 169, 'strike': 12}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261124-201815
+mode: live  duration: 43.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 36, 'status': 87, 'lock_state': 467, 'strike': 32, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-окна, где модель была уверена (p >= 0.99): вход 0; без входа:
-    12  фильтр Binance (движение против нас / скачок / пауза)
-no fills
+lock orders: sent 1  filled 1  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 264  p90 264  max 264
+  exchange call alone, ms: median 261  p90 261  max 261
+  decision -> order sent, ms: median 1  p90 1  max 1
+  GC pause per 30 s, ms: median 0  p90 2  max 84
+  market prewarm (2 lookups + signing), ms: median 132  max 191  n 36
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+
+entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
+  <= 2.5 bp (the fixed pause allows too)       :    1 /    1 /   0 /    +0.19
+  > 2.5 bp (only the volatility pause)         :    0 /    0 /   0 /    +0.00
+
+окна, где модель была уверена (p >= 0.99): вход 1; без входа:
+    28  фильтр Binance (движение против нас / скачок / пауза)
+
+fills: 1  shares: 10  notional: $9.80
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+eth        1    10.0       9.8       0.98  244.215
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+eth          1  9.814  0.186          0.186     0.0       1.0  0.186  0.186  0.019
+
+TOTAL pnl $+0.19 (ex-rebate $+0.19) on cost $9.81 -> ROI +1.90%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
