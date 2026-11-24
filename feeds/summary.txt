@@ -1,42 +1,42 @@
-price-source race 2026-11-23 13:29 - 2026-11-24 03:01 UTC (13.5 h); moves >= {'btc': 2.0, 'eth': 2.5, 'sol': 4.0, 'xrp': 4.0} bp within 300 ms seen by >= 3 sources, no recorder stall
+price-source race 2026-11-23 13:29 - 2026-11-24 04:01 UTC (14.5 h); moves >= {'btc': 2.0, 'eth': 2.5, 'sol': 4.0, 'xrp': 4.0} bp within 300 ms seen by >= 3 sources, no recorder stall
 
 feeds: rows/min per asset, venue -> us ms (median / p90, venue clock), connects
-  bn           85.2         - /       -   0
-  bnft        129.6     128.6 /   265.0   0
-  bybitf      105.7     126.3 /   146.4   0
-  cb           88.4      56.1 /    89.4   0
-  cl           57.9    1406.3 /  1697.9   0
-  hl           61.7     396.6 /   501.5   0
-  okxf         77.0     135.8 /   161.2   0
-  pm          491.8      27.1 /    51.0   0
+  bn           38.1         - /       -   0
+  bnft         73.6     145.5 /   268.3   0
+  bybitf       55.7     128.0 /   153.7   0
+  cb           51.0      54.0 /    82.5   0
+  cl           60.1    1359.5 /  1612.4   0
+  hl           30.7     395.7 /   469.6   0
+  okxf         38.1     136.2 /   164.3   0
+  pm          375.9      23.3 /    41.8   0
 
-btc: 134 events (75 up; the Polymarket book settled >= 1 c the same way in 54)
+btc: 173 events (92 up; the Polymarket book settled >= 1 c the same way in 68)
   src       seen  first behind 1st    ahead of bn (med, >=50, >=100 ms)   beats makers
-  bn         63%    22%       22 ms                                           90 % of 31
+  bn         66%    23%       17 ms                                           91 % of 43
   bnc         1%     1%        0 ms        +14 ms     0 %     0 %  (n 1)               
   bnf         1%     0%       24 ms                                                    
-  bnft       79%    24%       20 ms         -0 ms    24 %    11 %  (n 66)      90 % of 50
+  bnft       80%    26%       18 ms         +0 ms    22 %    11 %  (n 89)      90 % of 61
   bybit       1%     0%        4 ms                                                    
-  bybitf     80%    26%       17 ms         +1 ms    35 %    26 %  (n 68)      89 % of 44
-  cb         58%     7%       62 ms        -26 ms    22 %    15 %  (n 54)      90 % of 30
+  bybitf     82%    23%       18 ms         -4 ms    29 %    23 %  (n 93)      91 % of 57
+  cb         58%     9%       58 ms        -27 ms    21 %    14 %  (n 70)      90 % of 42
   deribit     1%     0%       80 ms                                                    
-  hl         59%     1%      829 ms       -812 ms     0 %     0 %  (n 53)      41 % of 34
+  hl         59%     2%      811 ms       -809 ms     1 %     1 %  (n 69)      48 % of 42
   okx         1%     1%        0 ms                                                    
-  okxf       82%    18%       30 ms        -15 ms    24 %    16 %  (n 70)      96 % of 45
-  polymarket Up book half-way to its new level 881 ms after the first source (median; p25 553, p75 1232); before the first source in 2 %
+  okxf       82%    16%       29 ms        -16 ms    24 %    15 %  (n 92)      95 % of 56
+  polymarket Up book half-way to its new level 951 ms after the first source (median; p25 569, p75 1271); before the first source in 3 %
 
-eth: 145 events (70 up; the Polymarket book settled >= 1 c the same way in 79)
+eth: 172 events (85 up; the Polymarket book settled >= 1 c the same way in 95)
   src       seen  first behind 1st    ahead of bn (med, >=50, >=100 ms)   beats makers
-  bn         52%    17%       13 ms                                           45 % of 44
+  bn         55%    17%       15 ms                                           48 % of 56
   bnc         1%     0%      384 ms                                                    
-  bnft       75%    23%       15 ms         -1 ms    16 %    13 %  (n 55)      44 % of 57
-  bybitf     72%    20%       15 ms         -2 ms    18 %    14 %  (n 57)      40 % of 55
-  cb         72%    21%       47 ms        -32 ms    24 %    17 %  (n 59)      36 % of 55
-  hl         57%     1%      762 ms       -756 ms     4 %     4 %  (n 45)       8 % of 51
+  bnft       77%    23%       20 ms         +0 ms    18 %    14 %  (n 72)      45 % of 71
+  bybitf     72%    19%       17 ms         -5 ms    20 %    14 %  (n 71)      41 % of 69
+  cb         70%    19%       54 ms        -15 ms    26 %    19 %  (n 69)      38 % of 64
+  hl         59%     1%      762 ms       -753 ms     5 %     5 %  (n 55)      10 % of 63
   kraken      1%     0%     1043 ms                                                    
   okx         1%     1%      711 ms                                                    
-  okxf       77%    18%       22 ms        -15 ms    21 %    21 %  (n 62)      38 % of 60
-  polymarket Up book half-way to its new level 159 ms after the first source (median; p25 45, p75 338); before the first source in 20 %
+  okxf       77%    20%       21 ms        -15 ms    22 %    21 %  (n 77)      41 % of 71
+  polymarket Up book half-way to its new level 164 ms after the first source (median; p25 45, p75 350); before the first source in 21 %
 
 xrp: 5 events (0 up; the Polymarket book settled >= 1 c the same way in 1)
   src       seen  first behind 1st    ahead of bn (med, >=50, >=100 ms)   beats makers
