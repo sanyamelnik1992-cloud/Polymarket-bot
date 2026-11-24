@@ -531,6 +531,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `bnft` (Binance USD-M aggTrade, ~19x fewer messages; USD-M market streams moved to `wss://fstream.binance.com/market/stream`,
   the old `/stream` route connects and sends no aggTrade), `cb`, `okxf`, `bybitf`, `hl`, `pm`, `cl`; `min_bp` 0.5; `Overload`
   in `scripts/record_feeds.py` stops the recorder when it stalled > 25 % of the last minute.
+  Section 7 (24 Nov, owner: "вариант ускорить бота перехватчика что бы был плюс?" - answer NO): the recorder stopped 24 Nov
+  08:34 UTC (cause not visible in the report), 19.1 h, 203 BTC + 186 ETH moves: no source leads Binance spot (Binance futures
+  trades +1 ms median, Bybit futures -2, OKX futures -14, Coinbase -25, Hyperliquid -0.8 s; the earliest of all only 13-22 ms
+  ahead). Paper twin's race log (251 orders, 0.5 s): only Binance-driven entries earn on paper (`move` +$14.17, `level`
+  +$14.39), `book` -$5.07 and `timer` -$3.62 (no race entries lose even on paper); 66 of 148 misses went to a taker ~100 ms
+  ahead of our decision. By report 86 section 7: close the interceptor (proposed: stop the paper twin `pmbot-lock-fair`,
+  ~26 % of a core; owner's word). The bots' Binance feed costs 46 us a message (~2 % of a core here): no compression 35,
+  lean loop 24; postponed.
 - **`reports/88_telegram_sizes_competitor.md` (23 Nov evening, owner: Telegram cleanup, stake size, the competitor)**: /status and
   the 6-hourly digest (`notify.format_status` / `format_digest`) list only RUNNING units (`notify.RUNNING`): real money first
   (each live bot with today, total and the limits read from its config by `notify.limits`), a live bot stopped by its own day
