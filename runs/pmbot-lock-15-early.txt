@@ -1,20 +1,20 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261123-184410
-mode: paper  duration: 916.3 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1832, 'lock_state': 2182, 'strike': 240, 'lock_miss': 38, 'fill': 16, 'lock_entry': 16, 'provisional': 16, 'settle': 16}
+mode: paper  duration: 976.9 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1953, 'lock_state': 2231, 'strike': 256, 'lock_miss': 40, 'fill': 18, 'lock_entry': 18, 'provisional': 18, 'settle': 17}
 
-lock orders: sent 54  filled 16  ask gone 38  errors 0
+lock orders: sent 58  filled 18  ask gone 40  errors 0
   signal -> exchange answer, ms: median 301  p90 308  max 310
   decision -> order sent, ms: median 1  p90 3  max 10
   GC pause per 30 s, ms: median 1  p90 9  max 80
   fill price minus the ask we saw, cents: mean +0.01  worst +0.1
   misses came 124-300 s before the end; model p 0.000-0.000
 
-fills: 16  shares: 202  notional: $199.45
+fills: 18  shares: 217  notional: $214.30
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        8  120.00   118.758       0.99  662.221
 eth        1   15.00    14.850       0.99  769.115
-sol        5   56.51    55.945       0.99  765.439
-xrp        2   10.00     9.900       0.99  714.352
+sol        6   66.51    65.845       0.99  753.905
+xrp        3   15.00    14.850       0.99  736.353
 
 settled windows:
        windows     cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
@@ -22,7 +22,7 @@ asset
 btc          8  118.844  1.156          1.156     0.0       1.0  0.140  0.168  0.010
 eth          1   14.860  0.140          0.140     0.0       1.0  0.140  0.140  0.009
 sol          5   55.984  0.526          0.526     0.0       1.0  0.046  0.140  0.009
-xrp          2    9.907  0.093          0.093     0.0       1.0  0.046  0.046  0.009
+xrp          3   14.860  0.140          0.140     0.0       1.0  0.046  0.046  0.009
 
-TOTAL pnl $+1.91 (ex-rebate $+1.91) on cost $199.60 -> ROI +0.96%; windows 16, t-stat +11.33
+TOTAL pnl $+1.96 (ex-rebate $+1.96) on cost $204.55 -> ROI +0.96%; windows 17, t-stat +10.66
 max drawdown $0.00; hedged windows (both sides filled): 0
