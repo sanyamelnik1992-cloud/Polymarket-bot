@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261123-184405
-mode: live  duration: 557.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 152, 'lock_state': 2785, 'status': 1114, 'strike': 144, 'order_rejected': 1, 'lock_miss': 1, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
+mode: live  duration: 617.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 168, 'lock_state': 3014, 'status': 1235, 'strike': 160, 'order_rejected': 2, 'lock_miss': 2, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
 
-lock orders: sent 3  filled 2  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 439  p90 628  max 628
-  exchange call alone, ms: median 439  p90 628  max 628
-  decision -> order sent, ms: median 1  p90 9  max 9
+lock orders: sent 4  filled 2  ask gone 2  errors 0
+  signal -> exchange answer, ms: median 628  p90 680  max 680
+  exchange call alone, ms: median 628  p90 680  max 680
+  decision -> order sent, ms: median 2  p90 9  max 9
   GC pause per 30 s, ms: median 0  p90 5  max 143
-  market prewarm (2 lookups + signing), ms: median 155  max 424  n 152
+  market prewarm (2 lookups + signing), ms: median 152  max 424  n 168
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 39-39 s before the end; model p 0.970-0.970
-  exchange rejections by code: {'fak_not_filled': 1}
+  misses came 39-59 s before the end; model p 0.952-0.970
+  exchange rejections by code: {'fak_not_filled': 2}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    1 /    1 /   0 /    +0.19
