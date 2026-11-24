@@ -828,7 +828,7 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     assert l15.lock.tiers == [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]] and l15.lock.theta == 0.90
     assert l15.risk.max_open_entries == 1 and l3.risk.max_open_entries == 1                            # one entry at a time
     assert (l15.lock.shares, l15.lock.big_shares, l15.lock.big_shares_p, l15.lock.big_late_rel, l15.lock.big_calm_s) == \
-        (2.0, 10.0, 0.99, 0.0, 3.0)                              # reports/76: 2 shares below p 0.99; late = 10 shares off (75)
+        (5.0, 10.0, 0.99, 0.0, 3.0)                              # reports/90: 5 shares below p 0.99 (2 since reports/76); late off (75)
     assert l15.lock.late_tier_rel == 0.0                               # every 15m tier still enters from second 240
     assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
 
@@ -1484,7 +1484,7 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
     """reports/73: lock.big_late_rel buys big_shares from that window second on, as p >= big_shares_p does; within 3 s of a
     Binance guard block the entry stays small (reports/71). reports/75 (16 Nov): no config uses the late half any more (it stood on
     23 / 0; the next 5 such live entries lost one at 10 shares, and late p 0.90-0.93 states lose 8-10 % like the early ones).
-    15m live buys 10 shares only at p >= 0.99 and 2 below (reports/76)."""
+    15m live buys 10 shares only at p >= 0.99 and 5 below (reports/76: 2, reports/90: 5)."""
     import glob
     import time as _t
     import pmbot.bot.lock as lockmod
@@ -1507,11 +1507,11 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
             return limit, shares, 0.0
 
     # (window second, model p, guard block 1 s before?, big_late_rel) -> shares
-    cases = ((244.0, 0.94, False, 260.0, 2), (259.9, 0.96, False, 260.0, 2), (260.0, 0.94, False, 260.0, 10),
+    cases = ((244.0, 0.94, False, 260.0, 5), (259.9, 0.96, False, 260.0, 5), (260.0, 0.94, False, 260.0, 10),
              (285.0, 0.955, False, 260.0, 10), (244.0, 0.992, False, 260.0, 10), (244.0, 0.995, False, 260.0, 10),
-             (270.0, 0.94, True, 260.0, 2), (244.0, 0.995, True, 260.0, 2),
-             (270.0, 0.94, False, 0.0, 2), (285.0, 0.96, False, 0.0, 2), (270.0, 0.975, False, 0.0, 2),    # the configs as they are
-             (270.0, 0.992, False, 0.0, 10))                                                              # (reports/76)
+             (270.0, 0.94, True, 260.0, 5), (244.0, 0.995, True, 260.0, 5),
+             (270.0, 0.94, False, 0.0, 5), (285.0, 0.96, False, 0.0, 5), (270.0, 0.975, False, 0.0, 5),    # the configs as they are
+             (270.0, 0.992, False, 0.0, 10))                                                              # (reports/76, 90)
     for i, (rel, p_model, guard, late, want) in enumerate(cases):
         br = Br()
         cfg = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"),
@@ -1626,3 +1626,42 @@ def test_sniper_with_the_volatility_pause_differs_from_the_live_sniper_only_by_i
     assert var.risk.state_file != live.risk.state_file and var.journal_dir != live.journal_dir
     inst = open(os.path.join(ROOT, "deploy", "install_units.sh")).read()
     assert "START_ONCE=" in inst and "pmbot-lock-99-sigma" in inst.split("START_ONCE=")[1].splitlines()[0]
+
+
+def test_missed_signal_breakdown_in_the_run_report():
+    """reports/90: the run report counts the windows the model liked that ended without an entry, by what stopped them (one
+    window at a time, a missed FAK, a Binance guard, no seller at our price)."""
+    import contextlib
+    import importlib.util
+    import io
+    spec = importlib.util.spec_from_file_location("rj", os.path.join(ROOT, "scripts", "report_journal.py"))
+    rj = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rj)
+    ev = [{"type": "start", "config": {"lock": {"theta": 0.93}}},
+          {"type": "lock_state", "key": "btc-1", "why": "ask_too_high", "p": 0.95},
+          {"type": "lock_state", "key": "btc-1", "why": "risk:max_open", "p": 0.96, "side": "U", "ask": 0.92},
+          {"type": "lock_state", "key": "eth-1", "why": "binance_against", "p": 0.97},
+          {"type": "lock_state", "key": "sol-1", "why": "ask_too_high", "p": 0.95},
+          {"type": "lock_state", "key": "xrp-1", "why": "ask_too_high", "p": 0.5},        # the model was not sure: not counted
+          {"type": "lock_state", "key": "btc-2", "why": "p", "p": 0.97}, {"type": "lock_entry", "key": "btc-2"},
+          {"type": "lock_state", "key": "eth-2", "why": "p", "p": 0.97}, {"type": "lock_miss", "key": "eth-2"}]
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        rj.missed_report(ev)
+    text = out.getvalue()
+    assert "вход 1" in text and "max_open: btc-1 U p 0.96 ask 0.92" in text
+    for name in ("одно окно за раз", "продажи уже не было", "фильтр Binance", "продавца по нашей цене нет"):
+        assert f"   1  " in text and name in text, name
+
+
+def test_15m_live_size_raised_on_the_owners_word():
+    """reports/90 (24 Nov, owner: "подними лимит денег на рабочих стратегиях, только проверь чтобы был баланс потере к
+    выигрышу"): the 15m live tiers below 0.99 buy 5 shares (was 2). At ~0.91 a win is ~+8 c a share and a loss ~-92 c (one loss =
+    ~11 wins; 62 entries / 1 lost at 2 shares since 17 Nov). One 5-share loss stays under the $5 day stop, the second stops it.
+    The Sniper is NOT raised: at ~0.98 one loss = ~53 wins, a month of its profit."""
+    live = load_lock_config(os.path.join(ROOT, "config", "lock15_live.toml"))
+    sniper = load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml"))
+    assert live.lock.shares == 5 and live.lock.big_shares == 10 and live.risk.daily_loss_limit == 5.0
+    worst_small = live.lock.shares * (max(t[1] for t in live.lock.tiers if t[0] < 0.99) + 0.005)   # top price below 0.99 + fee
+    assert worst_small < live.risk.daily_loss_limit < 2 * live.lock.shares * min(t[1] for t in live.lock.tiers)
+    assert sniper.lock.shares == 10 and sniper.risk.max_open_usd == 10.0

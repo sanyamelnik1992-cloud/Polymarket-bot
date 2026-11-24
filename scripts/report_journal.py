@@ -163,6 +163,56 @@ def shock_breakdown(ev, fixed_bp=2.5):
         print(f"  {name:45s}: {len(es):4d} / {len(done):4d} / {sum(1 for x in done if x < 0):3d} / {sum(done):+8.2f}")
 
 
+MISS_ORDER = (("max_open", "сигнал был, но уже открыт вход (одно окно за раз)"),
+              ("fak_miss", "заявка ушла, продажи уже не было"),
+              ("guard", "фильтр Binance (движение против нас / скачок / пауза)"),
+              ("no_seller", "модель уверена, но продавца по нашей цене нет"),
+              ("day_stop", "дневной стоп / файл STOP"))
+
+
+def missed_report(ev):
+    """Lock bots (reports/90): windows the model liked that ended without an entry, by what stopped them. A window counts once,
+    by the strongest reason: an entry, else a blocked signal (max_open), a missed FAK, a Binance guard, no seller at our
+    price (the model at or above theta), the day stop."""
+    states = [e for e in ev if e["type"] == "lock_state"]
+    if not states or any(e["type"] == "mm_quote" for e in ev):
+        return
+    start = next((e for e in ev if e["type"] == "start"), {}) or {}
+    theta = ((start.get("config") or {}).get("lock") or {}).get("theta", 0.9)
+    entered = {e["key"] for e in ev if e["type"] == "lock_entry"}
+    fak = {e["key"] for e in ev if e["type"] == "lock_miss" and not e.get("error")}
+    why = {}
+    for e in states:
+        why.setdefault(e["key"], []).append(e)
+    cls = Counter()
+    blocked = []
+    for key, es in why.items():
+        if key in entered:
+            cls["entered"] += 1
+            continue
+        ws = [e.get("why") or "" for e in es]
+        if "risk:max_open" in ws:
+            cls["max_open"] += 1
+            b = next(e for e in es if e.get("why") == "risk:max_open")
+            blocked.append((key, b.get("side"), b.get("p"), b.get("ask")))
+        elif key in fak:
+            cls["fak_miss"] += 1
+        elif any(w in ("binance_against", "binance_jump", "shock") for w in ws):
+            cls["guard"] += 1
+        elif any(w == "ask_too_high" and (e.get("p") or 0) >= theta - 1e-9 for w, e in zip(ws, es)):
+            cls["no_seller"] += 1
+        elif any(w.startswith("risk:") for w in ws):
+            cls["day_stop"] += 1
+    if not sum(cls.values()):
+        return
+    print(f"\nокна, где модель была уверена (p >= {theta}): вход {cls['entered']}; без входа:")
+    for k, name in MISS_ORDER:
+        if cls[k]:
+            print(f"  {cls[k]:4d}  {name}")
+    for key, side, p_, ask in blocked[-10:]:
+        print(f"    max_open: {key} {side} p {p_} ask {ask}")
+
+
 def maker_report(ev):
     """Paper maker (reports/89): quotes, fills by our edge at the fill (fair value - price), the side's fair value 5 / 30 s later
     (markout: > 0 = the fill was not picked off), the outcome per share and the windows."""
@@ -238,6 +288,7 @@ def main(d):
     fair_breakdown(ev)
     race_report(ev)
     shock_breakdown(ev)
+    missed_report(ev)
     maker_report(ev)
     if fills.empty:
         print("no fills")

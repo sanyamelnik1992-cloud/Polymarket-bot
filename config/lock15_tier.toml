@@ -19,8 +19,11 @@ a_max = 0.98
 min_edge = 0.005
 rel_lo = 240.0
 rel_hi = 299.5
-shares = 2            # reports/76 (16 Nov, owner: "нужно что-то менять или мы весь баланс просрём"): 2 shares below p 0.99 (was 5):
-                      # a loss is ~-$1.9, not -$4.6. No tier below 0.99 has a proven edge on real fills yet
+shares = 5            # 24 Nov (owner: "подними лимит денег на рабочих стратегиях, только проверь чтобы был баланс потере к
+                      # выигрышу", reports/90): 2 -> 5 on the tiers below 0.99. Since 17 Nov 62 entries / 1 lost / +6.7 c a share
+                      # at 2 shares; at ~0.91 a win is ~+8 c a share and a loss ~-92 c: one loss = ~11 wins, ~1 entry in 40 lost.
+                      # A 5-share loss (~-$4.7) is 3.6 % of the wallet and keeps the bot running; the day stop ($5) ends the day
+                      # at the second one. Was 2 since 16 Nov (reports/76).
 max_entries_per_window = 1
 tiers = [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]]   # reports/75 (16 Nov): the bottom tier needs p >= 0.93 (was 0.90). At p 0.90-0.93 the market
                       # price is the real odds: 527 window states 10-16 Nov, 8.0 % lost against a ~0.906 cost; live 39 entries / 4 lost

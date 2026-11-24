@@ -600,6 +600,16 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   windows +$0.33 (22 / 25 paired), -$3.50 and -$4.25 (10 shares one side within 2 s, the model 3-4 c above the book, the book
   right): hence the "min" twin. A one-sided window is +-$4: judge on hundreds of windows. Both makers in main 24 Nov ~16:00
   UTC on the owner's "Заливай в мейн" (started once by install_units.sh; cold start: ~30 min of Binance history before quoting).
+- **`reports/90_live_sizes_win_loss_balance.md` (24 Nov, owner: "заливай в мейн и подними лимит денег на рабочих стратегиях, только
+  проверь чтобы был баланс потере к выигрышу"; REAL MONEY)**: 15m Ступени live (`lock15_live.toml` + twins `lock15_tier`,
+  `lock15_alt`) `shares` 2 -> 5 on the tiers below 0.99 (10 at >= 0.99 unchanged; $10 / $10 / one window / day stop $5
+  unchanged: one 5-share loss ~-$4.7 keeps it running, the second stops it). Balance: at ~0.91 a win is ~+8 c a share, a loss
+  ~-92 c (one loss = ~11 wins); since 17 Nov 62 entries / 1 lost / +6.7 c a share at 2 shares; expected ~+$2.2 a day (was
+  ~$0.9). The Sniper is NOT raised: at ~0.98 one loss = ~53 wins (a month of its profit), 20 shares = -$19.6 = 15 % of the
+  $130 wallet. `report_journal.py` `missed_report`: windows the model liked (p >= theta) by entry / one window at a time
+  (`risk:max_open`) / missed FAK / Binance guard / no seller at our price / day stop -> decide on 2 windows at a time for 15m.
+  Back to 2 shares at two losses in 3 days or > 4 % lost over 50 entries; 10 shares below 0.99 only with a ~$200 wallet
+  and 100 entries at 5 with <= 2.5 % lost.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
