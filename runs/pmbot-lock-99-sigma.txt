@@ -1,9 +1,6 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261124-155600
-mode: paper  duration: 185.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 370, 'lock_state': 2201, 'strike': 144, 'lock_miss': 1}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261124-194109
+mode: paper  duration: 21.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 42, 'lock_state': 149, 'strike': 12}
 
-lock orders: sent 1  filled 0  ask gone 1  errors 0
-  signal -> exchange answer, ms: median 301  p90 301  max 301
-  decision -> order sent, ms: median 5  p90 5  max 5
-  GC pause per 30 s, ms: median 1  p90 10  max 74
-  misses came 60-60 s before the end; model p 0.996-0.996
+окна, где модель была уверена (p >= 0.99): вход 0; без входа:
+    11  фильтр Binance (движение против нас / скачок / пауза)
 no fills
