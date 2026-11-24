@@ -1,58 +1,58 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-fair/20261123-184427
-mode: paper  duration: 1157.5 min  events: {'start': 1, 'gc_freeze': 2, 'status': 2313, 'lock_state': 1325, 'strike': 924, 'bn_strike': 924, 'fill': 151, 'lock_entry': 151, 'lock_race': 359, 'provisional': 115, 'settle': 112, 'lock_miss': 208}
+mode: paper  duration: 1216.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 2431, 'lock_state': 1387, 'strike': 972, 'bn_strike': 972, 'fill': 158, 'lock_entry': 158, 'lock_race': 396, 'provisional': 122, 'settle': 121, 'lock_miss': 238}
 
-lock orders: sent 359  filled 151  ask gone 208  errors 0
-  signal -> exchange answer, ms: median 502  p90 516  max 817
+lock orders: sent 396  filled 158  ask gone 238  errors 0
+  signal -> exchange answer, ms: median 502  p90 515  max 921
   decision -> order sent, ms: median 2  p90 13  max 89
-  GC pause per 30 s, ms: median 1  p90 11  max 109
-  signal age at the decision, ms: median 6  p90 51
-  fill price minus the ask we saw, cents: mean -0.57  worst +13.1
+  GC pause per 30 s, ms: median 2  p90 12  max 109
+  signal age at the decision, ms: median 6  p90 50
+  fill price minus the ask we saw, cents: mean -0.52  worst +13.1
   misses came 63-290 s before the end; model p 0.202-0.999
 
 fair entries by edge, c: orders / filled / settled / won (expected at the paid prices) / pnl
-       15-20:  335 /  138 ( 41 %) /  131 /   49 (  38.3) /   +36.52
-       20-25:   19 /   11 ( 58 %) /   11 /    6 (   4.1) /    +9.51
-       25-35:    3 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
+       15-20:  370 /  144 ( 39 %) /  143 /   51 (  42.1) /   +24.28
+       20-25:   20 /   12 ( 60 %) /   12 /    7 (   4.7) /   +11.67
+       25-35:    4 /    0 (  0 %) /    0 /    0 (   0.0) /    +0.00
         >=35:    2 /    2 (100 %) /    2 /    2 (   0.5) /    +7.57
 
 fair entries by ask size, shares: orders / filled / settled / won (expected at the paid prices) / pnl
-        0-10:  104 /   32 ( 31 %) /   32 /   11 (   9.1) /    +4.47
-       10-50:  140 /   58 ( 41 %) /   52 /   24 (  13.7) /   +45.21
-      50-200:   65 /   27 ( 42 %) /   26 /   10 (   9.2) /    +0.51
-       >=200:   50 /   34 ( 68 %) /   34 /   12 (  10.9) /    +3.41
+        0-10:  115 /   33 ( 29 %) /   33 /   12 (   9.8) /    +6.00
+       10-50:  155 /   61 ( 39 %) /   61 /   25 (  16.6) /   +33.52
+      50-200:   72 /   29 ( 40 %) /   28 /   11 (   9.8) /    +1.71
+       >=200:   54 /   35 ( 65 %) /   35 /   12 (  11.0) /    +2.30
 
 fair entries by signal age, ms: orders / filled / settled / won (expected at the paid prices) / pnl
-       0-100:  359 /  151 ( 42 %) /  144 /   57 (  42.8) /   +53.61
+       0-100:  396 /  158 ( 40 %) /  157 /   60 (  47.2) /   +43.53
 
 fair entries by what woke the decision (section 17): orders / filled / settled / won (expected at the paid prices) / pnl
-        book:   48 /   26 ( 54 %) /   23 /    4 (   4.6) /    -8.49
-       level:   30 /   14 ( 47 %) /   14 /    6 (   4.4) /   +10.09
-        move:  194 /   67 ( 35 %) /   65 /   36 (  23.9) /   +53.75
-       timer:   87 /   44 ( 51 %) /   42 /   11 (   9.9) /    -1.74
+        book:   50 /   26 ( 52 %) /   26 /    4 (   4.9) /   -11.45
+       level:   34 /   14 ( 41 %) /   14 /    6 (   4.4) /   +10.09
+        move:  221 /   72 ( 33 %) /   72 /   38 (  27.1) /   +46.51
+       timer:   91 /   46 ( 51 %) /   45 /   12 (  10.7) /    -1.62
 
 race for the ask (reports/83 s. 17): orders whose ask is still in our book this long after the decision
        0    50   100   150   200   250   300   400   500   750  1000  ms
-     98%   85%   78%   72%   65%   63%   57%   49%   42%   33%   28%  all (359)
-    100%   96%   96%   97%   96%   97%   97%   97%   99%   73%   58%  filled (151)
-     97%   77%   64%   54%   43%   39%   28%   14%    0%    4%    6%  missed (208)
-  misses: 92 of 208 had a public trade at or under our limit before our answer = another taker was faster, the first of them 63 ms after our decision (median); 116 without one = the ask was pulled
+     98%   84%   77%   70%   64%   62%   56%   48%   40%   32%   26%  all (396)
+    100%   96%   96%   97%   96%   97%   97%   97%   99%   73%   58%  filled (158)
+     96%   76%   63%   53%   43%   39%   29%   15%    1%    4%    5%  missed (238)
+  misses: 108 of 238 had a public trade at or under our limit before our answer = another taker was faster, the first of them 49 ms after our decision (median); 130 without one = the ask was pulled
   decision -> answer, ms: median 505  (paper: paper_exec_ms)
 
-fills: 151  shares: 920  notional: $232.68
+fills: 158  shares: 958  notional: $251.20
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       81  456.17   141.348      0.340  172.012
-eth       29  202.00    35.881      0.202  199.419
-sol       21  146.00    29.096      0.249  215.634
+btc       85  479.17   149.868      0.343  174.041
+eth       31  212.00    42.631      0.233  191.833
+sol       22  151.00    32.346      0.267  213.336
 xrp       20  115.65    26.355      0.258  194.845
 
 settled windows:
        windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst    best    roi
 asset                                                                                 
-btc         57  146.914  31.256         31.256     0.0     0.456 -6.443  16.344  0.213
-eth         21   34.686  11.314         11.314     0.0     0.381 -3.346   8.043  0.326
-sol         17   27.519   2.481          2.481     0.0     0.353 -2.249   3.784  0.090
-xrp         17   26.445   8.555          8.555     0.0     0.412 -3.546   4.048  0.324
+btc         60  154.630  33.540         33.540     0.0     0.467 -6.443  16.344  0.217
+eth         24   44.645   6.355          6.355     0.0     0.375 -3.427   8.043  0.142
+sol         19   33.761  -3.761         -3.761     0.0     0.316 -3.330   3.784 -0.111
+xrp         18   27.605   7.395          7.395     0.0     0.389 -3.546   4.048  0.268
 
-TOTAL pnl $+53.61 (ex-rebate $+53.61) on cost $235.56 -> ROI +22.76%; windows 112, t-stat +1.64
-max drawdown $-19.70; hedged windows (both sides filled): 6
+TOTAL pnl $+43.53 (ex-rebate $+43.53) on cost $260.64 -> ROI +16.70%; windows 121, t-stat +1.29
+max drawdown $-20.62; hedged windows (both sides filled): 6
