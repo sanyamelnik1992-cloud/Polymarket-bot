@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261124-201822
-mode: paper  duration: 821.9 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1643, 'lock_state': 1569, 'strike': 216, 'fill': 18, 'lock_entry': 18, 'provisional': 18, 'settle': 18, 'lock_miss': 2}
+mode: paper  duration: 882.9 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1765, 'lock_state': 1594, 'strike': 232, 'fill': 18, 'lock_entry': 18, 'provisional': 18, 'settle': 18, 'lock_miss': 2}
 
 lock orders: sent 20  filled 18  ask gone 2  errors 0
   signal -> exchange answer, ms: median 301  p90 303  max 306
@@ -10,7 +10,7 @@ lock orders: sent 20  filled 18  ask gone 2  errors 0
 
 окна, где модель была уверена (p >= 0.99): вход 17; без входа:
      2  заявка ушла, продажи уже не было
-    45  фильтр Binance (движение против нас / скачок / пауза)
+    46  фильтр Binance (движение против нас / скачок / пауза)
 
 fills: 18  shares: 87  notional: $86.09
        fills  shares  notional  avg_price  med_rel
