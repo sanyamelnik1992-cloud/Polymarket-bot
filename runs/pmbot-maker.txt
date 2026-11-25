@@ -1,31 +1,31 @@
 run: /home/pmbot/Polymarket-bot/data/journal-maker/20261124-202455
-mode: paper  duration: 876.5 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1752, 'bn_strike': 175, 'strike': 175, 'fv': 6724, 'mm_quote': 10675, 'fill': 1622, 'mm_fill': 1622, 'mm_markout': 3244, 'mm_pull': 723, 'mm_cancel': 534, 'provisional': 170, 'settle': 169}
+mode: paper  duration: 936.7 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1872, 'bn_strike': 187, 'strike': 187, 'fv': 7206, 'mm_quote': 11314, 'fill': 1737, 'mm_fill': 1737, 'mm_markout': 3467, 'mm_pull': 782, 'mm_cancel': 558, 'provisional': 182, 'settle': 181}
 
-maker: quotes 10675 (moved 8998), pulls on a Binance jump 723, cancels {'pause': 330, 'price': 107, 'side_full': 59, 'unpaired': 32, 'time': 5, 'book_stale': 1}
-  fills 1622: 7069 shares, $3491.55
+maker: quotes 11314 (moved 9528), pulls on a Binance jump 782, cancels {'pause': 342, 'price': 115, 'side_full': 60, 'unpaired': 34, 'time': 6, 'book_stale': 1}
+  fills 1737: 7563 shares, $3724.64
   by our edge at the fill (fair - price):     fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
-  -100..  +0 c                                   54      244   -1.46   -2.00   -4.81    +4.88 (234)
-    +0..  +1 c                                  510     2216   +0.54   -1.03   -1.90    +4.24 (2186)
-    +1..  +2 c                                  405     1820   +1.48   -0.81   -0.01    -3.43 (1790)
-    +2..  +3 c                                  356     1525   +2.47   -0.84   -2.68    -2.67 (1505)
-    +3..  +5 c                                  210      886   +3.73   +0.18   -0.83    -7.60 (881)
-    +5..+100 c                                   87      378   +7.02   -0.86   +0.45    +4.61 (373)
+  -100..  +0 c                                   60      274   -1.41   -2.10   -5.12    +0.77 (269)
+    +0..  +1 c                                  539     2342   +0.54   -1.07   -1.84    +3.51 (2317)
+    +1..  +2 c                                  441     1974   +1.48   -0.70   +0.03    -2.42 (1955)
+    +2..  +3 c                                  382     1630   +2.48   -0.59   -2.14    -0.98 (1602)
+    +3..  +5 c                                  220      931   +3.73   +0.13   -0.81    -7.19 (926)
+    +5..+100 c                                   95      411   +6.97   -0.51   +1.06    +4.12 (401)
   by the Binance move of the 2 s before (bp): fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
-  against us (< -0.5)                           533     2279   +1.34   -1.13   -1.57    -0.95 (2244)
-  flat                                          751     3346   +2.02   -1.21   -1.88    -1.40 (3301)
-  toward us (> 0.5)                             338     1445   +2.39   +0.66   -0.15    +1.41 (1425)
-  all                                          1622     7069   +1.88   -0.80   -1.42    -0.68 (6969)
-  windows settled 169: pnl -47.31 (won 79, lost 89, worst -7.25, best +4.60); shares paired 3206, unpaired 557
+  against us (< -0.5)                           560     2405   +1.35   -1.07   -1.47    -1.04 (2385)
+  flat                                          805     3568   +2.00   -1.13   -1.79    -1.17 (3518)
+  toward us (> 0.5)                             372     1590   +2.38   +0.69   +0.30    +2.32 (1567)
+  all                                          1737     7563   +1.87   -0.73   -1.25    -0.40 (7470)
+  windows settled 181: pnl -29.62 (won 87, lost 93, worst -7.25, best +7.20); shares paired 3439, unpaired 593
 
-fills: 1622  shares: 7069  notional: $3491.55
-       fills    shares  notional  avg_price  med_rel
-asset                                               
-btc     1622  7069.316  3491.548      0.491   41.456
+fills: 1737  shares: 7563  notional: $3724.64
+       fills   shares  notional  avg_price  med_rel
+asset                                              
+btc     1737  7562.59  3724.639      0.489   41.571
 
 settled windows:
        windows      cost     pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
 asset                                                                                
-btc        169  3443.648 -47.311        -47.311     0.0     0.467  -7.25   4.6 -0.014
+btc        181  3681.033 -29.624        -29.624     0.0     0.481  -7.25   7.2 -0.008
 
-TOTAL pnl $-47.31 (ex-rebate $-47.31) on cost $3443.65 -> ROI -1.37%; windows 169, t-stat -1.73
-max drawdown $-66.43; hedged windows (both sides filled): 149
+TOTAL pnl $-29.62 (ex-rebate $-29.62) on cost $3681.03 -> ROI -0.80%; windows 181, t-stat -1.01
+max drawdown $-66.43; hedged windows (both sides filled): 159

@@ -1,29 +1,30 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261124-201814
-mode: live  duration: 882.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 1765, 'prewarm': 236, 'lock_state': 3305, 'strike': 232, 'order_filled': 9, 'fill': 9, 'lock_entry': 9, 'provisional': 9, 'settle': 9, 'order_rejected': 3, 'lock_miss': 3}
+mode: live  duration: 943.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 1886, 'prewarm': 252, 'lock_state': 3611, 'strike': 248, 'order_filled': 10, 'fill': 10, 'lock_entry': 10, 'provisional': 10, 'settle': 9, 'order_rejected': 3, 'lock_miss': 3}
 
-lock orders: sent 12  filled 9  ask gone 3  errors 0
+lock orders: sent 13  filled 10  ask gone 3  errors 0
   signal -> exchange answer, ms: median 266  p90 353  max 353
   exchange call alone, ms: median 261  p90 352  max 353
   decision -> order sent, ms: median 2  p90 3  max 3
   GC pause per 30 s, ms: median 0  p90 5  max 80
-  market prewarm (2 lookups + signing), ms: median 131  max 647  n 236
-  fill price minus the ask we saw, cents: mean +0.21  worst +1.0
+  market prewarm (2 lookups + signing), ms: median 134  max 647  n 252
+  fill price minus the ask we saw, cents: mean +0.31  worst +1.2
   misses came 23-60 s before the end; model p 0.951-0.991
   exchange rejections by code: {'fak_not_filled': 3}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    7 /    7 /   0 /    +2.35
-  > 2.5 bp (only the volatility pause)         :    2 /    2 /   0 /    +0.91
+  > 2.5 bp (only the volatility pause)         :    3 /    2 /   0 /    +0.91
 
-окна, где модель была уверена (p >= 0.9): вход 7; без входа:
+окна, где модель была уверена (p >= 0.9): вход 8; без входа:
      1  заявка ушла, продажи уже не было
-   208  фильтр Binance (движение против нас / скачок / пауза)
+   223  фильтр Binance (движение против нас / скачок / пауза)
      8  модель уверена, но продавца по нашей цене нет
 
-fills: 9  shares: 50  notional: $46.80
+fills: 10  shares: 55  notional: $51.70
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        8  45.228     42.25      0.929  844.782
+sol        1   5.147      4.90      0.952  880.404
 xrp        1   5.056      4.55      0.900  840.796
 
 settled windows:
