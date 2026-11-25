@@ -1,38 +1,38 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261124-201814
-mode: live  duration: 1302.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2605, 'prewarm': 348, 'lock_state': 6342, 'strike': 344, 'order_filled': 11, 'fill': 11, 'lock_entry': 11, 'provisional': 11, 'settle': 11, 'order_rejected': 4, 'lock_miss': 4}
+mode: live  duration: 1363.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2726, 'prewarm': 364, 'lock_state': 6659, 'strike': 360, 'order_filled': 12, 'fill': 12, 'lock_entry': 12, 'provisional': 12, 'settle': 12, 'order_rejected': 4, 'lock_miss': 4}
 
-lock orders: sent 15  filled 11  ask gone 4  errors 0
+lock orders: sent 16  filled 12  ask gone 4  errors 0
   signal -> exchange answer, ms: median 266  p90 353  max 458
-  exchange call alone, ms: median 261  p90 353  max 458
+  exchange call alone, ms: median 263  p90 353  max 458
   decision -> order sent, ms: median 2  p90 3  max 3
   GC pause per 30 s, ms: median 0  p90 8  max 189
-  market prewarm (2 lookups + signing), ms: median 140  max 647  n 348
-  fill price minus the ask we saw, cents: mean +0.28  worst +1.2
+  market prewarm (2 lookups + signing), ms: median 143  max 647  n 364
+  fill price minus the ask we saw, cents: mean +0.26  worst +1.2
   misses came 23-60 s before the end; model p 0.951-0.991
   exchange rejections by code: {'fak_not_filled': 4}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    8 /    8 /   0 /    +2.77
-  > 2.5 bp (only the volatility pause)         :    3 /    3 /   0 /    +1.14
+  > 2.5 bp (only the volatility pause)         :    4 /    4 /   0 /    +1.37
 
-окна, где модель была уверена (p >= 0.9): вход 8; без входа:
+окна, где модель была уверена (p >= 0.9): вход 9; без входа:
      2  заявка ушла, продажи уже не было
-   315  фильтр Binance (движение против нас / скачок / пауза)
+   330  фильтр Binance (движение против нас / скачок / пауза)
      9  модель уверена, но продавца по нашей цене нет
 
-fills: 11  shares: 60  notional: $56.25
+fills: 12  shares: 65  notional: $61.00
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        9  50.228     46.80      0.927  843.228
-sol        1   5.147      4.90      0.952  880.404
+sol        2  10.147      9.65      0.951  885.827
 xrp        1   5.056      4.55      0.900  840.796
 
 settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
 btc          9  47.021  3.208          3.208     0.0       1.0  0.186  0.490  0.068
-sol          1   4.916  0.231          0.231     0.0       1.0  0.231  0.231  0.047
+sol          2   9.683  0.464          0.464     0.0       1.0  0.231  0.233  0.048
 xrp          1   4.582  0.474          0.474     0.0       1.0  0.474  0.474  0.103
 
-TOTAL pnl $+3.91 (ex-rebate $+3.91) on cost $56.52 -> ROI +6.92%; windows 11, t-stat +10.20
+TOTAL pnl $+4.15 (ex-rebate $+4.15) on cost $61.29 -> ROI +6.76%; windows 12, t-stat +10.34
 max drawdown $0.00; hedged windows (both sides filled): 0
