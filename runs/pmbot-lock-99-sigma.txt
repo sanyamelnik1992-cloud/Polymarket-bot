@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261124-201823
-mode: paper  duration: 703.7 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1407, 'lock_state': 6960, 'strike': 560, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1, 'lock_miss': 1}
+mode: paper  duration: 763.7 min  events: {'start': 1, 'gc_freeze': 2, 'status': 1527, 'lock_state': 7702, 'strike': 608, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1, 'lock_miss': 1}
 
 lock orders: sent 2  filled 1  ask gone 1  errors 0
   signal -> exchange answer, ms: median 301  p90 301  max 301
@@ -14,7 +14,7 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
 
 окна, где модель была уверена (p >= 0.99): вход 1; без входа:
      1  заявка ушла, продажи уже не было
-   482  фильтр Binance (движение против нас / скачок / пауза)
+   521  фильтр Binance (движение против нас / скачок / пауза)
      2  модель уверена, но продавца по нашей цене нет
 
 fills: 1  shares: 10  notional: $9.60
