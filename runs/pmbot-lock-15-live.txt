@@ -1,23 +1,23 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261124-201814
-mode: live  duration: 1002.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2005, 'prewarm': 268, 'lock_state': 3814, 'strike': 264, 'order_filled': 11, 'fill': 11, 'lock_entry': 11, 'provisional': 11, 'settle': 11, 'order_rejected': 3, 'lock_miss': 3}
+mode: live  duration: 1064.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2128, 'prewarm': 284, 'lock_state': 4301, 'strike': 280, 'order_filled': 11, 'fill': 11, 'lock_entry': 11, 'provisional': 11, 'settle': 11, 'order_rejected': 4, 'lock_miss': 4}
 
-lock orders: sent 14  filled 11  ask gone 3  errors 0
-  signal -> exchange answer, ms: median 267  p90 353  max 458
-  exchange call alone, ms: median 265  p90 353  max 458
+lock orders: sent 15  filled 11  ask gone 4  errors 0
+  signal -> exchange answer, ms: median 266  p90 353  max 458
+  exchange call alone, ms: median 261  p90 353  max 458
   decision -> order sent, ms: median 2  p90 3  max 3
-  GC pause per 30 s, ms: median 0  p90 6  max 80
-  market prewarm (2 lookups + signing), ms: median 134  max 647  n 268
+  GC pause per 30 s, ms: median 0  p90 7  max 80
+  market prewarm (2 lookups + signing), ms: median 136  max 647  n 284
   fill price minus the ask we saw, cents: mean +0.28  worst +1.2
   misses came 23-60 s before the end; model p 0.951-0.991
-  exchange rejections by code: {'fak_not_filled': 3}
+  exchange rejections by code: {'fak_not_filled': 4}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    8 /    8 /   0 /    +2.77
   > 2.5 bp (only the volatility pause)         :    3 /    3 /   0 /    +1.14
 
 окна, где модель была уверена (p >= 0.9): вход 8; без входа:
-     1  заявка ушла, продажи уже не было
-   237  фильтр Binance (движение против нас / скачок / пауза)
+     2  заявка ушла, продажи уже не было
+   252  фильтр Binance (движение против нас / скачок / пауза)
      9  модель уверена, но продавца по нашей цене нет
 
 fills: 11  shares: 60  notional: $56.25
