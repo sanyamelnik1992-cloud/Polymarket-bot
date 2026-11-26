@@ -712,7 +712,9 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   > 100 ms 8 times in 44 min (max 470 ms), so the median place / cancel 152 / 187 ms is the exchange and the network, the p95 668 / 786 ms
   partly ours. Decide on a bigger server from the next reports (maker place / cancel median and p95, loop lag, steal): the median stays ->
   the exchange is the limit, a bigger server only helps the tails; the tails stay -> dedicated cores. A new server must stay in IRELAND
-  (`live.API_OK_COUNTRIES = {"IE"}`; London is close-only, Germany and the UK are closed), e.g. AWS eu-west-1.
+  (`live.API_OK_COUNTRIES = {"IE"}`; docs "Geographic Restrictions": the exchange's primary servers are in eu-west-2 (London), the closest
+  non-restricted region is eu-west-1 (Ireland), the UK and Germany are close-only on the frontend AND the API; direct co-location in
+  eu-west-2 exists for traders on their own account and makers by a KYC/KYB form), e.g. AWS eu-west-1.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`
