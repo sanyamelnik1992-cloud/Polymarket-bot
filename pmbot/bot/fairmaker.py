@@ -112,7 +112,7 @@ def load_maker_config(path=None, overrides=None):
 # The live maker is a TEST at the exchange minimum (reports/94): these caps cannot be raised from a config. Growing it into a
 # bot is the owner's decision and a change of this code, reviewed like every real-money change.
 LIVE_CAPS = {"shares": 5.0, "max_side_shares": 15.0, "max_unpaired": 10.0, "max_resting_usd": 10.0, "daily_loss_limit": 15.0,
-             "max_open_usd": 40.0, "max_orders_hour": 3000, "min_reserve_usd": 40.0}
+             "max_open_usd": 40.0, "max_orders_hour": 5000, "min_reserve_usd": 40.0}
 
 
 def load_maker_live_config(path, live_flag=False, overrides=None):
@@ -142,7 +142,7 @@ def load_maker_live_config(path, live_flag=False, overrides=None):
     if not (lc.reserve_usd >= k["min_reserve_usd"] and 1 <= lc.max_orders_hour <= k["max_orders_hour"]
             and 2 <= lc.heartbeat_s <= 6 and 181 <= lc.ttl_s <= 600 and 0 <= lc.cross_pause_ms <= 5000
             and 1 <= lc.reconcile_every_s <= 120):
-        raise ValueError("live maker: reserve_usd >= 40, 1 <= max_orders_hour <= 3000, 2 <= heartbeat_s <= 6, "
+        raise ValueError("live maker: reserve_usd >= 40, 1 <= max_orders_hour <= 5000, 2 <= heartbeat_s <= 6, "
                          "181 <= ttl_s <= 600, 0 <= cross_pause_ms <= 5000, 1 <= reconcile_every_s <= 120")
     return cfg, mm, lc
 
@@ -226,6 +226,8 @@ class FairMaker(LockBot):
             self.broker = PaperBroker(cfg.execution.paper_place_ms, cfg.execution.paper_cancel_ms,
                                       on_fill=self._on_mm_fill, queue=True)
         self.live = self.broker.mode == "live"
+        from dataclasses import asdict
+        journal.log("mm_config", maker=asdict(mm), live=asdict(live) if live is not None else None, mode=self.broker.mode)
         # the public trades go to the paper broker (LockBot gave the fair rule's race log the feed)
         self.feeds = {a: ClobFeed(self.st, a, alive=self.alive, on_trade=self._on_public_trade) for a in cfg.lock.assets}
         self.mm_bids = {}          # (window key, side) -> {"oid", "price", "size", "token", "p", "t"}

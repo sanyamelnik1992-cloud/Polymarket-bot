@@ -9,8 +9,8 @@ StartLimitBurst=5
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# REAL MONEY. Installed but NOT enabled at boot and NOT started by install_units.sh: the owner's word starts it
-# (Telegram /restart pmbot-maker-live). reports/94. A daily-loss stop exits the process; it stays stopped until a human starts it.
+# REAL MONEY. Not enabled at boot. Started ONCE by install_units.sh (START_ONCE) on the owner's "запускай" (26 Nov, reports/94);
+# after its daily-loss stop or an /off it stays stopped until a human starts it (Telegram /restart pmbot-maker-live).
 ExecStart=__REPO__/.venv/bin/python scripts/run_maker.py --config config/maker_live.toml --live
 # CPU priority of a live bot (5x the default share under contention, paper bots 0.2x)
 CPUWeight=500

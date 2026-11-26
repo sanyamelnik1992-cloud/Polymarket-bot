@@ -4,8 +4,9 @@
 # post-only GTD bids, the order heartbeat as the dead-man switch, cancels by id and sweeps by our own tokens (never cancel-all:
 # the wallet is shared with the lock bots). It answers what paper cannot: the real fill rate of a 5-share bid among other
 # makers, how far the price moves against our fills with our real latency, and the exchange's maker rebate.
-# Not enabled at boot and not started by install_units.sh: the owner's word starts it (/restart pmbot-maker-live). The loader
-# caps every limit below (fairmaker.LIVE_CAPS); growing it is a change of that code and the owner's decision.
+# Started on the owner's "запускай" (26 Nov) once by install_units.sh (START_ONCE), not enabled at boot; after its day stop it
+# stays stopped until a human runs /restart pmbot-maker-live. The loader caps every limit below (fairmaker.LIVE_CAPS); growing
+# it is a change of that code and the owner's decision.
 journal_dir = "data/journal-maker-live"
 
 [lock]
@@ -38,7 +39,8 @@ markout_s = [5, 30]
 max_shares = 5              # one order; the broker refuses more whatever the quoting asks
 max_resting_usd = 10.0      # both resting bids together (2 x 5 x <= 0.90)
 reserve_usd = 60.0          # collateral that must stay free for the lock bots (same wallet): below it no new bid
-max_orders_hour = 1500      # orders placed in any rolling hour (paper: ~700 an hour at most); above it the test stops
+max_orders_hour = 4000      # orders placed in any rolling hour: a runaway guard, not a quota; above it the test stops.
+                            # The paper twin (ref "min") placed 1330 an hour on average over 40.6 h, ~2x in busy hours
 ttl_s = 185                 # GTD: every order expires by itself (the SDK wants >= 180 s ahead); the heartbeat acts first
 heartbeat_s = 4.0           # the exchange cancels our orders ~10 s after the last heartbeat (process dead or hung)
 cross_pause_ms = 300        # a post-only refusal (the book moved during our latency): that token waits this long

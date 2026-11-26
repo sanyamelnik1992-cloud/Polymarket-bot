@@ -46,7 +46,9 @@ def test_unit_is_wired_as_a_paper_bot():
     for f in ("autoupdate.sh", "install_units.sh"):
         assert " pmbot-maker " in open(os.path.join(ROOT, "deploy", f)).read(), f
     inst = open(os.path.join(ROOT, "deploy", "install_units.sh")).read()
-    assert "pmbot-maker" in inst.split("START_ONCE=")[1].splitlines()[0]
+    # 26 Nov (reports/94): retired to make room for the live maker, whose rule is the cautious twin's ("min")
+    assert "pmbot-maker" in inst.split("RETIRED=")[1].splitlines()[0].replace('"', " ").split()
+    assert "pmbot-maker" not in inst.split("START_ONCE=")[1].splitlines()[0].replace('"', " ").split()
 
 
 def test_the_cautious_twin_differs_only_in_the_reference():

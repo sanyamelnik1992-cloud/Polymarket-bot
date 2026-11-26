@@ -640,9 +640,10 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   over 40.6 h: `maker` +$39.17 (389 windows, t 0.8), `maker-safe` +$55.11 (469, t 1.1), days -$35..+$105, drawdowns ~-$60,
   rebate not counted (~0.3 % of turnover): not proven, a few more days; the live maker broker is built only on the owner's word.
   Deployed 26 Nov 13:18 UTC (c093d4f) after the owner's $226.49 deposit (wallet ~$365).
-- **`reports/94_live_maker_test.md` (26 Nov, owner: "Давай начинай делать"; REAL MONEY CODE, NOT STARTED)**: the live maker
-  test. `pmbot/bot/maker_live.py` `MakerLiveBroker` (built on the rewards live broker of report 72): post-only GTD BUYs, <= 5
-  shares, <= 1 resting order per token and 2 in all, <= $10 resting, <= 1500 orders an hour (then fatal), the order heartbeat
+- **`reports/94_live_maker_test.md` (26 Nov, owner: "Давай начинай делать", then "Проверь все еще раз ... и запускай"; REAL
+  MONEY, STARTED 26 Nov ~14:30 UTC once by install_units.sh START_ONCE)**: the live maker test. `pmbot/bot/maker_live.py` `MakerLiveBroker` (built on the rewards live broker of report 72): post-only GTD BUYs, <= 5
+  shares, <= 1 resting order per token and 2 in all, <= $10 resting, <= 4000 orders an hour (then fatal; a runaway guard: the
+  paper twin placed 1330 an hour on average, the first 1500 would have stopped it every busy hour), the order heartbeat
   (4 s) as the dead-man switch, GTD expiry max(now + 185, window end + 60) (the SDK wants >= now + 180), NEVER cancel-all (the
   wallet is shared; cancels by id, sweeps by the tokens it quoted: the lock bots' FAK orders never rest), an unanswered order call
   = `suspect` token (no new order until it is swept and the exchange shows none of ours there), fills from the user stream once
@@ -657,8 +658,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   ref "min" reads the book mid without our own live bids (`_mid_wo_own`: the G ratchet), `LockBot._on_stopping` hook pulls
   every bid BEFORE the up-to-15-min settle wait (it used to run after it). Unit `pmbot-maker-live` = `config/maker_live.toml`
   (the rule of its paper twin `maker_safe.toml`, a test keeps it; 5 shares, 10 a side, 5 unpaired, $10 resting, $30 open,
-  day stop $5, reserve $60, not enabled at boot, NOT in START_ONCE: /restart on the owner's word); `notify.TWINS` safe -> live,
-  `QUIET_SETTLES` (one summary an hour), `SHELF` line, alerts `mm_live_error` / `fill_failed` (rate-limited), report_journal.py
+  day stop $5, reserve $60, not enabled at boot, in START_ONCE on the owner's "запускай": after its day stop / an /off it stays
+  stopped until /restart); `prewarm` signs a never-posted limit order when a window appears (the SDK's two market lookups
+  before the first bid); an adopted order counts later fills up to 5 shares; `gc` forgets orders an hour after their window.
+  The paper `pmbot-maker` ("fair") is RETIRED to make room on the 2 vCPU (each maker ~17 % of a core); `pmbot-maker-safe`
+  stays as the live test's twin. `notify.TWINS` safe -> live,
+  `QUIET_SETTLES` (one summary an hour), alerts `mm_live_error` / `fill_failed` (rate-limited), report_journal.py
   `maker_live_report` (share of orders filled, place / cancel ms, refusals, fill sources, rebate). Verdict after 2-3 days
   (~300 windows) against the paper twin: fill share, markouts 5 / 30 / 60 s, per share by outcome, rebate. Not built: merge of
   pairs (the exchange redeemed the lock bots' wins by itself ~20-40 min after the window), a start-up reconcile of fills lost

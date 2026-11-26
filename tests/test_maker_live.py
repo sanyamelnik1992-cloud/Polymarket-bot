@@ -149,7 +149,7 @@ def test_live_config_needs_the_live_mode_and_the_flag_and_stays_a_test():
                 {"maker": {"max_side_shares": 20}}, {"maker": {"max_unpaired": 15, "max_side_shares": 15}},
                 {"live": {"max_resting_usd": 20.0}}, {"live": {"max_resting_usd": 8.0}},
                 {"risk": {"daily_loss_limit": 20.0}}, {"risk": {"max_open_usd": 50.0}}, {"risk": {"resume_next_day": True}},
-                {"live": {"reserve_usd": 10.0}}, {"lock": {"assets": ["btc", "eth"]}}, {"live": {"max_orders_hour": 5000}},
+                {"live": {"reserve_usd": 10.0}}, {"lock": {"assets": ["btc", "eth"]}}, {"live": {"max_orders_hour": 6000}},
                 {"live": {"heartbeat_s": 10.0}}, {"live": {"ttl_s": 100}}, {"live": {"typo": 1}}, {"risk": {"kill_file": ""}}):
         with pytest.raises(ValueError):
             load_maker_live_config(LIVE, live_flag=True, overrides=bad)
@@ -169,14 +169,17 @@ def test_live_config_runs_the_rule_of_its_paper_twin():
     assert ops.unit_is_live("pmbot-maker-live") and "5 акций" in notify.limits("pmbot-maker-live")
 
 
-def test_unit_is_live_installed_but_started_only_on_the_owners_word():
+def test_unit_is_live_and_started_once_on_the_owners_word():
+    """26 Nov, the owner: "запускай" -> started ONCE by install_units.sh (a marker in data/state; after its day stop or an /off
+    it stays stopped), never enabled at boot."""
     text = open(os.path.join(ROOT, "deploy", "pmbot-maker-live.service")).read()
     assert "scripts/run_maker.py --config config/maker_live.toml --live" in text and "CPUWeight=500" in text
     assert "pmbot-maker-live" in ops.BOT_UNITS and "pmbot-maker-live" in notify.BOTS
     inst = open(os.path.join(ROOT, "deploy", "install_units.sh")).read()
     assert " pmbot-maker-live " in inst                                   # Telegram may start / stop it
-    assert "pmbot-maker-live" not in inst.split("START_ONCE=")[1].splitlines()[0]     # never started by a deploy
-    assert "pmbot-maker-live" not in inst.split("RETIRED=")[1].splitlines()[0]
+    assert "pmbot-maker-live" in inst.split("START_ONCE=")[1].splitlines()[0].replace('"', " ").split()
+    assert "pmbot-maker-live" not in inst.split("RETIRED=")[1].splitlines()[0].replace('"', " ").split()
+    assert "systemctl enable " not in inst
     assert " pmbot-maker-live " in open(os.path.join(ROOT, "deploy", "autoupdate.sh")).read()
 
 
@@ -551,3 +554,69 @@ def test_a_bid_the_exchange_removed_is_placed_again(tmp_path):
     run(bot.decide_once(now + 200))
     assert any(c[0] == "place" and c[2] == "U" for c in br.calls) and bot.mm_bids[(w.key, "U")]["oid"] != gone
     assert any(x["why"] == "gone" for x in j.of("mm_cancel"))
+
+
+def test_prewarm_signs_an_order_that_is_never_posted():
+    class C(FakeClient):
+        async def create_limit_order(self, **kw):
+            self.calls.append(("sign", kw))
+            return object()
+    b = broker(client=C())
+    ms = run(b.prewarm("U"))
+    assert ms is not None and [c[0] for c in b.client.calls] == ["sign"] and not b.client.open
+    assert b.client.calls[0][1]["post_only"] is True and b.client.calls[0][1]["expiration"] >= time.time() + 180
+
+
+def test_an_adopted_order_counts_its_later_fills_and_old_windows_are_forgotten():
+    fills = []
+    b = broker(fills=fills)
+    b.tokens["D"] = ("btc-7", "D", time.time() + 100)
+    b.handle_trade(trade("t1", "MATCHED", ("lost", 2, 0.41, WALLET, "D")))
+    b.handle_trade(trade("t2", "MATCHED", ("lost", 3, 0.41, WALLET, "D")))      # the rest of the same order, later
+    assert [f["size"] for f in fills] == [2.0, 3.0]
+    b.tokens["D"] = ("btc-7", "D", time.time() - 3700)                    # an hour after that window
+    b.gc(0)
+    assert "D" not in b.tokens and "lost" not in b.known and not any(u[1] == "lost" for u in b._counted)
+
+
+def test_the_maker_on_the_real_live_broker_end_to_end(tmp_path):
+    """FairMaker + MakerLiveBroker on the fake exchange: both bids, a fill from the stream, a jump pull in one call, the stop
+    sweep. Catches interface mismatches between the maker and the live broker (paper never exercises them)."""
+    over = {"risk": {"state_file": str(tmp_path / "s.json"), "kill_file": str(tmp_path / "STOP")}}
+    cfg, mm, lc = load_maker_live_config(LIVE, live_flag=True, overrides=over)
+    j = J()
+    bot = FairMaker(cfg, mm, j, live=lc)
+    b = bot.broker
+    b.client, b._geoblock_get, b._env = FakeClient(), OK_GEO, ENV
+    b.stream_ok, b.hb_ok_at, b.balance_usd, b.wallet = True, b.mono(), 300.0, WALLET.lower()
+    now = int(time.time() * 1000)
+    start = now // 1000 - 100
+    w = bot.st.add_window(Window(asset="btc", start=start, slug="s", condition_id="c", token_up="U", token_down="D"))
+    px = bot.st.prices["btc"]
+    for s in range(start - 70, start):
+        px.bn_sec_mid[s] = 100.0
+    px.bn_hist.append((now - 5000, 100.0 * math.exp(10e-4)))
+    bot.bsig["btc"].r2.extend([1e-8 * 10] * 360)
+    bot.bsig["btc"].last_sec = now // 1000 - 2
+    bot.st.books["U"] = Book(bids={0.55: 100.0}, asks={0.90: 50.0})
+    bot.st.books["D"] = Book(bids={0.09: 100.0}, asks={0.45: 50.0})
+    bot.st.feed_alive["clob"]["btc"] = now
+    bot.st.feed_alive["binance"] = now
+
+    async def go():
+        await bot.decide_once(now)
+        placed = [c for c in b.client.calls if isinstance(c, tuple) and c[0] == "place"]
+        assert len(placed) == 2 and {c[1]["asset_id"] for c in placed} == {"U", "D"} and len(b.orders) == 2
+        assert all(c[1]["post_only"] and c[1]["expiration"] >= w.end + 60 for c in placed)
+        up = bot.mm_bids[(w.key, "U")]["oid"]
+        b.handle_trade(trade("t1", "MATCHED", (up, 5, bot.mm_bids[(w.key, "U")]["price"], WALLET, "U")))
+        assert bot.held(w.key) == (5.0, 0.0) and (w.key, "U") not in bot.mm_bids and len(j.of("fill")) == 1
+        px.bn_hist.append((now + 100, 100.0 * math.exp(40e-4)))              # a 30 bp Binance jump: pull
+        b.client.calls.clear()
+        await bot.decide_once(now + 150)
+        cancels = [c for c in b.client.calls if isinstance(c, tuple) and c[0] == "cancel"]
+        assert len(cancels) == 1 and not bot.mm_bids and not b.orders
+        b.client.open["ghost"] = {"asset_id": "U"}                       # an order of ours the stop must not leave behind
+        await bot._on_stopping()
+        assert not b.client.open
+    run(go())

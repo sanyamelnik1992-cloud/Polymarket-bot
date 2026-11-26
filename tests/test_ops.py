@@ -160,7 +160,7 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
 
 
 KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-15-early", "pmbot-feedrec", "pmbot-tg",
-              "pmbot-lock-99-sigma", "pmbot-maker", "pmbot-maker-safe",
+              "pmbot-lock-99-sigma", "pmbot-maker-safe",
               "pmbot-lock-15-early-live", "pmbot-maker-live"}
 # the current lineup (24 Nov: the interceptor retired, live 23 Nov and its paper twin 24 Nov, reports/86-87; the two paper
 # makers of reports/89 added); every other unit is retired

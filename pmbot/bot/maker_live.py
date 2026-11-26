@@ -46,7 +46,8 @@ class MakerLiveCfg:
     max_shares: float = 5.0              # one order (the exchange minimum is 5)
     max_resting_usd: float = 10.0        # all resting bids together (two 5-share bids at <= 0.90 = $9)
     reserve_usd: float = 60.0            # collateral that must stay free for the lock bots (the same wallet)
-    max_orders_hour: int = 1500          # orders placed in any rolling hour (paper: ~700 an hour at most)
+    max_orders_hour: int = 4000          # orders placed in any rolling hour: a runaway guard, not a quota (the paper twin
+                                         # maker_safe placed 1330 an hour on average over 40.6 h, ~2x that in busy hours)
     ttl_s: int = 185                     # GTD: expiration = max(now + ttl_s, window end + 60); the SDK wants >= now + 180
     heartbeat_s: float = 4.0             # the exchange cancels our orders ~10 s after the last heartbeat
     cross_pause_ms: int = 300            # after a post-only refusal ("crosses book") no new order on that token this long
@@ -302,6 +303,19 @@ class MakerLiveBroker:
     def open_usd(self):
         return sum(o.price * o.remaining for o in self.orders.values())
 
+    async def prewarm(self, token):
+        """Let the SDK resolve and cache the market metadata of a new window (tick size, fee rate, neg-risk: two lookups, cached
+        10 min for both tokens) before its first bid: create_limit_order() signs an order that is never posted. LockBot calls it
+        when the window appears (~20 s before the first quote). Returns ms, None on an error (the order path then looks it up)."""
+        t0 = time.perf_counter()
+        try:
+            await self.client.create_limit_order(asset_id=token, side="BUY", price="0.01", size="5", post_only=True,
+                                                 expiration=int(self.clock()) + 600)
+        except Exception as e:  # noqa: BLE001
+            self.log("prewarm_error", err=type(e).__name__, error=str(e)[:200])
+            return None
+        return round((time.perf_counter() - t0) * 1000, 1)
+
     def is_resting(self, oid):
         """False once the exchange removed the order (filled, cancelled by a heartbeat lapse, expired): the maker bids again."""
         return oid in self.orders
@@ -453,8 +467,15 @@ class MakerLiveBroker:
         now = self.clock()
         for oid in [k for k, o in self.orders.items() if now >= o.exp - 60]:
             self.orders.pop(oid, None)
-        for tok in [t for t, (_, _, end) in self.tokens.items() if end + 3600 < now]:
-            self.tokens.pop(tok, None)
+        old = {t for t, (_, _, end) in self.tokens.items() if end + 3600 < now}
+        if old:                                            # an hour after a window: no late fill can come any more
+            for tok in old:
+                self.tokens.pop(tok, None)
+            gone = {k for k, o in self.known.items() if o.token in old and k not in self.orders}
+            for k in gone:
+                self.known.pop(k, None)
+            for uid in [u for u in self._counted if u[1] in gone]:
+                self._counted.pop(uid, None)
 
     def on_public_trade(self, *a, **kw):
         pass                                               # live fills come from the authenticated user stream
@@ -505,7 +526,7 @@ class MakerLiveBroker:
                 if not mine or tok not in self.tokens or status == "FAILED":
                     continue                               # another maker's order (we were the taker), or not a quoted token
                 key, side, _ = self.tokens[tok]
-                size = float(mo.matched_amount)
+                size = max(float(mo.matched_amount), self.lc.max_shares)       # its later fills count too (up to one order)
                 o = LiveOrder(tok, key, side, float(mo.price), size, self.clock(), 0)
                 self.known[oid] = o
                 self.stats["adopted"] += 1
