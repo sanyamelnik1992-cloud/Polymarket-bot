@@ -1,6 +1,7 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261126-132020
-mode: live  duration: 41.5 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 83, 'prewarm': 12, 'lock_state': 71, 'strike': 8}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261126-141744
+mode: live  duration: 43.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 87, 'prewarm': 12, 'lock_state': 74, 'strike': 8}
 
 окна, где модель была уверена (p >= 0.9): вход 0; без входа:
-     7  фильтр Binance (движение против нас / скачок / пауза)
+     6  фильтр Binance (движение против нас / скачок / пауза)
+     2  модель уверена, но продавца по нашей цене нет
 no fills

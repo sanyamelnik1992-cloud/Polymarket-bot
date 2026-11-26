@@ -1,7 +1,6 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261126-132039
-mode: paper  duration: 41.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 82, 'lock_state': 220, 'strike': 28}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261126-141753
+mode: paper  duration: 43.5 min  events: {'start': 1, 'gc_freeze': 2, 'status': 87, 'lock_state': 316, 'strike': 32}
 
 окна, где модель была уверена (p >= 0.99): вход 0; без входа:
-    17  фильтр Binance (движение против нас / скачок / пауза)
-     1  модель уверена, но продавца по нашей цене нет
+    29  фильтр Binance (движение против нас / скачок / пауза)
 no fills

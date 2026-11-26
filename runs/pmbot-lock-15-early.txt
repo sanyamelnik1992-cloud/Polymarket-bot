@@ -1,6 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261126-132031
-mode: paper  duration: 41.5 min  events: {'start': 1, 'gc_freeze': 2, 'status': 83, 'lock_state': 16, 'strike': 8}
-
-окна, где модель была уверена (p >= 0.99): вход 0; без входа:
-     1  фильтр Binance (движение против нас / скачок / пауза)
+run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261126-142017
+mode: paper  duration: 41.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 82, 'lock_state': 12, 'strike': 8}
 no fills

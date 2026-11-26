@@ -1,0 +1,43 @@
+run: /home/pmbot/Polymarket-bot/data/journal-maker-live/20261126-141739
+mode: live  duration: 44.2 min  events: {'mm_config': 1, 'geoblock_ok': 1, 'mm_balance': 45, 'start': 1, 'gc_freeze': 2, 'user_stream_up': 1, 'prewarm': 10, 'status': 88, 'bn_strike': 9, 'mm_rebate': 1, 'strike': 4, 'fv': 114, 'order_placed': 141, 'mm_quote': 141, 'order_cancelled': 131, 'mm_exec': 16, 'fill': 16, 'mm_fill': 16, 'mm_cancel': 4, 'mm_markout': 32, 'mm_live_error': 1, 'order_rejected': 5, 'provisional': 3, 'mm_pull': 8, 'settle': 2}
+
+lock orders: sent 0  filled 0  ask gone 0  errors 0
+  GC pause per 30 s, ms: median 1  p90 1  max 107
+  market prewarm (2 lookups + signing), ms: median 132  max 241  n 10
+  exchange rejections by code: {'post_only_would_cross': 5}
+
+maker: quotes 141 (moved 117), pulls on a Binance jump 8, cancels {'pause': 2, 'unpaired': 1, 'side_full': 1}
+  fills 16: 80 shares, $38.65
+  by our edge at the fill (fair - price):     fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
+  -100..  +0 c                                    6       30   -3.40   -0.18   +8.63    +0.50 (10)
+    +0..  +1 c                                    4       20   +0.45   -5.58   -4.84   +16.33 (15)
+    +1..  +2 c                                    1        5   +1.28   -4.34  -32.91   -51.00 (5)
+    +2..  +3 c                                    2       10   +2.44   -4.84   -2.41   +65.00 (5)
+    +3..  +5 c                                    1        5   +4.63   -6.16   -6.76        .
+    +5..+100 c                                    2       10   +7.04   -0.48   +8.35   -17.00 (5)
+  by the Binance move of the 2 s before (bp): fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
+  against us (< -0.5)                             7       35   -1.33   -0.54   +6.24    -5.33 (15)
+  flat                                            6       30   +2.29   -5.69   +0.17   +28.50 (20)
+  toward us (> 0.5)                               3       15   +0.59   -2.20  -11.70   -51.00 (5)
+  all                                            16       80   +0.39   -2.78   +0.63    +5.87 (40)
+  windows settled 2: pnl +2.35 (won 2, lost 0, worst +1.05, best +1.30); shares paired 20, unpaired 0
+
+maker LIVE: orders placed 141, filled at least partly 16 (11.3 %), shares 80
+  place ms median 151.6 p90 427.7; cancel ms median 187.3 p90 612.8
+  refused by the exchange {'post_only_would_cross': 5}; by our own limits (records, 1 per 10 s) {}
+  cancels that came too late (already matched) 6; fills from {'stream': 16}; failed trades 0; sweeps 0
+  maker rebate of 2026-11-26 (the exchange's number, our address): $0.0000
+  errors {'get_order': 1}
+
+fills: 16  shares: 80  notional: $38.65
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc       16    80.0     38.65      0.483  107.648
+
+settled windows:
+       windows   cost   pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
+asset                                                                           
+btc          2  17.65  2.35           2.35     0.0       1.0   1.05   1.3  0.133
+
+TOTAL pnl $+2.35 (ex-rebate $+2.35) on cost $17.65 -> ROI +13.31%; windows 2, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 2
