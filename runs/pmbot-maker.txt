@@ -1,5 +1,5 @@
 run: /home/pmbot/Polymarket-bot/data/journal-maker/20261124-202455
-mode: paper  duration: 2015.5 min  events: {'start': 1, 'gc_freeze': 2, 'status': 4029, 'bn_strike': 394, 'strike': 394, 'fv': 15331, 'mm_quote': 28043, 'fill': 3681, 'mm_fill': 3681, 'mm_markout': 7362, 'mm_pull': 1580, 'mm_cancel': 1145, 'provisional': 389, 'settle': 389, 'kill': 1}
+mode: paper  duration: 2076.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 4150, 'bn_strike': 394, 'strike': 394, 'fv': 15331, 'mm_quote': 28043, 'fill': 3681, 'mm_fill': 3681, 'mm_markout': 7362, 'mm_pull': 1580, 'mm_cancel': 1145, 'provisional': 389, 'settle': 389, 'kill': 1}
 
 maker: quotes 28043 (moved 24295), pulls on a Binance jump 1580, cancels {'pause': 656, 'price': 276, 'side_full': 120, 'unpaired': 73, 'time': 19, 'book_stale': 1}
   fills 3681: 15856 shares, $7660.85

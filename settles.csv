@@ -1,5 +1,4 @@
 time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
-2026-11-12 06:03:14,pmbot-lock-live,live,sol-1794462900,Down,0,5.0,4.6728,5.0,0.0,0.3272
 2026-11-12 07:06:07,pmbot-lock-15-live,live,eth-1794465900,Down,0,5.0256,4.9086,5.0256,0.0,0.117
 2026-11-12 07:17:35,pmbot-lock-live,live,sol-1794467400,Down,0,5.4706,4.6988,5.4706,0.0,0.7718
 2026-11-12 07:31:36,pmbot-lock-live,live,sol-1794468000,Up,0,5.0538,4.676,0,0.0,-4.676
@@ -3490,3 +3489,18 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-26 05:50:12,pmbot-lock-15-early,paper,btc-1795671000,Down,0,5.0,4.9535,5.0,0.0,0.0465
 2026-11-26 05:50:14,pmbot-lock-15-early-live,live,btc-1795671000,Down,0,5.0,4.9535,5.0,0.0,0.0465
 2026-11-26 06:00:07,pmbot-maker-safe,paper,btc-1795672200,Down,25.0,25.0,24.6,25.0,0.0,0.4
+2026-11-26 06:02:42,pmbot-lock-15-early,paper,btc-1795671900,Down,0,5.0,4.9535,5.0,0.0,0.0465
+2026-11-26 06:02:44,pmbot-lock-15-early-live,live,btc-1795671900,Down,0,5.0,4.9535,5.0,0.0,0.0465
+2026-11-26 06:05:28,pmbot-maker-safe,paper,btc-1795672500,Down,25.0,24.6875,25.3844,24.6875,0.0,-0.6969
+2026-11-26 06:10:09,pmbot-maker-safe,paper,btc-1795672800,Down,0,10.0,7.8,10.0,0.0,2.2
+2026-11-26 06:15:11,pmbot-maker-safe,paper,btc-1795673100,Down,25.0,25.0,25.0,25.0,0.0,0.0
+2026-11-26 06:20:13,pmbot-maker-safe,paper,btc-1795673400,Down,2.0488,5.1168,4.8804,5.1168,0.0,0.2364
+2026-11-26 06:20:15,pmbot-lock-15-early-live,live,eth-1795672800,Down,0,0.95,0.9412,0.95,0.0,0.0088
+2026-11-26 06:25:24,pmbot-maker-safe,paper,btc-1795673700,Down,0,10.0,4.75,10.0,0.0,5.25
+2026-11-26 06:30:06,pmbot-maker-safe,paper,btc-1795674000,Up,5.0,0,4.25,5.0,0.0,0.75
+2026-11-26 06:35:06,pmbot-maker-safe,paper,btc-1795674300,Up,25.0,25.0,21.45,25.0,0.0,3.55
+2026-11-26 06:40:07,pmbot-maker-safe,paper,btc-1795674600,Up,5.0,15.0,7.05,5.0,0.0,-2.05
+2026-11-26 06:45:08,pmbot-maker-safe,paper,btc-1795674900,Down,25.0,21.7544,23.9044,21.7544,0.0,-2.15
+2026-11-26 06:50:09,pmbot-maker-safe,paper,btc-1795675200,Down,10.0,0,2.75,0,0.0,-2.75
+2026-11-26 06:55:10,pmbot-maker-safe,paper,btc-1795675500,Up,25.0,22.2188,18.8709,25.0,0.0,6.1291
+2026-11-26 07:00:11,pmbot-maker-safe,paper,btc-1795675800,Up,15.0,20.1304,15.2904,15.0,0.0,-0.2904
