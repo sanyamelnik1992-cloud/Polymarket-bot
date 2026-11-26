@@ -1,36 +1,38 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261124-201815
-mode: live  duration: 2142.3 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 1716, 'status': 4284, 'lock_state': 27796, 'strike': 1712, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2, 'order_rejected': 2, 'lock_miss': 2}
+mode: live  duration: 2203.8 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 1764, 'status': 4407, 'lock_state': 28485, 'strike': 1760, 'order_filled': 4, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4, 'order_rejected': 3, 'lock_miss': 3}
 
-lock orders: sent 4  filled 2  ask gone 2  errors 0
-  signal -> exchange answer, ms: median 343  p90 988  max 988
-  exchange call alone, ms: median 343  p90 988  max 988
+lock orders: sent 7  filled 4  ask gone 3  errors 0
+  signal -> exchange answer, ms: median 272  p90 988  max 988
+  exchange call alone, ms: median 272  p90 988  max 988
   decision -> order sent, ms: median 1  p90 2  max 2
   GC pause per 30 s, ms: median 0  p90 8  max 133
-  market prewarm (2 lookups + signing), ms: median 137  max 665  n 1716
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 31-47 s before the end; model p 0.991-0.995
-  exchange rejections by code: {'fak_not_filled': 2}
+  market prewarm (2 lookups + signing), ms: median 137  max 665  n 1764
+  fill price minus the ask we saw, cents: mean +0.25  worst +1.0
+  misses came 9-47 s before the end; model p 0.991-0.996
+  exchange rejections by code: {'fak_not_filled': 3}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
-  <= 2.5 bp (the fixed pause allows too)       :    2 /    2 /   0 /    +0.57
+  <= 2.5 bp (the fixed pause allows too)       :    4 /    4 /   0 /    +0.85
   > 2.5 bp (only the volatility pause)         :    0 /    0 /   0 /    +0.00
 
-окна, где модель была уверена (p >= 0.99): вход 2; без входа:
-     2  заявка ушла, продажи уже не было
-  1532  фильтр Binance (движение против нас / скачок / пауза)
+окна, где модель была уверена (p >= 0.99): вход 4; без входа:
+     3  заявка ушла, продажи уже не было
+  1574  фильтр Binance (движение против нас / скачок / пауза)
      6  модель уверена, но продавца по нашей цене нет
 
-fills: 2  shares: 20  notional: $19.60
+fills: 4  shares: 35  notional: $34.30
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        1  10.208       9.8       0.96  273.130
 eth        1  10.000       9.8       0.98  244.215
+sol        2  15.000      14.7       0.98  267.674
 
 settled windows:
-       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                             
-btc          1  9.827  0.381          0.381     0.0       1.0  0.381  0.381  0.039
-eth          1  9.814  0.186          0.186     0.0       1.0  0.186  0.186  0.019
+       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                              
+btc          1   9.827  0.381          0.381     0.0       1.0  0.381  0.381  0.039
+eth          1   9.814  0.186          0.186     0.0       1.0  0.186  0.186  0.019
+sol          2  14.721  0.279          0.279     0.0       1.0  0.093  0.186  0.019
 
-TOTAL pnl $+0.57 (ex-rebate $+0.57) on cost $19.64 -> ROI +2.89%; windows 2, t-stat +nan
+TOTAL pnl $+0.85 (ex-rebate $+0.85) on cost $34.36 -> ROI +2.46%; windows 4, t-stat +3.50
 max drawdown $0.00; hedged windows (both sides filled): 0
