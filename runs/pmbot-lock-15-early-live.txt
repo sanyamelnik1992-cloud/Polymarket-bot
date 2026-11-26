@@ -1,29 +1,29 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261124-201820
-mode: live  duration: 1903.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 3806, 'prewarm': 508, 'lock_state': 4865, 'strike': 504, 'order_filled': 34, 'fill': 34, 'lock_entry': 34, 'provisional': 34, 'settle': 34, 'order_rejected': 6, 'lock_miss': 6}
+mode: live  duration: 1962.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 3923, 'prewarm': 524, 'lock_state': 4928, 'strike': 520, 'order_filled': 35, 'fill': 35, 'lock_entry': 35, 'provisional': 35, 'settle': 34, 'order_rejected': 6, 'lock_miss': 6}
 
-lock orders: sent 40  filled 34  ask gone 6  errors 0
-  signal -> exchange answer, ms: median 280  p90 518  max 2001
-  exchange call alone, ms: median 280  p90 518  max 2000
+lock orders: sent 41  filled 35  ask gone 6  errors 0
+  signal -> exchange answer, ms: median 273  p90 431  max 2001
+  exchange call alone, ms: median 273  p90 431  max 2000
   decision -> order sent, ms: median 1  p90 2  max 4
   GC pause per 30 s, ms: median 0  p90 9  max 98
-  market prewarm (2 lookups + signing), ms: median 137  max 400  n 508
+  market prewarm (2 lookups + signing), ms: median 136  max 400  n 524
   fill price minus the ask we saw, cents: mean +0.01  worst +0.3
   misses came 125-300 s before the end; model p 0.000-0.000
   exchange rejections by code: {'fak_not_filled': 6}
 
-окна, где модель была уверена (p >= 0.99): вход 32; без входа:
+окна, где модель была уверена (p >= 0.99): вход 33; без входа:
      4  сигнал был, но уже открыт вход (одно окно за раз)
      5  заявка ушла, продажи уже не было
-   112  фильтр Binance (движение против нас / скачок / пауза)
+   115  фильтр Binance (движение против нас / скачок / пауза)
     max_open: sol-1795605300 D p None ask 0.99
     max_open: xrp-1795605300 D p None ask 0.99
     max_open: sol-1795617000 D p None ask 0.99
     max_open: xrp-1795651200 U p None ask 0.99
 
-fills: 34  shares: 170  notional: $168.30
+fills: 35  shares: 175  notional: $173.25
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       19   95.03     94.05       0.99  673.900
+btc       20  100.03     99.00       0.99  679.058
 eth        5   25.00     24.75       0.99  659.452
 sol        6   30.00     29.70       0.99  723.254
 xrp        4   20.00     19.80       0.99  633.354
