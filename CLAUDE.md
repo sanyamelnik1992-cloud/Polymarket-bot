@@ -627,6 +627,18 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   limits; out of RETIRED, started once by `install_units.sh` START_ONCE (the owner cannot run /restart); off the Telegram
   shelf. Review after ~200 real entries: <= 1 lost in 160 -> grow with the wallet (5 % rule: 10 shares at ~$200, 100 at ~$2k);
   > 1 in 100 -> back to paper.
+- **`reports/93_15m_ten_shares_every_tier.md` (26 Nov, owner: "может начнем масштабирование", then "Деньги закину"; REAL
+  MONEY)**: 15m Ступени live (`lock15_live.toml` + twins `lock15_tier`, `lock15_alt`) buy 10 shares on EVERY tier:
+  `big_shares_p` 0.99 -> 0.93 (= the lowest tier's p), `shares` 5 only within 3 s of a Binance guard block (`big_calm_s`),
+  `daily_loss_limit` 5 -> 9 (a 10-share loss on a day without wins stops it, a 5-share one does not); $10 / $10 / one window
+  unchanged. Evidence: since 17 Nov 82 live entries on this rule, 1 lost (1.2 % vs 7.5 % priced in), +6.6 c a share, t 5.4.
+  A 10-share loss (-$9.1..-9.6) needs a ~$190 wallet for the 5 % rule: the owner deposits ~$70; the change goes to main only
+  once the hourly report shows the wallet >= $175 (it was $138.91). Back to 5 (`big_shares_p = 0.99`) at 2 losses in 30
+  entries; 20 shares or two windows only after 100 entries at 10 with <= 2.5 % lost. Unchanged: the Sniper (10 shares = 7.5 %
+  of the wallet already), the early sniper (46 of its 200 real entries), two windows at once (0 signals blocked in 16.7 h; the
+  `missed_report` "guard" line counts any guard moment at p >= theta, also without a seller at the tier price). Paper makers
+  over 40.6 h: `maker` +$39.17 (389 windows, t 0.8), `maker-safe` +$55.11 (469, t 1.1), days -$35..+$105, drawdowns ~-$60,
+  rebate not counted (~0.3 % of turnover): not proven, a few more days; the live maker broker is built only on the owner's word.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

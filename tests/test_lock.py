@@ -828,7 +828,7 @@ def test_l3_on_15m_is_the_live_rule_with_another_duration():
     assert l15.lock.tiers == [[0.99, 0.98], [0.97, 0.95], [0.95, 0.93], [0.93, 0.91]] and l15.lock.theta == 0.90
     assert l15.risk.max_open_entries == 1 and l3.risk.max_open_entries == 1                            # one entry at a time
     assert (l15.lock.shares, l15.lock.big_shares, l15.lock.big_shares_p, l15.lock.big_late_rel, l15.lock.big_calm_s) == \
-        (5.0, 10.0, 0.99, 0.0, 3.0)                              # reports/90: 5 shares below p 0.99 (2 since reports/76); late off (75)
+        (5.0, 10.0, 0.93, 0.0, 3.0)                              # reports/93: 10 shares on every tier, 5 right after a guard block
     assert l15.lock.late_tier_rel == 0.0                               # every 15m tier still enters from second 240
     assert l15.risk.state_file not in ("", l3.risk.state_file) and l15.journal_dir != l3.journal_dir
 
@@ -1352,7 +1352,7 @@ def test_l3_15_live_is_its_paper_twin_with_live_limits():
     # reports/73 (owner 15 Nov: "может увеличить деньги"): 10 shares on the strong entries, still one window at a time
     assert live.lock.shares <= 5 and live.lock.big_shares <= 10 and live.risk.max_usd_per_entry <= 10.0
     assert live.risk.max_open_usd <= 10.0 and live.risk.max_open_entries == 1
-    assert live.risk.daily_loss_limit <= 5.0 and live.risk.resume_next_day is False            # reports/75: back to 5
+    assert live.risk.daily_loss_limit <= 9.0 and live.risk.resume_next_day is False            # reports/93: 9 (was 5, reports/75)
     assert live.lock.big_late_rel == 0.0 and min(t[0] for t in live.lock.tiers) >= 0.93         # reports/75
     assert dc.replace(paper.risk, state_file=live.risk.state_file, resume_next_day=False) == live.risk
     assert len({live.risk.state_file, paper.risk.state_file, l3.risk.state_file, l99.risk.state_file}) == 4
@@ -1506,17 +1506,21 @@ def test_15m_buys_ten_shares_late_in_the_window_or_when_sure(tmp_path, monkeypat
             self.calls.append((key, shares, limit))
             return limit, shares, 0.0
 
-    # (window second, model p, guard block 1 s before?, big_late_rel) -> shares
-    cases = ((244.0, 0.94, False, 260.0, 5), (259.9, 0.96, False, 260.0, 5), (260.0, 0.94, False, 260.0, 10),
-             (285.0, 0.955, False, 260.0, 10), (244.0, 0.992, False, 260.0, 10), (244.0, 0.995, False, 260.0, 10),
-             (270.0, 0.94, True, 260.0, 5), (244.0, 0.995, True, 260.0, 5),
-             (270.0, 0.94, False, 0.0, 5), (285.0, 0.96, False, 0.0, 5), (270.0, 0.975, False, 0.0, 5),    # the configs as they are
-             (270.0, 0.992, False, 0.0, 10))                                                              # (reports/76, 90)
-    for i, (rel, p_model, guard, late, want) in enumerate(cases):
+    # (window second, model p, guard block 1 s before?, big_late_rel, big_shares_p or None = as configured) -> shares
+    cases = ((244.0, 0.94, False, 260.0, 0.99, 5), (259.9, 0.96, False, 260.0, 0.99, 5), (260.0, 0.94, False, 260.0, 0.99, 10),
+             (285.0, 0.955, False, 260.0, 0.99, 10), (244.0, 0.992, False, 260.0, 0.99, 10), (244.0, 0.995, False, 260.0, 0.99, 10),
+             (270.0, 0.94, True, 260.0, 0.99, 5), (244.0, 0.995, True, 260.0, 0.99, 5),
+             (270.0, 0.94, False, 0.0, 0.99, 5), (270.0, 0.975, False, 0.0, 0.99, 5),       # reports/76, 90: 10 only at p >= 0.99
+             (270.0, 0.992, False, 0.0, 0.99, 10),
+             (244.0, 0.935, False, 0.0, None, 10), (270.0, 0.94, False, 0.0, None, 10),     # the configs as they are (reports/93):
+             (285.0, 0.96, False, 0.0, None, 10), (270.0, 0.975, False, 0.0, None, 10),     # every tier buys 10 ...
+             (270.0, 0.992, False, 0.0, None, 10), (270.0, 0.94, True, 0.0, None, 5),       # ... 5 right after a guard block
+             (244.0, 0.995, True, 0.0, None, 5))
+    for i, (rel, p_model, guard, late, bsp, want) in enumerate(cases):
         br = Br()
+        lk = {"big_late_rel": late, **({"big_shares_p": bsp} if bsp else {})}
         cfg = load_lock_config(os.path.join(ROOT, "config", "lock15_tier.toml"),
-                               overrides={"lock": {"big_late_rel": late},
-                                          "risk": {"state_file": str(tmp_path / f"s{i}.json"), "kill_file": ""}})
+                               overrides={"lock": lk, "risk": {"state_file": str(tmp_path / f"s{i}.json"), "kill_file": ""}})
         bot = LockBot(cfg, _J(), broker=br, tables=_Tab())
         now = int(_t.time() * 1000)
         for a in ("btc", "eth"):                                    # two coins qualify: still one entry at a time
@@ -1654,14 +1658,19 @@ def test_missed_signal_breakdown_in_the_run_report():
         assert f"   1  " in text and name in text, name
 
 
-def test_15m_live_size_raised_on_the_owners_word():
-    """reports/90 (24 Nov, owner: "подними лимит денег на рабочих стратегиях, только проверь чтобы был баланс потере к
-    выигрышу"): the 15m live tiers below 0.99 buy 5 shares (was 2). At ~0.91 a win is ~+8 c a share and a loss ~-92 c (one loss =
-    ~11 wins; 62 entries / 1 lost at 2 shares since 17 Nov). One 5-share loss stays under the $5 day stop, the second stops it.
-    The Sniper is NOT raised: at ~0.98 one loss = ~53 wins, a month of its profit."""
+def test_15m_live_ten_shares_on_every_tier_on_the_owners_word():
+    """reports/93 (26 Nov, owner: "Деньги закину" after the proposal "10 shares on every 15m tier with a ~$200 wallet"; before it,
+    reports/90: 2 -> 5 below p 0.99): every entry of the 15m live bot buys 10 shares (big_shares_p at the lowest tier's p), 5 only
+    within 3 s of a Binance guard block. Evidence: 82 live entries on this rule since 17 Nov, 1 lost (1.2 % against 7.5 % priced in).
+    A 10-share loss (-$9.1..-9.6) stops a day without wins (the $9 day stop), a 5-share one does not. The Sniper is NOT raised:
+    at ~0.98 one loss = ~53 wins, a month of its profit."""
     live = load_lock_config(os.path.join(ROOT, "config", "lock15_live.toml"))
     sniper = load_lock_config(os.path.join(ROOT, "config", "lock_99_live.toml"))
-    assert live.lock.shares == 5 and live.lock.big_shares == 10 and live.risk.daily_loss_limit == 5.0
-    worst_small = live.lock.shares * (max(t[1] for t in live.lock.tiers if t[0] < 0.99) + 0.005)   # top price below 0.99 + fee
-    assert worst_small < live.risk.daily_loss_limit < 2 * live.lock.shares * min(t[1] for t in live.lock.tiers)
+    c, r = live.lock, live.risk
+    assert c.big_shares == 10 and c.shares == 5 and c.big_calm_s == 3.0 and c.big_late_rel == 0.0
+    assert c.big_shares_p <= min(t[0] for t in c.tiers)                       # every tier is a 10-share tier
+    assert r.max_usd_per_entry == 10.0 and r.max_open_usd == 10.0 and r.max_open_entries == 1 and r.daily_loss_limit == 9.0
+    big_loss_min = c.big_shares * min(t[1] for t in c.tiers)                   # the cheapest 10-share entry, 10 x 0.91
+    small_loss_max = c.shares * (max(t[1] for t in c.tiers) + 0.005)            # the dearest 5-share entry + fee
+    assert small_loss_max < r.daily_loss_limit <= big_loss_min
     assert sniper.lock.shares == 10 and sniper.risk.max_open_usd == 10.0
