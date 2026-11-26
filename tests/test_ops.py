@@ -159,9 +159,8 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
-KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-lock-15-early", "pmbot-feedrec", "pmbot-tg",
-              "pmbot-lock-99-sigma", "pmbot-maker-v2",
-              "pmbot-lock-15-early-live", "pmbot-maker-live"}
+KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-feedrec", "pmbot-tg", "pmbot-lock-15-early-live", "pmbot-maker-live"}
+PAUSED_UNITS = {"pmbot-lock-15-early", "pmbot-lock-99-sigma", "pmbot-maker-v2"}   # 26 Nov: the server is too small for them
 # the current lineup (24 Nov: the interceptor retired, live 23 Nov and its paper twin 24 Nov, reports/86-87; the two paper
 # makers of reports/89 added); every other unit is retired
 
@@ -172,6 +171,11 @@ def test_retired_units_are_disabled_and_the_lineup_is_not():
     import re
     text = open("deploy/install_units.sh").read()
     retired = set(re.search(r'(?m)^RETIRED="([^"]+)"', text).group(1).split())
+    paused = set(re.search(r'(?m)^PAUSED="([^"]*)"', text).group(1).split())
+    assert paused == PAUSED_UNITS
+    for u in paused:                                                     # paused = paper only, never a live unit
+        assert os.path.exists(f"deploy/{u}.service") and "--live" not in open(f"deploy/{u}.service").read(), u
+    retired |= paused
     assert not retired & KEEP_UNITS
     every = set(ops.BOT_UNITS + ops.REWARD_UNITS + ops.REWARD_LIVE_UNITS + ops.WEATHER_UNITS + ops.RESEARCH_UNITS)
     assert every - retired - KEEP_UNITS == set(), every - retired - KEEP_UNITS

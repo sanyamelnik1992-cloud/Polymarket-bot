@@ -7,7 +7,10 @@ Type=oneshot
 User=__USER__
 WorkingDirectory=__REPO__
 EnvironmentFile=/etc/pmbot/pmbot.env
-# low priority: never steal CPU from the trading bots
-Nice=15
+# low priority: never steal CPU from the trading bots (26 Nov: the scheduler's idle class, like the hourly report)
+Nice=19
+CPUWeight=10
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle
 ExecStart=__REPO__/.venv/bin/python scripts/nightly_review.py --send
 TimeoutStartSec=1200

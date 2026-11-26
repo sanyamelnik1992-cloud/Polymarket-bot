@@ -35,6 +35,20 @@ RETIRED="pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5
 # live test runs the rule of reports/95, whose paper twin is pmbot-maker-v2 (the old symmetric "min" rule, pmbot-maker-safe, is retired
 # too: two paper makers + the live one do not fit the 2 vCPU; its paper result and the tape simulation stay in reports/94 and 95).
 STOP_LIVE="pmbot-lock-fair-live"
+# PAUSED (26 Nov, owner: "Если сервер перегружен то давай его разгрузим для нормальной работы, можем остановить пока что бумагу на время
+# что бы мейкер нормально работал, а если все ок то просто куплю более мощный сервер"): PAPER units stopped and disabled like the retired
+# ones, for as long as the 2 vCPU are too small for them. Live bots come first: in the live maker's first hour place / cancel took
+# 152 / 187 ms (p95 668 / 786), the server was 60 % busy and the host stole 22 %. Not retired for good: to bring a unit back take it out
+# of PAUSED and list it in RESUME_ONCE for ONE deploy (START_ONCE would not start it again: its marker is already there), then empty
+# RESUME_ONCE. Paper units only (tests/test_ops.py checks it): a live unit here is skipped.
+PAUSED="pmbot-lock-15-early pmbot-lock-99-sigma pmbot-maker-v2"
+RESUME_ONCE=""
+for u in $PAUSED; do
+  f="$REPO/deploy/$u.service"
+  [ -e "$f" ] || continue
+  grep -q -- '--live' "$f" && continue
+  systemctl --no-block disable -q --now "$u" 2>/dev/null || true
+done
 for u in $RETIRED; do
   f="$REPO/deploy/$u.service"
   [ -e "$f" ] || continue
@@ -54,9 +68,17 @@ done
 START_ONCE="pmbot-feedrec pmbot-lock-99-sigma pmbot-maker-v2 pmbot-lock-15-early-live pmbot-maker-live"
 for u in $START_ONCE; do
   [ -e "$REPO/deploy/$u.service" ] || continue
+  grep -qw -- "$u" <<< "$RETIRED $PAUSED" && continue          # retired or paused: never started here
   mark="$REPO/data/state/.started-$u"
   [ -e "$mark" ] && continue
   mkdir -p "$REPO/data/state"
   systemctl is-active -q "$u" || systemctl --no-block start "$u" 2>/dev/null || true
   touch "$mark"
+done
+# paper units brought back from PAUSED: started on this deploy only (empty RESUME_ONCE afterwards)
+for u in $RESUME_ONCE; do
+  [ -e "$REPO/deploy/$u.service" ] || continue
+  grep -qw -- "$u" <<< "$RETIRED $PAUSED" && continue
+  grep -q -- '--live' "$REPO/deploy/$u.service" && continue     # a live unit starts on the owner's word, not here
+  systemctl is-active -q "$u" || systemctl --no-block start "$u" 2>/dev/null || true
 done

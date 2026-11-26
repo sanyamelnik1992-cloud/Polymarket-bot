@@ -11,5 +11,8 @@ WorkingDirectory=__REPO__
 Nice=19
 CPUWeight=10
 IOSchedulingClass=idle
+# 26 Nov: the scheduler's IDLE class, it runs only when a CPU has nothing else to do (the live maker's place / cancel took 152 / 187 ms
+# on a server 60 % busy; this job read every journal with pandas at :02 every hour)
+CPUSchedulingPolicy=idle
 ExecStart=/bin/bash __REPO__/deploy/push_reports.sh
 TimeoutStartSec=600

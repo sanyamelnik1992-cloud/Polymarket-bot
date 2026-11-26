@@ -704,6 +704,15 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   while the cancel was in flight; `pmbot-maker-v2` now simulates 150 / 190), markout 5 s -2.8 c. The "error" the owner got in Telegram was ONE failed
   `get_order` (the SDK reads OPEN orders only): it is now retried up to 3 times a second apart and journalled (`mm_get_order_error`,
   `mm_get_order_giveup`), never an alert. The maker had NOT stopped.
+  Server load (report 95 section 9, 26 Nov, owner: "Если сервер перегружен то давай его разгрузим ... остановить пока что бумагу ... а если все
+  ок то просто куплю более мощный сервер"): `install_units.sh` `PAUSED` = the paper units `pmbot-lock-15-early`, `pmbot-lock-99-sigma`,
+  `pmbot-maker-v2` (stopped and disabled on deploy; paper only, a test checks it; to bring one back take it out of PAUSED and list it in
+  `RESUME_ONCE` for ONE deploy, START_ONCE will not start it again), the hourly report and the nightly review run in the scheduler's idle
+  class, the hourly load report lists 12 processes. The 15:02 report: load 2.08 on 2 cores, busy 60 %, steal 22 %; the maker's loop lagged
+  > 100 ms 8 times in 44 min (max 470 ms), so the median place / cancel 152 / 187 ms is the exchange and the network, the p95 668 / 786 ms
+  partly ours. Decide on a bigger server from the next reports (maker place / cancel median and p95, loop lag, steal): the median stays ->
+  the exchange is the limit, a bigger server only helps the tails; the tails stay -> dedicated cores. A new server must stay in IRELAND
+  (`live.API_OK_COUNTRIES = {"IE"}`; London is close-only, Germany and the UK are closed), e.g. AWS eu-west-1.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

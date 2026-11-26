@@ -785,7 +785,7 @@ def load_report(sample_s=2.0):
     r = cpu_probe()
     lines.append(f"проба скорости: 0.25 с работы заняли {0.25 * r:.2f} с на часах (x{r:.1f}; 1.0 норма, выше 1.5 — "
                  f"ядро урезано или занято)")
-    top = top_cpu()
+    top = top_cpu(12)                     # 26 Nov: every bot process (the owner decides what to stop or whether to buy a bigger server)
     if top:
         lines.append("топ по CPU (среднее с запуска): " + ", ".join(f"{n} {c:.0f} % ({m} МБ)" for c, m, n in top))
     return lines
