@@ -3608,3 +3608,4 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-26 15:50:11,pmbot-maker-live,live,btc-1795707600,Up,5.0,10.0,7.45,5.0,0.0,-2.45
 2026-11-26 16:01:13,pmbot-maker-live,live,btc-1795708200,Up,10.0,10.0,9.95,10.0,0.0,0.05
 2026-11-26 16:25:24,pmbot-maker-live,live,btc-1795709700,Down,10.0,5.0,8.15,5.0,0.0,-3.15
+2026-11-26 17:32:08,pmbot-lock-15-live,live,eth-1795713300,Down,0,10.0,9.5333,10.0,0.0,0.4667
