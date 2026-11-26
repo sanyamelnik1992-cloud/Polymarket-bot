@@ -699,6 +699,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   +2.31 (4 of 4), BTC 15m from second 300 +4.06 (3 of 4); the symmetric rules lose everywhere (-0.3..-3.6); their volume is small (3-5 k
   shares a day each). Verdict after 2-3 days (>= 100 live fills): live c a share by outcome >= +1.5 and no day stop -> next stage
   (more shares, SOL / XRP 5m first, then ETH, 15m: `LIVE_CAPS` allows BTC only today); live < 0 with a positive paper twin -> look for delay and queue.
+  First 44 live minutes (26 Nov 14:17-15:02, still the old symmetric rule; report 95 section 8): 141 orders, 16 fills (80 shares at 0.483),
+  2 windows paired +$2.35, place 152 ms (p95 668) and cancel 187 ms (p95 786) against the paper's 60 / 50 (6 of the 16 fills happened
+  while the cancel was in flight; `pmbot-maker-v2` now simulates 150 / 190), markout 5 s -2.8 c. The "error" the owner got in Telegram was ONE failed
+  `get_order` (the SDK reads OPEN orders only): it is now retried up to 3 times a second apart and journalled (`mm_get_order_error`,
+  `mm_get_order_giveup`), never an alert. The maker had NOT stopped.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

@@ -307,6 +307,10 @@ def maker_live_report(ev):
     errs = Counter(e.get("where") for e in ev if e["type"] == "mm_live_error")
     if errs:
         print(f"  errors {dict(errs)}")
+    go = sum(1 for e in ev if e["type"] == "mm_get_order_error")
+    if go:
+        print(f"  order reads that failed {go} (gave up on {sum(1 for e in ev if e['type'] == 'mm_get_order_giveup')}): benign, "
+              f"the SDK reads open orders only")
 
 
 def main(d):

@@ -49,6 +49,6 @@ resume_next_day = true
 
 [execution]
 mode = "paper"
-paper_place_ms = 60         # a bid is live 60 ms after the decision (live 8 Nov: place median 52-62 ms)
-paper_cancel_ms = 50        # and gone 50 ms after its cancel (cancel median 40-49 ms)
+paper_place_ms = 150        # a bid is live 150 ms after the decision: the live test measured place 152 ms (p95 668) in its first 44 minutes
+paper_cancel_ms = 190       # and gone 190 ms after its cancel (live: median 187, p95 786 ms): with the old 60 / 50 the paper twin was too kind
 cl_feed = "both"            # Chainlink prints only for the provisional result after each window

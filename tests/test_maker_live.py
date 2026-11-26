@@ -811,3 +811,56 @@ def test_the_guard_looks_again_only_after_a_tenth_of_a_basis_point(tmp_path):
         await asyncio.sleep(0.01)
     run(go())
     assert len(calls) == 2
+
+
+def test_a_failed_order_read_is_retried_and_never_an_alert():
+    """26 Nov: one failed get_order sent the owner an 'error' alert (mm_live_error) that looked like a stop. Now it is retried a
+    second later (the SDK reads OPEN orders: a matched or cancelled one can be 'not found') and only journalled."""
+    from pmbot.bot.alerts import ALERT_TYPES
+    j = J()
+    b = broker(journal=j)
+    oid = run(b.place("U", "btc-1", "U", 0.47, 5, 0))
+    calls = {"n": 0}
+    real = b.client.get_order
+
+    async def flaky(order_id):
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise RuntimeError("order not found")
+        return await real(order_id=order_id)
+    b.client.get_order = flaky
+    b.client.matched[oid] = 5
+    b.lc.balance_every_s = b.lc.rebate_every_s = b.lc.reconcile_every_s = 1e9
+    fills = []
+    b.on_fill = fills.append
+
+    async def go():
+        assert await b.account(oid) == 0.0 and oid in b._retry          # the first read failed: queued, nothing alerted
+        t = asyncio.create_task(b._upkeep_loop())
+        await asyncio.sleep(2.6)
+        t.cancel()
+    run(go())
+    assert calls["n"] == 3 and [f["size"] for f in fills] == [5.0] and not b._retry and oid not in b._get_order_tries
+    assert not j.of("mm_live_error") and len(j.of("mm_get_order_error")) == 2
+    assert "mm_get_order_error" not in ALERT_TYPES and "mm_get_order_giveup" not in ALERT_TYPES
+
+
+def test_an_order_that_cannot_be_read_three_times_is_forgotten_without_an_alert():
+    j = J()
+    b = broker(journal=j)
+    oid = run(b.place("U", "btc-1", "U", 0.47, 5, 0))
+
+    async def dead(order_id):
+        raise RuntimeError("order not found")
+    b.client.get_order = dead
+    b.lc.balance_every_s = b.lc.rebate_every_s = b.lc.reconcile_every_s = 1e9
+
+    async def go():
+        await b.account(oid)
+        t = asyncio.create_task(b._upkeep_loop())
+        await asyncio.sleep(3.6)
+        t.cancel()
+    run(go())
+    assert oid not in b.orders and not b._retry and len(j.of("mm_get_order_giveup")) == 1 and b.stats["get_order_errors"] == 3
+    assert not j.of("mm_live_error") and not b.is_resting(oid)
+    assert b.health() == (True, "")                                     # a failed read never stops the maker

@@ -101,6 +101,8 @@ class MakerLiveBroker:
         self._lock = asyncio.Lock()
         self._refused = {}                # (token, why) -> monotonic of the last "mm_refused" record (no flood)
         self._reconcile_now = False       # the account stream just (re)connected: read the exchange's record of our orders at once
+        self._get_order_tries = {}        # order id -> consecutive failed get_order calls
+        self._retry = set()               # order ids whose get_order is read again by the upkeep loop
         self.stats = {"placed": 0, "rejected": 0, "crossed": 0, "cancels": 0, "cancel_late": 0, "fills": 0,
                       "adopted": 0, "reconciled": 0, "failed": 0, "place_ms": None, "cancel_ms": None}
         self._lat = {"place": [], "cancel": []}
@@ -262,6 +264,9 @@ class MakerLiveBroker:
             try:
                 if self.suspect:
                     await self.resolve_suspect()
+                for oid in list(self._retry):
+                    self._retry.discard(oid)
+                    await self.account(oid)
                 if self._reconcile_now or now - last["rec"] >= self.lc.reconcile_every_s:
                     self._reconcile_now = False
                     last["rec"] = now
@@ -462,8 +467,8 @@ class MakerLiveBroker:
         try:
             x = await self.client.get_order(order_id=oid)
         except Exception as e:  # noqa: BLE001
-            self.log("mm_live_error", where="get_order", error=str(e)[:200])
-            return 0.0
+            return self._get_order_failed(oid, e)
+        self._get_order_tries.pop(oid, None)
         matched = float(getattr(x, "size_matched", 0) or 0)
         q = matched - (o.size - o.remaining)
         status = str(getattr(x, "status", "") or "").upper()
@@ -475,6 +480,25 @@ class MakerLiveBroker:
         self._fill(oid, o, q, o.price, trade_id=None, status="RECONCILED")
         self.stats["reconciled"] += 1
         return q
+
+    def _get_order_failed(self, oid, e):
+        """A failed get_order is NOT an alert by itself (26 Nov: one failed read in 44 minutes sent the owner an "error" message and
+        looked like a stop). The SDK reads OPEN orders: a matched, cancelled or expired order can be "not found", and the fills come from
+        the account stream, this read is the backstop. Read it again a second later, up to 3 tries; an order that cannot be read is gone
+        (filled, expired or cancelled): forget it so that the maker bids again. Counted in stats and in the run report."""
+        n = self._get_order_tries.get(oid, 0) + 1
+        self.stats["get_order_errors"] = self.stats.get("get_order_errors", 0) + 1
+        msg = f"{type(e).__name__}: {str(e)[:150]}"
+        if n >= 3:
+            self._get_order_tries.pop(oid, None)
+            self._retry.discard(oid)
+            self.orders.pop(oid, None)
+            self.log("mm_get_order_giveup", order_id=oid, tries=n, error=msg)
+            return 0.0
+        self._get_order_tries[oid] = n
+        self._retry.add(oid)
+        self.log("mm_get_order_error", order_id=oid, tries=n, error=msg)
+        return 0.0
 
     async def reconcile(self):
         """account() for every order we believe resting. Returns the shares found filled."""
