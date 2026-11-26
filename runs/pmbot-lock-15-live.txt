@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261126-190610
-mode: live  duration: 115.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 230, 'prewarm': 32, 'lock_state': 228, 'strike': 28, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: live  duration: 176.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 352, 'prewarm': 48, 'lock_state': 325, 'strike': 44, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
 lock orders: sent 1  filled 1  ask gone 0  errors 0
   signal -> exchange answer, ms: median 260  p90 260  max 260
   exchange call alone, ms: median 259  p90 259  max 259
   decision -> order sent, ms: median 0  p90 0  max 0
   GC pause per 30 s, ms: median 0  p90 1  max 198
-  market prewarm (2 lookups + signing), ms: median 119  max 257  n 32
+  market prewarm (2 lookups + signing), ms: median 121  max 257  n 48
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
@@ -14,8 +14,8 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
   > 2.5 bp (only the volatility pause)         :    0 /    0 /   0 /    +0.00
 
 окна, где модель была уверена (p >= 0.9): вход 1; без входа:
-    23  фильтр Binance (движение против нас / скачок / пауза)
-     3  модель уверена, но продавца по нашей цене нет
+    31  фильтр Binance (движение против нас / скачок / пауза)
+     9  модель уверена, но продавца по нашей цене нет
 
 fills: 1  shares: 5  notional: $4.75
        fills  shares  notional  avg_price  med_rel

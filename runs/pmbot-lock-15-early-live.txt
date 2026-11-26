@@ -1,6 +1,28 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261126-190614
-mode: live  duration: 115.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 230, 'prewarm': 32, 'lock_state': 58, 'strike': 28}
+mode: live  duration: 176.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 352, 'prewarm': 48, 'lock_state': 87, 'strike': 44, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
 
-окна, где модель была уверена (p >= 0.99): вход 0; без входа:
-     1  фильтр Binance (движение против нас / скачок / пауза)
-no fills
+lock orders: sent 2  filled 2  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 397  p90 397  max 397
+  exchange call alone, ms: median 398  p90 398  max 398
+  decision -> order sent, ms: median 1  p90 1  max 1
+  GC pause per 30 s, ms: median 0  p90 1  max 97
+  market prewarm (2 lookups + signing), ms: median 124  max 419  n 48
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+
+окна, где модель была уверена (p >= 0.99): вход 2; без входа:
+     2  фильтр Binance (движение против нас / скачок / пауза)
+
+fills: 2  shares: 10  notional: $9.90
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+btc        1     5.0      4.95       0.99  728.470
+sol        1     5.0      4.95       0.99  663.702
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+btc          1  4.954  0.046          0.046     0.0       1.0  0.046  0.046  0.009
+sol          1  4.954  0.046          0.046     0.0       1.0  0.046  0.046  0.009
+
+TOTAL pnl $+0.09 (ex-rebate $+0.09) on cost $9.91 -> ROI +0.94%; windows 2, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
