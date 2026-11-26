@@ -736,7 +736,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   10 s shock pause cannot see. XRP is the rule's weak coin (live, all time with it): 22 entries / 3 lost / -$9.86 vs BTC 66 / 2 / +$11.89,
   ETH 30 / 1 / -$0.11, SOL 13 / 0 / +$2.69 (equal rates would give >= 3 XRP losses ~8 % of the time). Owner: keep XRP for now ("Пока
   оставь хрп, может случайность, посмотрим еще"). Proposed check: another XRP loss within its next ~15 entries -> propose removing XRP
-  (`lock15_live.toml` + twins `assets`); else review at 40 XRP entries. Not tested yet: a "recent swing larger than the lead" filter.
+  (`lock15_live.toml` + twins `assets`); else review at 40 XRP entries. **`reports/97_15m_spike_fade_filter.md`**: "spike and fade" filters
+  REJECTED. Replay of the production `decide_state` on 15m tapes + Binance 1 s (`reports/97_tools/swing15.py`, Chainlink not available, Gamma
+  outcomes, fills = tape asks within 1-2 s): "our side was losing 120 s before" removed 6 of 7 losses on 17-26 Nov (170 entries) but on
+  1-16 Nov (289 entries, out of sample) those entries made +$20.84 at 10 shares and 10 of 16 losses stayed; every lookback 30-240 s and
+  the swing / crossing variants flip sign between the periods. XRP 59 / 3 / +$11.32 in the replay, SOL worst (35 / 3 / -$8.24): the weak
+  coin moves around. The rule over 19 days: 459 entries, 5.0 % lost vs 7.2 % break-even, +1.8 c a share.
   Server load (report 95 section 9, 26 Nov, owner: "Если сервер перегружен то давай его разгрузим ... остановить пока что бумагу ... а если все
   ок то просто куплю более мощный сервер"): `install_units.sh` `PAUSED` = the paper units `pmbot-lock-15-early`, `pmbot-lock-99-sigma`,
   `pmbot-maker-v2` (stopped and disabled on deploy; paper only, a test checks it; to bring one back take it out of PAUSED and list it in
