@@ -704,6 +704,14 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   while the cancel was in flight; `pmbot-maker-v2` now simulates 150 / 190), markout 5 s -2.8 c. The "error" the owner got in Telegram was ONE failed
   `get_order` (the SDK reads OPEN orders only): it is now retried up to 3 times a second apart and journalled (`mm_get_order_error`,
   `mm_get_order_giveup`), never an alert. The maker had NOT stopped.
+  Telegram report of the maker (report 95 section 10, owner: "добавь какой то отчет по мейкеру в тг, например каждые 30 мин или час"):
+  `pmbot/bot/makerreport.py` (`Interval`, `next_boundary`) + `FairMaker.report_loop` / `report_record` write the journal record `mm_report` every
+  `[maker] report_every_s` = 1800 s at wall-clock :00 / :30 UTC (0 = off; a report covering < 1/3 of the period after a restart is skipped, its counters
+  go on); `notify.maker_report` renders it (result of the closed windows, fills by favourite / underdog, markout 5 / 30 s, position, cancels by reason,
+  place / cancel latency median + p95 from `MakerLiveBroker.latency_report`, wallet); Telegram only in live (`alerts.LIVE_ONLY`), the paper twin journals
+  it silently. It REPLACES the per-window and hourly settle messages of the maker (`notify.REPORTED_UNITS`, was `QUIET_SETTLES`; `PMBOT_TG_SETTLES=1`
+  brings the per-window ones back). `/maker` = the newest `mm_report` and its age (`ops.last_event`). The counters are fed through
+  `FairMaker._note`, which swallows a fault: the report must never disturb orders, fills or settlement. `LockBot.extra_loops()` is the hook for it.
   Server load (report 95 section 9, 26 Nov, owner: "Если сервер перегружен то давай его разгрузим ... остановить пока что бумагу ... а если все
   ок то просто куплю более мощный сервер"): `install_units.sh` `PAUSED` = the paper units `pmbot-lock-15-early`, `pmbot-lock-99-sigma`,
   `pmbot-maker-v2` (stopped and disabled on deploy; paper only, a test checks it; to bring one back take it out of PAUSED and list it in

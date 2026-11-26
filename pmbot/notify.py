@@ -74,7 +74,10 @@ TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-l
          "pmbot-5m-e": "pmbot-5m-live"}
 # Live units whose closed windows come as ONE summary an hour instead of a message each (the Перехватчик closes dozens of
 # windows a day, half of them lost). 22 Nov the owner saw only the stop message and no trade at all (reports/83 section 13).
-QUIET_SETTLES = {"pmbot-lock-fair-live", "pmbot-maker-live"}     # the maker: every 5-minute window (reports/94)
+QUIET_SETTLES = {"pmbot-lock-fair-live"}
+# Live units whose closed windows are NOT sent one by one nor as an hourly summary: their own periodic report carries them (the
+# maker's `mm_report` every 30 minutes, reports/95 section 10; owner 26 Nov: "добавь какой то отчет по мейкеру в тг")
+REPORTED_UNITS = {"pmbot-maker-live"}
 GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
           ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
 # What /status and the digest list (reports/88, owner 23 Nov: "те стратегии от которых мы отказались не отображать, хорошо разделить
@@ -161,6 +164,98 @@ def quiet_summary(unit, q, total, minutes=60, mode="live"):
     tail = " 💰" if mode == "live" else " (paper)"
     return (f"{label(unit, False)} · за {minutes} мин: окон {q['n']} (+{q['won']}/−{q['n'] - q['won']}), итог {money(q['pnl'], True)}{tail}\n"
             f"с запуска: окон {total['n']} (+{total['won']}/−{total['n'] - total['won']}), итог {money(total['pnl'])}")
+
+
+MAKER_STATE_RU = {
+    "ok": "🟢 работает",
+    "kill_file": "⛔ остановлен файлом STOP",
+    "killed": "⛔ дневной стоп: убыток за сегодня дошёл до лимита",
+    "broker_fatal": "⛔ биржа отказала в доступе (401/403)",
+    "order_outcome_unknown": "⏸ пауза: исход заявки неизвестен, проверяю биржу",
+    "api_backoff": "⏸ пауза: биржа просит подождать (ошибка API)",
+    "user_stream_down": "⏸ пауза: нет потока исполнений",
+    "heartbeat_down": "⏸ пауза: сердцебиение биржи не проходит",
+    "low_balance": "⏸ пауза: на кошельке меньше резерва",
+}
+MAKER_CANCELS_RU = (("requote", "подвинуто"), ("pause", "пауза Binance"), ("gate", "фильтр стороны"), ("end", "конец окна"),
+                    ("limits", "лимиты"), ("trouble", "⚠️ сбои"))
+
+
+def _cents(x):
+    return "—" if x is None else f"{x:+.1f}¢".replace("-", "−")
+
+
+def maker_report(rec, unit="pmbot-maker-live"):
+    """The maker's periodic report (reports/95 section 10): one message for the last `minutes`. `rec` is the journal's `mm_report`."""
+    live = rec.get("mode") == "live"
+    t1 = rec.get("t1") or time.time()
+    out = [f"{label(unit, False)}{' 💰' if live else ' (paper)'} · за {rec.get('minutes', 0)} мин ({hhmm(rec.get('t0') or t1)}–{hhmm(t1)} UTC)",
+           MAKER_STATE_RU.get(rec.get("state"), "⚠️ " + esc(rec.get("state"))), ""]
+    closed = rec.get("closed", 0)
+    out.append("<b>Итог</b>")
+    out.append((f"окон с позицией закрыто {closed} (+{rec.get('won', 0)}/−{rec.get('lost', 0)}) · {money(rec.get('pnl'), True)}"
+                + (f" · с парой Up+Down: {rec['paired']}" if rec.get("paired") else "")) if closed else "окон с позицией закрыто 0")
+    lim = rec.get("day_limit")
+    out.append(f"сегодня {money(rec.get('day'), True)}" + (f" (стоп при −{lim:.2f}$)" if lim else "")
+               + f" · всего {money(rec.get('total'))} за {rec.get('days', 0)} дн.")
+    out += ["", "<b>Заявки</b>"]
+    q, n = rec.get("quotes", 0), rec.get("fills", 0)
+    out.append(f"окон с заявками {rec.get('windows_quoted', 0)} · поставлено заявок {q} · исполнений {n}" + (f" ({100 * n / q:.1f}%)" if q else ""))
+    if n:
+        side = (f" · фаворит {rec['fav']} · аутсайдер {rec['dog']}" if rec.get("fav") or rec.get("dog") else "")
+        out.append(f"куплено {rec.get('shares', 0):g} акций по {rec.get('avg_price') or 0:.2f} (Up {rec.get('up', 0):g} · Down {rec.get('dn', 0):g}){side}")
+        extra = []
+        if rec.get("edge_c") is not None:
+            extra.append(f"ниже модельной цены на {rec['edge_c']:.1f}¢")
+        mo = rec.get("mo_c") or {}
+        if mo:
+            extra.append("цена стороны после исполнения: " + ", ".join(f"за {h} с {_cents(v)}" for h, v in sorted(mo.items(), key=lambda kv: int(kv[0]))))
+        if extra:
+            out.append(" · ".join(extra) + (" (минус = против нас)" if mo else ""))
+    o = rec.get("open") or {}
+    out += ["", "<b>Сейчас</b>"]
+    out.append((f"в позиции окон {o['windows']}: Up {o.get('up', 0):g} · Down {o.get('dn', 0):g} · худший случай {money(-(o.get('worst') or 0))}"
+                if o.get("windows") else "позиций нет") + f" · заявок на бирже {o.get('bids', 0)}")
+    cs = rec.get("cancels") or {}
+    parts = [f"{ru} {cs[k]}" for k, ru in MAKER_CANCELS_RU if cs.get(k)]
+    if parts:
+        out += ["", f"<b>Заявок снято или переставлено</b> {sum(cs.values())}: " + " · ".join(parts)]
+    if live:
+        lat, b = rec.get("lat") or {}, rec.get("broker") or {}
+        calls = [f"{name} {x['med']:.0f} мс (p95 {x['p95']:.0f})" for name, key in (("поставить", "place"), ("снять", "cancel"))
+                 if (x := lat.get(key)) and x.get("n")]
+        bad = []
+        if b.get("cancel_late"):
+            bad.append(f"не успели снять {b['cancel_late']}")
+        if b.get("rejected"):
+            bad.append(f"отказов биржи {b['rejected']}")
+        if b.get("failed"):
+            bad.append(f"⚠️ сделок не прошло {b['failed']}")
+        if rec.get("lag_over_100ms"):
+            bad.append(f"пауз цикла >0.1 с {rec['lag_over_100ms']}")
+        if rec.get("balance") is not None:
+            bad.append(f"кошелёк {rec['balance']:.2f}$")
+        if calls or bad:
+            out += ["", "<b>Связь</b> · " + " · ".join(calls)] if calls else ["", "<b>Связь</b>"]
+            if bad:
+                out.append(" · ".join(bad))
+    return "\n".join(out)
+
+
+def format_maker(unit="pmbot-maker-live"):
+    """/maker: the newest periodic report of the live maker test, how old it is and whether the maker runs."""
+    journal = ops.bot_paths(unit)[0]
+    rec = ops.last_event(journal, "mm_report") if journal else None
+    state, _ = ops.unit_state(unit)
+    name = label(unit, False)
+    state_ru = ops.STATE_RU.get(state, esc(state))
+    start = "" if state in RUNNING else f"\nЗапуск: /restart {unit}"
+    if rec is None:
+        return (f"{name}: {state_ru}. Отчётов в журнале ещё нет: первый приходит в :00 или :30 UTC, не раньше чем через "
+                f"10 минут после запуска.{start}")
+    head = "" if state == "active" else f"{name}: {state_ru}{start}\n\n"
+    return (head + maker_report(rec, unit)
+            + f"\n\n<i>Это отчёт {ops.fmt_age(rec['t'])} назад; новые приходят сами в :00 и :30 UTC.</i>")
 
 
 def group_of(unit, mode):
@@ -251,7 +346,9 @@ def event_message(kind, rec, unit=None, prefix="pmbot", mode="paper", per_window
     """Text for one journal event, or None if this event should not be sent."""
     who = _who(unit, prefix)
     live = mode == "live" or rec.get("mode") == "live"
-    length = 3600 if unit.startswith("pmbot-hourly") else 300
+    length = 3600 if unit and unit.startswith("pmbot-hourly") else 300
+    if kind == "mm_report":
+        return maker_report(rec, unit or "pmbot-maker-live")
     if kind == "settle":
         if not (live or per_window):
             return None                       # paper windows go into the hourly digest instead of 30 messages/hour

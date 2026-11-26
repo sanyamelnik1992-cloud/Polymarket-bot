@@ -35,6 +35,7 @@ last 2 s toward our side), mm_markout (the side's fair value markout_s later), s
 import asyncio
 import logging
 import math
+import os
 import time
 import tomllib
 from dataclasses import dataclass, field
@@ -44,11 +45,14 @@ from .feeds import ClobFeed
 from .live import LiveGateError
 from .lock import LockBot, _apply, load_lock_config, tick_floor
 from .maker_live import MakerLiveBroker, MakerLiveCfg
+from .makerreport import Interval, next_boundary
 from .paper import PaperBroker
 from .state import now_ms
 
 log = logging.getLogger("pmbot.maker")
 MIN_BID = 0.05             # the live broker refuses bids under 0.05 (MakerLiveBroker.PRICE_LO): paper does not quote them either
+REPORT_COUNTERS = ("quotes", "requotes", "pulls", "guard", "lag_over_100ms", "skipped_risk")   # mm_report: by difference
+REPORT_BROKER = ("placed", "rejected", "crossed", "cancel_late", "failed", "adopted", "reconciled")
 UP_HYST = 0.003            # a resting bid is raised only when the raw target is this far past the next cent (a fair value that
                            # flickers around a cent boundary would re-place the bid back and forth and lose its queue place);
                            # it is lowered at once (that is the side where a stale bid gets picked off)
@@ -80,6 +84,7 @@ class MakerCfg:
     gate_s: float = 3.0                  # seconds (reports/95: fills after such a move are the toxic ones, the good ones follow a move
                                          # toward us); the other side keeps quoting. 0 = off
     markout_s: list = field(default_factory=lambda: [5, 30])    # mm_markout: the side's fair value this many s after a fill
+    report_every_s: float = 1800.0       # one `mm_report` record (Telegram in live) every this many s, at wall-clock multiples; 0 = off
 
 
 def _parse_maker(path=None, overrides=None):
@@ -179,6 +184,8 @@ def _check_maker(cfg, mm):
         raise ValueError("maker: 0 <= dog_spread <= 0.5, 0.3 <= fav_p <= 0.7, 0 <= gate_bp <= 10, 1 <= gate_s <= 30")
     if not mm.markout_s or any(not (isinstance(h, int) and 1 <= h <= 120) for h in mm.markout_s):
         raise ValueError("maker.markout_s: whole seconds in [1, 120]")
+    if not (mm.report_every_s == 0 or 300 <= mm.report_every_s <= 7200):
+        raise ValueError("maker.report_every_s: 0 (off) or 300..7200 seconds")
     if cfg.risk.max_open_usd < 2 * mm.shares * mm.p_hi:
         raise ValueError("risk.max_open_usd must fit the two bids of a window")
     return cfg, mm
@@ -253,6 +260,8 @@ class FairMaker(LockBot):
         self._guard_mid = {}       # asset -> the Binance mid of the guard's last look (it looks again after a 0.1 bp move)
         self.marks = []            # pending markouts: (due ms, key, side, h, price, size, fair value at the fill)
         self._fv_t = {}            # window key -> ms of the last "fv" record (the hourly report's markout-60 reads the book mid)
+        self.iv = Interval(time.time())    # the report interval in progress (pmbot/bot/makerreport.py)
+        self._rep_prev = {}        # cumulative counters at the last report (the report carries the difference)
         self.stats.update(quotes=0, requotes=0, cancels=0, pulls=0, fills=0, shares_up=0.0, shares_dn=0.0)
 
     # ---------------------------------------------------------------- positions and risk
@@ -334,6 +343,7 @@ class FairMaker(LockBot):
             return False, True
         for s, b in bs:
             self.stats["cancels"] += 1
+            self._note("cancel", why)
             if why != "requote":
                 self.j.log("mm_cancel", key=key, side=s, why=why, price=b["price"])
         return True, bool(late)
@@ -527,6 +537,7 @@ class FairMaker(LockBot):
                     continue
                 self.mm_bids[(key, side)] = {"oid": oid, "price": tgt, "size": size, "token": token, "p": p, "t": now}
                 self.stats["quotes"] += 1
+                self._note("quote", key)
                 bb = book.best_bid() if book is not None and hasattr(book, "best_bid") else None
                 self.j.log("mm_quote", key=key, side=side, price=tgt, size=size, p=round(p, 4), ref=round(ref, 4), q=round(q_ahead, 1),
                            bb=bb, ba=ask[0] if ask else None, rel=round(rel, 1), up=up, dn=dn, re=bool(cur), fav=bool(fav))
@@ -563,6 +574,7 @@ class FairMaker(LockBot):
         mv = self.move_toward_bp(w.asset, side) if w else None
         self.stats["fills"] += 1
         self.stats["shares_up" if side == "U" else "shares_dn"] += q
+        self._note("fill", key, side, px, q, None if b is None else b["p"] >= self.mm.fav_p, None if p is None else p - px)
         self._save_state()
         self.j.log("fill", key=key, side=side, price=round(px, 4), size=round(q, 4), ts=fill["ts"], fee=0.0,
                    order_id=fill["order_id"], mode=self.broker.mode)
@@ -602,6 +614,96 @@ class FairMaker(LockBot):
                 keep.append(mk)
                 continue
             p1 = self._side_fair(key, side, now)
+            self._note("markout", h, None if p1 is None else p1 - p0, q)
             self.j.log("mm_markout", key=key, side=side, h=h, price=round(px, 4), size=round(q, 4), p0=round(p0, 4),
                        p1=None if p1 is None else round(p1, 4), d=None if p1 is None else round(p1 - p0, 4))
         self.marks = keep
+
+    # ---------------------------------------------------------------- the periodic report (reports/95 section 10)
+    def _note(self, what, *args):
+        """Feed the report's interval. The report is only a view: a fault in it must never reach the order, fill or settle
+        bookkeeping it is called from (real money), so it is logged and dropped."""
+        try:
+            getattr(self.iv, what)(*args)
+        except Exception as e:  # noqa: BLE001
+            log.warning("report %s: %s", what, e)
+
+    def _settle(self, key, winner):
+        """LockBot's settlement, plus the closed window for the report (result and whether we held both sides)."""
+        es = list(self.entries.get(key, []))
+        super()._settle(key, winner)
+        if es:
+            up = sum(e["shares"] for e in es if e["side"] == "U")
+            dn = sum(e["shares"] for e in es if e["side"] == "D")
+            self._note("settle", (up if winner == "Up" else dn) - sum(e["cost"] + e["fee"] for e in es), up, dn)
+
+    def extra_loops(self):
+        return [self.report_loop()] if self.mm.report_every_s > 0 else []
+
+    async def report_loop(self, clock=time.time, sleep=asyncio.sleep):
+        """One `mm_report` every maker.report_every_s seconds, at wall-clock multiples (:00 and :30 for 1800). A report that
+        would cover less than a third of the period (the bot was just restarted: every deploy restarts it) is skipped and its
+        counters go on into the next one."""
+        every = float(self.mm.report_every_s)
+        while self.alive():
+            now = clock()
+            target = next_boundary(now, every)
+            await sleep(max(0.5, target - now))
+            if not self.alive():
+                break
+            t = clock()
+            if t < target:                    # woken a few ms early (the sleep runs on the monotonic clock): the report is stamped :00 / :30
+                await sleep(target - t + 0.01)
+                if not self.alive():
+                    break
+                t = max(clock(), target)
+            if t - self.iv.t0 < every / 3:
+                continue
+            try:
+                self.report_once(t)
+            except Exception as e:  # noqa: BLE001  (a report must never stop the maker)
+                log.warning("report: %s", e)
+                self.j.log("error", where="mm_report", error=str(e)[:200])
+
+    def report_state(self):
+        """'ok', or why the maker is not quoting now. No side effects (can_enter() may stop the bot)."""
+        r = self.cfg.risk
+        if r.kill_file and os.path.exists(r.kill_file):
+            return "kill_file"
+        if self.risk.get("killed_day") == self.today() or self.day_pnl() <= -r.daily_loss_limit:
+            return "killed"
+        health = getattr(self.broker, "health", None)
+        ok, why = health() if health else (True, "")
+        return "ok" if ok else why
+
+    def report_record(self, now):
+        """The `mm_report` record of the interval that ends at `now` (wall clock, s); the next interval starts here."""
+        iv = self.iv
+        bs = getattr(self.broker, "stats", None) or {}
+        cur = {k: self.stats.get(k, 0) for k in REPORT_COUNTERS}
+        cur.update({"b_" + k: bs.get(k, 0) for k in REPORT_BROKER})
+        d = {k: cur[k] - self._rep_prev.get(k, 0) for k in cur}
+        rec = iv.summary()
+        rec.update(mode=self.broker.mode, t0=round(iv.t0, 1), t1=round(now, 1), minutes=round((now - iv.t0) / 60),
+                   state=self.report_state(), quotes=d["quotes"], requotes=d["requotes"], pulls=d["pulls"], guard=d["guard"],
+                   lag_over_100ms=d["lag_over_100ms"], skipped_risk=d["skipped_risk"])
+        prov = self.risk["provisional"]
+        open_keys = [k for k, es in self.entries.items() if es and k not in prov]
+        held = [self.held(k) for k in open_keys]
+        rec["open"] = {"windows": len(open_keys), "up": round(sum(h[0] for h in held), 4), "dn": round(sum(h[1] for h in held), 4),
+                       "worst": round(self.open_cost(), 4), "bids": len(self.mm_bids)}
+        by_day = self.risk["realized_by_day"]
+        rec.update(day=round(self.day_pnl(), 4), day_limit=self.cfg.risk.daily_loss_limit, days=len(by_day),
+                   total=round(sum(by_day.values()) + sum(v for k, v in prov.items() if k not in self.risk["settled"]), 4))
+        if self.live:
+            rec["broker"] = {k: d["b_" + k] for k in REPORT_BROKER}
+            lat = getattr(self.broker, "latency_report", None)
+            rec["lat"] = lat() if lat else {}
+            rec["balance"] = getattr(self.broker, "balance_usd", None)
+        self.iv, self._rep_prev = Interval(now), cur
+        return rec
+
+    def report_once(self, now):
+        rec = self.report_record(now)
+        self.j.log("mm_report", **rec)
+        return rec

@@ -29,7 +29,7 @@ CHAT = os.environ.get("PMBOT_TG_CHAT", "").strip().replace(" ", "")      # every
 CHATS = [c for c in CHAT.split(",") if c]
 OWNER = CHATS[0] if CHATS else ""
 VIEWER_COMMANDS = {"/start", "/help", "/status", "/trades", "/server", "/chart", "/review", "/r", "/rewards",
-                   "/rhow", "/rlive"}   # read-only
+                   "/rhow", "/rlive", "/maker"}   # read-only
 _reply_chat = None   # chat of the command being handled (cmd_chart sends its picture there)
 DIGEST_HOURS = sorted({int(h) % 24 for h in os.environ.get("PMBOT_TG_DIGEST_HOURS", "6,12,18").replace(" ", "").split(",")
                         if h.isdigit()})
@@ -43,6 +43,7 @@ HELP = """🤖 <b>pmbot — команды</b>
 🧾 /trades — последние 10 закрытых окон
 🎁 /r — бот «Награды»: заработал, потерял, итог по дням · /rhow — как он работает
 🧪 /rlive — живой тест «Наград» на реальные деньги: доля и начисления по данным биржи
+🏦 /maker — живой тест Мейкера: последний отчёт (новые приходят сами в :00 и :30 UTC)
 🖥 /server — CPU, RAM, диск
 📜 /log [юнит] — последние строки лога
 
@@ -194,6 +195,7 @@ COMMANDS = {
     "/r": lambda a: notify.format_rewards(), "/rewards": lambda a: notify.format_rewards(),
     "/rhow": lambda a: notify.REWARDS_HOW,
     "/rlive": lambda a: notify.format_rewards_live(),
+    "/maker": lambda a: notify.format_maker(),
     "/trades": lambda a: notify.format_trades(), "/server": lambda a: notify.format_server(),
     "/chart": cmd_chart, "/review": cmd_review,
     "/log": cmd_log, "/stop": cmd_stop, "/resume": cmd_resume, "/update": cmd_update, "/restart": cmd_restart, "/off": cmd_off,
@@ -299,7 +301,7 @@ def main():
         requests.post(f"{API}/setMyCommands", timeout=15, json={"commands": [
             {"command": c.strip("/"), "description": d} for c, d in [
                 ("/status", "статус и PnL"), ("/chart", "график PnL"), ("/review", "разбор и вердикт"),
-                ("/trades", "последние сделки"), ("/r", "бот «Награды»: деньги"), ("/rhow", "как работает «Награды»"), ("/rlive", "живой тест «Наград»"),
+                ("/trades", "последние сделки"), ("/r", "бот «Награды»: деньги"), ("/rhow", "как работает «Награды»"), ("/rlive", "живой тест «Наград»"), ("/maker", "отчёт Мейкера"),
                 ("/server", "сервер"), ("/log", "лог"), ("/stop", "АВАРИЙНЫЙ СТОП"), ("/resume", "снять стоп"),
                 ("/update", "обновить код"), ("/restart", "перезапустить юнит"), ("/help", "помощь")]]})
     except requests.RequestException:

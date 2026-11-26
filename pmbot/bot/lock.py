@@ -1641,6 +1641,10 @@ class LockBot:
         bots' taker orders never rest, so there is nothing to do; FairMaker pulls its bids."""
         return None
 
+    def extra_loops(self):
+        """Hook of run(): more coroutines to run next to the bot's own loops (they end with the bot). FairMaker adds its report."""
+        return []
+
     async def _refreeze(self, after_s=120.0):
         """Freeze once more when the feeds, connections and SDK caches created at start-up exist (reports/83 section 14)."""
         await asyncio.sleep(after_s)
@@ -1659,7 +1663,7 @@ class LockBot:
             self.discover_loop(), *cl_feeds, binance_feed(self.st, self.alive),
             *([binance_futures_feed(self.st, self.alive)] if self.fut else []),
             self.decide_loop(), self.status_loop(), self.strike_check_loop(), self.lag_loop(),
-            self.warm_loop())]
+            self.warm_loop(), *self.extra_loops())]
         tasks += [asyncio.create_task(f.run()) for f in self.feeds.values()]
         settle = asyncio.create_task(self.settle_loop())
         try:

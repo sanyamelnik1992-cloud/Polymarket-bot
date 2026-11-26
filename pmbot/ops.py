@@ -116,7 +116,7 @@ def run_dirs(journal_dir, max_age_s=None):
 
 
 _WANTED = ('"type":"settle"', '"type":"fill"', '"type":"kill"', '"type":"start"', '"type":"status"',
-           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"', '"type":"rday"',
+           '"type":"pause"', '"type":"order_rejected"', '"type":"stopped"', '"type":"rstatus"', '"type":"rday"', '"type":"mm_report"',
            '"type":"rlive')            # rlive, rlive_market, rlive_fill, rlive_done, ...: the live rewards test
 
 
@@ -137,6 +137,28 @@ def read_events(run_dir, since_ts=0.0):
     except OSError:
         pass
     return out
+
+
+def last_event(journal_dir, type_, max_bytes=6_000_000):
+    """The newest journal record of a type (newest run first; only the last `max_bytes` of a file are read), or None."""
+    needle = f'"type":"{type_}"'
+    for d in reversed(run_dirs(journal_dir)):
+        path = os.path.join(d, "events.jsonl")
+        try:
+            with open(path, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                f.seek(max(0, size - max_bytes))
+                lines = f.read().decode("utf-8", "replace").splitlines()
+        except OSError:
+            continue
+        for line in reversed(lines):
+            if needle in line:
+                try:
+                    return json.loads(line)
+                except ValueError:
+                    continue
+    return None
 
 
 def events_since(journal_dir, since_ts):

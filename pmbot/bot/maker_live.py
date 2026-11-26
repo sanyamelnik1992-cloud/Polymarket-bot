@@ -106,6 +106,7 @@ class MakerLiveBroker:
         self.stats = {"placed": 0, "rejected": 0, "crossed": 0, "cancels": 0, "cancel_late": 0, "fills": 0,
                       "adopted": 0, "reconciled": 0, "failed": 0, "place_ms": None, "cancel_ms": None}
         self._lat = {"place": [], "cancel": []}
+        self._lat_iv = {"place": [], "cancel": []}     # every call since the last latency_report() (the Telegram report's interval)
 
     def log(self, kind, **kw):
         if self.journal:
@@ -342,6 +343,22 @@ class MakerLiveBroker:
             del xs[:100]
         s = sorted(xs)
         self.stats[op + "_ms"] = s[len(s) // 2]
+        iv = self._lat_iv[op]
+        iv.append(ms)
+        if len(iv) > 20000:                            # a report that never comes must not grow without bound
+            del iv[:10000]
+
+    def latency_report(self, reset=True):
+        """The exchange calls of the interval since the last report: {"place": {"n", "med", "p95", "max"}, "cancel": {...}} in ms
+        ({"n": 0} when there was none). The status line's place_ms / cancel_ms are medians of the last 100-200 calls only."""
+        out = {}
+        for op, xs in self._lat_iv.items():
+            s = sorted(xs)
+            out[op] = ({"n": len(s), "med": s[len(s) // 2], "p95": s[min(len(s) - 1, int(0.95 * len(s)))], "max": s[-1]}
+                       if s else {"n": 0})
+            if reset:
+                xs.clear()
+        return out
 
     async def place(self, token, key, side, price, size, now_ms, expiration_s=None, queue_ahead=None, end_s=None):
         """One post-only GTD BUY, or None (refused by our limits or by the exchange: nothing rests then)."""

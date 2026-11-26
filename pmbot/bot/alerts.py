@@ -18,8 +18,9 @@ ALERT_TYPES = {"start", "kill", "pause", "order_rejected", "cancel_failed", "hea
                "broker_fatal", "api_error", "reset_failed", "settle_timeout", "existing_position", "final", "settle", "geoblock_ok", "balance",
                "order_failed", "order_pending", "lock_hedge",
                "rlive_market", "rlive_fill", "rlive_done", "rlive_no_market",       # the live rewards test
-               "mm_live_error", "fill_failed"}                                       # the live maker (reports/94)
-LIVE_ONLY = {"start", "pause", "final", "settle", "existing_position", "geoblock_ok", "balance", "lock_hedge"}
+               "mm_live_error", "fill_failed",                                       # the live maker (reports/94)
+               "mm_report"}                                                          # its periodic report (reports/95 section 10)
+LIVE_ONLY = {"start", "pause", "final", "settle", "existing_position", "geoblock_ok", "balance", "lock_hedge", "mm_report"}
 RATE_LIMITED = {"order_rejected", "cancel_failed", "heartbeat_error", "user_stream_error", "settle_timeout",
                 "api_error", "reset_failed", "order_failed", "order_pending", "mm_live_error", "fill_failed"}
 # the book moved during our latency: routine, not an alert (a maker's post-only bid would cross; a taker's FAK found
@@ -62,7 +63,9 @@ class TelegramAlerts:
         if kind in LIVE_ONLY and self.mode != "live" and not (kind == "settle" and self.per_window):
             return None
         if kind == "settle" and not self.per_window:
-            from ..notify import QUIET_SETTLES
+            from ..notify import QUIET_SETTLES, REPORTED_UNITS
+            if self.unit in REPORTED_UNITS:
+                return None                      # the unit's own periodic report carries its closed windows (the maker's mm_report)
             if self.unit in QUIET_SETTLES:
                 return self._quiet_settle(rec)   # dozens of windows a day (reports/83 sections 10, 13): one summary an hour
         if kind in RATE_LIMITED:

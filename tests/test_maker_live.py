@@ -166,7 +166,7 @@ def test_live_config_runs_the_rule_of_its_paper_twin():
     assert dc.asdict(lm) == dc.asdict(pm)
     assert live.journal_dir != paper.journal_dir and live.risk.state_file != paper.risk.state_file
     assert (live.risk.max_open_usd, live.risk.max_usd_per_entry) == (paper.risk.max_open_usd, paper.risk.max_usd_per_entry)
-    assert notify.TWINS["pmbot-maker-v2"] == "pmbot-maker-live" and "pmbot-maker-live" in notify.QUIET_SETTLES
+    assert notify.TWINS["pmbot-maker-v2"] == "pmbot-maker-live" and "pmbot-maker-live" in notify.REPORTED_UNITS and "pmbot-maker-live" not in notify.QUIET_SETTLES
     assert (lm.half_spread, lm.dog_spread, lm.fav_p, lm.gate_bp, lm.gate_s, lm.ref) == (0.015, 0.10, 0.5, 0.5, 3.0, "min")
     assert (lm.p_lo, lm.p_hi) == (0.10, 0.80)                         # a bid costs <= 5 x 0.785: a loss <= $3.9
     assert live.lock.rel_lo == 100.0 and live.lock.rel_hi == 230.0
