@@ -32,6 +32,7 @@ Positions are held to resolution (an Up + Down pair pays $1). Makers pay no fee;
 Journal: mm_quote, mm_cancel, mm_pull, fill + mm_fill (the side's fair value and our edge at the fill, the Binance move of the
 last 2 s toward our side), mm_markout (the side's fair value markout_s later), settle (from LockBot).
 """
+import asyncio
 import logging
 import math
 import time
@@ -47,6 +48,7 @@ from .paper import PaperBroker
 from .state import now_ms
 
 log = logging.getLogger("pmbot.maker")
+MIN_BID = 0.05             # the live broker refuses bids under 0.05 (MakerLiveBroker.PRICE_LO): paper does not quote them either
 UP_HYST = 0.003            # a resting bid is raised only when the raw target is this far past the next cent (a fair value that
                            # flickers around a cent boundary would re-place the bid back and forth and lose its queue place);
                            # it is lowered at once (that is the side where a stale bid gets picked off)
@@ -71,6 +73,12 @@ class MakerCfg:
     pause_s: float = 2.0                 # and quote that coin again only this long after the last such move
     p_lo: float = 0.10                   # no bid on a side whose fair value is below p_lo or above p_hi (nearly decided:
     p_hi: float = 0.90                   # a 1-2 c spread is all the edge there and the tail risk is the whole bid)
+    dog_spread: float = 0.0              # > 0: the discount of a side whose MODEL fair value is below fav_p (the underdog) instead of
+    fav_p: float = 0.5                   # half_spread (reports/95: on 8 days of public trades a symmetric bid loses on the underdog
+                                         # side, -2..-4 c a share, the model is too high there; 0.10 = it only catches dislocations)
+    gate_bp: float = 0.0                 # > 0: no bid on a side while Binance moved AGAINST it by more than gate_bp over the last gate_s
+    gate_s: float = 3.0                  # seconds (reports/95: fills after such a move are the toxic ones, the good ones follow a move
+                                         # toward us); the other side keeps quoting. 0 = off
     markout_s: list = field(default_factory=lambda: [5, 30])    # mm_markout: the side's fair value this many s after a fill
 
 
@@ -167,6 +175,8 @@ def _check_maker(cfg, mm):
         raise ValueError("maker: 0 < pull_bp <= 20, 0 <= pull_sigmas <= 10, 0.2 <= pull_s <= 30, 0 <= pause_s <= 60")
     if not 0 < mm.p_lo < mm.p_hi < 1:
         raise ValueError("maker: 0 < p_lo < p_hi < 1")
+    if not (0 <= mm.dog_spread <= 0.5 and 0.3 <= mm.fav_p <= 0.7 and 0 <= mm.gate_bp <= 10 and 1 <= mm.gate_s <= 30):
+        raise ValueError("maker: 0 <= dog_spread <= 0.5, 0.3 <= fav_p <= 0.7, 0 <= gate_bp <= 10, 1 <= gate_s <= 30")
     if not mm.markout_s or any(not (isinstance(h, int) and 1 <= h <= 120) for h in mm.markout_s):
         raise ValueError("maker.markout_s: whole seconds in [1, 120]")
     if cfg.risk.max_open_usd < 2 * mm.shares * mm.p_hi:
@@ -174,40 +184,47 @@ def _check_maker(cfg, mm):
     return cfg, mm
 
 
-def discount(mm: MakerCfg, long_by):
-    """How far under its reference a side is bid: half_spread, plus skew_c per `shares` this side is long, minus the same
+def base_spread(mm: MakerCfg, fav=True):
+    """The side's own half spread: half_spread, or dog_spread for the underdog (fav = the model's fair value >= fav_p)."""
+    return mm.half_spread if fav or mm.dog_spread <= 0 else mm.dog_spread
+
+
+def discount(mm: MakerCfg, long_by, fav=True):
+    """How far under its reference a side is bid: its base spread, plus skew_c per `shares` this side is long, minus the same
     for each `shares` it is short (down to 0: a pair is completed at the reference at most). The classic inventory skew of a
     maker: long Down = Down bid lower and (an Up bid is a Down ask) Down offered cheaper."""
+    base = base_spread(mm, fav)
     k = mm.skew_c * abs(long_by) / mm.shares
-    return mm.half_spread + k if long_by > 0 else mm.half_spread - min(mm.half_spread, k)
+    return base + k if long_by > 0 else base - min(base, k)
 
 
-def bid_target(mm: MakerCfg, p, have, long_by, best_ask):
+def bid_target(mm: MakerCfg, p, have, long_by, best_ask, fav=True):
     """Price of our bid for a side whose reference price is p, or (None, why). have = shares of that side bought in the
-    window, long_by = (this side - the other side) shares, best_ask = that side's best ask or None."""
+    window, long_by = (this side - the other side) shares, best_ask = that side's best ask or None, fav = the side is the
+    favourite (its base spread is half_spread, the underdog's dog_spread)."""
     if not mm.p_lo <= p <= mm.p_hi:
         return None, "price"
     if have >= mm.max_side_shares - 1e-9:
         return None, "side_full"
     if long_by >= mm.max_unpaired - 1e-9:
         return None, "unpaired"
-    b = tick_floor(p - discount(mm, long_by), 0.01)
+    b = tick_floor(p - discount(mm, long_by, fav), 0.01)
     if best_ask is not None and b >= best_ask - 1e-9:
         b = tick_floor(best_ask - 0.01, 0.01)          # post-only: a bid at or over the ask would take it
     b = round(b, 2)
-    if b < 0.01:
+    if b < MIN_BID:
         return None, "too_low"
     return b, ""
 
 
-def keep_bid(mm: MakerCfg, cur, tgt, p, long_by):
+def keep_bid(mm: MakerCfg, cur, tgt, p, long_by, fav=True):
     """True when a bid resting at `cur` may stay although the target is `tgt`: lower targets move it at once (>= requote_c),
     higher ones only when the unrounded target is UP_HYST past cur + requote_c."""
     if tgt <= cur - mm.requote_c + 1e-9:
         return False
     if tgt < cur + mm.requote_c - 1e-9:
         return True
-    return p - discount(mm, long_by) < cur + mm.requote_c + UP_HYST
+    return p - discount(mm, long_by, fav) < cur + mm.requote_c + UP_HYST
 
 
 class FairMaker(LockBot):
@@ -232,6 +249,8 @@ class FairMaker(LockBot):
         self.feeds = {a: ClobFeed(self.st, a, alive=self.alive, on_trade=self._on_public_trade) for a in cfg.lock.assets}
         self.mm_bids = {}          # (window key, side) -> {"oid", "price", "size", "token", "p", "t"}
         self.pause_until = {}      # asset -> ms: no bids until then (a Binance jump)
+        self._guard_busy = {}      # asset -> an urgent guard task is cancelling (live)
+        self._guard_mid = {}       # asset -> the Binance mid of the guard's last look (it looks again after a 0.1 bp move)
         self.marks = []            # pending markouts: (due ms, key, side, h, price, size, fair value at the fill)
         self._fv_t = {}            # window key -> ms of the last "fv" record (the hourly report's markout-60 reads the book mid)
         self.stats.update(quotes=0, requotes=0, cancels=0, pulls=0, fills=0, shares_up=0.0, shares_dn=0.0)
@@ -299,17 +318,21 @@ class FairMaker(LockBot):
         """Cancel our bids of a window's sides in ONE call (a Binance jump pulls both at once: in live every call is a
         round trip). Returns (ok, late): ok = False when the cancel itself failed (the bids are kept and tried again next
         pass); late = a bid was matched before the cancel reached the exchange (its fill is counted already: no re-bid now)."""
-        bs = [(s, self.mm_bids.get((key, s))) for s in sides]
-        bs = [(s, b) for s, b in bs if b]
+        bs = []
+        for s in sides:                                # CLAIM the bids first: the urgent guard (below) and the decision pass may both
+            b = self.mm_bids.pop((key, s), None)       # cancel the same side; the second one finds nothing to do
+            if b:
+                bs.append((s, b))
         if not bs:
             return True, False
         try:
             late = await self.broker.cancel([b["oid"] for _, b in bs], now)
         except Exception as e:  # noqa: BLE001  (live: still resting as far as we know, the next pass cancels again)
+            for s, b in bs:
+                self.mm_bids.setdefault((key, s), b)
             self.j.log("error", where="mm_cancel", error=str(e)[:200], key=key, why=why)
             return False, True
         for s, b in bs:
-            self.mm_bids.pop((key, s), None)
             self.stats["cancels"] += 1
             if why != "requote":
                 self.j.log("mm_cancel", key=key, side=s, why=why, price=b["price"])
@@ -350,6 +373,63 @@ class FairMaker(LockBot):
         if bb is None or ba is None:
             return None
         return (bb + ba) / 2
+
+    def gate_blocks(self, asset, side):
+        """maker.gate_bp > 0: Binance moved against this side by more than gate_bp over the last gate_s seconds -> no bid on it
+        (the takers who come now know more; reports/95: after such a move the fills lose, after a move toward the side they
+        earn most). The other side keeps quoting."""
+        m = self.mm
+        if m.gate_bp <= 0:
+            return False
+        mv = self.move_toward_bp(asset, side, int(m.gate_s * 1000))
+        return mv is not None and mv < -m.gate_bp
+
+    # ---------------------------------------------------------------- the urgent guard (live)
+    def _on_tick(self, asset):
+        """Live: a Binance tick that makes a resting bid dangerous pulls it NOW, from the feed's own callback, instead of waiting for
+        the decision pass to finish its place / cancel calls (each ~50-250 ms at the exchange). Paper needs none: its calls are
+        instant. The pass applies the same predicates (jump pull, gate), so the two agree."""
+        super()._on_tick(asset)
+        if not self.live or not self.mm_bids or self._guard_busy.get(asset):
+            return
+        try:
+            mid = self.sig_px(asset).bn_mid()
+            ref = self._guard_mid.get(asset)
+            if not mid or (ref is not None and abs(mid / ref - 1.0) < 1e-5):
+                return                              # bookTicker sends hundreds of updates a second: look again after a 0.1 bp move
+            self._guard_mid[asset] = mid
+            now = now_ms()
+            m = self.mm
+            mine = [k for k in self.mm_bids if k[0].rsplit("-", 1)[0] == asset]
+            if not mine:
+                return
+            jump, lim = self.jump_bp(asset, now), self.pull_limit_bp(asset)
+            if jump >= lim:
+                sides = ("U", "D")
+            else:
+                sides = tuple(sd for sd in ("U", "D") if any(k[1] == sd for k in mine) and self.gate_blocks(asset, sd))
+                jump = 0.0
+            if sides:
+                self._guard_busy[asset] = True
+                asyncio.get_running_loop().create_task(self._guard(asset, sides, jump, lim))
+        except Exception as e:  # noqa: BLE001  (inside the Binance feed: never raises)
+            log.warning("guard %s: %s", asset, e)
+
+    async def _guard(self, asset, sides, jump, lim):
+        try:
+            now = now_ms()
+            if jump:
+                if now >= self.pause_until.get(asset, 0):
+                    self.stats["pulls"] += 1
+                    self.j.log("mm_pull", asset=asset, key="*", move_bp=round(jump, 3), limit_bp=round(lim, 3), guard=True)
+                self.pause_until[asset] = now + int(self.mm.pause_s * 1000)
+            for key in sorted({k[0] for k in self.mm_bids if k[0].rsplit("-", 1)[0] == asset}):
+                await self._cancel_sides(key, sides, now_ms(), "pause" if jump else "gate")
+                self.stats["guard"] = self.stats.get("guard", 0) + 1
+        except Exception as e:  # noqa: BLE001
+            self.j.log("error", where="guard", error=str(e)[:200])
+        finally:
+            self._guard_busy[asset] = False
 
     async def decide_once(self, now):
         c, m = self.cfg.lock, self.mm
@@ -410,7 +490,10 @@ class FairMaker(LockBot):
                     mid = self._mid_wo_own(token, other)
                     if mid is not None:
                         ref = min(p, mid)                                 # never above the side's book mid
-                tgt, why = bid_target(m, ref, have, long_by, ask[0] if ask else None)
+                fav = p >= m.fav_p                                   # the MODEL's favourite (not the min() reference)
+                tgt, why = bid_target(m, ref, have, long_by, ask[0] if ask else None, fav)
+                if tgt is not None and self.gate_blocks(w.asset, side):
+                    tgt, why = None, "gate"
                 cur = self.mm_bids.get((key, side))
                 resting = getattr(self.broker, "is_resting", None)
                 if cur and resting and not resting(cur["oid"]):   # live: gone at the exchange (a heartbeat lapse, expiry)
@@ -421,7 +504,7 @@ class FairMaker(LockBot):
                     if cur:
                         await self._mm_cancel(key, side, now, why)
                     continue
-                if cur and keep_bid(m, cur["price"], tgt, ref, long_by):
+                if cur and keep_bid(m, cur["price"], tgt, ref, long_by, fav):
                     continue                              # resting close enough to the target
                 size = min(m.shares, math.floor(m.max_side_shares - have + 1e-9))
                 if size < 5:
@@ -446,7 +529,7 @@ class FairMaker(LockBot):
                 self.stats["quotes"] += 1
                 bb = book.best_bid() if book is not None and hasattr(book, "best_bid") else None
                 self.j.log("mm_quote", key=key, side=side, price=tgt, size=size, p=round(p, 4), ref=round(ref, 4), q=round(q_ahead, 1),
-                           bb=bb, ba=ask[0] if ask else None, rel=round(rel, 1), up=up, dn=dn, re=bool(cur))
+                           bb=bb, ba=ask[0] if ask else None, rel=round(rel, 1), up=up, dn=dn, re=bool(cur), fav=bool(fav))
         for key, side in [k for k in self.mm_bids if k[0] not in self.st.windows]:
             await self._mm_cancel(key, side, now, "window_gone")
         gc_ = getattr(self.broker, "gc", None)

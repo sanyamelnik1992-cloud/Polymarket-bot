@@ -20,6 +20,7 @@ from pmbot.bot.state import Book, Window
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 LIVE = os.path.join(ROOT, "config", "maker_live.toml")
 SAFE = os.path.join(ROOT, "config", "maker_safe.toml")
+V2 = os.path.join(ROOT, "config", "maker_v2.toml")
 ENV = {"PMBOT_LIVE_CONFIRM": CONFIRM_PHRASE, "PMBOT_PRIVATE_KEY": "0xabc"}
 OK_GEO = lambda url, timeout: types.SimpleNamespace(json=lambda: {"blocked": False, "country": "IE"})  # noqa: E731
 WALLET = "0xOurWallet"
@@ -147,7 +148,7 @@ def test_live_config_needs_the_live_mode_and_the_flag_and_stays_a_test():
         load_maker_config(SAFE, overrides={"live": {"max_shares": 5}})    # [live] in a paper config
     for bad in ({"maker": {"shares": 10, "max_side_shares": 20}, "live": {"max_shares": 10}},
                 {"maker": {"max_side_shares": 20}}, {"maker": {"max_unpaired": 15, "max_side_shares": 15}},
-                {"live": {"max_resting_usd": 20.0}}, {"live": {"max_resting_usd": 8.0}},
+                {"live": {"max_resting_usd": 20.0}}, {"live": {"max_resting_usd": 7.0}},
                 {"risk": {"daily_loss_limit": 20.0}}, {"risk": {"max_open_usd": 50.0}}, {"risk": {"resume_next_day": True}},
                 {"live": {"reserve_usd": 10.0}}, {"lock": {"assets": ["btc", "eth"]}}, {"live": {"max_orders_hour": 6000}},
                 {"live": {"heartbeat_s": 10.0}}, {"live": {"ttl_s": 100}}, {"live": {"typo": 1}}, {"risk": {"kill_file": ""}}):
@@ -157,14 +158,18 @@ def test_live_config_needs_the_live_mode_and_the_flag_and_stays_a_test():
 
 
 def test_live_config_runs_the_rule_of_its_paper_twin():
-    """pmbot-maker-safe is the twin: the same [lock] and quoting rule; only the size caps of the test and the money differ."""
+    """pmbot-maker-v2 is the twin (reports/95): the same [lock], the same [maker] to the last number (the caps too, so that both see
+    the same fills); only the money differs (day stop, resume, mode)."""
     live, lm, lc = load_maker_live_config(LIVE, live_flag=True)
-    paper, pm = load_maker_config(SAFE)
+    paper, pm = load_maker_config(V2)
     assert live.lock == paper.lock
-    keep = ("max_side_shares", "max_unpaired")
-    assert {k: v for k, v in dc.asdict(lm).items() if k not in keep} == {k: v for k, v in dc.asdict(pm).items() if k not in keep}
+    assert dc.asdict(lm) == dc.asdict(pm)
     assert live.journal_dir != paper.journal_dir and live.risk.state_file != paper.risk.state_file
-    assert notify.TWINS["pmbot-maker-safe"] == "pmbot-maker-live" and "pmbot-maker-live" in notify.QUIET_SETTLES
+    assert (live.risk.max_open_usd, live.risk.max_usd_per_entry) == (paper.risk.max_open_usd, paper.risk.max_usd_per_entry)
+    assert notify.TWINS["pmbot-maker-v2"] == "pmbot-maker-live" and "pmbot-maker-live" in notify.QUIET_SETTLES
+    assert (lm.half_spread, lm.dog_spread, lm.fav_p, lm.gate_bp, lm.gate_s, lm.ref) == (0.015, 0.10, 0.5, 0.5, 3.0, "min")
+    assert (lm.p_lo, lm.p_hi) == (0.10, 0.80)                         # a bid costs <= 5 x 0.785: a loss <= $3.9
+    assert live.lock.rel_lo == 100.0 and live.lock.rel_hi == 230.0
     assert ops.bot_paths("pmbot-maker-live") == ("data/journal-maker-live", "data/state/maker_live.json", "live")
     assert ops.unit_is_live("pmbot-maker-live") and "5 акций" in notify.limits("pmbot-maker-live")
 
@@ -620,3 +625,189 @@ def test_the_maker_on_the_real_live_broker_end_to_end(tmp_path):
         await bot._on_stopping()
         assert not b.client.open
     run(go())
+
+
+def test_a_fill_that_arrives_before_the_place_answer_is_counted_once():
+    """The stream event of a fill can beat the HTTP answer of the place call (an aggressive bid hit within one round trip): the
+    order is adopted by our address first; the answer must not make a fresh order of it (reconcile would count the shares again)."""
+    fills = []
+    b = broker(fills=fills)
+    client = b.client
+
+    async def slow_place(**kw):
+        client.n += 1
+        oid = f"o{client.n}"
+        client.open[oid] = kw
+        # the exchange matched it at once and the account stream told us before the answer reached us
+        b.handle_trade(trade("t1", "MATCHED", (oid, 5, 0.47, WALLET, kw["asset_id"])))
+        return types.SimpleNamespace(ok=True, order_id=oid, status="matched")
+    client.place_limit_order = slow_place
+
+    async def go():
+        oid = await b.place("U", "btc-1", "U", 0.47, 5, 0, end_s=time.time() + 200)
+        assert oid and [f["size"] for f in fills] == [5.0]
+        assert oid not in b.orders and b.stats["fill_before_answer"] == 1           # fully filled: not resting
+        client.matched[oid] = 5
+        assert await b.reconcile() == 0.0 and [f["size"] for f in fills] == [5.0]   # and never counted again
+        assert b.open_usd() == 0.0
+    run(go())
+
+
+def test_a_partly_filled_adopted_order_keeps_its_rest():
+    fills = []
+    b = broker(fills=fills)
+    client = b.client
+
+    async def slow_place(**kw):
+        client.n += 1
+        oid = f"o{client.n}"
+        client.open[oid] = kw
+        b.handle_trade(trade("t1", "MATCHED", (oid, 2, 0.47, WALLET, kw["asset_id"])))
+        return types.SimpleNamespace(ok=True, order_id=oid, status="live")
+    client.place_limit_order = slow_place
+
+    async def go():
+        oid = await b.place("U", "btc-1", "U", 0.47, 5, 0, end_s=time.time() + 200)
+        assert b.orders[oid].remaining == pytest.approx(3.0) and b.orders[oid].size == 5 and b.orders[oid].price == 0.47
+        client.matched[oid] = 5
+        assert await b.reconcile() == pytest.approx(3.0)
+        assert sum(f["size"] for f in fills) == pytest.approx(5.0)
+    run(go())
+
+
+def test_the_exchange_restart_answer_is_a_rejection_not_an_unknown_order():
+    class RequestRejectedError(Exception):
+        restriction = "RESTARTING"
+        retry_after = 7
+    b = broker()
+    b.client.place_error = RequestRejectedError("engine restarting")
+    assert run(b.place("U", "btc-1", "U", 0.5, 5, 0)) is None
+    assert not b.suspect and b.health() == (False, "api_backoff") and b.stats["rejected"] == 1
+    assert b.backoff_until - b.mono() > 5
+
+
+def test_the_stream_reconnect_triggers_a_reconcile():
+    b = broker()
+    oid = run(b.place("U", "btc-1", "U", 0.47, 5, 0))
+    b.client.matched[oid] = 5                                         # filled while the stream was down
+    b._reconcile_now = True
+    b.lc.balance_every_s = b.lc.rebate_every_s = 1e9
+    b.lc.reconcile_every_s = 1e9
+
+    async def go():
+        t = asyncio.create_task(b._upkeep_loop())
+        await asyncio.sleep(1.3)
+        t.cancel()
+    fills = []
+    b.on_fill = fills.append
+    run(go())
+    assert [f["size"] for f in fills] == [5.0] and not b._reconcile_now
+
+
+def test_the_urgent_guard_pulls_from_the_binance_callback_without_waiting_for_the_pass(tmp_path):
+    bot, j, br, w, now = live_bot(tmp_path, rel=140)
+    run(bot.decide_once(now))
+    assert {s for _, s in bot.mm_bids} == {"U", "D"}
+    br.calls.clear()
+    bot.st.prices["btc"].bn_hist.append((now + 100, 100.0 * math.exp(10e-4) * math.exp(-1.5e-4)))      # -1.5 bp: against Up
+
+    async def go():
+        bot._on_tick("btc")                                            # what the Binance feed calls on every update
+        await asyncio.sleep(0.05)
+    run(go())
+    cancels = [c for c in br.calls if c[0] == "cancel"]
+    assert len(cancels) == 1 and cancels[0][1] == ("x1",)              # only the Up bid: the gate is directional
+    assert (w.key, "U") not in bot.mm_bids and (w.key, "D") in bot.mm_bids
+    assert bot.stats.get("guard") == 1 and not bot._guard_busy["btc"]
+    assert [x["why"] for x in j.of("mm_cancel") if x["side"] == "U"] == ["gate"]
+
+
+def test_the_urgent_guard_pulls_both_sides_on_a_jump_and_logs_it_once(tmp_path):
+    bot, j, br, w, now = live_bot(tmp_path, rel=140)
+    run(bot.decide_once(now))
+    br.calls.clear()
+    bot.st.prices["btc"].bn_hist.append((now + 100, 100.0 * math.exp(10e-4) * math.exp(40e-4)))        # +40 bp
+
+    async def go():
+        bot._on_tick("btc")
+        bot._on_tick("btc")                                            # a second tick while the first guard is busy: ignored
+        await asyncio.sleep(0.05)
+        bot._on_tick("btc")                                            # the same mid again (nothing left to cancel): no new task
+        await asyncio.sleep(0.01)
+    run(go())
+    assert [c[0] for c in br.calls].count("cancel") == 1 and not bot.mm_bids
+    assert len(j.of("mm_pull")) == 1 and j.of("mm_pull")[0]["guard"] is True
+    assert bot.pause_until["btc"] > now_ms_()
+
+
+def now_ms_():
+    return int(time.time() * 1000)
+
+
+def test_the_guard_is_live_only_and_never_raises_into_the_feed(tmp_path):
+    over = {"risk": {"state_file": str(tmp_path / "s.json")}}
+    cfg, mm = load_maker_config(V2, overrides=over)
+    paper = FairMaker(cfg, mm, J())
+    paper._on_tick("btc")                                              # paper: no urgent guard, no task, no error
+    bot, j, br, w, now = live_bot(tmp_path, rel=140)
+    bot.mm_bids[(w.key, "U")] = {"oid": "x1", "price": 0.7, "size": 5.0, "token": "U", "p": 0.8, "t": now}
+    bot.st.prices["btc"].bn_hist.clear()                               # no Binance mid at all: the callback must just return
+    bot._on_tick("btc")
+    assert not br.calls
+
+
+def test_two_cancellers_of_the_same_bids_send_one_cancel(tmp_path):
+    bot, j, br, w, now = live_bot(tmp_path, rel=140)
+    run(bot.decide_once(now))
+    br.calls.clear()
+    real = br.cancel
+
+    async def slow(oids, now_ms):
+        await asyncio.sleep(0.02)
+        return await real(oids, now_ms)
+    br.cancel = slow
+
+    async def go():
+        a = asyncio.create_task(bot._cancel_sides(w.key, ("U", "D"), now, "gate"))
+        b = asyncio.create_task(bot._cancel_sides(w.key, ("U", "D"), now, "pause"))
+        return await asyncio.gather(a, b)
+    ra, rb = run(go())
+    assert [c[0] for c in br.calls].count("cancel") == 1 and ra == (True, False) and rb == (True, False) and not bot.mm_bids
+
+
+def test_the_maker_report_splits_fills_by_side_and_second(capsys):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("rj", os.path.join(ROOT, "scripts", "report_journal.py"))
+    rj = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rj)
+    ev = [{"type": "mm_quote"},
+          {"type": "mm_fill", "key": "btc-1", "side": "U", "price": 0.60, "size": 5.0, "edge": 0.02, "p_quote": 0.65, "rel": 150.0, "bn2": 0.8},
+          {"type": "mm_fill", "key": "btc-1", "side": "D", "price": 0.20, "size": 5.0, "edge": 0.03, "p_quote": 0.30, "rel": 60.0, "bn2": -0.1},
+          {"type": "settle", "key": "btc-1", "winner": "Up", "pnl": 1.0, "up": 5.0, "down": 5.0}]
+    rj.maker_report(ev)
+    out = capsys.readouterr().out
+    assert "favourite (model fair >= 0.5)" in out and "underdog (model fair < 0.5)" in out and "second 0-100" in out and "second 140-180" in out
+    assert "second 100-140" not in out                                # an empty bucket prints nothing
+    fav = next(l for l in out.splitlines() if l.strip().startswith("favourite"))
+    dog = next(l for l in out.splitlines() if l.strip().startswith("underdog"))
+    assert "+40.00" in fav and "-20.00" in dog                      # outcome c/share: Up won, bought at 0.60 / Down lost at 0.20
+
+
+def test_the_guard_looks_again_only_after_a_tenth_of_a_basis_point(tmp_path):
+    bot, j, br, w, now = live_bot(tmp_path, rel=140)
+    run(bot.decide_once(now))
+    px = bot.st.prices["btc"]
+    calls = []
+    real = bot.jump_bp
+    bot.jump_bp = lambda a, n: (calls.append(1), real(a, n))[1]
+
+    async def go():
+        bot._on_tick("btc")                                            # the first look
+        bot._on_tick("btc")                                            # the same mid: skipped before any work
+        px.bn_hist.append((now + 10, px.bn_mid() * (1 + 0.5e-5)))      # +0.05 bp: still skipped
+        bot._on_tick("btc")
+        px.bn_hist.append((now + 20, px.bn_mid() * (1 + 2e-5)))        # +0.2 bp since the look: looks again
+        bot._on_tick("btc")
+        await asyncio.sleep(0.01)
+    run(go())
+    assert len(calls) == 2

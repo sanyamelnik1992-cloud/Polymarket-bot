@@ -1,18 +1,22 @@
-# Мейкер — LIVE TEST, REAL MONEY (reports/94; owner 26 Nov: "Давай начинай делать" after "начинать писать живого мейкера").
-# The rule of its paper twin config/maker_safe.toml (pmbot-maker-safe: bids under min(Binance fair value, the side's book mid),
-# a test keeps [lock] and the quoting rule equal) at the exchange minimum, with the live broker pmbot/bot/maker_live.py:
-# post-only GTD bids, the order heartbeat as the dead-man switch, cancels by id and sweeps by our own tokens (never cancel-all:
-# the wallet is shared with the lock bots). It answers what paper cannot: the real fill rate of a 5-share bid among other
-# makers, how far the price moves against our fills with our real latency, and the exchange's maker rebate.
-# Started on the owner's "запускай" (26 Nov) once by install_units.sh (START_ONCE), not enabled at boot; after its day stop it
-# stays stopped until a human runs /restart pmbot-maker-live. The loader caps every limit below (fairmaker.LIVE_CAPS); growing
-# it is a change of that code and the owner's decision.
+# Мейкер — LIVE TEST, REAL MONEY (reports/94 and 95; owner 26 Nov: "запускай", then "посмотри на конкурентов ... что бы улучшить наш").
+# The rule of its paper twin config/maker_v2.toml (pmbot-maker-v2; a test keeps [lock] and [maker] equal), at the exchange minimum, with
+# the live broker pmbot/bot/maker_live.py: post-only GTD bids, the order heartbeat as the dead-man switch, cancels by id and sweeps by our
+# own tokens (never cancel-all: the wallet is shared with the lock bots). The rule (reports/95, 8 days of public trades): the favourite
+# side 1.5 c under min(fair, book mid), the underdog 10 c under it, no bid on a side while Binance moved against it by > 0.5 bp over
+# 3 s, quoting from window second 100, no bid at a reference above 0.80. It replaces the symmetric 1 c "min" rule of the first hours of the
+# test, 26 Nov (the paper twin of that rule,
+# pmbot-maker-safe, had +0.30 c a share in 2.5 days; the same rule is +0.3 / +1.2 c on the tape, the new one +7.7 / +4.5 c).
+# The test answers what paper cannot: the real fill rate of a 5-share bid among other makers, how far the price moves against our
+# fills with our real latency. NO maker rebate: it needs 200 000 $ of maker weighted volume in 30 days (docs: Maker Rebates), we are far
+# below. Started on the owner's "запускай" once by install_units.sh (START_ONCE), not enabled at boot; after its day stop it stays stopped
+# until a human runs /restart pmbot-maker-live. The loader caps every limit below (fairmaker.LIVE_CAPS); growing it is a change of that
+# code and the owner's decision.
 journal_dir = "data/journal-maker-live"
 
 [lock]
 assets = ["btc"]
 zone = "fair"               # the Binance fair value (strike, BlockSigma): FairMaker decides
-rel_lo = 20.0               # window seconds 20..230: no bids while the strike is fresh or in the closing TWAP
+rel_lo = 100.0              # window seconds 100..230 (reports/95: the first 100 s do not pay; the closing TWAP starts at 238)
 rel_hi = 230.0
 fair_sigma_s = 3600.0
 fair_min_sigma_s = 1800.0
@@ -20,7 +24,11 @@ fair_react_bp = 0.3         # a 0.3 bp Binance move wakes the quote loop at once
 tick_ms = 200
 
 [maker]
-half_spread = 0.01          # bid = min(fair, book mid without our own bids) - 0.01, down to the 0.01 grid
+half_spread = 0.015         # the favourite: bid = min(fair, book mid without our own bids) - 1.5 c, down to the 0.01 grid
+dog_spread = 0.10           # the underdog (model fair < fav_p): 10 c under the reference, it only catches dislocations
+fav_p = 0.5
+gate_bp = 0.5               # no bid on a side while Binance moved against it by more than 0.5 bp over the last gate_s seconds
+gate_s = 3.0
 ref = "min"
 shares = 5                  # the exchange minimum
 max_side_shares = 10        # LIVE TEST: two fills a side per window at most (paper twin: 25)
@@ -32,12 +40,12 @@ pull_sigmas = 2.5
 pull_s = 2.0
 pause_s = 2.0
 p_lo = 0.10
-p_hi = 0.90
+p_hi = 0.80                 # no bid on a side whose reference is above 0.80 (reports/95: no edge there, a loss costs $3.9 a fill)
 markout_s = [5, 30]
 
 [live]
 max_shares = 5              # one order; the broker refuses more whatever the quoting asks
-max_resting_usd = 10.0      # both resting bids together (2 x 5 x <= 0.90)
+max_resting_usd = 10.0      # both resting bids together (2 x 5 x <= 0.80)
 reserve_usd = 60.0          # collateral that must stay free for the lock bots (same wallet): below it no new bid
 max_orders_hour = 4000      # orders placed in any rolling hour: a runaway guard, not a quota; above it the test stops.
                             # The paper twin (ref "min") placed 1330 an hour on average over 40.6 h, ~2x in busy hours

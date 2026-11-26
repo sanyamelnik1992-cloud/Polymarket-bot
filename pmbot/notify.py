@@ -40,8 +40,10 @@ BOTS = {
                             "входов? Экзамен: 300 входов (отчёт 88)"),
     "pmbot-maker": ("🏦", "Мейкер · 5 мин", "заявки на обе стороны BTC 5 мин чуть ниже справедливой цены по Binance "
                     "(paper; выключен 26 ноя: живой тест идёт по осторожному варианту, отчёт 94)"),
-    "pmbot-maker-safe": ("🏦", "Мейкер осторожный · 5 мин", "то же, но заявка не выше середины стакана: проверка, кто прав, "
-                         "модель или рынок (отчёт 89)"),
+    "pmbot-maker-safe": ("🏦", "Мейкер осторожный · 5 мин", "симметричные заявки не выше середины стакана (paper; выключен 26 ноя, "
+                         "заменён на v2, отчёты 94–95)"),
+    "pmbot-maker-v2": ("🏦", "Мейкер v2 · 5 мин", "заявки в основном на фаворита, ниже середины стакана, не против движения Binance, "
+                       "со 100-й секунды окна: бумажный близнец живого теста (отчёт 95)"),
     "pmbot-maker-live": ("🏦", "Мейкер · живой тест", "заявки на обе стороны BTC 5 мин на минимуме биржи: сколько реально "
                          "исполняется и сколько платит биржа мейкеру (отчёт 94)"),
     "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона в последнюю минуту, только уверенность от 99% по цене до 0.98 (10 акций; страховка при развороте; стоп −$5/день)"),
@@ -68,7 +70,7 @@ PAIRS = [("pmbot-5m-c", "pmbot-5m"), ("pmbot-5m-d", "pmbot-5m-b")]   # (variant,
 TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-lock-15-tier": "pmbot-lock-15-live",
          "pmbot-lock-15-early": "pmbot-lock-15-early-live",
          "pmbot-lock-fair": "pmbot-lock-fair-live",
-         "pmbot-maker-safe": "pmbot-maker-live",
+         "pmbot-maker-v2": "pmbot-maker-live",
          "pmbot-5m-e": "pmbot-5m-live"}
 # Live units whose closed windows come as ONE summary an hour instead of a message each (the Перехватчик closes dozens of
 # windows a day, half of them lost). 22 Nov the owner saw only the stop message and no trade at all (reports/83 section 13).

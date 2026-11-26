@@ -68,7 +68,9 @@ def test_the_cautious_twin_differs_only_in_the_reference():
         assert " pmbot-maker-safe " in open(os.path.join(ROOT, "deploy", f)).read() or \
             " pmbot-maker-safe\"" in open(os.path.join(ROOT, "deploy", f)).read(), f
     inst = open(os.path.join(ROOT, "deploy", "install_units.sh")).read()
-    assert "pmbot-maker-safe" in inst.split("START_ONCE=")[1].splitlines()[0]
+    # 26 Nov (reports/95): retired for the v2 paper twin of the live test (two paper makers do not fit the 2 vCPU)
+    assert "pmbot-maker-safe" in inst.split("RETIRED=")[1].splitlines()[0].replace('"', " ").split()
+    assert "pmbot-maker-safe" not in inst.split("START_ONCE=")[1].splitlines()[0].replace('"', " ").split()
 
 
 def test_bid_target():
@@ -249,3 +251,70 @@ def test_markouts_and_kill_file(tmp_path):
     open(str(tmp_path / "STOP"), "w").close()
     run(bot.decide_once(now + 200))
     assert not bot.mm_bids and bot.last_why[w.key] == "risk:kill_file"
+
+
+# ---------------------------------------------------------------- reports/95: favourite skew, Binance gate
+V2OVER = {"maker": {"half_spread": 0.015, "dog_spread": 0.10, "gate_bp": 0.5, "ref": "min"}, "lock": {"rel_lo": 100.0}}
+
+
+def test_the_underdog_has_its_own_wide_spread_and_the_skew_keeps_it():
+    mm = MakerCfg(half_spread=0.015, dog_spread=0.10, skew_c=0.01, shares=5, max_unpaired=10, max_side_shares=25)
+    assert bid_target(mm, 0.653, 0, 0, None, True) == (0.63, "")             # 0.638 -> the 0.01 grid
+    assert bid_target(mm, 0.353, 0, 0, None, False) == (0.25, "")            # 10 c under: 0.253 -> 0.25
+    assert bid_target(mm, 0.353, 5, 5, None, False) == (0.24, "")            # long 5: 1 c lower still
+    assert bid_target(mm, 0.353, 0, -5, None, False) == (0.26, "")           # short 5: 1 c higher, never above its reference
+    assert bid_target(mm, 0.353, 0, 0, None) == (0.33, "")                   # fav defaults to True: the old call keeps working
+    assert bid_target(mm, 0.13, 0, 0, None, False) == (None, "too_low")      # 0.13 - 10 c = 0.03: under the broker's 0.05 floor
+    assert bid_target(mm, 0.153, 0, 0, None, False) == (0.05, "")
+    off = MakerCfg(half_spread=0.015, dog_spread=0.0)                       # dog_spread 0 = the same spread on both sides
+    assert bid_target(off, 0.353, 0, 0, None, False) == bid_target(off, 0.353, 0, 0, None, True)
+    for bad in ({"maker": {"dog_spread": 0.6}}, {"maker": {"fav_p": 0.9}}, {"maker": {"gate_bp": 20.0}}, {"maker": {"gate_s": 0.5}}):
+        with pytest.raises(ValueError):
+            load_maker_config(CFG, overrides=bad)
+
+
+def test_the_favourite_is_bid_close_and_the_underdog_deep(tmp_path):
+    bot, j, w, now = _bot(tmp_path, rel=140, cfg_over=V2OVER)
+    run(bot.decide_once(now))
+    pu = _fair_up(10.0, now / 1000 - w.start)
+    q = {x["side"]: x for x in j.kinds("mm_quote")}
+    up_ref = min(pu, (0.55 + 0.90) / 2)                                      # the book mid caps the favourite (ref = "min")
+    dn_ref = min(1 - pu, (0.09 + 0.45) / 2)
+    assert pu > 0.5 and q["U"]["fav"] is True and q["D"]["fav"] is False
+    assert q["U"]["price"] == pytest.approx(math.floor((up_ref - 0.015) * 100 + 1e-9) / 100)
+    assert q["D"]["price"] == pytest.approx(math.floor((dn_ref - 0.10) * 100 + 1e-9) / 100)
+    assert q["U"]["price"] - q["D"]["price"] > 0.5                           # the underdog sits far below, not at fair - 1 c
+    assert not bot.gate_blocks("btc", "U") and not bot.gate_blocks("btc", "D")
+
+
+def test_the_gate_pulls_the_side_binance_moved_against_and_keeps_the_other(tmp_path):
+    bot, j, w, now = _bot(tmp_path, rel=140, cfg_over=V2OVER)
+    run(bot.decide_once(now))
+    assert len(bot.mm_bids) == 2
+    # Binance -1.5 bp within the last 3 s: against Up, toward Down; below the 3.5 bp jump limit, so no both-sides pull
+    bot.st.prices["btc"].bn_hist.append((now + 100, 100.0 * math.exp(10e-4) * math.exp(-1.5e-4)))
+    assert bot.gate_blocks("btc", "U") and not bot.gate_blocks("btc", "D")
+    run(bot.decide_once(now + 200))
+    assert (w.key, "U") not in bot.mm_bids and (w.key, "D") in bot.mm_bids
+    assert [x["why"] for x in j.kinds("mm_cancel") if x["side"] == "U"] == ["gate"] and not j.kinds("mm_pull")
+    # a move back the other way (toward Up): the gate lifts, the Up bid returns
+    bot.st.prices["btc"].bn_hist.append((now + 250, 100.0 * math.exp(10e-4) * math.exp(+2.0e-4)))
+    bot.st.feed_alive["binance"] = bot.st.feed_alive["clob"]["btc"] = now + 400
+    assert not bot.gate_blocks("btc", "U")
+    run(bot.decide_once(now + 300))
+    assert (w.key, "U") in bot.mm_bids
+
+
+def test_the_gate_is_off_in_the_old_configs(tmp_path):
+    bot, j, w, now = _bot(tmp_path)                                         # maker_fair.toml: gate_bp 0, no dog spread
+    run(bot.decide_once(now))
+    bot.st.prices["btc"].bn_hist.append((now + 100, 100.0 * math.exp(10e-4) * math.exp(-1.5e-4)))
+    assert not bot.gate_blocks("btc", "U")
+    assert bot.mm.dog_spread == 0.0 and bot.mm.gate_bp == 0.0
+
+
+def test_quotes_only_from_second_100_with_the_v2_window(tmp_path):
+    for rel, quoted in ((99, False), (101, True), (229, True), (232, False)):
+        bot, j, w, now = _bot(tmp_path, rel=rel, cfg_over=V2OVER)
+        run(bot.decide_once(now))
+        assert bool(bot.mm_bids) == quoted, rel

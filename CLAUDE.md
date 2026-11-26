@@ -638,7 +638,8 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   of the wallet already), the early sniper (46 of its 200 real entries), two windows at once (0 signals blocked in 16.7 h; the
   `missed_report` "guard" line counts any guard moment at p >= theta, also without a seller at the tier price). Paper makers
   over 40.6 h: `maker` +$39.17 (389 windows, t 0.8), `maker-safe` +$55.11 (469, t 1.1), days -$35..+$105, drawdowns ~-$60,
-  rebate not counted (~0.3 % of turnover): not proven, a few more days; the live maker broker is built only on the owner's word.
+  not proven, a few more days (NO maker rebate for us: 0 % below 200 000 $ of 30-day maker weighted volume, reports/95; the "~0.3 % of
+  turnover" of this note was wrong); the live maker broker is built only on the owner's word.
   Deployed 26 Nov 13:18 UTC (c093d4f) after the owner's $226.49 deposit (wallet ~$365).
 - **`reports/94_live_maker_test.md` (26 Nov, owner: "Давай начинай делать", then "Проверь все еще раз ... и запускай"; REAL
   MONEY, STARTED 26 Nov ~14:30 UTC once by install_units.sh START_ONCE)**: the live maker test. `pmbot/bot/maker_live.py` `MakerLiveBroker` (built on the rewards live broker of report 72): post-only GTD BUYs, <= 5
@@ -649,7 +650,8 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   = `suspect` token (no new order until it is swept and the exchange shows none of ours there), fills from the user stream once
   per (trade, order) + `get_order` reconcile every 20 s and for every late cancel, an unknown order of ours (maker_address =
   our wallet, on a token we quoted) is adopted, a FAILED trade is taken back (`on_unfill`) and its token swept, the day's
-  maker rebate (`get_current_rebates`, journal `mm_rebate`). The broker journals `mm_exec` (the maker journals `fill` +
+  maker rebate (`get_current_rebates`, journal `mm_rebate`; it reads 0: the program pays from 200 000 $ of 30-day weighted volume).
+  The broker journals `mm_exec` (the maker journals `fill` +
   `mm_fill`: never two fill records). `fairmaker.py` live mode: `load_maker_live_config(path, live_flag)` (mode live + the
   --live flag of `scripts/run_maker.py`, caps `LIVE_CAPS`: 5 shares, <= 15 a side, <= 10 unpaired, <= $10 resting, day stop
   <= $15, <= $40 open, reserve >= $40, BTC only; the lock loader's taker rules are skipped: it checks the maker as paper),
@@ -668,6 +670,33 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   (~300 windows) against the paper twin: fill share, markouts 5 / 30 / 60 s, per share by outcome, rebate. Not built: merge of
   pairs (the exchange redeemed the lock bots' wins by itself ~20-40 min after the window), a start-up reconcile of fills lost
   in a crash between the match and its stream event.
+- **`reports/95_maker_check_competitors_v2.md` (26 Nov, owner: "Перепроверь все в мейкере и посмотри на конкурентов ... что бы улучшить наш";
+  REAL MONEY rule change of the live maker test, limits unchanged)**: re-check of the maker and a study of how the others work. FIXED
+  in `maker_live.py`: a fill whose stream event comes BEFORE the place answer is adopted by our address and the answer keeps what it
+  counted (it used to make a fresh 5-share order: the reconcile counted the same shares again, a phantom position); a stream
+  reconnect reconciles at once; a restart answer (`RequestRejectedError`, `restriction`) is a rejection with a pause, not an unknown
+  order. `fairmaker.py`: an URGENT GUARD (`_on_tick` -> `_guard`, live only) cancels from the Binance feed's callback instead of
+  waiting for the pass to end its place / cancel calls (40-100+ ms each); `_cancel_sides` CLAIMS the bids before awaiting the cancel
+  (the guard and the pass never cancel the same bid twice). MY ERRORS: the maker rebate is 0 for us (tiers by 30-day weighted volume
+  `C p (1 - p)`: < 200 000 $ 0 %, then 3 / 7 / 10 / 15 %; the "0.3 % of turnover" of reports 93 / 94 was wrong); the exchange's taker
+  fee for BTC 5 / 15 m is `fd.r = 0.05` (`/clob-markets/<cid>`), our `CRYPTO_FEE_RATE` is 0.07 (conservative, left as it is: it feeds
+  the live FAK budgets); the first tape simulation priced a bid at the TRADE's price (our bid is the better price and fills at OUR
+  price: the symmetric fair - 1 c maker is -1.5 c a share, not +2.6). THE STUDY (`reports/95_tools`: `fetch_tape.py`, `bn_fetch.py`,
+  `tape_table.py`, `tape_rules.py`, `tape_regimes.py`, `maker_profile.py`; 3.4 M public taker trades of BTC 5m, 18-21 and 22-25 Nov,
+  honest accounting, validated by one point: the old rule's tape +0.32 c vs its paper twin +0.30 c): the model's fair value is too
+  close to 0.5 (underdogs win 2-3 c less than fair, favourites 1-3 c more; the trade price is calibrated within 1 c), the market
+  is worth as much as the model when Binance is flat (weights 0.54 / 0.53, after a +-1.5 bp move 0.22 / 0.81), a symmetric bid
+  loses on the underdog side and in the first 100 s of a window and after a Binance move against the side; the top makers' own fills
+  (8 wallets, 12 190 fills, +0.81 c a share) earn after Binance moved toward them (+4..+10 c) and lose after it moved against them.
+  RULE V2 (live `config/maker_live.toml` and its paper twin `config/maker_v2.toml`, `pmbot-maker-v2`; a test keeps `[lock]` and
+  `[maker]` equal): window second 100-230, bid under min(fair, book mid without our own bids) by `half_spread` 0.015 for the favourite
+  (model fair >= `fav_p` 0.5) and `dog_spread` 0.10 for the underdog, no bid on a side while Binance moved against it by more than
+  `gate_bp` 0.5 bp over `gate_s` 3 s, no bid at a reference above `p_hi` 0.80; caps as before (5 shares, 10 a side, 5 unpaired, $10
+  resting, $30 open, day stop $5). Tape: +4.48 c (18-21 Nov) / +7.68 c (22-25 Nov) a share, every one of 8 days positive, ~23-26 k
+  shares a day for the whole market (an upper bound); the old symmetric "min" rule +1.22 / +0.32 c. The paper `pmbot-maker-safe` (the old rule) and `pmbot-maker` are
+  RETIRED (3 makers do not fit 2 vCPU), `pmbot-maker-v2` is started once. `report_journal.maker_report` splits fills by favourite /
+  underdog and by second. Verdict after 2-3 days (>= 100 live fills): live c a share by outcome >= +1.5 and no day stop -> next stage
+  (more shares, ETH / SOL, 15m: the same tape tools); live < 0 with a positive paper twin -> look for delay and queue.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

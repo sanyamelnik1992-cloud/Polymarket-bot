@@ -13,7 +13,7 @@ done
 
 # the Telegram bot may start/stop/restart exactly these units and trigger an update -- nothing else
 CMDS=""
-for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-lock-early pmbot-lock-15-early pmbot-lock-15-early-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-fair-fut pmbot-lock-15-fair pmbot-lock-99-sigma pmbot-maker pmbot-maker-safe pmbot-maker-live pmbot-rewards pmbot-rewards-live pmbot-weather-rec pmbot-feedrec pmbot-arb pmbot-hourly pmbot-hourly-last pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
+for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-lock-early pmbot-lock-15-early pmbot-lock-15-early-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-fair-fut pmbot-lock-15-fair pmbot-lock-99-sigma pmbot-maker pmbot-maker-safe pmbot-maker-v2 pmbot-maker-live pmbot-rewards pmbot-rewards-live pmbot-weather-rec pmbot-feedrec pmbot-arb pmbot-hourly pmbot-hourly-last pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
   for a in start restart stop; do CMDS="$CMDS, /usr/bin/systemctl $a --no-block $u"; done
 done
 echo "$USER_NAME ALL=(root) NOPASSWD: ${CMDS#, }" > /etc/sudoers.d/pmbot
@@ -27,12 +27,13 @@ systemctl daemon-reload
 # day stop started the old makers A and C, L2 and the 5m early bot, still enabled at boot, next to the live bots. A paper unit
 # of this list is also stopped; a live one only disabled, unless it is in STOP_LIVE. Bring one back by hand: /restart <unit>
 # (it stays off at boot).
-RETIRED="pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-early pmbot-lock-fair-fut pmbot-hourly pmbot-hourly-last pmbot-arb pmbot-weather-rec pmbot-rewards pmbot-rewards-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-15-fair pmbot-maker"
+RETIRED="pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-early pmbot-lock-fair-fut pmbot-hourly pmbot-hourly-last pmbot-arb pmbot-weather-rec pmbot-rewards pmbot-rewards-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-15-fair pmbot-maker pmbot-maker-safe"
 # Live units of RETIRED that are stopped too (a graceful stop: open windows settle first). reports/86 (23 Nov): the live
 # interceptor lost on the fills it can actually get (33 fills, 6 won where the prices paid implied 8.3). 24 Nov (owner: "выключай
 # перехватчика"): its paper twin pmbot-lock-fair is retired too (reports/87 section 7: no price source beats Binance).
 # 26 Nov (reports/94): the paper maker pmbot-maker ("fair" reference) makes room on the 2 vCPU for the live maker; the
-# live test runs the "min" rule, whose paper twin pmbot-maker-safe keeps running.
+# live test runs the rule of reports/95, whose paper twin is pmbot-maker-v2 (the old symmetric "min" rule, pmbot-maker-safe, is retired
+# too: two paper makers + the live one do not fit the 2 vCPU; its paper result and the tape simulation stay in reports/94 and 95).
 STOP_LIVE="pmbot-lock-fair-live"
 for u in $RETIRED; do
   f="$REPO/deploy/$u.service"
@@ -50,7 +51,7 @@ done
 # reports/89: the paper maker (bids on both sides of the BTC 5m windows). reports/92 (24 Nov, the owner's "Давай"): the LIVE
 # 15m early sniper at 5 shares is started here once too; after its day stop it stays stopped until a human restarts it.
 # reports/94 (26 Nov, the owner's "запускай"): the LIVE maker test (5 shares, $10 resting, -$5 day stop) is started once too.
-START_ONCE="pmbot-feedrec pmbot-lock-99-sigma pmbot-maker-safe pmbot-lock-15-early-live pmbot-maker-live"
+START_ONCE="pmbot-feedrec pmbot-lock-99-sigma pmbot-maker-v2 pmbot-lock-15-early-live pmbot-maker-live"
 for u in $START_ONCE; do
   [ -e "$REPO/deploy/$u.service" ] || continue
   mark="$REPO/data/state/.started-$u"

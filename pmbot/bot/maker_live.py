@@ -100,6 +100,7 @@ class MakerLiveBroker:
         self._stopping = False
         self._lock = asyncio.Lock()
         self._refused = {}                # (token, why) -> monotonic of the last "mm_refused" record (no flood)
+        self._reconcile_now = False       # the account stream just (re)connected: read the exchange's record of our orders at once
         self.stats = {"placed": 0, "rejected": 0, "crossed": 0, "cancels": 0, "cancel_late": 0, "fills": 0,
                       "adopted": 0, "reconciled": 0, "failed": 0, "place_ms": None, "cancel_ms": None}
         self._lat = {"place": [], "cancel": []}
@@ -261,7 +262,8 @@ class MakerLiveBroker:
             try:
                 if self.suspect:
                     await self.resolve_suspect()
-                if now - last["rec"] >= self.lc.reconcile_every_s:
+                if self._reconcile_now or now - last["rec"] >= self.lc.reconcile_every_s:
+                    self._reconcile_now = False
                     last["rec"] = now
                     await self.reconcile()
                 if now - last["bal"] >= self.lc.balance_every_s:
@@ -382,6 +384,13 @@ class MakerLiveBroker:
                 self.pause[token] = now + (lc.cross_pause_ms / 1000.0 if cross else lc.reject_pause_s)
                 return None
             self.note_error("place", e)
+            if type(e).__name__ == "RequestRejectedError" or getattr(e, "restriction", None):
+                # the exchange answered: restarting / cancel-only / post-only mode (docs: "Matching Engine Restarts"). Nothing was
+                # created; note_error backed off for retry_after and the maker pulls and waits (health: api_backoff)
+                self.stats["rejected"] += 1
+                self.log("order_rejected", token=token, key=key, side=side, price=price, size=size, code="restricted",
+                         message=str(e)[:200])
+                return None
             self.suspect.add(token)                        # no answer: the order may exist. Sweep before the next one
             self.log("mm_live_error", where="place", error=str(e)[:200], token=token, key=key)
             return None
@@ -394,13 +403,25 @@ class MakerLiveBroker:
                      code=code, message=str(getattr(resp, "message", ""))[:200])
             self.pause[token] = now + (lc.cross_pause_ms / 1000.0 if "cross" in str(code) else lc.reject_pause_s)
             return None
-        o = LiveOrder(token, key, side, price, size, wall, exp)
-        self.orders[resp.order_id] = o
-        self.known[resp.order_id] = o
+        oid = resp.order_id
+        o = self.known.get(oid)
+        if o is None:
+            o = LiveOrder(token, key, side, price, size, wall, exp)
+            self.known[oid] = o
+        else:
+            # the order was filled (at least partly) and the stream event came BEFORE this answer: it was adopted by our address
+            # with remaining = size - filled. Keep what it counted: a fresh order here would count the same shares again at the
+            # next reconcile (a phantom position of up to 5 shares in the window's books)
+            filled = max(0.0, o.size - o.remaining)
+            o.price, o.size, o.exp, o.t = price, size, exp, wall
+            o.remaining = max(0.0, size - filled)
+            self.stats["fill_before_answer"] = self.stats.get("fill_before_answer", 0) + 1
+        if o.remaining > 1e-9:
+            self.orders[oid] = o
         self.stats["placed"] += 1
-        self.log("order_placed", order_id=resp.order_id, token=token, key=key, side=side, price=price, size=size,
+        self.log("order_placed", order_id=oid, token=token, key=key, side=side, price=price, size=size,
                  expiration=exp, latency_ms=lat, status=getattr(resp, "status", None))
-        return resp.order_id
+        return oid
 
     async def cancel(self, oids, now_ms):
         """Cancel our orders by id. Returns the ids the exchange could not cancel (matched or gone already): their fills
@@ -487,6 +508,7 @@ class MakerLiveBroker:
             try:
                 async with await self.client.subscribe([UserSpec()]) as stream:
                     self.stream_ok = True
+                    self._reconcile_now = True                     # fills of the gap are in the exchange's record, not in the stream
                     self.log("user_stream_up")
                     async for ev in stream:
                         if getattr(ev, "type", None) == "trade":

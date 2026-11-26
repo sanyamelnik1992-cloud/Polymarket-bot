@@ -1,0 +1,54 @@
+# Мейкер v2 — PAPER twin of the live test config/maker_live.toml (reports/95; owner 26 Nov: "посмотри на конкурентов ... что бы улучшить
+# наш"). The rule found on 8 days of public trades (18-21 and 22-25 Nov, 3.4 M taker trades, honest fills at OUR price):
+#   * the FAVOURITE side (model fair >= 0.5) is bid 1.5 c under min(fair, book mid); the underdog side 10 c under it (a symmetric
+#     bid loses 1-4 c a share on the underdog: the market is better calibrated there than our fair value);
+#   * no bid on a side while Binance moved against it by > 0.5 bp over the last 3 s (fills after such a move lose, after a move
+#     toward the side they earn most);
+#   * quoting only from window second 100 (the first 100 s earned -0.3..-0.6 c, the rest +4..+10 c).
+# Tape simulation of exactly this rule: +4.2 c a share on 18-21 Nov and +7.7 c on 22-25 Nov (every day positive), against +1.2 / +0.3 c
+# for the rule it replaces (the symmetric "min" maker, whose paper twin measured +0.30 c in 2.5 days). Same [lock] and [maker] as
+# config/maker_live.toml (a test keeps them equal); only the money differs.
+journal_dir = "data/journal-maker-v2"
+
+[lock]
+assets = ["btc"]
+zone = "fair"               # the Binance fair value (strike, BlockSigma), not the taker rule: FairMaker decides
+rel_lo = 100.0              # window seconds 100..230 (reports/95: the first 100 s do not pay)
+rel_hi = 230.0
+fair_sigma_s = 3600.0
+fair_min_sigma_s = 1800.0
+fair_react_bp = 0.3         # a 0.3 bp Binance move wakes the quote loop at once
+tick_ms = 200
+
+[maker]
+half_spread = 0.015         # the favourite: bid = min(fair, book mid) - 1.5 c, down to the 0.01 grid
+dog_spread = 0.10           # the underdog (model fair < fav_p): 10 c under the reference, it only catches dislocations
+fav_p = 0.5
+gate_bp = 0.5               # no bid on a side while Binance moved against it by more than 0.5 bp over the last gate_s seconds
+gate_s = 3.0
+ref = "min"
+shares = 5
+max_side_shares = 10        # the live test's caps (paper twin: the same, so that the two see the same fills)
+max_unpaired = 5
+skew_c = 0.01
+requote_c = 0.01
+pull_bp = 1.5               # pull both bids for pause_s after a Binance move of max(1.5 bp, 2.5 sigma * sqrt(2 s)) within 2 s
+pull_sigmas = 2.5
+pull_s = 2.0
+pause_s = 2.0
+p_lo = 0.10
+p_hi = 0.80                 # no bid on a side whose reference is above 0.80 (reports/95: no edge there, a loss costs $3.9 a fill)
+markout_s = [5, 30]
+
+[risk]
+max_usd_per_entry = 5.0     # unused by the maker (each bid is `shares` at <= p_hi)
+max_open_usd = 30.0         # worst case of open windows + every resting bid as if filled
+daily_loss_limit = 30.0     # paper: a stop, then the next UTC day
+state_file = "data/state/maker_v2.json"
+resume_next_day = true
+
+[execution]
+mode = "paper"
+paper_place_ms = 60         # a bid is live 60 ms after the decision (live 8 Nov: place median 52-62 ms)
+paper_cancel_ms = 50        # and gone 50 ms after its cancel (cancel median 40-49 ms)
+cl_feed = "both"            # Chainlink prints only for the provisional result after each window

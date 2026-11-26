@@ -258,6 +258,13 @@ def maker_report(ev):
                       ("toward us (> 0.5)", lambda v: v > 0.5)):
         row(f"{name:42s}", [f for f in fills if f.get("bn2") is not None and sel(f["bn2"])])
     row(f"{'all':42s}", fills)
+    # reports/95: where the edge lives. Side at the quote = the model's fair value of the side (the favourite has >= 0.5); the
+    # tape study says a symmetric bid loses on the underdog and the first 100 s of a window do not pay
+    print(f"  by side at the quote and second of the window: {hdr}")
+    row(f"{'favourite (model fair >= 0.5)':42s}", [f for f in fills if f.get("p_quote") is not None and f["p_quote"] >= 0.5])
+    row(f"{'underdog (model fair < 0.5)':42s}", [f for f in fills if f.get("p_quote") is not None and f["p_quote"] < 0.5])
+    for lo, hi in ((0, 100), (100, 140), (140, 180), (180, 300)):
+        row(f"{f'second {lo}-{hi}':42s}", [f for f in fills if f.get("rel") is not None and lo <= f["rel"] < hi])
     ws = [e for e in win.values()]
     if ws:
         pnl = [e["pnl"] for e in ws]
