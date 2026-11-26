@@ -1,7 +1,17 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-151628
-mode: live  duration: 224.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 449, 'prewarm': 180, 'lock_state': 2049, 'strike': 176}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-190604
+mode: live  duration: 55.5 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 111, 'prewarm': 44, 'lock_state': 345, 'strike': 40, 'order_rejected': 1, 'lock_miss': 1}
+
+lock orders: sent 1  filled 0  ask gone 1  errors 0
+  signal -> exchange answer, ms: median 296  p90 296  max 296
+  exchange call alone, ms: median 296  p90 296  max 296
+  decision -> order sent, ms: median 1  p90 1  max 1
+  GC pause per 30 s, ms: median 0  p90 1  max 109
+  market prewarm (2 lookups + signing), ms: median 114  max 336  n 44
+  misses came 32-32 s before the end; model p 0.991-0.991
+  exchange rejections by code: {'fak_not_filled': 1}
 
 окна, где модель была уверена (p >= 0.99): вход 0; без входа:
-   149  фильтр Binance (движение против нас / скачок / пауза)
+     1  заявка ушла, продажи уже не было
+    34  фильтр Binance (движение против нас / скачок / пауза)
      1  модель уверена, но продавца по нашей цене нет
 no fills
