@@ -1,31 +1,3 @@
-run: /home/pmbot/Polymarket-bot/data/journal-maker/20261124-202455
-mode: paper  duration: 2437.1 min  events: {'start': 1, 'gc_freeze': 2, 'status': 4872, 'bn_strike': 394, 'strike': 394, 'fv': 15331, 'mm_quote': 28043, 'fill': 3681, 'mm_fill': 3681, 'mm_markout': 7362, 'mm_pull': 1580, 'mm_cancel': 1145, 'provisional': 389, 'settle': 389, 'kill': 1}
-
-maker: quotes 28043 (moved 24295), pulls on a Binance jump 1580, cancels {'pause': 656, 'price': 276, 'side_full': 120, 'unpaired': 73, 'time': 19, 'book_stale': 1}
-  fills 3681: 15856 shares, $7660.85
-  by our edge at the fill (fair - price):     fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
-  -100..  +0 c                                  104      488   -1.38   -1.67   -2.49    -1.64 (488)
-    +0..  +1 c                                 1090     4728   +0.53   -0.77   -1.03    +1.99 (4728)
-    +1..  +2 c                                  982     4284   +1.47   -0.48   -0.46    +0.42 (4284)
-    +2..  +3 c                                  812     3462   +2.46   -0.31   -1.51    -2.97 (3462)
-    +3..  +5 c                                  468     1951   +3.74   -0.23   -0.38    -1.92 (1951)
-    +5..+100 c                                  225      944   +7.29   +0.42   -0.02    +7.96 (944)
-  by the Binance move of the 2 s before (bp): fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
-  against us (< -0.5)                          1234     5317   +1.52   -0.46   -1.47    -0.74 (5317)
-  flat                                         1495     6526   +1.94   -1.01   -1.57    -1.64 (6526)
-  toward us (> 0.5)                             952     4014   +2.51   +0.35   +0.99    +4.61 (4014)
-  all                                          3681    15856   +1.94   -0.48   -0.89    +0.25 (15856)
-  windows settled 389: pnl +39.17 (won 215, lost 172, worst -7.54, best +10.83); shares paired 7204, unpaired 1449
-
-fills: 3681  shares: 15856  notional: $7660.85
-       fills     shares  notional  avg_price  med_rel
-asset                                                
-btc     3681  15856.476  7660.849      0.478   39.948
-
-settled windows:
-       windows      cost     pnl  pnl_ex_rebate  rebate  win_rate  worst    best    roi
-asset                                                                                  
-btc        389  7660.849  39.167         39.167     0.0     0.553  -7.54  10.831  0.005
-
-TOTAL pnl $+39.17 (ex-rebate $+39.17) on cost $7660.85 -> ROI +0.51%; windows 389, t-stat +0.81
-max drawdown $-66.43; hedged windows (both sides filled): 342
+run: /home/pmbot/Polymarket-bot/data/journal-maker/20261126-132040
+mode: paper  duration: 41.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 82}
+no fills

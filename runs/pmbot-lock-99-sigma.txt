@@ -1,33 +1,7 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261124-201823
-mode: paper  duration: 2443.6 min  events: {'start': 1, 'gc_freeze': 2, 'status': 4886, 'lock_state': 28850, 'strike': 1952, 'fill': 4, 'lock_entry': 4, 'provisional': 4, 'settle': 4, 'lock_miss': 6}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-sigma/20261126-132039
+mode: paper  duration: 41.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 82, 'lock_state': 220, 'strike': 28}
 
-lock orders: sent 10  filled 4  ask gone 6  errors 0
-  signal -> exchange answer, ms: median 301  p90 307  max 307
-  decision -> order sent, ms: median 1  p90 19  max 19
-  GC pause per 30 s, ms: median 1  p90 11  max 122
-  fill price minus the ask we saw, cents: mean -0.25  worst +0.0
-  misses came 9-54 s before the end; model p 0.990-0.996
-
-entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
-  <= 2.5 bp (the fixed pause allows too)       :    2 /    2 /   0 /    +0.56
-  > 2.5 bp (only the volatility pause)         :    2 /    2 /   0 /    +0.56
-
-окна, где модель была уверена (p >= 0.99): вход 4; без входа:
-     6  заявка ушла, продажи уже не было
-  1677  фильтр Binance (движение против нас / скачок / пауза)
-    16  модель уверена, но продавца по нашей цене нет
-
-fills: 4  shares: 40  notional: $38.80
-       fills  shares  notional  avg_price  med_rel
-asset                                             
-btc        2    20.0      19.2       0.96  272.395
-sol        2    20.0      19.6       0.98  262.331
-
-settled windows:
-       windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
-asset                                                                              
-btc          2  19.254  0.746          0.746     0.0       1.0  0.373  0.373  0.039
-sol          2  19.627  0.373          0.373     0.0       1.0  0.186  0.186  0.019
-
-TOTAL pnl $+1.12 (ex-rebate $+1.12) on cost $38.88 -> ROI +2.88%; windows 4, t-stat +5.19
-max drawdown $0.00; hedged windows (both sides filled): 0
+окна, где модель была уверена (p >= 0.99): вход 0; без входа:
+    17  фильтр Binance (движение против нас / скачок / пауза)
+     1  модель уверена, но продавца по нашей цене нет
+no fills
