@@ -731,6 +731,12 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   twin test ignores that field) and the control bot sends ONE message for them a couple of minutes past each hour
   (`notify.format_maker_paper`, `notify.PAPER_MAKERS`, `tg_bot.Watcher.paper_makers`); `/maker` shows live + paper. The live maker stays
   stopped on v2 with its limits (owner: no money changes); back to money only on the owner's word, with v3 if paper confirms it.
+  15m Ступени, 26 Nov 18:59 UTC: the first 10-share loss (-$9.33): XRP 18:45-19:00, Up 10 @ 0.93 at the 3rd second of the closing
+  minute (model p >= 0.95) after a ~17 bp rally in ~70 s (the market Up 0.07 -> 0.95), faded 7 bp in the next 15 s: a spike-and-fade the
+  10 s shock pause cannot see. XRP is the rule's weak coin (live, all time with it): 22 entries / 3 lost / -$9.86 vs BTC 66 / 2 / +$11.89,
+  ETH 30 / 1 / -$0.11, SOL 13 / 0 / +$2.69 (equal rates would give >= 3 XRP losses ~8 % of the time). Owner: keep XRP for now ("Пока
+  оставь хрп, может случайность, посмотрим еще"). Proposed check: another XRP loss within its next ~15 entries -> propose removing XRP
+  (`lock15_live.toml` + twins `assets`); else review at 40 XRP entries. Not tested yet: a "recent swing larger than the lead" filter.
   Server load (report 95 section 9, 26 Nov, owner: "Если сервер перегружен то давай его разгрузим ... остановить пока что бумагу ... а если все
   ок то просто куплю более мощный сервер"): `install_units.sh` `PAUSED` = the paper units `pmbot-lock-15-early`, `pmbot-lock-99-sigma`,
   `pmbot-maker-v2` (stopped and disabled on deploy; paper only, a test checks it; to bring one back take it out of PAUSED and list it in
