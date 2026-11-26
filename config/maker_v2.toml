@@ -8,6 +8,8 @@
 # Tape simulation of exactly this rule: +4.2 c a share on 18-21 Nov and +7.7 c on 22-25 Nov (every day positive), against +1.2 / +0.3 c
 # for the rule it replaces (the symmetric "min" maker, whose paper twin measured +0.30 c in 2.5 days). Same [lock] and [maker] as
 # config/maker_live.toml (a test keeps them equal); only the money differs.
+# 26 Nov evening (owner: "Давай бумажного мейкера, по деньгам не поднимай"): back from PAUSED after the live test's day stop, as the
+# twin of the (stopped) live rule; its improved variant runs next to it as config/maker_v3.toml (reports/96).
 journal_dir = "data/journal-maker-v2"
 
 [lock]
@@ -39,7 +41,7 @@ pause_s = 2.0
 p_lo = 0.10
 p_hi = 0.80                 # no bid on a side whose reference is above 0.80 (reports/95: no edge there, a loss costs $3.9 a fill)
 markout_s = [5, 30]
-report_every_s = 1800        # one mm_report record every 30 min at :00 / :30 UTC (live: a Telegram message, reports/95 section 10); 0 = off
+report_every_s = 3600        # paper: one mm_report an hour; the Telegram bot sends the paper makers in ONE message (reports/96)
 
 [risk]
 max_usd_per_entry = 5.0     # unused by the maker (each bid is `shares` at <= p_hi)

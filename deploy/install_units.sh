@@ -13,7 +13,7 @@ done
 
 # the Telegram bot may start/stop/restart exactly these units and trigger an update -- nothing else
 CMDS=""
-for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-lock-early pmbot-lock-15-early pmbot-lock-15-early-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-fair-fut pmbot-lock-15-fair pmbot-lock-99-sigma pmbot-maker pmbot-maker-safe pmbot-maker-v2 pmbot-maker-live pmbot-rewards pmbot-rewards-live pmbot-weather-rec pmbot-feedrec pmbot-arb pmbot-hourly pmbot-hourly-last pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
+for u in pmbot-5m pmbot-5m-b pmbot-5m-c pmbot-5m-d pmbot-5m-e pmbot-5m-f pmbot-5m-g pmbot-5m-g2 pmbot-5m-h pmbot-5m-live pmbot-lock pmbot-lock-wide pmbot-lock-15 pmbot-lock-maker pmbot-lock-maker2 pmbot-lock-tier pmbot-lock-tier-wide pmbot-lock-15-tier pmbot-lock-15-alt pmbot-lock-maker3 pmbot-lock-99 pmbot-lock-99-live pmbot-lock-tier-pb pmbot-lock-tier-late pmbot-lock-live pmbot-lock-15-live pmbot-lock-early pmbot-lock-15-early pmbot-lock-15-early-live pmbot-lock-fair pmbot-lock-fair-live pmbot-lock-fair-fut pmbot-lock-15-fair pmbot-lock-99-sigma pmbot-maker pmbot-maker-safe pmbot-maker-v2 pmbot-maker-v3 pmbot-maker-live pmbot-rewards pmbot-rewards-live pmbot-weather-rec pmbot-feedrec pmbot-arb pmbot-hourly pmbot-hourly-last pmbot-recorder pmbot-tg pmbot-autoupdate.service; do
   for a in start restart stop; do CMDS="$CMDS, /usr/bin/systemctl $a --no-block $u"; done
 done
 echo "$USER_NAME ALL=(root) NOPASSWD: ${CMDS#, }" > /etc/sudoers.d/pmbot
@@ -41,13 +41,16 @@ STOP_LIVE="pmbot-lock-fair-live"
 # 152 / 187 ms (p95 668 / 786), the server was 60 % busy and the host stole 22 %. Not retired for good: to bring a unit back take it out
 # of PAUSED and list it in RESUME_ONCE for ONE deploy (START_ONCE would not start it again: its marker is already there), then empty
 # RESUME_ONCE. Paper units only (tests/test_ops.py checks it): a live unit here is skipped.
-PAUSED="pmbot-lock-15-early pmbot-lock-99-sigma pmbot-maker-v2"
-RESUME_ONCE=""
+# 26 Nov evening (owner: "Давай бумажного мейкера, по деньгам не поднимай пока что"): pmbot-maker-v2 is back, next to its improved variant
+# pmbot-maker-v3 (reports/96); the live maker stays stopped after its day stop.
+PAUSED="pmbot-lock-15-early pmbot-lock-99-sigma"
+RESUME_ONCE="pmbot-maker-v2"
 for u in $PAUSED; do
   f="$REPO/deploy/$u.service"
   [ -e "$f" ] || continue
   grep -q -- '--live' "$f" && continue
   systemctl --no-block disable -q --now "$u" 2>/dev/null || true
+  rm -f "$REPO/data/state/.resumed-$u"                           # a later RESUME_ONCE starts it again
 done
 for u in $RETIRED; do
   f="$REPO/deploy/$u.service"
@@ -65,7 +68,9 @@ done
 # reports/89: the paper maker (bids on both sides of the BTC 5m windows). reports/92 (24 Nov, the owner's "Давай"): the LIVE
 # 15m early sniper at 5 shares is started here once too; after its day stop it stays stopped until a human restarts it.
 # reports/94 (26 Nov, the owner's "запускай"): the LIVE maker test (5 shares, $10 resting, -$5 day stop) is started once too.
-START_ONCE="pmbot-feedrec pmbot-lock-99-sigma pmbot-maker-v2 pmbot-lock-15-early-live pmbot-maker-live"
+# reports/96 (26 Nov, the owner's "Давай бумажного мейкера"): the paper maker v3 (v2 with bids at least 1.5 x the fair value's 1 s move
+# under it) is started once too.
+START_ONCE="pmbot-feedrec pmbot-lock-99-sigma pmbot-maker-v2 pmbot-lock-15-early-live pmbot-maker-live pmbot-maker-v3"
 for u in $START_ONCE; do
   [ -e "$REPO/deploy/$u.service" ] || continue
   grep -qw -- "$u" <<< "$RETIRED $PAUSED" && continue          # retired or paused: never started here
@@ -75,10 +80,14 @@ for u in $START_ONCE; do
   systemctl is-active -q "$u" || systemctl --no-block start "$u" 2>/dev/null || true
   touch "$mark"
 done
-# paper units brought back from PAUSED: started on this deploy only (empty RESUME_ONCE afterwards)
+# paper units brought back from PAUSED: started once (a marker, removed again when the unit is paused), so a later /off sticks
 for u in $RESUME_ONCE; do
   [ -e "$REPO/deploy/$u.service" ] || continue
   grep -qw -- "$u" <<< "$RETIRED $PAUSED" && continue
   grep -q -- '--live' "$REPO/deploy/$u.service" && continue     # a live unit starts on the owner's word, not here
+  mark="$REPO/data/state/.resumed-$u"
+  [ -e "$mark" ] && continue
+  mkdir -p "$REPO/data/state"
   systemctl is-active -q "$u" || systemctl --no-block start "$u" 2>/dev/null || true
+  touch "$mark"
 done

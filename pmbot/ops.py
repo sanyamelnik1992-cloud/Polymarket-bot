@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BOT_UNITS = ["pmbot-5m", "pmbot-5m-b", "pmbot-5m-c", "pmbot-5m-d", "pmbot-5m-e", "pmbot-5m-f", "pmbot-5m-g", "pmbot-5m-g2", "pmbot-5m-h", "pmbot-5m-live", "pmbot-lock", "pmbot-lock-wide", "pmbot-lock-15", "pmbot-lock-maker", "pmbot-lock-maker2", "pmbot-lock-tier", "pmbot-lock-tier-wide", "pmbot-lock-15-tier", "pmbot-lock-15-alt", "pmbot-lock-maker3", "pmbot-lock-99", "pmbot-lock-99-live", "pmbot-lock-tier-pb", "pmbot-lock-tier-late", "pmbot-lock-live", "pmbot-lock-15-live", "pmbot-hourly", "pmbot-hourly-last",
              "pmbot-lock-early", "pmbot-lock-15-early", "pmbot-lock-15-early-live", "pmbot-lock-fair", "pmbot-lock-fair-live", "pmbot-lock-fair-fut", "pmbot-lock-15-fair",
-             "pmbot-lock-99-sigma", "pmbot-maker", "pmbot-maker-safe", "pmbot-maker-v2", "pmbot-maker-live"]
+             "pmbot-lock-99-sigma", "pmbot-maker", "pmbot-maker-safe", "pmbot-maker-v2", "pmbot-maker-v3",
+             "pmbot-maker-live"]
 REWARD_UNITS = ["pmbot-rewards"]           # liquidity-rewards farmer (pmbot/rewards, reports/68), its own journal format
 REWARD_LIVE_UNITS = ["pmbot-rewards-live"]  # the live test of the rewards rule: REAL MONEY, one market (pmbot/rewards/live.py)
 WEATHER_UNITS = ["pmbot-weather-rec"]       # weather recorder: public data only, no orders (reports/78)

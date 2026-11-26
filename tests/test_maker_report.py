@@ -245,7 +245,7 @@ def test_report_every_s_switches_the_loop_off_and_is_validated(tmp_path):
     for ok in (0, 300, 1800, 7200):
         assert load_maker_live_config(LIVE, live_flag=True, overrides={"maker": {"report_every_s": ok}})[1].report_every_s == ok
     assert load_maker_live_config(LIVE, live_flag=True)[1].report_every_s == 1800
-    assert load_maker_config(V2)[1].report_every_s == 1800                  # the paper twin keeps the same setting
+    assert load_maker_config(V2)[1].report_every_s == 3600                  # paper: hourly, one Telegram message for all (reports/96)
 
 
 def test_the_live_broker_reports_latency_per_interval():

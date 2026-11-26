@@ -43,7 +43,7 @@ HELP = """🤖 <b>pmbot — команды</b>
 🧾 /trades — последние 10 закрытых окон
 🎁 /r — бот «Награды»: заработал, потерял, итог по дням · /rhow — как он работает
 🧪 /rlive — живой тест «Наград» на реальные деньги: доля и начисления по данным биржи
-🏦 /maker — живой тест Мейкера: последний отчёт (новые приходят сами в :00 и :30 UTC)
+🏦 /maker — Мейкер: последний отчёт живого теста и бумажных v2 / v3 (живой сам шлёт отчёт в :00 и :30 UTC, бумажные — раз в час одним сообщением)
 🖥 /server — CPU, RAM, диск
 📜 /log [юнит] — последние строки лога
 
@@ -246,6 +246,7 @@ class Watcher:
         self.states = {u: ops.unit_state(u)[0] for u in ops.ALL_UNITS}
         self.last_slot = self.slot()
         self.disk_warned = False
+        self.mm_hour = int(time.time() // 3600)    # the paper makers' hourly message: the next one, not one at start-up
 
     def tick(self):
         for u in ops.ALL_UNITS:
@@ -272,6 +273,19 @@ class Watcher:
             self.last_slot = slot
             if slot is not None:
                 self.digest(slot)
+        self.paper_makers()
+
+    def paper_makers(self, now=None):
+        """reports/96: two minutes past each hour (the paper makers write their hourly mm_report at :00), ONE message with them."""
+        now = now or time.time()
+        hour = int(now // 3600)
+        if hour == self.mm_hour or now % 3600 < 120:
+            return None
+        self.mm_hour = hour
+        msg = notify.format_maker_paper(now=now)
+        if msg:
+            send(msg)
+        return msg
 
     @staticmethod
     def slot():

@@ -159,8 +159,9 @@ def test_quality_shows_lock_orders_misses_and_latency(tmp_path, monkeypatch):
     assert "прогрев рынка 95 мс" in text and "цикл опоздал > 100 мс 7 раз" in text
 
 
-KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-feedrec", "pmbot-tg", "pmbot-lock-15-early-live", "pmbot-maker-live"}
-PAUSED_UNITS = {"pmbot-lock-15-early", "pmbot-lock-99-sigma", "pmbot-maker-v2"}   # 26 Nov: the server is too small for them
+KEEP_UNITS = {"pmbot-lock-99-live", "pmbot-lock-15-live", "pmbot-feedrec", "pmbot-tg", "pmbot-lock-15-early-live", "pmbot-maker-live",
+              "pmbot-maker-v2", "pmbot-maker-v3"}      # 26 Nov evening (reports/96): the paper maker v2 is back, v3 next to it
+PAUSED_UNITS = {"pmbot-lock-15-early", "pmbot-lock-99-sigma"}   # 26 Nov: the server is too small for them
 # the current lineup (24 Nov: the interceptor retired, live 23 Nov and its paper twin 24 Nov, reports/86-87; the two paper
 # makers of reports/89 added); every other unit is retired
 

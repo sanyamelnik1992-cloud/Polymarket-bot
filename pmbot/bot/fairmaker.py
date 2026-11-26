@@ -40,7 +40,7 @@ import time
 import tomllib
 from dataclasses import dataclass, field
 
-from ..lockmodel import TW_LO, early_z
+from ..lockmodel import EARLY_AVG_VAR, TW_LO, early_z
 from .feeds import ClobFeed
 from .live import LiveGateError
 from .lock import LockBot, _apply, load_lock_config, tick_floor
@@ -83,6 +83,11 @@ class MakerCfg:
     gate_bp: float = 0.0                 # > 0: no bid on a side while Binance moved AGAINST it by more than gate_bp over the last gate_s
     gate_s: float = 3.0                  # seconds (reports/95: fills after such a move are the toxic ones, the good ones follow a move
                                          # toward us); the other side keeps quoting. 0 = off
+    k_time: float = 0.0                  # > 0 (reports/96): every bid at least k_time x the fair value's 1 s move under its reference,
+                                         # phi(z) / sqrt(tau0 + 19.5) in probability: ~3 c at second 100, 4.5-6 c in the last 40 s of
+                                         # quoting (the live v2 test bid 1.5 c under fair and was picked off when the price moved 3-6 c
+                                         # in one second; on the tape of 18-26 Nov k 1.5 earns +9..+12 c a share instead of +3..+6)
+    vol_ratio: bool = False              # ... times max(1, sigma of the last 10 min / sigma of the hour): wider in a turbulent spell
     markout_s: list = field(default_factory=lambda: [5, 30])    # mm_markout: the side's fair value this many s after a fill
     report_every_s: float = 1800.0       # one `mm_report` record (Telegram in live) every this many s, at wall-clock multiples; 0 = off
 
@@ -184,6 +189,8 @@ def _check_maker(cfg, mm):
         raise ValueError("maker: 0 <= dog_spread <= 0.5, 0.3 <= fav_p <= 0.7, 0 <= gate_bp <= 10, 1 <= gate_s <= 30")
     if not mm.markout_s or any(not (isinstance(h, int) and 1 <= h <= 120) for h in mm.markout_s):
         raise ValueError("maker.markout_s: whole seconds in [1, 120]")
+    if not 0 <= mm.k_time <= 5:
+        raise ValueError("maker.k_time must be in [0, 5]")
     if not (mm.report_every_s == 0 or 300 <= mm.report_every_s <= 7200):
         raise ValueError("maker.report_every_s: 0 (off) or 300..7200 seconds")
     if cfg.risk.max_open_usd < 2 * mm.shares * mm.p_hi:
@@ -191,31 +198,32 @@ def _check_maker(cfg, mm):
     return cfg, mm
 
 
-def base_spread(mm: MakerCfg, fav=True):
-    """The side's own half spread: half_spread, or dog_spread for the underdog (fav = the model's fair value >= fav_p)."""
-    return mm.half_spread if fav or mm.dog_spread <= 0 else mm.dog_spread
+def base_spread(mm: MakerCfg, fav=True, floor=0.0):
+    """The side's own half spread: half_spread, or dog_spread for the underdog (fav = the model's fair value >= fav_p), and at
+    least `floor` (FairMaker.spread_floor: k_time x the fair value's 1 s move)."""
+    return max(mm.half_spread if fav or mm.dog_spread <= 0 else mm.dog_spread, floor)
 
 
-def discount(mm: MakerCfg, long_by, fav=True):
+def discount(mm: MakerCfg, long_by, fav=True, floor=0.0):
     """How far under its reference a side is bid: its base spread, plus skew_c per `shares` this side is long, minus the same
     for each `shares` it is short (down to 0: a pair is completed at the reference at most). The classic inventory skew of a
     maker: long Down = Down bid lower and (an Up bid is a Down ask) Down offered cheaper."""
-    base = base_spread(mm, fav)
+    base = base_spread(mm, fav, floor)
     k = mm.skew_c * abs(long_by) / mm.shares
     return base + k if long_by > 0 else base - min(base, k)
 
 
-def bid_target(mm: MakerCfg, p, have, long_by, best_ask, fav=True):
+def bid_target(mm: MakerCfg, p, have, long_by, best_ask, fav=True, floor=0.0):
     """Price of our bid for a side whose reference price is p, or (None, why). have = shares of that side bought in the
     window, long_by = (this side - the other side) shares, best_ask = that side's best ask or None, fav = the side is the
-    favourite (its base spread is half_spread, the underdog's dog_spread)."""
+    favourite (its base spread is half_spread, the underdog's dog_spread), floor = the least distance under p (FairMaker.spread_floor)."""
     if not mm.p_lo <= p <= mm.p_hi:
         return None, "price"
     if have >= mm.max_side_shares - 1e-9:
         return None, "side_full"
     if long_by >= mm.max_unpaired - 1e-9:
         return None, "unpaired"
-    b = tick_floor(p - discount(mm, long_by, fav), 0.01)
+    b = tick_floor(p - discount(mm, long_by, fav, floor), 0.01)
     if best_ask is not None and b >= best_ask - 1e-9:
         b = tick_floor(best_ask - 0.01, 0.01)          # post-only: a bid at or over the ask would take it
     b = round(b, 2)
@@ -224,14 +232,14 @@ def bid_target(mm: MakerCfg, p, have, long_by, best_ask, fav=True):
     return b, ""
 
 
-def keep_bid(mm: MakerCfg, cur, tgt, p, long_by, fav=True):
+def keep_bid(mm: MakerCfg, cur, tgt, p, long_by, fav=True, floor=0.0):
     """True when a bid resting at `cur` may stay although the target is `tgt`: lower targets move it at once (>= requote_c),
     higher ones only when the unrounded target is UP_HYST past cur + requote_c."""
     if tgt <= cur - mm.requote_c + 1e-9:
         return False
     if tgt < cur + mm.requote_c - 1e-9:
         return True
-    return p - discount(mm, long_by, fav) < cur + mm.requote_c + UP_HYST
+    return p - discount(mm, long_by, fav, floor) < cur + mm.requote_c + UP_HYST
 
 
 class FairMaker(LockBot):
@@ -285,23 +293,45 @@ class FairMaker(LockBot):
         return self.open_cost() + sum(b["price"] * b["size"] for k, b in self.mm_bids.items() if k != skip)
 
     # ---------------------------------------------------------------- model
-    def fair_up(self, key, w, now):
-        """(fair value of Up, Binance mid) or (None, why)."""
+    def fair_parts(self, key, w, now):
+        """(fair value of Up, Binance mid, z, tau0 = seconds to the closing TWAP) or (None, why, None, None)."""
         c = self.cfg.lock
         K = self.bn_strike(key, w.asset, w.start)
         if not K:
-            return None, "no_strike"
+            return None, "no_strike", None, None
         sg = self.bsig[w.asset].sigma(c.fair_min_sigma_s)
         if not sg:
-            return None, "no_sigma"
+            return None, "no_sigma", None, None
         S = self.sig_px(w.asset).bn_mid()
         if not S:
-            return None, "no_binance"
+            return None, "no_binance", None, None
         tau0 = (self.anchor(w.start) + TW_LO) - now / 1000.0
         if tau0 <= 0:
-            return None, "time"
+            return None, "time", None, None
         z = early_z(S, K, sg, tau0)
-        return 0.5 * math.erfc(-z / math.sqrt(2)), S
+        return 0.5 * math.erfc(-z / math.sqrt(2)), S, z, tau0
+
+    def fair_up(self, key, w, now):
+        """(fair value of Up, Binance mid) or (None, why)."""
+        pu, S, _, _ = self.fair_parts(key, w, now)
+        return pu, S
+
+    def spread_floor(self, asset, z, tau0):
+        """maker.k_time > 0 (reports/96): the least distance of a bid under its reference = k_time x the fair value's expected
+        move in one second, phi(z) / sqrt(tau0 + 19.5) (the model's z moves by 1 / sqrt(tau0 + 19.5) a second, whatever sigma),
+        times max(1, 10-min sigma / 1-h sigma) with maker.vol_ratio. Our cancel takes 150-450 ms: a bid closer than the price
+        moves in a second is a free option for the faster takers. 0 when off."""
+        m = self.mm
+        if m.k_time <= 0 or z is None or tau0 is None:
+            return 0.0
+        move = math.exp(-0.5 * z * z) / math.sqrt(2 * math.pi) / math.sqrt(max(tau0, 0.0) + EARLY_AVG_VAR)
+        if m.vol_ratio:
+            o = self.bsig.get(asset)
+            s1h = o.sigma() if o is not None else None
+            s10 = o.sigma_recent(60) if o is not None else None
+            if s1h and s10:
+                move *= max(1.0, s10 / s1h)
+        return m.k_time * move
 
     def pull_limit_bp(self, asset):
         m = self.mm
@@ -469,10 +499,11 @@ class FairMaker(LockBot):
             if now - self.st.feed_alive["clob"].get(w.asset, 0) > c.book_max_age_ms:
                 await self._mm_pull(key, now, "book_stale")
                 continue
-            pu, S = self.fair_up(key, w, now)
+            pu, S, z, tau0 = self.fair_parts(key, w, now)
             if pu is None:
                 await self._mm_pull(key, now, S)
                 continue
+            floor = self.spread_floor(w.asset, z, tau0)
             self.strike(key, w.asset, w.start)            # the Chainlink strike: provisional result right after the window
             if now - self._fv_t.get(key, 0) >= 5000:      # ops.quality: markout-60 of the fills against the book mid
                 bu = self.st.books.get(w.token_up)
@@ -501,7 +532,7 @@ class FairMaker(LockBot):
                     if mid is not None:
                         ref = min(p, mid)                                 # never above the side's book mid
                 fav = p >= m.fav_p                                   # the MODEL's favourite (not the min() reference)
-                tgt, why = bid_target(m, ref, have, long_by, ask[0] if ask else None, fav)
+                tgt, why = bid_target(m, ref, have, long_by, ask[0] if ask else None, fav, floor)
                 if tgt is not None and self.gate_blocks(w.asset, side):
                     tgt, why = None, "gate"
                 cur = self.mm_bids.get((key, side))
@@ -514,7 +545,7 @@ class FairMaker(LockBot):
                     if cur:
                         await self._mm_cancel(key, side, now, why)
                     continue
-                if cur and keep_bid(m, cur["price"], tgt, ref, long_by, fav):
+                if cur and keep_bid(m, cur["price"], tgt, ref, long_by, fav, floor):
                     continue                              # resting close enough to the target
                 size = min(m.shares, math.floor(m.max_side_shares - have + 1e-9))
                 if size < 5:
@@ -540,7 +571,8 @@ class FairMaker(LockBot):
                 self._note("quote", key)
                 bb = book.best_bid() if book is not None and hasattr(book, "best_bid") else None
                 self.j.log("mm_quote", key=key, side=side, price=tgt, size=size, p=round(p, 4), ref=round(ref, 4), q=round(q_ahead, 1),
-                           bb=bb, ba=ask[0] if ask else None, rel=round(rel, 1), up=up, dn=dn, re=bool(cur), fav=bool(fav))
+                           bb=bb, ba=ask[0] if ask else None, rel=round(rel, 1), up=up, dn=dn, re=bool(cur), fav=bool(fav),
+                           fl=round(floor, 4))
         for key, side in [k for k in self.mm_bids if k[0] not in self.st.windows]:
             await self._mm_cancel(key, side, now, "window_gone")
         gc_ = getattr(self.broker, "gc", None)

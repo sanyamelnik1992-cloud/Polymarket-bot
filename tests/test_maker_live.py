@@ -163,7 +163,8 @@ def test_live_config_runs_the_rule_of_its_paper_twin():
     live, lm, lc = load_maker_live_config(LIVE, live_flag=True)
     paper, pm = load_maker_config(V2)
     assert live.lock == paper.lock
-    assert dc.asdict(lm) == dc.asdict(pm)
+    rule = lambda m: {k: v for k, v in dc.asdict(m).items() if k != "report_every_s"}    # noqa: E731  (reporting, not the rule)
+    assert rule(lm) == rule(pm) and (lm.report_every_s, pm.report_every_s) == (1800, 3600)
     assert live.journal_dir != paper.journal_dir and live.risk.state_file != paper.risk.state_file
     assert (live.risk.max_open_usd, live.risk.max_usd_per_entry) == (paper.risk.max_open_usd, paper.risk.max_usd_per_entry)
     assert notify.TWINS["pmbot-maker-v2"] == "pmbot-maker-live" and "pmbot-maker-live" in notify.REPORTED_UNITS and "pmbot-maker-live" not in notify.QUIET_SETTLES

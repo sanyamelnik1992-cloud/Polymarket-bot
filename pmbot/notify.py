@@ -44,6 +44,8 @@ BOTS = {
                          "заменён на v2, отчёты 94–95)"),
     "pmbot-maker-v2": ("🏦", "Мейкер v2 · 5 мин", "заявки в основном на фаворита, ниже середины стакана, не против движения Binance, "
                        "со 100-й секунды окна: бумажный близнец живого теста (отчёт 95)"),
+    "pmbot-maker-v3": ("🏦", "Мейкер v3 · 5 мин", "v2, но заявка не ближе к справедливой цене, чем она проходит за 1.5 секунды (в конце окна и в "
+                       "беспокойные минуты шире): меньше сделок, меньше проигрышей (paper, отчёт 96)"),
     "pmbot-maker-live": ("🏦", "Мейкер · живой тест", "заявки на обе стороны BTC 5 мин на минимуме биржи: сколько реально "
                          "исполняется и сколько платит биржа мейкеру (отчёт 94)"),
     "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона в последнюю минуту, только уверенность от 99% по цене до 0.98 (10 акций; страховка при развороте; стоп −$5/день)"),
@@ -87,8 +89,8 @@ GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 
 RUNNING = ("active", "activating", "deactivating", "failed")
 # Strategies that are shelved or being built (not running): the end of /status, one line each. Keep it short and current.
 SHELF = [
-    ("⏸", "Бумажные боты на паузе", "близнец раннего снайпера, гибкая пауза Снайпера и близнец мейкера v2 остановлены 26 ноя, чтобы "
-                                  "разгрузить сервер для живых ботов; вернутся на более мощном сервере"),
+    ("⏸", "Бумажные боты на паузе", "близнец раннего снайпера и гибкая пауза Снайпера остановлены 26 ноя, чтобы разгрузить сервер "
+                                  "для живых ботов; вернутся на более мощном сервере"),
     ("🛠", "Больше входов для «почти решённых»", "гибкая пауза Снайпера — на бумаге; Снайпер на нескольких монетах сразу и "
                                                    "новые монеты 15 мин — следующие (отчёт 88)"),
 ]
@@ -243,7 +245,8 @@ def maker_report(rec, unit="pmbot-maker-live"):
 
 
 def format_maker(unit="pmbot-maker-live"):
-    """/maker: the newest periodic report of the live maker test, how old it is and whether the maker runs."""
+    """/maker: the newest periodic report of the live maker test, how old it is and whether the maker runs; then the paper makers'
+    newest hourly reports (reports/96)."""
     journal = ops.bot_paths(unit)[0]
     rec = ops.last_event(journal, "mm_report") if journal else None
     state, _ = ops.unit_state(unit)
@@ -251,11 +254,53 @@ def format_maker(unit="pmbot-maker-live"):
     state_ru = ops.STATE_RU.get(state, esc(state))
     start = "" if state in RUNNING else f"\nЗапуск: /restart {unit}"
     if rec is None:
-        return (f"{name}: {state_ru}. Отчётов в журнале ещё нет: первый приходит в :00 или :30 UTC, не раньше чем через "
+        live = (f"{name}: {state_ru}. Отчётов в журнале ещё нет: первый приходит в :00 или :30 UTC, не раньше чем через "
                 f"10 минут после запуска.{start}")
-    head = "" if state == "active" else f"{name}: {state_ru}{start}\n\n"
-    return (head + maker_report(rec, unit)
-            + f"\n\n<i>Это отчёт {ops.fmt_age(rec['t'])} назад; новые приходят сами в :00 и :30 UTC.</i>")
+    else:
+        head = "" if state == "active" else f"{name}: {state_ru}{start}\n\n"
+        live = (head + maker_report(rec, unit)
+                + f"\n\n<i>Это отчёт {ops.fmt_age(rec['t'])} назад; новые приходят сами в :00 и :30 UTC.</i>")
+    paper = format_maker_paper(max_age_s=7200)
+    return live + ("\n\n" + paper if paper else "")
+
+
+# The paper makers (reports/96): their hourly `mm_report` records come as ONE Telegram message from the control bot (scripts/tg_bot.py,
+# a couple of minutes past the hour), not one message per bot.
+PAPER_MAKERS = ("pmbot-maker-v2", "pmbot-maker-v3")
+
+
+def maker_paper_line(rec, unit):
+    """One line of a paper maker's report: closed windows, fills against bids, the 30 s markout, the day."""
+    name = BOTS.get(unit, ("", unit, ""))[1]
+    closed, q, n = rec.get("closed", 0), rec.get("quotes", 0), rec.get("fills", 0)
+    parts = [f"окон с позицией {closed}" + (f" (+{rec.get('won', 0)}/−{rec.get('lost', 0)}) {money(rec.get('pnl'), True)}" if closed else ""),
+             f"исполнений {n} из {q} заявок"]
+    mo = (rec.get("mo_c") or {}).get("30")
+    if n and mo is not None:
+        parts.append(f"цена через 30 с {_cents(mo)}")
+    parts.append(f"сегодня {money(rec.get('day'))}")
+    return f"🏦 <b>{esc(name)}</b>: " + " · ".join(parts)
+
+
+def format_maker_paper(units=PAPER_MAKERS, max_age_s=900, now=None):
+    """ONE message for the newest reports of the running paper makers (only reports younger than max_age_s), or None."""
+    now = now or time.time()
+    lines, t0s, t1s = [], [], []
+    for u in units:
+        if ops.unit_state(u)[0] not in RUNNING:
+            continue
+        journal = ops.bot_paths(u)[0]
+        rec = ops.last_event(journal, "mm_report") if journal else None
+        if not rec or now - float(rec.get("t") or 0) > max_age_s:
+            continue
+        lines.append(maker_paper_line(rec, u))
+        t0s.append(float(rec.get("t0") or rec["t"]))
+        t1s.append(float(rec.get("t1") or rec["t"]))
+    if not lines:
+        return None
+    t0, t1 = min(t0s), max(t1s)
+    return "\n".join([f"📄 <b>Мейкеры на бумаге</b> · за {round((t1 - t0) / 60)} мин ({hhmm(t0)}–{hhmm(t1)} UTC), без денег"] + lines
+                     + ["<i>v2 = правило живого теста, v3 = заявки шире, когда цена быстро движется (отчёт 96). Подробно: /maker</i>"])
 
 
 def group_of(unit, mode):

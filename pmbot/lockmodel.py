@@ -14,6 +14,7 @@ probability comes from an EMPIRICAL table of Y_m = X_m / (sigma * sqrt(v_m)) bui
 import math
 import os
 from collections import deque
+from itertools import islice
 
 import numpy as np
 
@@ -214,6 +215,16 @@ class BlockSigma:
         if not self.r2 or self.seconds() < min_s:
             return None
         return math.sqrt(sum(self.r2) / len(self.r2) / self.block)
+
+    def sigma_recent(self, n_blocks):
+        """The same RMS over the last n_blocks blocks only (60 = the last 10 minutes): the regime of the moment against the hour
+        (the maker's spread, reports/96). None until there are that many blocks."""
+        if n_blocks <= 0 or len(self.r2) < n_blocks:
+            return None
+        tot = 0.0
+        for x in islice(reversed(self.r2), n_blocks):
+            tot += x
+        return math.sqrt(tot / n_blocks / self.block)
 
     def to_dict(self):
         return {"block": self.block, "r2": [round(x, 16) for x in self.r2], "last_sec": self.last_sec,

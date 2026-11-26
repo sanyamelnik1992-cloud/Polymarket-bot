@@ -712,6 +712,25 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   it silently. It REPLACES the per-window and hourly settle messages of the maker (`notify.REPORTED_UNITS`, was `QUIET_SETTLES`; `PMBOT_TG_SETTLES=1`
   brings the per-window ones back). `/maker` = the newest `mm_report` and its age (`ops.last_event`). The counters are fed through
   `FairMaker._note`, which swallows a fault: the report must never disturb orders, fills or settlement. `LockBot.extra_loops()` is the hook for it.
+  **`reports/96_maker_fast_loss_v3.md` (26 Nov evening, owner: "Давай бумажного мейкера, по деньгам не поднимай пока что ... проанализируй
+  почему так быстро в минус ушли ... и как можно уменьшить убыточные сделки")**: the live maker hit its -$5 day stop at ~16:20 UTC (old rule
+  14:17-15:16 5 windows +$1.20, v2 15:16-16:20 5 windows -$6.45). Our real fills come from public data (`reports/96_tools/live_fills.py`: our
+  wallet = the one whose BUY rows match settles.csv's Up / Down shares in EVERY window; never written anywhere). Causes: 15-16 UTC was the
+  day's second most volatile hour (sigma 1.30 vs 0.6-0.8 bp/sqrt s; the window-level tape sim gives v2 -$2.5..-4.4 on the same windows and
+  -$13.4 for 15-18 UTC after +$54 before); v2 bids 1.5 c under fair while the fair value moves phi(z) / sqrt(tau0 + 19.5) = 3 c a second at
+  window second 100 and 5-6 c at 190-213, and our cancel takes 150-450 ms (edge at the fill ~+1 c, 4 of 16 filled orders paid above the
+  model's value, 9 of 16 fills at seconds 190-213, takers of 134-198 shares on the other side); one window = +-$2.5-3 (5 unpaired shares),
+  so the -$5 stop is two bad windows. `reports/96_tools/window_sim.py` (per-window sim with the live caps, fills "at" or "thru" our price,
+  18-26 Nov, ~2 300 filled windows): `maker.k_time = 1.5` + `maker.vol_ratio` (bid >= 1.5 x the fair value's 1 s move under its reference,
+  x max(1, 10-min / 1-h sigma); `FairMaker.spread_floor`, `BlockSigma.sigma_recent`, journal `mm_quote.fl`) beats v2 every day: +10.0 /
+  +11.7 / +9.4 c a share vs +6.3 / +5.3 / +2.6 (18-21, 22-25, 26 Nov), $ a filled window +12..+93 %, 30-47 % fewer filled windows, stop
+  within 50 windows on 26 Nov 16 % vs 31 %; ending quotes earlier, a pair stop, one fill a side, calm / cooldown pauses do not help. About a
+  third of the windows lose under every rule: never promise "no losing trades". Paper: `pmbot-maker-v2` back from PAUSED (`RESUME_ONCE`, now
+  with a `data/state/.resumed-<unit>` marker removed when a unit is paused again) and NEW `pmbot-maker-v3` = `config/maker_v3.toml` (v2 +
+  k_time 1.5 + vol_ratio; a test keeps every other number equal; START_ONCE). Both write `mm_report` hourly (`report_every_s = 3600`; the
+  twin test ignores that field) and the control bot sends ONE message for them a couple of minutes past each hour
+  (`notify.format_maker_paper`, `notify.PAPER_MAKERS`, `tg_bot.Watcher.paper_makers`); `/maker` shows live + paper. The live maker stays
+  stopped on v2 with its limits (owner: no money changes); back to money only on the owner's word, with v3 if paper confirms it.
   Server load (report 95 section 9, 26 Nov, owner: "Если сервер перегружен то давай его разгрузим ... остановить пока что бумагу ... а если все
   ок то просто куплю более мощный сервер"): `install_units.sh` `PAUSED` = the paper units `pmbot-lock-15-early`, `pmbot-lock-99-sigma`,
   `pmbot-maker-v2` (stopped and disabled on deploy; paper only, a test checks it; to bring one back take it out of PAUSED and list it in
