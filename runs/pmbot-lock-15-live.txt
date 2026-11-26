@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261124-201814
-mode: live  duration: 2383.9 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4767, 'prewarm': 636, 'lock_state': 10132, 'strike': 632, 'order_filled': 17, 'fill': 17, 'lock_entry': 17, 'provisional': 17, 'settle': 17, 'order_rejected': 7, 'lock_miss': 7}
+mode: live  duration: 2443.9 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4887, 'prewarm': 652, 'lock_state': 10289, 'strike': 648, 'order_filled': 17, 'fill': 17, 'lock_entry': 17, 'provisional': 17, 'settle': 17, 'order_rejected': 8, 'lock_miss': 8}
 
-lock orders: sent 24  filled 17  ask gone 7  errors 0
-  signal -> exchange answer, ms: median 260  p90 353  max 1794
-  exchange call alone, ms: median 260  p90 353  max 1794
+lock orders: sent 25  filled 17  ask gone 8  errors 0
+  signal -> exchange answer, ms: median 249  p90 353  max 1794
+  exchange call alone, ms: median 248  p90 353  max 1794
   decision -> order sent, ms: median 1  p90 3  max 3
   GC pause per 30 s, ms: median 0  p90 8  max 189
-  market prewarm (2 lookups + signing), ms: median 140  max 647  n 636
+  market prewarm (2 lookups + signing), ms: median 141  max 647  n 652
   fill price minus the ask we saw, cents: mean +0.12  worst +1.2
   misses came 23-60 s before the end; model p 0.932-0.991
-  exchange rejections by code: {'fak_not_filled': 7}
+  exchange rejections by code: {'fak_not_filled': 8}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :   11 /   11 /   0 /    +4.18
@@ -17,8 +17,8 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
 
 окна, где модель была уверена (p >= 0.9): вход 14; без входа:
      1  сигнал был, но уже открыт вход (одно окно за раз)
-     4  заявка ушла, продажи уже не было
-   576  фильтр Binance (движение против нас / скачок / пауза)
+     5  заявка ушла, продажи уже не было
+   591  фильтр Binance (движение против нас / скачок / пауза)
     20  модель уверена, но продавца по нашей цене нет
     max_open: eth-1795659300 D p 0.972582 ask 0.95
 
