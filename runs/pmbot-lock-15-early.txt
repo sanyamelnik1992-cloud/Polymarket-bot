@@ -1,37 +1,37 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early/20261124-201822
-mode: paper  duration: 2262.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 4522, 'lock_state': 5360, 'strike': 600, 'fill': 40, 'lock_entry': 40, 'provisional': 40, 'settle': 40, 'lock_miss': 7}
+mode: paper  duration: 2323.0 min  events: {'start': 1, 'gc_freeze': 2, 'status': 4644, 'lock_state': 5449, 'strike': 616, 'fill': 44, 'lock_entry': 44, 'provisional': 44, 'settle': 44, 'lock_miss': 9}
 
-lock orders: sent 47  filled 40  ask gone 7  errors 0
+lock orders: sent 53  filled 44  ask gone 9  errors 0
   signal -> exchange answer, ms: median 302  p90 311  max 347
-  decision -> order sent, ms: median 1  p90 17  max 86
-  GC pause per 30 s, ms: median 1  p90 11  max 149
-  fill price minus the ask we saw, cents: mean -0.01  worst +0.0
-  misses came 125-300 s before the end; model p 0.000-0.000
+  decision -> order sent, ms: median 1  p90 16  max 86
+  GC pause per 30 s, ms: median 1  p90 10  max 149
+  fill price minus the ask we saw, cents: mean -0.03  worst +0.0
+  misses came 124-300 s before the end; model p 0.000-0.000
 
-окна, где модель была уверена (p >= 0.99): вход 38; без входа:
+окна, где модель была уверена (p >= 0.99): вход 42; без входа:
      4  сигнал был, но уже открыт вход (одно окно за раз)
-     7  заявка ушла, продажи уже не было
-   137  фильтр Binance (движение против нас / скачок / пауза)
+     8  заявка ушла, продажи уже не было
+   140  фильтр Binance (движение против нас / скачок / пауза)
     max_open: sol-1795605300 D p None ask 0.99
     max_open: xrp-1795605300 D p None ask 0.99
     max_open: sol-1795617000 D p None ask 0.99
     max_open: xrp-1795651200 U p None ask 0.99
 
-fills: 40  shares: 190  notional: $187.56
+fills: 44  shares: 210  notional: $207.31
        fills  shares  notional  avg_price  med_rel
 asset                                             
-btc       25  125.00   123.695       0.99  681.394
-eth        5   25.00    24.750       0.99  659.549
-sol        6   23.52    23.280       0.99  677.011
-xrp        4   16.00    15.840       0.99  633.377
+btc       26  130.00   128.645      0.990  677.640
+eth        7   35.00    34.650      0.990  659.549
+sol        7   28.52    28.180      0.988  657.364
+xrp        4   16.00    15.840      0.990  633.377
 
 settled windows:
        windows     cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                               
-btc         25  123.786  1.214          1.214     0.0       1.0  0.046  0.065  0.010
-eth          5   24.768  0.232          0.232     0.0       1.0  0.046  0.046  0.009
-sol          6   23.297  0.223          0.223     0.0       1.0  0.014  0.051  0.010
+btc         26  128.740  1.260          1.260     0.0       1.0  0.046  0.065  0.010
+eth          7   34.674  0.326          0.326     0.0       1.0  0.046  0.046  0.009
+sol          7   28.204  0.316          0.316     0.0       1.0  0.014  0.093  0.011
 xrp          4   15.851  0.149          0.149     0.0       1.0  0.009  0.046  0.009
 
-TOTAL pnl $+1.82 (ex-rebate $+1.82) on cost $187.70 -> ROI +0.97%; windows 40, t-stat +28.87
+TOTAL pnl $+2.05 (ex-rebate $+2.05) on cost $207.47 -> ROI +0.99%; windows 44, t-stat +26.00
 max drawdown $0.00; hedged windows (both sides filled): 0
