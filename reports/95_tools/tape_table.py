@@ -1,6 +1,6 @@
 """Every public taker trade of BTC 5m windows as a MAKER fill, with our Binance fair value, outcome and context -> table.npz
 
-  python tape_table.py TAPE_DIR BN1S.npz OUT.npz          (TAPE_DIR from fetch_tape.py, BN1S from bn_fetch.py)
+  python tape_table.py TAPE_DIR BN1S.npz OUT.npz [asset=btc] [duration_s=300]   (TAPE_DIR from fetch_tape.py, BN1S from bn_fetch.py)
 
 A taker SELL of O at p = a maker bought O at p; a taker BUY of O at p = a maker bought the other side at 1 - p (the books are
 mirrors). So every row is a long position of a bid-only maker: side d (+1 Up / -1 Down), price pl, size n.
@@ -16,9 +16,12 @@ import numpy as np
 from scipy.special import ndtr
 
 TAPE, BN, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
+ASSET = sys.argv[4] if len(sys.argv) > 4 else "btc"
+DUR = int(sys.argv[5]) if len(sys.argv) > 5 else 300
+SYMBOL = {"btc": "BTCUSDT", "eth": "ETHUSDT", "sol": "SOLUSDT", "xrp": "XRPUSDT"}[ASSET]
 B = np.load(BN)
 T0 = int(B["t0"])
-PX = B["BTCUSDT"].astype(float)
+PX = B[SYMBOL].astype(float)
 LP = np.log(PX)
 N = len(PX)
 # sigma per second: RMS of 10 s log returns over the last hour (360 samples, stride 10), per 1 s
@@ -42,7 +45,7 @@ for c in range(10):
     roll = cs.copy()
     roll[60:] = cs[60:] - cs[:-60]
     SIG10[idx[60:]] = np.sqrt(roll[60:] / 60.0 / 10.0)
-W = {w["slug"]: w for w in json.load(open(f"{TAPE}/windows.json"))}
+W = {w["slug"]: w for w in json.load(open(f"{TAPE}/windows.json")) if w["asset"] == ASSET and w["end"] - w["start"] == DUR}
 TR = json.load(open(f"{TAPE}/trades.json"))
 cols = {k: [] for k in "t start rel d pl n won u".split()}
 for s, rows in TR.items():
@@ -74,7 +77,7 @@ def fair_up(ii, st, tt):
     for s in np.unique(st):                                 # strike per window: mean of [s-62, s-3]
         m = st == s
         K[m] = PX[s - 62 - T0: s - 2 - T0].mean()
-    tau0 = np.maximum(0.0, (st + 300 - 62) - tt)
+    tau0 = np.maximum(0.0, (st + DUR - 62) - tt)
     sg = SIG[ii]
     z = np.log(PX[ii] / K) / (sg * np.sqrt(tau0 + 19.5) + 1e-18)
     z = np.where(tau0 > 0, z, np.nan)
@@ -123,5 +126,5 @@ for s in np.unique(st_o):
 out["mL"] = np.where(d == 1, mU, 1 - mU)
 out["mN"] = mN
 np.savez_compressed(OUT, **out)
-ok = (out["rel"] >= 20) & (out["rel"] <= 230) & np.isfinite(out["fL"])
+ok = (out["rel"] >= 20) & (out["rel"] <= DUR - 70) & np.isfinite(out["fL"])
 print("trades", len(t), "in rel 20..230 with a fair value", int(ok.sum()), "days", np.unique(out["day"]))

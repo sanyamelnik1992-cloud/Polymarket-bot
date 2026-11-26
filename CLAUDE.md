@@ -695,8 +695,10 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   resting, $30 open, day stop $5). Tape: +4.48 c (18-21 Nov) / +7.68 c (22-25 Nov) a share, every one of 8 days positive, ~23-26 k
   shares a day for the whole market (an upper bound); the old symmetric "min" rule +1.22 / +0.32 c. The paper `pmbot-maker-safe` (the old rule) and `pmbot-maker` are
   RETIRED (3 makers do not fit 2 vCPU), `pmbot-maker-v2` is started once. `report_journal.maker_report` splits fills by favourite /
-  underdog and by second. Verdict after 2-3 days (>= 100 live fills): live c a share by outcome >= +1.5 and no day stop -> next stage
-  (more shares, ETH / SOL, 15m: the same tape tools); live < 0 with a positive paper twin -> look for delay and queue.
+  underdog and by second. Other markets on the same tape (22-25 Nov, V2 c a share): ETH 5m +4.84 (3 of 4 days), SOL 5m +4.89 (4 of 4), XRP 5m
+  +2.31 (4 of 4), BTC 15m from second 300 +4.06 (3 of 4); the symmetric rules lose everywhere (-0.3..-3.6); their volume is small (3-5 k
+  shares a day each). Verdict after 2-3 days (>= 100 live fills): live c a share by outcome >= +1.5 and no day stop -> next stage
+  (more shares, SOL / XRP 5m first, then ETH, 15m: `LIVE_CAPS` allows BTC only today); live < 0 with a positive paper twin -> look for delay and queue.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

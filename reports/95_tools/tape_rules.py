@@ -20,8 +20,8 @@ def load(path):
     return {k: T[k] for k in T.files}
 
 
-def evaluate(t, label, hf, hd, ref="fair", rel_lo=20, gate=None, th=0.5, pmin=0.10, pmax=0.90, fav_thr=0.5, kappa=1.0):
-    base = (t["rel"] >= rel_lo) & (t["rel"] <= 230) & np.isfinite(t["fL"])
+def evaluate(t, label, hf, hd, ref="fair", rel_lo=20, gate=None, th=0.5, pmin=0.10, pmax=0.90, fav_thr=0.5, kappa=1.0, rel_hi=230):
+    base = (t["rel"] >= rel_lo) & (t["rel"] <= rel_hi) & np.isfinite(t["fL"])
     won = t["pnl"] + t["pl"]
     w = np.minimum(t["n"], 5.0)
     pl, mL = t["pl"], t["mL"]
