@@ -1,6 +1,6 @@
-run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-141749
-mode: live  duration: 43.5 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'prewarm': 36, 'status': 87, 'lock_state': 306, 'strike': 32}
+run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-151628
+mode: live  duration: 44.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 89, 'prewarm': 36, 'lock_state': 444, 'strike': 32}
 
 окна, где модель была уверена (p >= 0.99): вход 0; без входа:
-    29  фильтр Binance (движение против нас / скачок / пауза)
+    31  фильтр Binance (движение против нас / скачок / пауза)
 no fills
