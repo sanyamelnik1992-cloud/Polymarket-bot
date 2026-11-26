@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261124-201814
-mode: live  duration: 1842.8 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 3685, 'prewarm': 492, 'lock_state': 8703, 'strike': 488, 'order_filled': 14, 'fill': 14, 'lock_entry': 14, 'provisional': 14, 'settle': 14, 'order_rejected': 5, 'lock_miss': 5}
+mode: live  duration: 1903.8 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 3807, 'prewarm': 508, 'lock_state': 8912, 'strike': 504, 'order_filled': 14, 'fill': 14, 'lock_entry': 14, 'provisional': 14, 'settle': 14, 'order_rejected': 6, 'lock_miss': 6}
 
-lock orders: sent 19  filled 14  ask gone 5  errors 0
+lock orders: sent 20  filled 14  ask gone 6  errors 0
   signal -> exchange answer, ms: median 263  p90 458  max 1794
   exchange call alone, ms: median 261  p90 458  max 1794
   decision -> order sent, ms: median 1  p90 3  max 3
   GC pause per 30 s, ms: median 0  p90 8  max 189
-  market prewarm (2 lookups + signing), ms: median 140  max 647  n 492
+  market prewarm (2 lookups + signing), ms: median 140  max 647  n 508
   fill price minus the ask we saw, cents: mean +0.36  worst +1.2
   misses came 23-60 s before the end; model p 0.932-0.991
-  exchange rejections by code: {'fak_not_filled': 5}
+  exchange rejections by code: {'fak_not_filled': 6}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    8 /    8 /   0 /    +2.77
@@ -17,9 +17,9 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
 
 окна, где модель была уверена (p >= 0.9): вход 11; без входа:
      1  сигнал был, но уже открыт вход (одно окно за раз)
-     3  заявка ушла, продажи уже не было
-   450  фильтр Binance (движение против нас / скачок / пауза)
-    12  модель уверена, но продавца по нашей цене нет
+     4  заявка ушла, продажи уже не было
+   464  фильтр Binance (движение против нас / скачок / пауза)
+    13  модель уверена, но продавца по нашей цене нет
     max_open: eth-1795659300 D p 0.972582 ask 0.95
 
 fills: 14  shares: 75  notional: $70.30
