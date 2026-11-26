@@ -58,6 +58,15 @@ def main(paths):
         e["run_rel"] = e["run_120"] / max(e["lead_bp"], 0.1)
     bins(E, "swing_rel", [0, 1, 1.5, 2, 3, 5, 1e9], "swing of 120 s / lead")
     bins(E, "run_rel", [-1e9, 0, 0.5, 1, 1.5, 2, 1e9], "move of 120 s toward us / lead (> 1 = the whole lead came in the last 2 minutes)")
+    print("\nthe lead K seconds before the entry (< 0 = our side was losing then):")
+    for k in (30, 60, 90, 120, 180, 240):
+        key = f"lead_at_{k}"
+        if key not in E[0]:
+            continue
+        neg = [e for e in E if e[key] < 0]
+        pos = [e for e in E if e[key] >= 0]
+        print(row(f"lead {k:3d} s before < 0", neg))
+        print(row(f"lead {k:3d} s before >= 0", pos))
     print("\nfilters (removed entries):")
     F = [("crossed in the last 60 s (min_lead_60 < 0)", lambda e: e["min_lead_60"] < 0),
          ("crossed in the last 120 s (min_lead_120 < 0)", lambda e: e["min_lead_120"] < 0),
@@ -66,6 +75,10 @@ def main(paths):
          ("120 s swing > 2 x lead", lambda e: e["swing_rel"] > 2),
          ("120 s swing > 3 x lead", lambda e: e["swing_rel"] > 3),
          ("crossed in 120 s AND run_rel > 1", lambda e: e["min_lead_120"] < 0 and e["run_rel"] > 1)]
+    for k in (60, 90, 120, 180):
+        if f"lead_at_{k}" in E[0]:
+            F.append((f"our side was losing {k} s before (lead_at_{k} < 0)", lambda e, k=k: e[f"lead_at_{k}"] < 0))
+            F.append((f"losing {k} s before by more than the lead now", lambda e, k=k: e[f"lead_at_{k}"] < -e["lead_bp"]))
     for label, f in F:
         rem = [e for e in E if f(e)]
         kept = [e for e in E if not f(e)]

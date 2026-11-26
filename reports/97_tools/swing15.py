@@ -14,7 +14,8 @@ our side at <= the tier's limit, and taker SELLs of the other side at q (a bid t
 
 Features of each entry (Binance, the seconds before the decision): lead_bp (spot vs strike, our side +), min_lead_60 / _120 (the lowest
 lead of the last 60 / 120 s: < 0 = the price was on the OTHER side of the strike then), swing_60 / _120 (max - min, bp), run_60 / _120
-(the move toward our side over 60 / 120 s), dist_bp / sigma_bp / p from the model."""
+(the move toward our side over 60 / 120 s), lead_at_K (the lead K seconds before: < 0 = our side was LOSING then), dist_bp / sigma_bp
+/ p from the model."""
 import json
 import os
 import sys
@@ -111,6 +112,7 @@ def main(tape, bn, out, cfg_path):
                 i1 = last_sec - T0
                 seg60, seg120 = px[i1 - 60: i1 + 1], px[i1 - 120: i1 + 1]
                 lead = sgn * (seg120 / K - 1) * 1e4
+                lead_at = {f"lead_at_{k}": round(float(sgn * (px[i1 - k] / K - 1) * 1e4), 3) for k in (30, 60, 90, 120, 180, 240)}
                 res.append({"a": a, "ws": ws, "s": s, "side": side, "p": round(p, 5), "limit": lim, "px": round(cost / got, 4),
                             "won": (side == "U") == (win == "Up"), "day": (ws - T0) // 86400,
                             "sigma_bp": ctx.get("sigma_bp"), "dist_bp": ctx.get("dist_bp"),
@@ -119,7 +121,7 @@ def main(tape, bn, out, cfg_path):
                             "swing_60": round(float((seg60.max() - seg60.min()) / K * 1e4), 3),
                             "swing_120": round(float((seg120.max() - seg120.min()) / K * 1e4), 3),
                             "run_60": round(float(sgn * (seg60[-1] / seg60[0] - 1) * 1e4), 3),
-                            "run_120": round(float(sgn * (seg120[-1] / seg120[0] - 1) * 1e4), 3)})
+                            "run_120": round(float(sgn * (seg120[-1] / seg120[0] - 1) * 1e4), 3), **lead_at})
                 break
         print(a, "windows so far", nwin, "entries", len(res), flush=True)
     json.dump({"windows": nwin, "entries": res, "config": cfg_path}, open(out, "w"))
