@@ -639,6 +639,30 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   `missed_report` "guard" line counts any guard moment at p >= theta, also without a seller at the tier price). Paper makers
   over 40.6 h: `maker` +$39.17 (389 windows, t 0.8), `maker-safe` +$55.11 (469, t 1.1), days -$35..+$105, drawdowns ~-$60,
   rebate not counted (~0.3 % of turnover): not proven, a few more days; the live maker broker is built only on the owner's word.
+  Deployed 26 Nov 13:18 UTC (c093d4f) after the owner's $226.49 deposit (wallet ~$365).
+- **`reports/94_live_maker_test.md` (26 Nov, owner: "Давай начинай делать"; REAL MONEY CODE, NOT STARTED)**: the live maker
+  test. `pmbot/bot/maker_live.py` `MakerLiveBroker` (built on the rewards live broker of report 72): post-only GTD BUYs, <= 5
+  shares, <= 1 resting order per token and 2 in all, <= $10 resting, <= 1500 orders an hour (then fatal), the order heartbeat
+  (4 s) as the dead-man switch, GTD expiry max(now + 185, window end + 60) (the SDK wants >= now + 180), NEVER cancel-all (the
+  wallet is shared; cancels by id, sweeps by the tokens it quoted: the lock bots' FAK orders never rest), an unanswered order call
+  = `suspect` token (no new order until it is swept and the exchange shows none of ours there), fills from the user stream once
+  per (trade, order) + `get_order` reconcile every 20 s and for every late cancel, an unknown order of ours (maker_address =
+  our wallet, on a token we quoted) is adopted, a FAILED trade is taken back (`on_unfill`) and its token swept, the day's
+  maker rebate (`get_current_rebates`, journal `mm_rebate`). The broker journals `mm_exec` (the maker journals `fill` +
+  `mm_fill`: never two fill records). `fairmaker.py` live mode: `load_maker_live_config(path, live_flag)` (mode live + the
+  --live flag of `scripts/run_maker.py`, caps `LIVE_CAPS`: 5 shares, <= 15 a side, <= 10 unpaired, <= $10 resting, day stop
+  <= $15, <= $40 open, reserve >= $40, BTC only; the lock loader's taker rules are skipped: it checks the maker as paper),
+  both sides pulled in ONE cancel call, a refused bid (place -> None) is not stored, no re-bid in the pass a cancel found a
+  fill or failed, a bid the exchange removed (`is_resting`) is placed again, broker unhealthy -> pull, `broker_fatal` -> kill,
+  ref "min" reads the book mid without our own live bids (`_mid_wo_own`: the G ratchet), `LockBot._on_stopping` hook pulls
+  every bid BEFORE the up-to-15-min settle wait (it used to run after it). Unit `pmbot-maker-live` = `config/maker_live.toml`
+  (the rule of its paper twin `maker_safe.toml`, a test keeps it; 5 shares, 10 a side, 5 unpaired, $10 resting, $30 open,
+  day stop $5, reserve $60, not enabled at boot, NOT in START_ONCE: /restart on the owner's word); `notify.TWINS` safe -> live,
+  `QUIET_SETTLES` (one summary an hour), `SHELF` line, alerts `mm_live_error` / `fill_failed` (rate-limited), report_journal.py
+  `maker_live_report` (share of orders filled, place / cancel ms, refusals, fill sources, rebate). Verdict after 2-3 days
+  (~300 windows) against the paper twin: fill share, markouts 5 / 30 / 60 s, per share by outcome, rebate. Not built: merge of
+  pairs (the exchange redeemed the lock bots' wins by itself ~20-40 min after the window), a start-up reconcile of fills lost
+  in a crash between the match and its stream event.
 - **Weather (temperature) markets, `reports/78_weather_start.md` (16 Nov, owner: "давай начнем работу с погодой")**: ~90
   "Highest temperature in CITY on DATE" events a day, 11 buckets, resolved by the ROUTINE METAR reports of one airport
   (T-group tenths else body whole C, SPECI excluded, local date, round half up, F = C*9/5+32): `pmbot/weather/rules.py`

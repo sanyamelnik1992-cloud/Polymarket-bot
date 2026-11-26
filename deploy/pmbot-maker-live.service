@@ -1,0 +1,23 @@
+[Unit]
+Description=pmbot Мейкер LIVE TEST (config/maker_live.toml: bids on both sides of BTC 5m at the exchange minimum, REAL MONEY, -$5/day stop)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=/etc/pmbot/pmbot.env
+# REAL MONEY. Installed but NOT enabled at boot and NOT started by install_units.sh: the owner's word starts it
+# (Telegram /restart pmbot-maker-live). reports/94. A daily-loss stop exits the process; it stays stopped until a human starts it.
+ExecStart=__REPO__/.venv/bin/python scripts/run_maker.py --config config/maker_live.toml --live
+# CPU priority of a live bot (5x the default share under contention, paper bots 0.2x)
+CPUWeight=500
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGINT
+TimeoutStopSec=960
+
+[Install]
+WantedBy=multi-user.target

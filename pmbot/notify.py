@@ -42,6 +42,8 @@ BOTS = {
                     "мейкеров, которые здесь зарабатывают (отчёт 89); экзамен: 1–2 дня бумаги"),
     "pmbot-maker-safe": ("🏦", "Мейкер осторожный · 5 мин", "то же, но заявка не выше середины стакана: проверка, кто прав, "
                          "модель или рынок (отчёт 89)"),
+    "pmbot-maker-live": ("🏦", "Мейкер · живой тест", "заявки на обе стороны BTC 5 мин на минимуме биржи: сколько реально "
+                         "исполняется и сколько платит биржа мейкеру (отчёт 94)"),
     "pmbot-lock-live": ("🪜", "Ступени · L3", "решённая сторона в последнюю минуту, только уверенность от 99% по цене до 0.98 (10 акций; страховка при развороте; стоп −$5/день)"),
     "pmbot-lock-15-live": ("⏳", "Ступени · 15 мин", "уверенная сторона (от 90%) в последние минуты 15-минутных окон"),
     "pmbot-rewards": ("🎁", "Награды · R", "заявки рядом с ценой на рынках с пулами наград, после исполнения сразу хедж (paper)"),
@@ -66,10 +68,11 @@ PAIRS = [("pmbot-5m-c", "pmbot-5m"), ("pmbot-5m-d", "pmbot-5m-b")]   # (variant,
 TWINS = {"pmbot-lock-tier": "pmbot-lock-live", "pmbot-lock-99": "pmbot-lock-99-live", "pmbot-lock-15-tier": "pmbot-lock-15-live",
          "pmbot-lock-15-early": "pmbot-lock-15-early-live",
          "pmbot-lock-fair": "pmbot-lock-fair-live",
+         "pmbot-maker-safe": "pmbot-maker-live",
          "pmbot-5m-e": "pmbot-5m-live"}
 # Live units whose closed windows come as ONE summary an hour instead of a message each (the Перехватчик closes dozens of
 # windows a day, half of them lost). 22 Nov the owner saw only the stop message and no trade at all (reports/83 section 13).
-QUIET_SETTLES = {"pmbot-lock-fair-live"}
+QUIET_SETTLES = {"pmbot-lock-fair-live", "pmbot-maker-live"}     # the maker: every 5-minute window (reports/94)
 GROUPS = [("live", "💰 <b>РЕАЛЬНЫЕ ДЕНЬГИ</b>"), ("twin", "📄 <b>БУМАГА · близнецы живых</b> (то же правило, без денег)"),
           ("lab", "🧪 <b>БУМАГА · эксперименты</b>")]
 # What /status and the digest list (reports/88, owner 23 Nov: "те стратегии от которых мы отказались не отображать, хорошо разделить
@@ -81,6 +84,8 @@ RUNNING = ("active", "activating", "deactivating", "failed")
 SHELF = [
     ("🛠", "Больше входов для «почти решённых»", "гибкая пауза Снайпера — на бумаге; Снайпер на нескольких монетах сразу и "
                                                    "новые монеты 15 мин — следующие (отчёт 88)"),
+    ("🏦", "Мейкер на реальные деньги", "живой тест готов: 5 акций, до $10 в заявках, стоп −$5 в день; запуск только по слову "
+                                       "владельца: /restart pmbot-maker-live (отчёт 94)"),
 ]
 
 
@@ -99,7 +104,7 @@ def limits(unit):
     c = ops.load_toml(cfg) if cfg else {}
     lk, rk = c.get("lock") or {}, c.get("risk") or {}
     parts = []
-    sh = lk.get("shares")
+    sh = (c.get("maker") or {}).get("shares") or lk.get("shares")       # the maker's bids: [maker] shares
     if sh:
         text = f"{sh:g} {_shares_word(sh)}"
         big, big_p = lk.get("big_shares") or 0, lk.get("big_shares_p") or 0
@@ -217,7 +222,9 @@ def unit_for_config(config_path):
 
 
 # ---------------------------------------------------------------- alerts from the trading bots
-KILL_RU = [("daily loss limit", "достигнут дневной лимит убытка"), ("kill file", "создан файл STOP (/stop)")]
+KILL_RU = [("daily loss limit", "достигнут дневной лимит убытка"), ("kill file", "создан файл STOP (/stop)"),
+           ("broker: max_orders_hour", "слишком много заявок за час (защита от зацикливания)"),
+           ("broker:", "биржа отказала в доступе (401/403)")]
 ERROR_RU = {
     "order_rejected": "биржа отклонила заявку",
     "cancel_failed": "не получилось снять заявку",
@@ -229,6 +236,8 @@ ERROR_RU = {
     "settle_timeout": "окно не рассчиталось за 30 мин",
     "order_failed": "заявка: биржа не ответила или ответила ошибкой, исход неизвестен (в этом окне больше не торгую)",
     "order_pending": "заявка принята, но ещё не исполнена (в этом окне больше не торгую, проверьте кошелёк)",
+    "mm_live_error": "мейкер: ошибка при работе с заявками (подробности ниже)",
+    "fill_failed": "мейкер: сделка не прошла на блокчейне, исполнение снято со счёта",
 }
 
 

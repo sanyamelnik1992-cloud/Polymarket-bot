@@ -1,0 +1,59 @@
+# Мейкер — LIVE TEST, REAL MONEY (reports/94; owner 26 Nov: "Давай начинай делать" after "начинать писать живого мейкера").
+# The rule of its paper twin config/maker_safe.toml (pmbot-maker-safe: bids under min(Binance fair value, the side's book mid),
+# a test keeps [lock] and the quoting rule equal) at the exchange minimum, with the live broker pmbot/bot/maker_live.py:
+# post-only GTD bids, the order heartbeat as the dead-man switch, cancels by id and sweeps by our own tokens (never cancel-all:
+# the wallet is shared with the lock bots). It answers what paper cannot: the real fill rate of a 5-share bid among other
+# makers, how far the price moves against our fills with our real latency, and the exchange's maker rebate.
+# Not enabled at boot and not started by install_units.sh: the owner's word starts it (/restart pmbot-maker-live). The loader
+# caps every limit below (fairmaker.LIVE_CAPS); growing it is a change of that code and the owner's decision.
+journal_dir = "data/journal-maker-live"
+
+[lock]
+assets = ["btc"]
+zone = "fair"               # the Binance fair value (strike, BlockSigma): FairMaker decides
+rel_lo = 20.0               # window seconds 20..230: no bids while the strike is fresh or in the closing TWAP
+rel_hi = 230.0
+fair_sigma_s = 3600.0
+fair_min_sigma_s = 1800.0
+fair_react_bp = 0.3         # a 0.3 bp Binance move wakes the quote loop at once
+tick_ms = 200
+
+[maker]
+half_spread = 0.01          # bid = min(fair, book mid without our own bids) - 0.01, down to the 0.01 grid
+ref = "min"
+shares = 5                  # the exchange minimum
+max_side_shares = 10        # LIVE TEST: two fills a side per window at most (paper twin: 25)
+max_unpaired = 5            # LIVE TEST: after one unpaired fill the long side gets no bid until the other side fills (paper: 10)
+skew_c = 0.01
+requote_c = 0.01
+pull_bp = 1.5               # pull both bids for pause_s after a Binance move of max(1.5 bp, 2.5 sigma * sqrt(2 s)) within 2 s
+pull_sigmas = 2.5
+pull_s = 2.0
+pause_s = 2.0
+p_lo = 0.10
+p_hi = 0.90
+markout_s = [5, 30]
+
+[live]
+max_shares = 5              # one order; the broker refuses more whatever the quoting asks
+max_resting_usd = 10.0      # both resting bids together (2 x 5 x <= 0.90)
+reserve_usd = 60.0          # collateral that must stay free for the lock bots (same wallet): below it no new bid
+max_orders_hour = 1500      # orders placed in any rolling hour (paper: ~700 an hour at most); above it the test stops
+ttl_s = 185                 # GTD: every order expires by itself (the SDK wants >= 180 s ahead); the heartbeat acts first
+heartbeat_s = 4.0           # the exchange cancels our orders ~10 s after the last heartbeat (process dead or hung)
+cross_pause_ms = 300        # a post-only refusal (the book moved during our latency): that token waits this long
+reject_pause_s = 30.0       # any other refusal of the exchange: that token waits this long
+balance_every_s = 60.0
+reconcile_every_s = 20.0    # the exchange's record of every resting order: a fill the account stream missed is counted
+rebate_every_s = 3600.0     # the day's maker rebate of our address (journal mm_rebate)
+
+[risk]
+max_usd_per_entry = 5.0     # unused by the maker (each bid is 5 shares at <= p_hi)
+max_open_usd = 30.0         # worst case of open windows + every resting bid as if filled
+daily_loss_limit = 5.0      # REAL MONEY: the day stop of the plan (reports/91, step 2); the process exits, a human restarts it
+state_file = "data/state/maker_live.json"
+resume_next_day = false
+
+[execution]
+mode = "live"
+cl_feed = "both"            # Chainlink prints only for the provisional result after each window

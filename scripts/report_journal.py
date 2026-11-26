@@ -268,6 +268,40 @@ def maker_report(ev):
               f"unpaired {unp:.0f}")
 
 
+def maker_live_report(ev):
+    """Live maker test (reports/94): what the exchange did with our bids. Paper cannot show these numbers: the share of our
+    orders that were filled at all, the place / cancel latency, refusals, the fills found only in the exchange's record,
+    and the maker rebate the exchange credited for the day."""
+    placed = [e for e in ev if e["type"] == "order_placed"]
+    if not placed or not any(e["type"] == "mm_quote" for e in ev):
+        return
+    execs = [e for e in ev if e["type"] == "mm_exec"]
+    filled = {e["order_id"] for e in execs}
+    rej = Counter(e.get("code") for e in ev if e["type"] == "order_rejected")
+    refused = Counter(e.get("why") for e in ev if e["type"] == "mm_refused")
+
+    def q(xs, f):
+        xs = sorted(x for x in xs if x is not None)
+        return xs[min(len(xs) - 1, int(f * len(xs)))] if xs else None
+
+    pl = [e.get("latency_ms") for e in placed]
+    cl = [e.get("latency_ms") for e in ev if e["type"] == "order_cancelled"]
+    print(f"\nmaker LIVE: orders placed {len(placed)}, filled at least partly {len(filled)} "
+          f"({100 * len(filled) / len(placed):.1f} %), shares {sum(e['size'] for e in execs):.0f}")
+    print(f"  place ms median {q(pl, 0.5)} p90 {q(pl, 0.9)}; cancel ms median {q(cl, 0.5)} p90 {q(cl, 0.9)}")
+    print(f"  refused by the exchange {dict(rej)}; by our own limits (records, 1 per 10 s) {dict(refused)}")
+    late = sum(1 for e in ev if e["type"] == "order_cancelled" and e.get("not_canceled"))
+    src = Counter("adopted" if e.get("adopted") else ("record" if e.get("status") == "RECONCILED" else "stream") for e in execs)
+    print(f"  cancels that came too late (already matched) {late}; fills from {dict(src)}; failed trades "
+          f"{sum(1 for e in ev if e['type'] == 'fill_failed')}; sweeps {sum(1 for e in ev if e['type'] == 'mm_sweep')}")
+    reb = [e for e in ev if e["type"] == "mm_rebate" and e.get("usd") is not None]
+    if reb:
+        print(f"  maker rebate of {reb[-1].get('day')} (the exchange's number, our address): ${reb[-1]['usd']:.4f}")
+    errs = Counter(e.get("where") for e in ev if e["type"] == "mm_live_error")
+    if errs:
+        print(f"  errors {dict(errs)}")
+
+
 def main(d):
     ev = [json.loads(line) for line in open(os.path.join(d, "events.jsonl")) if line.strip()]
     kinds = Counter(e["type"] for e in ev)
@@ -290,6 +324,7 @@ def main(d):
     shock_breakdown(ev)
     missed_report(ev)
     maker_report(ev)
+    maker_live_report(ev)
     if fills.empty:
         print("no fills")
         return

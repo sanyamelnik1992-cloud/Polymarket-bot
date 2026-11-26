@@ -1636,6 +1636,11 @@ class LockBot:
             self.stats.pop("cl_lag_ms", None)
             self._save_state()
 
+    async def _on_stopping(self):
+        """Hook of run(): called once the bot stops, before it waits up to 15 min for its open windows to settle. The lock
+        bots' taker orders never rest, so there is nothing to do; FairMaker pulls its bids."""
+        return None
+
     async def _refreeze(self, after_s=120.0):
         """Freeze once more when the feeds, connections and SDK caches created at start-up exist (reports/83 section 14)."""
         await asyncio.sleep(after_s)
@@ -1667,6 +1672,11 @@ class LockBot:
             self._stop = True
             for t in tasks:
                 t.cancel()
+            try:
+                await self._on_stopping()          # the live maker pulls its resting bids here, not after the settle wait
+            except Exception as e:  # noqa: BLE001
+                log.exception("stopping: %s", e)
+                self.j.log("error", where="on_stopping", error=str(e)[:300])
             self._save_state()
             self.j.log("stopped", pnl=round(self.day_pnl(), 4), stats=dict(self.stats))
             try:

@@ -65,7 +65,7 @@ class PaperBroker:
     async def stop(self):
         await self.cancel_all()
 
-    async def place(self, token, key, side, price, size, now_ms, expiration_s=None, queue_ahead=None):
+    async def place(self, token, key, side, price, size, now_ms, expiration_s=None, queue_ahead=None, end_s=None):
         oid = f"p{next(self._ids)}"
         exp = (expiration_s - 60) * 1000 if expiration_s else None   # GTD: effective expiry is 60s earlier
         live_from = now_ms + self.place_latency

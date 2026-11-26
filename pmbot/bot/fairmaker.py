@@ -1,4 +1,5 @@
-"""Мейкер ("fair-value market maker") on 5m Up/Down windows — PAPER ONLY (reports/89).
+"""Мейкер ("fair-value market maker") on 5m Up/Down windows — paper (reports/89) and a LIVE test at the exchange minimum
+(reports/94: pmbot/bot/maker_live.py, config/maker_live.toml, only with execution.mode = "live" AND the --live flag).
 
 Who makes the money on these markets (reports/89, 24 Nov): 26 of the week's top 60 crypto wallets are BTC 5m / 15m makers,
 +$409k in 7 days on $17.2M of turnover (+2.4 %, of it 0.2-0.4 % exchange maker rebates), 83 % of their days positive. They
@@ -39,7 +40,9 @@ from dataclasses import dataclass, field
 
 from ..lockmodel import TW_LO, early_z
 from .feeds import ClobFeed
+from .live import LiveGateError
 from .lock import LockBot, _apply, load_lock_config, tick_floor
+from .maker_live import MakerLiveBroker, MakerLiveCfg
 from .paper import PaperBroker
 from .state import now_ms
 
@@ -71,8 +74,10 @@ class MakerCfg:
     markout_s: list = field(default_factory=lambda: [5, 30])    # mm_markout: the side's fair value this many s after a fill
 
 
-def load_maker_config(path=None, overrides=None):
-    """[maker] -> MakerCfg; everything else is a LockConfig (zone "fair": the Binance fair value and its sigma)."""
+def _parse_maker(path=None, overrides=None):
+    """[maker] -> MakerCfg, [live] -> a dict, everything else a LockConfig (zone "fair": the Binance fair value and its sigma).
+    The lock loader's live rules are the Перехватчик's taker rules: the maker is checked as paper there and by its own rules
+    here (load_maker_config / load_maker_live_config)."""
     data = {}
     if path:
         with open(path, "rb") as f:
@@ -84,10 +89,66 @@ def load_maker_config(path=None, overrides=None):
             data[k] = v
     mm = MakerCfg()
     _apply(mm, dict(data.pop("maker", {})), "maker.")
+    live = dict(data.pop("live", {}) or {})
+    ex = dict(data.get("execution") or {})
+    mode = ex.get("mode", "paper")
+    data["execution"] = {**ex, "mode": "paper"}
     cfg = load_lock_config(None, overrides=data)
-    c, e = cfg.lock, cfg.execution
-    if e.mode != "paper":
-        raise ValueError("the maker is paper only: there is no live maker broker for it (reports/89)")
+    cfg.execution.mode = mode
+    _check_maker(cfg, mm)
+    return cfg, mm, live
+
+
+def load_maker_config(path=None, overrides=None):
+    """The paper maker: (LockConfig, MakerCfg). A live config is refused here (scripts/run_maker.py --live)."""
+    cfg, mm, live = _parse_maker(path, overrides)
+    if cfg.execution.mode != "paper":
+        raise ValueError("this config is not paper: a live maker runs only through scripts/run_maker.py --live (reports/94)")
+    if live:
+        raise ValueError("[live] belongs to a live maker config")
+    return cfg, mm
+
+
+# The live maker is a TEST at the exchange minimum (reports/94): these caps cannot be raised from a config. Growing it into a
+# bot is the owner's decision and a change of this code, reviewed like every real-money change.
+LIVE_CAPS = {"shares": 5.0, "max_side_shares": 15.0, "max_unpaired": 10.0, "max_resting_usd": 10.0, "daily_loss_limit": 15.0,
+             "max_open_usd": 40.0, "max_orders_hour": 3000, "min_reserve_usd": 40.0}
+
+
+def load_maker_live_config(path, live_flag=False, overrides=None):
+    """The LIVE maker test: (LockConfig, MakerCfg, MakerLiveCfg). Refuses a config that is not marked live, refuses to run it
+    without the --live flag, and refuses limits above LIVE_CAPS."""
+    cfg, mm, live = _parse_maker(path, overrides)
+    if cfg.execution.mode != "live":
+        raise ValueError("a live maker config needs execution.mode = \"live\" (paper runs without --live)")
+    if not live_flag:
+        raise LiveGateError("the config says live but the --live flag is missing: refusing to trade real money")
+    lc = MakerLiveCfg()
+    _apply(lc, live, "live.")
+    c, r, k = cfg.lock, cfg.risk, LIVE_CAPS
+    if c.assets != ["btc"]:
+        raise ValueError("live maker: BTC only (the coin the paper maker was measured on)")
+    if not (mm.shares == lc.max_shares == k["shares"] and mm.max_side_shares <= k["max_side_shares"]
+            and mm.max_unpaired <= k["max_unpaired"]):
+        raise ValueError(f"live maker: shares = live.max_shares = {k['shares']:g}, max_side_shares <= "
+                         f"{k['max_side_shares']:g}, max_unpaired <= {k['max_unpaired']:g} (a test at the exchange minimum)")
+    if not 2 * mm.shares * mm.p_hi <= lc.max_resting_usd <= k["max_resting_usd"]:
+        raise ValueError(f"live maker: two bids (2 x shares x p_hi) <= live.max_resting_usd <= {k['max_resting_usd']:g}")
+    if not (0 < r.daily_loss_limit <= k["daily_loss_limit"] and r.max_open_usd <= k["max_open_usd"]):
+        raise ValueError(f"live maker: 0 < risk.daily_loss_limit <= {k['daily_loss_limit']:g}, risk.max_open_usd <= "
+                         f"{k['max_open_usd']:g}")
+    if r.resume_next_day or not r.kill_file or not r.state_file:
+        raise ValueError("live maker: resume_next_day = false (a human restarts it), a kill file and a state file")
+    if not (lc.reserve_usd >= k["min_reserve_usd"] and 1 <= lc.max_orders_hour <= k["max_orders_hour"]
+            and 2 <= lc.heartbeat_s <= 6 and 181 <= lc.ttl_s <= 600 and 0 <= lc.cross_pause_ms <= 5000
+            and 1 <= lc.reconcile_every_s <= 120):
+        raise ValueError("live maker: reserve_usd >= 40, 1 <= max_orders_hour <= 3000, 2 <= heartbeat_s <= 6, "
+                         "181 <= ttl_s <= 600, 0 <= cross_pause_ms <= 5000, 1 <= reconcile_every_s <= 120")
+    return cfg, mm, lc
+
+
+def _check_maker(cfg, mm):
+    c = cfg.lock
     if c.zone != "fair" or c.entry != "taker" or c.duration != 300:
         raise ValueError("maker: lock.zone = 'fair' (the Binance fair value), lock.entry = 'taker' (unused) and 5m windows")
     if not 0 <= c.rel_lo < c.rel_hi <= 238:
@@ -152,11 +213,19 @@ def keep_bid(mm: MakerCfg, cur, tgt, p, long_by):
 class FairMaker(LockBot):
     """LockBot's windows, feeds, Binance fair value, journal, risk and settlement; its decision pass is the maker's."""
 
-    def __init__(self, cfg, mm: MakerCfg, journal, broker=None):
+    def __init__(self, cfg, mm: MakerCfg, journal, broker=None, live: MakerLiveCfg = None):
         super().__init__(cfg, journal, broker=broker or type("_Unset", (), {"mode": "paper"})())
         self.mm = mm
-        self.broker = broker or PaperBroker(cfg.execution.paper_place_ms, cfg.execution.paper_cancel_ms,
-                                            on_fill=self._on_mm_fill, queue=True)
+        if broker is not None:
+            self.broker = broker
+        elif cfg.execution.mode == "live":       # load_maker_live_config only (the --live flag and the caps were checked there)
+            if live is None:
+                raise LiveGateError("a live maker needs its [live] limits (load_maker_live_config)")
+            self.broker = MakerLiveBroker(live, on_fill=self._on_mm_fill, on_unfill=self._on_mm_unfill, journal=journal)
+        else:
+            self.broker = PaperBroker(cfg.execution.paper_place_ms, cfg.execution.paper_cancel_ms,
+                                      on_fill=self._on_mm_fill, queue=True)
+        self.live = self.broker.mode == "live"
         # the public trades go to the paper broker (LockBot gave the fair rule's race log the feed)
         self.feeds = {a: ClobFeed(self.st, a, alive=self.alive, on_trade=self._on_public_trade) for a in cfg.lock.assets}
         self.mm_bids = {}          # (window key, side) -> {"oid", "price", "size", "token", "p", "t"}
@@ -224,22 +293,72 @@ class FairMaker(LockBot):
         return r if side == "U" else -r
 
     # ---------------------------------------------------------------- orders
-    async def _mm_cancel(self, key, side, now, why):
-        b = self.mm_bids.pop((key, side), None)
-        if b:
-            await self.broker.cancel([b["oid"]], now)
+    async def _cancel_sides(self, key, sides, now, why):
+        """Cancel our bids of a window's sides in ONE call (a Binance jump pulls both at once: in live every call is a
+        round trip). Returns (ok, late): ok = False when the cancel itself failed (the bids are kept and tried again next
+        pass); late = a bid was matched before the cancel reached the exchange (its fill is counted already: no re-bid now)."""
+        bs = [(s, self.mm_bids.get((key, s))) for s in sides]
+        bs = [(s, b) for s, b in bs if b]
+        if not bs:
+            return True, False
+        try:
+            late = await self.broker.cancel([b["oid"] for _, b in bs], now)
+        except Exception as e:  # noqa: BLE001  (live: still resting as far as we know, the next pass cancels again)
+            self.j.log("error", where="mm_cancel", error=str(e)[:200], key=key, why=why)
+            return False, True
+        for s, b in bs:
+            self.mm_bids.pop((key, s), None)
             self.stats["cancels"] += 1
             if why != "requote":
-                self.j.log("mm_cancel", key=key, side=side, why=why, price=b["price"])
+                self.j.log("mm_cancel", key=key, side=s, why=why, price=b["price"])
+        return True, bool(late)
+
+    async def _mm_cancel(self, key, side, now, why):
+        return await self._cancel_sides(key, (side,), now, why)
 
     async def _mm_pull(self, key, now, why):
-        for side in ("U", "D"):
-            await self._mm_cancel(key, side, now, why)
+        await self._cancel_sides(key, ("U", "D"), now, why)
         self.last_why[key] = why
+
+    async def _on_stopping(self):
+        """LockBot.run: the bot stops (Ctrl+C, SIGTERM, the day stop): pull every bid NOW, not after the settle wait."""
+        for key in sorted({k for k, _ in self.mm_bids}):
+            await self._mm_pull(key, now_ms(), "stop")
+        q = getattr(self.broker, "quiesce", None)
+        if q:
+            await q("stop")
+
+    def _mid_wo_own(self, token, other):
+        """The side's book mid without our own live bids (an Up bid at b also shows as a Down ask at 1 - b): with ref "min"
+        our own bid inside the spread would raise the mid it is priced from, a step every requote (the G ratchet, CLAUDE.md).
+        Paper bids are not in the public book, so paper reads the book as it is."""
+        book = self.st.books.get(token)
+        if book is None or not book.bids or not book.asks:
+            return None
+        own_b, own_a = {}, {}
+        if self.live:
+            for b in self.mm_bids.values():
+                if b["token"] == token:
+                    own_b[round(b["price"], 2)] = own_b.get(round(b["price"], 2), 0.0) + b["size"]
+                elif b["token"] == other:
+                    q = round(1.0 - b["price"], 2)
+                    own_a[q] = own_a.get(q, 0.0) + b["size"]
+        bb = next((p for p in sorted(book.bids, reverse=True) if book.bids[p] - own_b.get(round(p, 2), 0.0) > 1e-9), None)
+        ba = next((p for p in sorted(book.asks) if book.asks[p] - own_a.get(round(p, 2), 0.0) > 1e-9), None)
+        if bb is None or ba is None:
+            return None
+        return (bb + ba) / 2
 
     async def decide_once(self, now):
         c, m = self.cfg.lock, self.mm
         ok, why_risk = self.can_enter()
+        health = getattr(self.broker, "health", None)
+        b_ok, b_why = health() if health else (True, "")
+        bstats = getattr(self.broker, "stats", None)
+        if bstats:
+            self.stats["ex"] = dict(bstats)          # live: orders, fills, latency of the exchange calls (status every 30 s)
+        if b_why == "broker_fatal":                  # 401 / 403 or the order-rate cap: stop the test (a human restarts it)
+            self._kill(f"broker: {getattr(self.broker, 'fatal', '')}"[:200])
         self._markouts(now)
         for key, w in list(self.st.windows.items()):
             rel = now / 1000.0 - self.anchor(w.start)
@@ -248,6 +367,9 @@ class FairMaker(LockBot):
                 continue
             if not ok:
                 await self._mm_pull(key, now, "risk:" + why_risk)
+                continue
+            if not b_ok:                              # live: stream / heartbeat / API trouble, an order of unknown outcome
+                await self._mm_pull(key, now, "broker:" + b_why)
                 continue
             if now - self.st.feed_alive.get("binance", 0) > c.bn_max_age_ms:
                 await self._mm_pull(key, now, "bn_stale")
@@ -277,14 +399,22 @@ class FairMaker(LockBot):
                 await self._mm_pull(key, now, "pause")
                 continue
             up, dn = self.held(key)
-            for side, p, token, have, long_by in (("U", pu, w.token_up, up, up - dn), ("D", 1.0 - pu, w.token_down, dn, dn - up)):
+            for side, p, token, other, have, long_by in (("U", pu, w.token_up, w.token_down, up, up - dn),
+                                                         ("D", 1.0 - pu, w.token_down, w.token_up, dn, dn - up)):
                 ask = self._book_ask(token)
                 book = self.st.books.get(token)
                 ref = p
-                if m.ref == "min" and ask and book is not None and book.bids:
-                    ref = min(p, (max(book.bids) + ask[0]) / 2)          # never above the side's book mid
+                if m.ref == "min" and ask:
+                    mid = self._mid_wo_own(token, other)
+                    if mid is not None:
+                        ref = min(p, mid)                                 # never above the side's book mid
                 tgt, why = bid_target(m, ref, have, long_by, ask[0] if ask else None)
                 cur = self.mm_bids.get((key, side))
+                resting = getattr(self.broker, "is_resting", None)
+                if cur and resting and not resting(cur["oid"]):   # live: gone at the exchange (a heartbeat lapse, expiry)
+                    self.mm_bids.pop((key, side), None)
+                    self.j.log("mm_cancel", key=key, side=side, why="gone", price=cur["price"])
+                    cur = None
                 if tgt is None:
                     if cur:
                         await self._mm_cancel(key, side, now, why)
@@ -302,10 +432,14 @@ class FairMaker(LockBot):
                         await self._mm_cancel(key, side, now, "risk:max_open")
                     continue
                 if cur:
-                    await self._mm_cancel(key, side, now, "requote")
+                    done, late = await self._mm_cancel(key, side, now, "requote")
                     self.stats["requotes"] += 1
+                    if late:                              # live: filled while we moved it, or the cancel failed: decide again
+                        continue                          # next pass with the new position (paper never gets here)
                 q_ahead = book.bids.get(tgt, 0.0) if book else 0.0
-                oid = await self.broker.place(token, key, side, tgt, size, now, queue_ahead=q_ahead)
+                oid = await self.broker.place(token, key, side, tgt, size, now, queue_ahead=q_ahead, end_s=w.end)
+                if oid is None:                           # live: refused by our limits or the exchange, nothing rests
+                    continue
                 self.mm_bids[(key, side)] = {"oid": oid, "price": tgt, "size": size, "token": token, "p": p, "t": now}
                 self.stats["quotes"] += 1
                 bb = book.best_bid() if book is not None and hasattr(book, "best_bid") else None
@@ -336,7 +470,7 @@ class FairMaker(LockBot):
                 self.mm_bids.pop((key, side), None)
         self.entries.setdefault(key, []).append({"side": side, "shares": round(q, 4), "price": round(px, 4),
                                                  "cost": round(px * q, 6), "fee": 0.0, "t": time.time(), "limit": px,
-                                                 "p": round(b["p"], 4) if b else None})
+                                                 "p": round(b["p"], 4) if b else None, "oid": fill["order_id"]})
         now = now_ms()
         p = self._side_fair(key, side, now)
         up, dn = self.held(key)
@@ -354,6 +488,26 @@ class FairMaker(LockBot):
         if p is not None:
             for h in self.mm.markout_s:
                 self.marks.append((now + h * 1000, key, side, h, px, q, p))
+
+    def _on_mm_unfill(self, rec):
+        """Live: a trade we counted FAILED on chain (the exchange takes it back): remove those shares of that order."""
+        key, left = rec["key"], float(rec["size"])
+        es = self.entries.get(key, [])
+        for e in reversed(es):
+            if left <= 1e-9:
+                break
+            if e.get("oid") != rec["order_id"]:
+                continue
+            q = min(e["shares"], left)
+            e["shares"] = round(e["shares"] - q, 4)
+            e["cost"] = round(e["price"] * e["shares"], 6)
+            left -= q
+        self.entries[key] = [e for e in es if e["shares"] > 1e-9]
+        if not self.entries[key]:
+            self.entries.pop(key, None)
+        self._save_state()
+        self.j.log("mm_unfill", key=key, side=rec.get("side"), order_id=rec["order_id"], size=round(float(rec["size"]), 4),
+                   not_found=round(left, 4))
 
     def _markouts(self, now):
         keep = []
