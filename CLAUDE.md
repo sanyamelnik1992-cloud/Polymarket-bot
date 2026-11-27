@@ -731,6 +731,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   twin test ignores that field) and the control bot sends ONE message for them a couple of minutes past each hour
   (`notify.format_maker_paper`, `notify.PAPER_MAKERS`, `tg_bot.Watcher.paper_makers`); `/maker` shows live + paper. The live maker stays
   stopped on v2 with its limits (owner: no money changes); back to money only on the owner's word, with v3 if paper confirms it.
+  First paper night (report 96 section 7, 26 Nov 19:06 - 27 Nov 06:00): v2 73 windows / 763 shares / +$2.93 (+0.4 c a share), v3 17 / 93
+  / -$22.49 (13 of 17 windows lost; edge at the fill +9.6 c but the side's fair value -15.6 c 30 s later, 73 of 93 shares unpaired):
+  a wide bid is hit only by a crash that goes on. The window sim on the same windows: v2 +$11..+29, v3 -$3..-8 (the v3 advantage of 18-26
+  Nov is not stable) and paper is stricter than the sim (v3 filled 17 windows vs 50). Proposed: switch v3 off, one more day of v2, then
+  close the maker direction if v2 stays about zero.
   15m Ступени, 26 Nov 18:59 UTC: the first 10-share loss (-$9.33): XRP 18:45-19:00, Up 10 @ 0.93 at the 3rd second of the closing
   minute (model p >= 0.95) after a ~17 bp rally in ~70 s (the market Up 0.07 -> 0.95), faded 7 bp in the next 15 s: a spike-and-fade the
   10 s shock pause cannot see. XRP is the rule's weak coin (live, all time with it): 22 entries / 3 lost / -$9.86 vs BTC 66 / 2 / +$11.89,
