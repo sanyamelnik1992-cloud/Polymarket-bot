@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261126-190614
-mode: live  duration: 774.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 1548, 'prewarm': 208, 'lock_state': 1657, 'strike': 204, 'order_filled': 18, 'fill': 18, 'lock_entry': 18, 'provisional': 18, 'settle': 18, 'order_rejected': 1, 'lock_miss': 1}
+mode: live  duration: 835.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 1671, 'prewarm': 224, 'lock_state': 1731, 'strike': 220, 'order_filled': 18, 'fill': 18, 'lock_entry': 18, 'provisional': 18, 'settle': 18, 'order_rejected': 1, 'lock_miss': 1}
 
 lock orders: sent 19  filled 18  ask gone 1  errors 0
   signal -> exchange answer, ms: median 243  p90 373  max 397
   exchange call alone, ms: median 242  p90 373  max 398
   decision -> order sent, ms: median 1  p90 4  max 7
   GC pause per 30 s, ms: median 0  p90 3  max 97
-  market prewarm (2 lookups + signing), ms: median 116  max 419  n 208
+  market prewarm (2 lookups + signing), ms: median 117  max 419  n 224
   fill price minus the ask we saw, cents: mean -0.02  worst +0.1
   misses came 146-146 s before the end; model p 0.000-0.000
   exchange rejections by code: {'fak_not_filled': 1}
@@ -14,7 +14,7 @@ lock orders: sent 19  filled 18  ask gone 1  errors 0
 окна, где модель была уверена (p >= 0.99): вход 16; без входа:
      2  сигнал был, но уже открыт вход (одно окно за раз)
      1  заявка ушла, продажи уже не было
-    34  фильтр Binance (движение против нас / скачок / пауза)
+    38  фильтр Binance (движение против нас / скачок / пауза)
     max_open: btc-1795733100 D p None ask 0.99
     max_open: eth-1795733100 D p None ask 0.99
 

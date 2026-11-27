@@ -1,6 +1,4 @@
 time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
-2026-11-13 08:33:55,pmbot-lock-15-live,live,btc-1794557700,Down,0,5.407,4.6956,5.407,0.0,0.7114
-2026-11-13 08:50:16,pmbot-lock-15-live,live,eth-1794558600,Down,0,5.0556,4.5818,5.0556,0.0,0.4738
 2026-11-13 09:55:15,pmbot-lock-live,live,eth-1794563100,Down,0,10.0102,9.8144,10.0102,0.0,0.1958
 2026-11-13 10:50:20,pmbot-lock-15-live,live,btc-1794565800,Up,5.0,0,4.5787,5.0,0.0,0.4213
 2026-11-13 10:50:56,pmbot-lock-live,live,btc-1794566400,Down,0,2.0217,1.8704,2.0217,0.0,0.1513
@@ -3718,3 +3716,6 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-27 07:49:33,pmbot-lock-99-live,live,sol-1795765200,Down,0,10.0,9.8137,10.0,0.0,0.1863
 2026-11-27 07:50:05,pmbot-lock-15-early-live,live,btc-1795764600,Down,0,5.0051,4.9538,5.0051,0.0,0.0513
 2026-11-27 07:50:10,pmbot-maker-v2,paper,btc-1795765200,Down,7.2727,5.0,6.0455,5.0,0.0,-1.0455
+2026-11-27 08:10:11,pmbot-maker-v2,paper,btc-1795766400,Up,5.0,0,3.05,5.0,0.0,1.95
+2026-11-27 08:15:32,pmbot-maker-v2,paper,btc-1795766700,Up,5.0,0,3.25,5.0,0.0,1.75
+2026-11-27 08:54:43,pmbot-maker-v2,paper,btc-1795769100,Down,0,5.0,2.35,5.0,0.0,2.65
