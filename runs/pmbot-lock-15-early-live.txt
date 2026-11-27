@@ -1,12 +1,12 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261126-190614
-mode: live  duration: 1014.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2029, 'prewarm': 272, 'lock_state': 1914, 'strike': 268, 'order_filled': 20, 'fill': 20, 'lock_entry': 20, 'provisional': 20, 'settle': 19, 'order_rejected': 1, 'lock_miss': 1}
+mode: live  duration: 1076.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2152, 'prewarm': 288, 'lock_state': 1940, 'strike': 284, 'order_filled': 20, 'fill': 20, 'lock_entry': 20, 'provisional': 20, 'settle': 20, 'order_rejected': 1, 'lock_miss': 1}
 
 lock orders: sent 21  filled 20  ask gone 1  errors 0
   signal -> exchange answer, ms: median 243  p90 336  max 397
   exchange call alone, ms: median 242  p90 335  max 398
   decision -> order sent, ms: median 1  p90 2  max 7
   GC pause per 30 s, ms: median 0  p90 3  max 97
-  market prewarm (2 lookups + signing), ms: median 120  max 419  n 272
+  market prewarm (2 lookups + signing), ms: median 121  max 419  n 288
   fill price minus the ask we saw, cents: mean -0.02  worst +0.1
   misses came 146-146 s before the end; model p 0.000-0.000
   exchange rejections by code: {'fak_not_filled': 1}
@@ -31,8 +31,8 @@ settled windows:
 asset                                                                              
 btc          8  39.633  0.438          0.438     0.0       1.0  0.046  0.084  0.011
 eth          2   9.907  0.093          0.093     0.0       1.0  0.046  0.046  0.009
-sol          6  29.721  0.279          0.279     0.0       1.0  0.046  0.046  0.009
+sol          7  34.674  0.326          0.326     0.0       1.0  0.046  0.046  0.009
 xrp          3  14.860  0.140          0.140     0.0       1.0  0.046  0.046  0.009
 
-TOTAL pnl $+0.95 (ex-rebate $+0.95) on cost $94.12 -> ROI +1.01%; windows 19, t-stat +23.01
+TOTAL pnl $+1.00 (ex-rebate $+1.00) on cost $99.07 -> ROI +1.01%; windows 20, t-stat +24.09
 max drawdown $0.00; hedged windows (both sides filled): 0
