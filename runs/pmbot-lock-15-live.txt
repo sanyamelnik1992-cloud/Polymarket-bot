@@ -1,33 +1,35 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261126-190610
-mode: live  duration: 296.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 592, 'prewarm': 80, 'lock_state': 627, 'strike': 76, 'order_filled': 2, 'fill': 2, 'lock_entry': 2, 'provisional': 2, 'settle': 2}
+mode: live  duration: 356.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 712, 'prewarm': 96, 'lock_state': 743, 'strike': 92, 'order_filled': 3, 'fill': 3, 'lock_entry': 3, 'provisional': 3, 'settle': 3}
 
-lock orders: sent 2  filled 2  ask gone 0  errors 0
-  signal -> exchange answer, ms: median 263  p90 263  max 263
-  exchange call alone, ms: median 263  p90 263  max 263
+lock orders: sent 3  filled 3  ask gone 0  errors 0
+  signal -> exchange answer, ms: median 263  p90 264  max 264
+  exchange call alone, ms: median 263  p90 264  max 264
   decision -> order sent, ms: median 1  p90 1  max 1
-  GC pause per 30 s, ms: median 0  p90 1  max 198
-  market prewarm (2 lookups + signing), ms: median 119  max 257  n 80
-  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
+  GC pause per 30 s, ms: median 0  p90 2  max 198
+  market prewarm (2 lookups + signing), ms: median 121  max 279  n 96
+  fill price minus the ask we saw, cents: mean -1.00  worst +0.0
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
-  <= 2.5 bp (the fixed pause allows too)       :    2 /    2 /   0 /    +1.20
+  <= 2.5 bp (the fixed pause allows too)       :    3 /    3 /   0 /    +2.36
   > 2.5 bp (only the volatility pause)         :    0 /    0 /   0 /    +0.00
 
-окна, где модель была уверена (p >= 0.9): вход 2; без входа:
-    57  фильтр Binance (движение против нас / скачок / пауза)
-    11  модель уверена, но продавца по нашей цене нет
+окна, где модель была уверена (p >= 0.9): вход 3; без входа:
+    68  фильтр Binance (движение против нас / скачок / пауза)
+    14  модель уверена, но продавца по нашей цене нет
 
-fills: 2  shares: 15  notional: $13.85
+fills: 3  shares: 25  notional: $22.95
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        1  10.111      9.10      0.900  846.620
+eth        1  10.341      9.10      0.880  841.031
 xrp        1   5.016      4.75      0.947  841.826
 
 settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
 btc          1  9.164  0.947          0.947     0.0       1.0  0.947  0.947  0.103
+eth          1  9.176  1.164          1.164     0.0       1.0  1.164  1.164  0.127
 xrp          1  4.768  0.248          0.248     0.0       1.0  0.248  0.248  0.052
 
-TOTAL pnl $+1.20 (ex-rebate $+1.20) on cost $13.93 -> ROI +8.58%; windows 2, t-stat +nan
+TOTAL pnl $+2.36 (ex-rebate $+2.36) on cost $23.11 -> ROI +10.21%; windows 3, t-stat +2.85
 max drawdown $0.00; hedged windows (both sides filled): 0
