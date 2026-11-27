@@ -1,24 +1,24 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-190604
-mode: live  duration: 1435.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2871, 'prewarm': 1148, 'lock_state': 15740, 'strike': 1144, 'order_rejected': 3, 'lock_miss': 3, 'prewarm_error': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
+mode: live  duration: 1495.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 2990, 'prewarm': 1196, 'lock_state': 16097, 'strike': 1192, 'order_rejected': 6, 'lock_miss': 6, 'prewarm_error': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-lock orders: sent 4  filled 1  ask gone 3  errors 0
-  signal -> exchange answer, ms: median 267  p90 296  max 296
-  exchange call alone, ms: median 266  p90 296  max 296
+lock orders: sent 7  filled 1  ask gone 6  errors 0
+  signal -> exchange answer, ms: median 296  p90 1984  max 1984
+  exchange call alone, ms: median 296  p90 1983  max 1983
   decision -> order sent, ms: median 1  p90 1  max 1
   GC pause per 30 s, ms: median 0  p90 5  max 109
-  market prewarm (2 lookups + signing), ms: median 126  max 5136  n 1148
+  market prewarm (2 lookups + signing), ms: median 126  max 5136  n 1196
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
-  misses came 15-32 s before the end; model p 0.990-1.000
-  exchange rejections by code: {'fak_not_filled': 3}
+  misses came 15-48 s before the end; model p 0.990-1.000
+  exchange rejections by code: {'fak_not_filled': 6}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :    1 /    1 /   0 /    +0.19
   > 2.5 bp (only the volatility pause)         :    0 /    0 /   0 /    +0.00
 
 окна, где модель была уверена (p >= 0.99): вход 1; без входа:
-     3  заявка ушла, продажи уже не было
-   962  фильтр Binance (движение против нас / скачок / пауза)
-     7  модель уверена, но продавца по нашей цене нет
+     5  заявка ушла, продажи уже не было
+   996  фильтр Binance (движение против нас / скачок / пауза)
+     8  модель уверена, но продавца по нашей цене нет
 
 fills: 1  shares: 10  notional: $9.80
        fills  shares  notional  avg_price  med_rel
