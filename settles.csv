@@ -3775,3 +3775,9 @@ time_utc,unit,mode,key,winner,up,down,cost,payoff,rebate,pnl
 2026-11-27 15:35:19,pmbot-maker-v2,paper,btc-1795793100,Up,0,5.0,1.1,0,0.0,-1.1
 2026-11-27 15:38:09,pmbot-maker-v2,paper,btc-1795793400,Up,5.0,0,2.4,5.0,0.0,2.6
 2026-11-27 15:59:10,pmbot-maker-v2,paper,btc-1795794600,Down,5.0,10.0,7.55,10.0,0.0,2.45
+2026-11-27 16:15:22,pmbot-maker-v2,paper,btc-1795795500,Up,10.0,5.0,8.15,10.0,0.0,1.85
+2026-11-27 16:20:23,pmbot-maker-v2,paper,btc-1795795800,Down,0,5.0,2.8,5.0,0.0,2.2
+2026-11-27 16:25:14,pmbot-maker-v2,paper,btc-1795796100,Down,5.0,0,2.25,0,0.0,-2.25
+2026-11-27 16:35:25,pmbot-maker-v2,paper,btc-1795796700,Down,10.0,10.0,10.05,10.0,0.0,-0.05
+2026-11-27 16:45:26,pmbot-maker-v2,paper,btc-1795797300,Down,5.0,0,2.75,0,0.0,-2.75
+2026-11-27 16:50:27,pmbot-maker-v2,paper,btc-1795797600,Down,5.0,0,2.55,0,0.0,-2.55
