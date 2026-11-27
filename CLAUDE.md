@@ -736,6 +736,11 @@ Research + trading bots for Polymarket 5-minute crypto Up/Down markets. Docs: `P
   a wide bid is hit only by a crash that goes on. The window sim on the same windows: v2 +$11..+29, v3 -$3..-8 (the v3 advantage of 18-26
   Nov is not stable) and paper is stricter than the sim (v3 filled 17 windows vs 50). Proposed: switch v3 off, one more day of v2, then
   close the maker direction if v2 stays about zero.
+  After 21 h (report 96 section 8, 27 Nov 16:00): v2 143 windows / +$20.99 (+$0.15 a window, sd $2.06, t 0.85, +1.5 c a share),
+  v3 29 / -$4.97; v2's day path went -$15.57 .. +$15.90, so with the live limits (-$5 day stop) it would have stopped at 00:50
+  (v3 both days): a maker with +-$2 windows needs ~700-800 windows to prove +$0.15 and a ~$20 day stop to live through a day.
+  27 Nov ~15:05-15:15 UTC the exchange halted trading (no BTC 5m trades; a 15m order got "trading is disabled": order_failed +
+  window_blocked, the bots went on).
   15m Ступени, 26 Nov 18:59 UTC: the first 10-share loss (-$9.33): XRP 18:45-19:00, Up 10 @ 0.93 at the 3rd second of the closing
   minute (model p >= 0.95) after a ~17 bp rally in ~70 s (the market Up 0.07 -> 0.95), faded 7 bp in the next 15 s: a spike-and-fade the
   10 s shock pause cannot see. XRP is the rule's weak coin (live, all time with it): 22 entries / 3 lost / -$9.86 vs BTC 66 / 2 / +$11.89,
