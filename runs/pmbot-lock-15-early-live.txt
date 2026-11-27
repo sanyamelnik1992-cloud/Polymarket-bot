@@ -1,17 +1,17 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-early-live/20261126-190614
-mode: live  duration: 235.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 470, 'prewarm': 64, 'lock_state': 241, 'strike': 60, 'order_filled': 5, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 3}
+mode: live  duration: 295.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 591, 'prewarm': 80, 'lock_state': 321, 'strike': 76, 'order_filled': 5, 'fill': 5, 'lock_entry': 5, 'provisional': 5, 'settle': 5}
 
 lock orders: sent 5  filled 5  ask gone 0  errors 0
   signal -> exchange answer, ms: median 245  p90 397  max 397
   exchange call alone, ms: median 245  p90 398  max 398
   decision -> order sent, ms: median 1  p90 4  max 4
   GC pause per 30 s, ms: median 0  p90 2  max 97
-  market prewarm (2 lookups + signing), ms: median 119  max 419  n 64
+  market prewarm (2 lookups + signing), ms: median 117  max 419  n 80
   fill price minus the ask we saw, cents: mean +0.00  worst +0.0
 
 окна, где модель была уверена (p >= 0.99): вход 4; без входа:
      2  сигнал был, но уже открыт вход (одно окно за раз)
-     6  фильтр Binance (движение против нас / скачок / пауза)
+     8  фильтр Binance (движение против нас / скачок / пауза)
     max_open: btc-1795733100 D p None ask 0.99
     max_open: eth-1795733100 D p None ask 0.99
 
@@ -26,8 +26,8 @@ settled windows:
        windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                             
 btc          1  4.954  0.046          0.046     0.0       1.0  0.046  0.046  0.009
-sol          1  4.954  0.046          0.046     0.0       1.0  0.046  0.046  0.009
-xrp          1  4.954  0.046          0.046     0.0       1.0  0.046  0.046  0.009
+sol          2  9.907  0.093          0.093     0.0       1.0  0.046  0.046  0.009
+xrp          2  9.907  0.093          0.093     0.0       1.0  0.046  0.046  0.009
 
-TOTAL pnl $+0.14 (ex-rebate $+0.14) on cost $14.86 -> ROI +0.94%; windows 3, t-stat +9477148888718352.00
+TOTAL pnl $+0.23 (ex-rebate $+0.23) on cost $24.77 -> ROI +0.94%; windows 5, t-stat +nan
 max drawdown $0.00; hedged windows (both sides filled): 0
