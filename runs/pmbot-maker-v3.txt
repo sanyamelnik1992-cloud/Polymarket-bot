@@ -1,7 +1,7 @@
 run: /home/pmbot/Polymarket-bot/data/journal-maker-v3/20261126-190559
-mode: paper  duration: 715.7 min  events: {'mm_config': 1, 'start': 1, 'gc_freeze': 2, 'status': 1431, 'bn_strike': 142, 'strike': 137, 'fv': 3202, 'mm_quote': 10862, 'mm_pull': 305, 'mm_cancel': 1392, 'fill': 21, 'mm_fill': 21, 'mm_markout': 42, 'provisional': 18, 'settle': 18, 'mm_report': 12}
+mode: paper  duration: 774.7 min  events: {'mm_config': 1, 'start': 1, 'gc_freeze': 2, 'status': 1549, 'bn_strike': 153, 'strike': 148, 'fv': 3471, 'mm_quote': 11572, 'mm_pull': 333, 'mm_cancel': 1487, 'fill': 21, 'mm_fill': 21, 'mm_markout': 42, 'provisional': 18, 'settle': 18, 'mm_report': 13}
 
-maker: quotes 10862 (moved 9465), pulls on a Binance jump 305, cancels {'gate': 922, 'price': 140, 'too_low': 130, 'pause': 113, 'time': 61, 'bn_stale': 12}
+maker: quotes 11572 (moved 10081), pulls on a Binance jump 333, cancels {'gate': 989, 'price': 155, 'too_low': 138, 'pause': 118, 'time': 61, 'bn_stale': 12}
   fills 21: 98 shares, $49.64
   by our edge at the fill (fair - price):     fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
   -100..  +0 c                                    2        5   -0.63   -1.25       .   -38.00 (5)

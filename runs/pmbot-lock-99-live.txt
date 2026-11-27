@@ -1,17 +1,34 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-190604
-mode: live  duration: 715.1 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 1430, 'prewarm': 572, 'lock_state': 6335, 'strike': 568, 'order_rejected': 2, 'lock_miss': 2, 'prewarm_error': 1}
+mode: live  duration: 774.6 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 1549, 'prewarm': 620, 'lock_state': 7055, 'strike': 616, 'order_rejected': 2, 'lock_miss': 2, 'prewarm_error': 1, 'order_filled': 1, 'fill': 1, 'lock_entry': 1, 'provisional': 1, 'settle': 1}
 
-lock orders: sent 2  filled 0  ask gone 2  errors 0
-  signal -> exchange answer, ms: median 296  p90 296  max 296
-  exchange call alone, ms: median 296  p90 296  max 296
+lock orders: sent 3  filled 1  ask gone 2  errors 0
+  signal -> exchange answer, ms: median 267  p90 296  max 296
+  exchange call alone, ms: median 266  p90 296  max 296
   decision -> order sent, ms: median 1  p90 1  max 1
-  GC pause per 30 s, ms: median 0  p90 3  max 109
-  market prewarm (2 lookups + signing), ms: median 118  max 5136  n 572
+  GC pause per 30 s, ms: median 0  p90 4  max 109
+  market prewarm (2 lookups + signing), ms: median 118  max 5136  n 620
+  fill price minus the ask we saw, cents: mean +0.00  worst +0.0
   misses came 17-32 s before the end; model p 0.991-1.000
   exchange rejections by code: {'fak_not_filled': 2}
 
-окна, где модель была уверена (p >= 0.99): вход 0; без входа:
+entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
+  <= 2.5 bp (the fixed pause allows too)       :    1 /    1 /   0 /    +0.19
+  > 2.5 bp (only the volatility pause)         :    0 /    0 /   0 /    +0.00
+
+окна, где модель была уверена (p >= 0.99): вход 1; без входа:
      2  заявка ушла, продажи уже не было
-   445  фильтр Binance (движение против нас / скачок / пауза)
+   489  фильтр Binance (движение против нас / скачок / пауза)
      7  модель уверена, но продавца по нашей цене нет
-no fills
+
+fills: 1  shares: 10  notional: $9.80
+       fills  shares  notional  avg_price  med_rel
+asset                                             
+sol        1    10.0       9.8       0.98  256.291
+
+settled windows:
+       windows   cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
+asset                                                                             
+sol          1  9.814  0.186          0.186     0.0       1.0  0.186  0.186  0.019
+
+TOTAL pnl $+0.19 (ex-rebate $+0.19) on cost $9.81 -> ROI +1.90%; windows 1, t-stat +nan
+max drawdown $0.00; hedged windows (both sides filled): 0
