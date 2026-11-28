@@ -1,31 +1,31 @@
 run: /home/pmbot/Polymarket-bot/data/journal-maker-v3/20261126-190559
-mode: paper  duration: 2575.9 min  events: {'mm_config': 1, 'start': 1, 'gc_freeze': 2, 'status': 5150, 'bn_strike': 514, 'strike': 509, 'fv': 12146, 'mm_quote': 37602, 'mm_pull': 1201, 'mm_cancel': 4923, 'fill': 139, 'mm_fill': 139, 'mm_markout': 278, 'provisional': 98, 'settle': 98, 'mm_report': 43}
+mode: paper  duration: 2635.1 min  events: {'mm_config': 1, 'start': 1, 'gc_freeze': 2, 'status': 5269, 'bn_strike': 525, 'strike': 520, 'fv': 12428, 'mm_quote': 38336, 'mm_pull': 1223, 'mm_cancel': 5000, 'fill': 140, 'mm_fill': 140, 'mm_markout': 280, 'provisional': 99, 'settle': 98, 'mm_report': 44}
 
-maker: quotes 37602 (moved 32636), pulls on a Binance jump 1201, cancels {'gate': 3290, 'price': 478, 'pause': 451, 'too_low': 433, 'time': 187, 'unpaired': 59}
-  fills 139: 627 shares, $309.48
+maker: quotes 38336 (moved 33292), pulls on a Binance jump 1223, cancels {'gate': 3339, 'price': 487, 'pause': 454, 'too_low': 444, 'time': 192, 'unpaired': 59}
+  fills 140: 632 shares, $313.08
   by our edge at the fill (fair - price):     fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
   -100..  +0 c                                    3       10   -1.22  -14.81  -29.27   -54.00 (10)
     +1..  +2 c                                    2        5   +1.01   -6.76  -35.19   -71.98 (5)
     +2..  +3 c                                    1        5   +2.53   -1.41   +5.51   -41.00 (5)
     +3..  +5 c                                    7       33   +4.39   +1.88   -5.26    -2.05 (33)
-    +5..+100 c                                  126      574  +10.42   -2.34   -3.41    +5.09 (574)
+    +5..+100 c                                  127      579  +10.39   -2.41   -3.46    +5.09 (574)
   by the Binance move of the 2 s before (bp): fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
   against us (< -0.5)                             9       34   +3.86   -6.97   -6.10   -27.37 (34)
-  flat                                          115      523  +10.07   -2.21   -4.52    +2.37 (523)
+  flat                                          116      528  +10.04   -2.28   -4.56    +2.37 (523)
   toward us (> 0.5)                              15       70  +10.47   -1.09   +0.19   +20.57 (70)
-  all                                           139      627   +9.77   -2.34   -4.01    +2.79 (627)
+  all                                           140      632   +9.75   -2.40   -4.05    +2.79 (627)
   by side at the quote and second of the window: fills  shares  edge c  mk5 c  mk30 c  by outcome c/share (settled shares)
-  favourite (model fair >= 0.5)                 107      482   +9.79   -2.03   -4.65    +3.55 (482)
+  favourite (model fair >= 0.5)                 108      487   +9.77   -2.12   -4.69    +3.55 (482)
   underdog (model fair < 0.5)                    23      110  +11.08   -2.06   +0.68    +7.95 (110)
   second 100-140                                 37      181   +7.23   -0.94   -5.34    -4.42 (181)
   second 140-180                                 50      210   +7.97   -3.37   -3.32   +17.07 (210)
-  second 180-300                                 52      236  +13.33   -2.50   -3.20    -4.37 (236)
+  second 180-300                                 53      241  +13.21   -2.66   -3.39    -4.37 (236)
   windows settled 98: pnl +17.47 (won 55, lost 43, worst -3.80, best +4.10); shares paired 105, unpaired 417
 
-fills: 139  shares: 627  notional: $309.48
+fills: 140  shares: 632  notional: $313.08
        fills   shares  notional  avg_price  med_rel
 asset                                              
-btc      139  627.068   309.476      0.496  165.945
+btc      140  632.068   313.076      0.497  165.997
 
 settled windows:
        windows     cost     pnl  pnl_ex_rebate  rebate  win_rate  worst  best    roi
