@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-190604
-mode: live  duration: 2454.3 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4908, 'prewarm': 1964, 'lock_state': 22530, 'strike': 1960, 'order_rejected': 18, 'lock_miss': 18, 'prewarm_error': 1, 'order_filled': 19, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'settle': 19}
+mode: live  duration: 2514.3 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 5028, 'prewarm': 2012, 'lock_state': 22783, 'strike': 2008, 'order_rejected': 19, 'lock_miss': 19, 'prewarm_error': 1, 'order_filled': 19, 'fill': 19, 'lock_entry': 19, 'provisional': 19, 'settle': 19}
 
-lock orders: sent 37  filled 19  ask gone 18  errors 0
+lock orders: sent 38  filled 19  ask gone 19  errors 0
   signal -> exchange answer, ms: median 274  p90 1016  max 1984
   exchange call alone, ms: median 274  p90 1016  max 1983
   decision -> order sent, ms: median 1  p90 2  max 36
   GC pause per 30 s, ms: median 0  p90 4  max 109
-  market prewarm (2 lookups + signing), ms: median 123  max 5136  n 1964
+  market prewarm (2 lookups + signing), ms: median 123  max 5136  n 2012
   fill price minus the ask we saw, cents: mean -0.68  worst +2.0
   misses came 15-60 s before the end; model p 0.990-1.000
-  exchange rejections by code: {'fak_not_filled': 18}
+  exchange rejections by code: {'fak_not_filled': 19}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :   19 /   19 /   0 /    +4.78
@@ -17,9 +17,9 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
 
 окна, где модель была уверена (p >= 0.99): вход 19; без входа:
      2  сигнал был, но уже открыт вход (одно окно за раз)
-    16  заявка ушла, продажи уже не было
-  1525  фильтр Binance (движение против нас / скачок / пауза)
-    27  модель уверена, но продавца по нашей цене нет
+    17  заявка ушла, продажи уже не было
+  1556  фильтр Binance (движение против нас / скачок / пауза)
+    28  модель уверена, но продавца по нашей цене нет
     max_open: sol-1795839000 U p 0.995165 ask 0.99
     max_open: eth-1795841700 D p 0.995818 ask 0.99
 
