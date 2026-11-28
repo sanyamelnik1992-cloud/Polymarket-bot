@@ -1,34 +1,34 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261126-190610
-mode: live  duration: 2215.3 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4430, 'prewarm': 592, 'lock_state': 7034, 'strike': 588, 'order_filled': 15, 'fill': 15, 'lock_entry': 15, 'provisional': 15, 'settle': 15, 'order_rejected': 6, 'lock_miss': 7, 'prewarm_error': 1, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1}
+mode: live  duration: 2274.8 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4549, 'prewarm': 608, 'lock_state': 7167, 'strike': 604, 'order_filled': 16, 'fill': 16, 'lock_entry': 16, 'provisional': 16, 'settle': 16, 'order_rejected': 6, 'lock_miss': 7, 'prewarm_error': 1, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1}
 
-lock orders: sent 22  filled 15  ask gone 6  errors 1
-  signal -> exchange answer, ms: median 264  p90 566  max 1980
-  exchange call alone, ms: median 264  p90 566  max 1980
+lock orders: sent 23  filled 16  ask gone 6  errors 1
+  signal -> exchange answer, ms: median 277  p90 566  max 1980
+  exchange call alone, ms: median 276  p90 566  max 1980
   decision -> order sent, ms: median 1  p90 2  max 5
   GC pause per 30 s, ms: median 0  p90 4  max 198
-  market prewarm (2 lookups + signing), ms: median 128  max 5256  n 592
-  fill price minus the ask we saw, cents: mean -0.27  worst +1.0
+  market prewarm (2 lookups + signing), ms: median 128  max 5256  n 608
+  fill price minus the ask we saw, cents: mean -0.44  worst +1.0
   misses came 15-59 s before the end; model p 0.943-0.990
   exchange rejections by code: {'fak_not_filled': 6}
   order_failed btc-1795791600: RequestRejectedError trading is disabled
   order_error btc-1795791600:  trading is disabled
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
-  <= 2.5 bp (the fixed pause allows too)       :   11 /   11 /   0 /    +5.51
+  <= 2.5 bp (the fixed pause allows too)       :   12 /   12 /   0 /    +6.47
   > 2.5 bp (only the volatility pause)         :    4 /    4 /   0 /    +2.14
 
-окна, где модель была уверена (p >= 0.9): вход 14; без входа:
+окна, где модель была уверена (p >= 0.9): вход 15; без входа:
      1  сигнал был, но уже открыт вход (одно окно за раз)
      6  заявка ушла, продажи уже не было
-   483  фильтр Binance (движение против нас / скачок / пауза)
-    39  модель уверена, но продавца по нашей цене нет
+   494  фильтр Binance (движение против нас / скачок / пауза)
+    40  модель уверена, но продавца по нашей цене нет
     max_open: btc-1795819500 D p 0.990751 ask 0.92
 
-fills: 15  shares: 106  notional: $98.15
+fills: 16  shares: 117  notional: $107.45
        fills  shares  notional  avg_price  med_rel
 asset                                             
 btc        8  55.777     51.20      0.919  850.865
-eth        3  25.351     23.45      0.923  844.325
+eth        4  35.684     32.75      0.917  848.286
 sol        3  20.164     18.75      0.933  847.278
 xrp        1   5.016      4.75      0.947  841.826
 
@@ -36,9 +36,9 @@ settled windows:
        windows    cost    pnl  pnl_ex_rebate  rebate  win_rate  worst   best    roi
 asset                                                                              
 btc          8  51.489  4.288          4.288     0.0       1.0  0.093  1.164  0.083
-eth          3  23.569  1.782          1.782     0.0       1.0  0.196  1.164  0.076
+eth          4  32.935  2.750          2.750     0.0       1.0  0.196  1.164  0.083
 sol          3  18.841  1.324          1.324     0.0       1.0  0.093  0.757  0.070
 xrp          1   4.768  0.248          0.248     0.0       1.0  0.248  0.248  0.052
 
-TOTAL pnl $+7.64 (ex-rebate $+7.64) on cost $98.67 -> ROI +7.74%; windows 15, t-stat +5.64
+TOTAL pnl $+8.61 (ex-rebate $+8.61) on cost $108.03 -> ROI +7.97%; windows 16, t-stat +6.03
 max drawdown $0.00; hedged windows (both sides filled): 0
