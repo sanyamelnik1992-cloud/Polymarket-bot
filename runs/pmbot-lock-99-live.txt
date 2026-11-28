@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-99-live/20261126-190604
-mode: live  duration: 2095.2 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4190, 'prewarm': 1676, 'lock_state': 19912, 'strike': 1672, 'order_rejected': 14, 'lock_miss': 14, 'prewarm_error': 1, 'order_filled': 14, 'fill': 14, 'lock_entry': 14, 'provisional': 14, 'settle': 14}
+mode: live  duration: 2155.7 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4311, 'prewarm': 1724, 'lock_state': 20417, 'strike': 1720, 'order_rejected': 15, 'lock_miss': 15, 'prewarm_error': 1, 'order_filled': 14, 'fill': 14, 'lock_entry': 14, 'provisional': 14, 'settle': 14}
 
-lock orders: sent 28  filled 14  ask gone 14  errors 0
-  signal -> exchange answer, ms: median 296  p90 1090  max 1984
-  exchange call alone, ms: median 296  p90 1090  max 1983
+lock orders: sent 29  filled 14  ask gone 15  errors 0
+  signal -> exchange answer, ms: median 295  p90 1090  max 1984
+  exchange call alone, ms: median 295  p90 1090  max 1983
   decision -> order sent, ms: median 1  p90 2  max 36
   GC pause per 30 s, ms: median 0  p90 4  max 109
-  market prewarm (2 lookups + signing), ms: median 123  max 5136  n 1676
+  market prewarm (2 lookups + signing), ms: median 124  max 5136  n 1724
   fill price minus the ask we saw, cents: mean -0.93  worst +2.0
   misses came 15-60 s before the end; model p 0.990-1.000
-  exchange rejections by code: {'fak_not_filled': 14}
+  exchange rejections by code: {'fak_not_filled': 15}
 
 entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled / lost / pnl
   <= 2.5 bp (the fixed pause allows too)       :   14 /   14 /   0 /    +4.01
@@ -17,9 +17,9 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
 
 окна, где модель была уверена (p >= 0.99): вход 14; без входа:
      2  сигнал был, но уже открыт вход (одно окно за раз)
-    12  заявка ушла, продажи уже не было
-  1319  фильтр Binance (движение против нас / скачок / пауза)
-    21  модель уверена, но продавца по нашей цене нет
+    13  заявка ушла, продажи уже не было
+  1356  фильтр Binance (движение против нас / скачок / пауза)
+    22  модель уверена, но продавца по нашей цене нет
     max_open: sol-1795839000 U p 0.995165 ask 0.99
     max_open: eth-1795841700 D p 0.995818 ask 0.99
 

@@ -1,15 +1,15 @@
 run: /home/pmbot/Polymarket-bot/data/journal-lock-15-live/20261126-190610
-mode: live  duration: 2095.5 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4190, 'prewarm': 560, 'lock_state': 6571, 'strike': 556, 'order_filled': 15, 'fill': 15, 'lock_entry': 15, 'provisional': 15, 'settle': 15, 'order_rejected': 5, 'lock_miss': 6, 'prewarm_error': 1, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1}
+mode: live  duration: 2155.8 min  events: {'geoblock_ok': 1, 'start': 1, 'gc_freeze': 2, 'status': 4311, 'prewarm': 576, 'lock_state': 6818, 'strike': 572, 'order_filled': 15, 'fill': 15, 'lock_entry': 15, 'provisional': 15, 'settle': 15, 'order_rejected': 6, 'lock_miss': 7, 'prewarm_error': 1, 'order_failed': 1, 'order_error': 1, 'window_blocked': 1}
 
-lock orders: sent 21  filled 15  ask gone 5  errors 1
-  signal -> exchange answer, ms: median 280  p90 1086  max 1980
-  exchange call alone, ms: median 280  p90 1082  max 1980
+lock orders: sent 22  filled 15  ask gone 6  errors 1
+  signal -> exchange answer, ms: median 264  p90 566  max 1980
+  exchange call alone, ms: median 264  p90 566  max 1980
   decision -> order sent, ms: median 1  p90 2  max 5
   GC pause per 30 s, ms: median 0  p90 4  max 198
-  market prewarm (2 lookups + signing), ms: median 128  max 5256  n 560
+  market prewarm (2 lookups + signing), ms: median 127  max 5256  n 576
   fill price minus the ask we saw, cents: mean -0.27  worst +1.0
   misses came 15-59 s before the end; model p 0.943-0.990
-  exchange rejections by code: {'fak_not_filled': 5}
+  exchange rejections by code: {'fak_not_filled': 6}
   order_failed btc-1795791600: RequestRejectedError trading is disabled
   order_error btc-1795791600:  trading is disabled
 
@@ -19,9 +19,9 @@ entries by the Binance jump before them (fixed pause 2.5 bp): entries / settled 
 
 окна, где модель была уверена (p >= 0.9): вход 14; без входа:
      1  сигнал был, но уже открыт вход (одно окно за раз)
-     5  заявка ушла, продажи уже не было
-   454  фильтр Binance (движение против нас / скачок / пауза)
-    38  модель уверена, но продавца по нашей цене нет
+     6  заявка ушла, продажи уже не было
+   467  фильтр Binance (движение против нас / скачок / пауза)
+    39  модель уверена, но продавца по нашей цене нет
     max_open: btc-1795819500 D p 0.990751 ask 0.92
 
 fills: 15  shares: 106  notional: $98.15
